@@ -2,6 +2,9 @@ import math
 
 import pygame
 
+from poker_speech import PokerSpeechOverlay, is_poker_chat_popups_enabled
+from poker_ui_assets import draw_poker_logo
+
 
 # ==================================================
 # ACTIONS
@@ -83,6 +86,7 @@ _draw_bet_slider_dragging = False
 _draw_manual_bet_text = ""
 _draw_manual_bet_active = False
 _draw_chat_history = []
+_draw_speech_overlay = PokerSpeechOverlay()
 _draw_active_tab = "log"
 _draw_log_scroll = 0
 _draw_chat_scroll = 0
@@ -1204,6 +1208,7 @@ def reset_five_card_draw_ui_session():
 
     _draw_selected_card_indexes = set()
     _draw_chat_history = []
+    _draw_speech_overlay.clear()
     _draw_active_tab = "log"
     _draw_log_scroll = 0
     _draw_chat_scroll = 0
@@ -1221,6 +1226,12 @@ def add_five_card_draw_chat_message(speaker, message):
 
     if not message:
         return
+
+    if speaker and is_poker_chat_popups_enabled():
+        _draw_speech_overlay.post(
+            speaker,
+            message
+        )
 
     text = (
         f"{speaker}: {message}"
@@ -1624,7 +1635,7 @@ def get_five_card_draw_action(mouse_pos, game):
     if DRAW_OPTIONS_RECT.collidepoint(mouse_pos):
         return ACTION_OPTIONS
 
-    if DRAW_EXIT_RECT.collidepoint(mouse_pos):
+    if game.hand_complete and DRAW_EXIT_RECT.collidepoint(mouse_pos):
         return ACTION_RETURN
 
     if game.hand_complete:
@@ -2376,12 +2387,14 @@ def draw_five_card_draw(
 
     draw_table(surface, felt_surface)
 
-    # Hold'em-style small game title above the lower-left panel.
-    title = fonts["small"].render("FIVE-CARD DRAW", True, WHITE)
-    surface.blit(title, (22, 580))
+    draw_poker_logo(
+        surface,
+        "five_card_draw",
+        pygame.Rect(32, 66, 280, 75)
+    )
 
     draw_button(surface, DRAW_OPTIONS_RECT, "OPTIONS", mouse_pos, fonts["tiny"], enabled=True)
-    draw_button(surface, DRAW_EXIT_RECT, "EXIT", mouse_pos, fonts["tiny"], enabled=True)
+    draw_button(surface, DRAW_EXIT_RECT, "EXIT", mouse_pos, fonts["tiny"], enabled=bool(game.hand_complete))
 
     # Subtle center panel keeps table information readable on custom felts.
     draw_panel(
@@ -2540,3 +2553,15 @@ def draw_five_card_draw(
         surface.blit(hand_surface, hand_surface.get_rect(bottomright=(DRAW_ACTION_PANEL_RECT.right - 6, DRAW_ACTION_PANEL_RECT.y - 8)))
 
     draw_action_panel(surface, mouse_pos, game, next_hand_seconds=next_hand_seconds)
+
+    # Final speech-bubble overlay pass keeps chatter above cards and chips.
+    if is_poker_chat_popups_enabled():
+        for index, _npc in enumerate(game.npcs[:4]):
+            anchor_x, anchor_y = npc_anchors[index]
+            name_rect = pygame.Rect(anchor_x, anchor_y + 6, 165, 40)
+            _draw_speech_overlay.draw(
+                surface,
+                game.get_table_player_name(index + 1),
+                name_rect,
+                fonts["tiny"]
+            )

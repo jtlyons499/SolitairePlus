@@ -40,6 +40,11 @@ class BlackjackGame:
         self.dealer_flip_start_time = None
         self.dealer_flip_duration = 0.32
 
+        # Natural-blackjack results wait until the dealer hole card has
+        # visibly flipped. This prevents an instant result with a hidden card.
+        self.pending_natural_result = None
+        self.pending_natural_finish_time = None
+
     # ==================================================
     # Deck
     # ==================================================
@@ -167,16 +172,23 @@ class BlackjackGame:
 
     def dealer_hole_is_revealed(self):
 
-        if not self.round_complete:
-            return False
-
         if self.dealer_reveal_time is None:
-            return True
+            return self.round_complete
 
         return (
                 time.monotonic()
                 >= self.dealer_reveal_time
         )
+
+    def start_dealer_reveal(self, delay=0.20):
+        """Begin the dealer hole-card flip and return the reveal-finish time."""
+        now = time.monotonic()
+        self.dealer_flip_start_time = now + max(0.0, float(delay))
+        self.dealer_reveal_time = (
+            self.dealer_flip_start_time
+            + self.dealer_flip_duration
+        )
+        return self.dealer_reveal_time
 
     def get_net_result(self):
 
@@ -272,6 +284,10 @@ class BlackjackGame:
         self.card_animations = []
         self.dealer_reveal_time = None
         self.dealer_flip_start_time = None
+        self.dealer_playing = False
+        self.dealer_next_action_time = None
+        self.pending_natural_result = None
+        self.pending_natural_finish_time = None
 
         # Proper deal order:
         # Player
@@ -329,22 +345,25 @@ class BlackjackGame:
                     player_blackjack
                     and dealer_blackjack
             ):
-
-                self.finish_round(
-                    "push"
-                )
-
+                natural_result = "push"
             elif player_blackjack:
-
-                self.finish_round(
-                    "blackjack"
-                )
-
+                natural_result = "blackjack"
             else:
+                natural_result = "dealer"
 
-                self.finish_round(
-                    "dealer"
-                )
+            # Let the initial four-card deal finish, then reveal the dealer's
+            # hole card before announcing the natural-blackjack result.
+            self.player_stood = True
+            initial_deal_remaining = (
+                self.animation_stagger * 3
+                + self.animation_duration
+                + 0.16
+            )
+            reveal_finish = self.start_dealer_reveal(
+                initial_deal_remaining
+            )
+            self.pending_natural_result = natural_result
+            self.pending_natural_finish_time = reveal_finish + 0.34
 
     # ==================================================
     # Player actions
@@ -377,10 +396,7 @@ class BlackjackGame:
 
         if value > 21:
 
-            self.dealer_reveal_time = (
-                    time.monotonic()
-                    + 0.20
-            )
+            self.start_dealer_reveal(0.18)
 
             self.finish_round(
                 "dealer"
@@ -403,22 +419,10 @@ class BlackjackGame:
         self.player_stood = True
         self.dealer_playing = True
 
-        now = time.monotonic()
-
-        self.dealer_flip_start_time = (
-                now + 0.20
-        )
-
-        self.dealer_reveal_time = (
-                now
-                + 0.20
-                + self.dealer_flip_duration
-        )
+        reveal_finish = self.start_dealer_reveal(0.20)
 
         self.dealer_next_action_time = (
-                now
-                + 0.20
-                + self.dealer_flip_duration
+                reveal_finish
                 + 0.35
         )
 
@@ -478,10 +482,7 @@ class BlackjackGame:
 
         if self.player_value() > 21:
 
-            self.dealer_reveal_time = (
-                    time.monotonic()
-                    + 0.35
-            )
+            self.start_dealer_reveal(0.24)
 
             self.finish_round(
                 "dealer"
@@ -563,6 +564,8 @@ class BlackjackGame:
 
         self.round_complete = True
         self.result = result
+        self.pending_natural_result = None
+        self.pending_natural_finish_time = None
 
     def get_payout(self):
 
@@ -596,14 +599,23 @@ class BlackjackGame:
 
     def update(self):
 
+        now = time.monotonic()
+
+        if self.pending_natural_result is not None:
+            if (
+                    self.pending_natural_finish_time is not None
+                    and now >= self.pending_natural_finish_time
+            ):
+                result = self.pending_natural_result
+                self.finish_round(result)
+            return
+
         if not self.dealer_playing:
             return
 
         if self.round_complete:
             self.dealer_playing = False
             return
-
-        now = time.monotonic()
 
         if self.dealer_next_action_time is None:
             return

@@ -520,6 +520,11 @@ class Game:
     # --------------------------------------------------
 
     def record_move(self):
+        # Any successful move invalidates the visual hint. Leaving the old
+        # source rectangle on screen after the card has moved is confusing.
+        self.hint_data = None
+        self.hint_start_ticks = 0
+
         if not self.round_won:
             self.move_count += 1
 

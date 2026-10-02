@@ -2,6 +2,13 @@ import math
 
 import pygame
 
+from poker_speech import (
+    PokerSpeechOverlay,
+    is_poker_chat_popups_enabled,
+    set_poker_chat_popups_enabled,
+)
+from poker_ui_assets import draw_poker_logo
+
 
 # ==================================================
 # ACTIONS
@@ -266,6 +273,7 @@ holdem_log_history = []
 holdem_log_scroll = 0
 
 holdem_chat_history = []
+_holdem_speech_overlay = PokerSpeechOverlay()
 
 holdem_active_tab = "log"
 
@@ -295,9 +303,9 @@ holdem_table_chat_enabled = True
 
 holdem_options_panel_rect = pygame.Rect(
     438,
-    205,
+    185,
     490,
-    355
+    430
 )
 
 holdem_options_close_rect = pygame.Rect(
@@ -341,6 +349,14 @@ holdem_auto_deal_toggle_rect = pygame.Rect(
 holdem_chat_toggle_rect = pygame.Rect(
     707,
     468,
+    144,
+    38
+)
+
+# Table chat pop-ups
+holdem_chat_popups_toggle_rect = pygame.Rect(
+    707,
+    530,
     144,
     38
 )
@@ -517,6 +533,11 @@ def is_holdem_table_chat_enabled():
     return holdem_table_chat_enabled
 
 
+def is_holdem_table_chat_popups_enabled():
+
+    return is_poker_chat_popups_enabled()
+
+
 def get_holdem_npc_delay():
 
     delays = {
@@ -644,6 +665,15 @@ def handle_holdem_options_click(
             not holdem_table_chat_enabled
         )
 
+        return True
+
+    if (
+            holdem_table_chat_enabled
+            and holdem_chat_popups_toggle_rect.collidepoint(mouse_pos)
+    ):
+        set_poker_chat_popups_enabled(
+            not is_poker_chat_popups_enabled()
+        )
         return True
 
     return False
@@ -2606,6 +2636,12 @@ def add_holdem_chat_message(
 
     if not holdem_table_chat_enabled:
         return
+
+    if speaker and is_poker_chat_popups_enabled():
+        _holdem_speech_overlay.post(
+            speaker,
+            message
+        )
 
     if speaker:
 
@@ -5248,6 +5284,31 @@ def draw_holdem_options_overlay(
     )
 
     # ==================================================
+    # TABLE CHAT POP-UPS
+    # ==================================================
+
+    popup_label = name_font.render(
+        "Table Chat Pop-ups",
+        True,
+        WHITE if holdem_table_chat_enabled else (125, 130, 135)
+    )
+    surface.blit(popup_label, (515, 537))
+
+    popup_enabled = is_poker_chat_popups_enabled()
+    popup_text = "ON" if popup_enabled else "OFF"
+    popup_color = (45, 115, 75) if popup_enabled else (130, 55, 55)
+
+    draw_modern_button(
+        surface,
+        holdem_chat_popups_toggle_rect,
+        popup_text,
+        mouse_pos,
+        small_font,
+        enabled=holdem_table_chat_enabled,
+        accent_color=popup_color
+    )
+
+    # ==================================================
     # Small explanatory text
     # ==================================================
 
@@ -5267,7 +5328,7 @@ def draw_holdem_options_overlay(
         note_surface.get_rect(
             center=(
                 holdem_options_panel_rect.centerx,
-                535
+                592
             )
         )
     )
@@ -5983,11 +6044,15 @@ def draw_texas_holdem(
             radius=10
         )
 
-        blit_text_fit(
-            game_surface,
+        npc_display_name = (
             holdem_game.get_table_player_name(
                 index + 1
-            ),
+            )
+        )
+
+        blit_text_fit(
+            game_surface,
+            npc_display_name,
             holdem_name_font,
             name_text_color,
             name_rect,
@@ -6731,61 +6796,13 @@ def draw_texas_holdem(
     )
 
     # ==================================================
-    # Hold'em table title / logo treatment
+    # Game logo
     # ==================================================
 
-    holdem_title_shadow = (
-        holdem_title_font.render(
-            "TEXAS HOLD'EM",
-            True,
-            (
-                20,
-                20,
-                20
-            )
-        )
-    )
-
-    holdem_title_surface = (
-        holdem_title_font.render(
-            "TEXAS HOLD'EM",
-            True,
-            (
-                245,
-                238,
-                205
-            )
-        )
-    )
-
-    title_anchor = (
-        table_rect.right - 12,
-        table_rect.y - 12
-    )
-
-    shadow_rect = (
-        holdem_title_shadow.get_rect(
-            bottomright=(
-                title_anchor[0] + 2,
-                title_anchor[1] + 2
-            )
-        )
-    )
-
-    title_rect = (
-        holdem_title_surface.get_rect(
-            bottomright=title_anchor
-        )
-    )
-
-    game_surface.blit(
-        holdem_title_shadow,
-        shadow_rect
-    )
-
-    game_surface.blit(
-        holdem_title_surface,
-        title_rect
+    draw_poker_logo(
+        game_surface,
+        "texas_holdem",
+        pygame.Rect(32, 66, 280, 75)
     )
 
     # ==================================================
@@ -6863,8 +6880,23 @@ def draw_texas_holdem(
         "EXIT",
         mouse_pos,
         holdem_small_font,
-        enabled=True
+        enabled=bool(holdem_game.hand_complete)
     )
+
+    # ==================================================
+    # Final speech-bubble overlay pass
+    # ==================================================
+
+    if is_poker_chat_popups_enabled():
+        for index, _npc in enumerate(holdem_game.npcs[:4]):
+            anchor_x, anchor_y = npc_anchors[index]
+            name_rect = pygame.Rect(anchor_x, anchor_y + 6, 165, 40)
+            _holdem_speech_overlay.draw(
+                game_surface,
+                holdem_game.get_table_player_name(index + 1),
+                name_rect,
+                holdem_small_font
+            )
 
     # ==================================================
     # Options overlay
@@ -6924,8 +6956,9 @@ def get_texas_holdem_action(
     # Exit
     # ==================================================
 
-    if holdem_exit_rect.collidepoint(
-            mouse_pos
+    if (
+            holdem_game.hand_complete
+            and holdem_exit_rect.collidepoint(mouse_pos)
     ):
         return ACTION_RETURN
 

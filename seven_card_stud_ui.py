@@ -2,6 +2,9 @@ import math
 
 import pygame
 
+from poker_speech import PokerSpeechOverlay, is_poker_chat_popups_enabled
+from poker_ui_assets import draw_poker_logo
+
 
 # ==================================================
 # ACTIONS
@@ -149,6 +152,7 @@ _stud_fonts = None
 _stud_chip_images = None
 
 _stud_chat_history = []
+_stud_speech_overlay = PokerSpeechOverlay()
 _stud_active_tab = "log"
 _stud_log_scroll = 0
 _stud_chat_scroll = 0
@@ -1480,6 +1484,7 @@ def reset_seven_card_stud_ui_session():
     global _stud_chat_unread
 
     _stud_chat_history = []
+    _stud_speech_overlay.clear()
     _stud_active_tab = "log"
     _stud_log_scroll = 0
     _stud_chat_scroll = 0
@@ -1495,6 +1500,12 @@ def add_seven_card_stud_chat_message(
 
     if not message:
         return
+
+    if speaker and is_poker_chat_popups_enabled():
+        _stud_speech_overlay.post(
+            speaker,
+            message
+        )
 
     text = (
         f"{speaker}: {message}"
@@ -1616,8 +1627,9 @@ def get_seven_card_stud_action(
     if STUD_OPTIONS_RECT.collidepoint(mouse_pos):
         return ACTION_OPTIONS
 
-    if STUD_EXIT_RECT.collidepoint(
-            mouse_pos
+    if (
+            game.hand_complete
+            and STUD_EXIT_RECT.collidepoint(mouse_pos)
     ):
         return ACTION_RETURN
 
@@ -2297,11 +2309,14 @@ def draw_seven_card_stud(
 
     draw_table(surface, felt_surface)
 
-    title = fonts["small"].render("SEVEN-CARD STUD", True, WHITE)
-    surface.blit(title, (22, 580))
+    draw_poker_logo(
+        surface,
+        "seven_card_stud",
+        pygame.Rect(32, 66, 280, 75)
+    )
 
     draw_button(surface, STUD_OPTIONS_RECT, "OPTIONS", mouse_pos, fonts["tiny"], enabled=True)
-    draw_button(surface, STUD_EXIT_RECT, "EXIT", mouse_pos, fonts["tiny"], enabled=True)
+    draw_button(surface, STUD_EXIT_RECT, "EXIT", mouse_pos, fonts["tiny"], enabled=bool(game.hand_complete))
 
     draw_panel(
         surface,
@@ -2457,3 +2472,15 @@ def draw_seven_card_stud(
         surface.blit(hand_surface, hand_surface.get_rect(bottomright=(STUD_ACTION_PANEL_RECT.right - 6, STUD_ACTION_PANEL_RECT.y - 8)))
 
     draw_action_panel(surface, mouse_pos, game, next_hand_seconds=next_hand_seconds)
+
+    # Final speech-bubble overlay pass keeps chatter above cards and chips.
+    if is_poker_chat_popups_enabled():
+        for index, _npc in enumerate(game.npcs[:4]):
+            anchor_x, anchor_y = npc_anchors[index]
+            name_rect = pygame.Rect(anchor_x, anchor_y + 6, 165, 40)
+            _stud_speech_overlay.draw(
+                surface,
+                game.get_table_player_name(index + 1),
+                name_rect,
+                fonts["tiny"]
+            )

@@ -8,7 +8,7 @@ import os
 
 SAVE_FOLDER = "saves"
 
-PROFILE_VERSION = 2
+PROFILE_VERSION = 5
 
 PROFILE_SLOT_COUNT = 3
 
@@ -35,9 +35,14 @@ def make_default_profile():
         "identity": {
             "name": "Player",
 
-            # Temporary until the avatar system
-            # replaces the old gender avatars.
+            # Personal details shown on the Career leaderboard bio.
+            # Older saves omit these fields and are migrated by main.py.
             "gender": "non-binary",
+            "country": "",
+            "age": "",
+            "hometown": "",
+            "favorite_suit": "",
+            "bio": "",
 
             "avatar": {
                 "base": "base_01",
@@ -64,8 +69,24 @@ def make_default_profile():
             # ----------------------------
 
             "rating": 1000,
+
+            # Per-game rating scaffolding. ``rating`` remains the legacy
+            # overall value for backward compatibility with existing UI.
+            "ratings": {
+                "overall": 1000,
+                "solitaire": 1000,
+                "texas_holdem": 1000,
+                "five_card_draw": 1000,
+                "seven_card_stud": 1000,
+                "blackjack": 1000,
+                "roulette": 1000,
+                "score_four": 1000,
+            },
+
             "cash": 0,
             "fans": 0,
+            "fan_rewarded_jobs": [],
+            "fan_news_milestones": [],
 
             # ----------------------------
             # Leaderboard Random GOAT
@@ -160,9 +181,17 @@ def make_default_profile():
             ],
         },
 
+        "achievements": {
+            "unlocked": [],
+            "stats": {},
+        },
+
         "settings": {
             "preferred_difficulty":
                 "normal",
+
+            "solitaire_deal_mode":
+                "random",
         },
     }
 
