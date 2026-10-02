@@ -1,6 +1,9 @@
 import os
 import sys
 import time
+import copy
+
+from career_hub_controls import CareerHubControls
 
 import random
 
@@ -156,19 +159,31 @@ from debug_menu import (
     get_debug_action,
     ACTION_CAREER_HUB,
     ACTION_CASUAL_CARDS,
+    ACTION_POKER_NIGHT,
     ACTION_CASINO_NIGHT,
+    ACTION_ADVANCE_CAREER_DAY,
+    ACTION_NEW_CAREER_MONTH,
+    ACTION_CHALLENGE_DRAW_3,
+    ACTION_CHALLENGE_NO_UNDO,
+    ACTION_CHALLENGE_NO_HINTS,
+    ACTION_CHALLENGE_ALL_OR_NOTHING,
     ACTION_SCORE_FOUR_SOLO,
     ACTION_SCORE_FOUR_COMPETITIVE,
     ACTION_BLACKJACK,
+    ACTION_ROULETTE,
+    ACTION_TEXAS_HOLDEM,
+    ACTION_FIVE_CARD_DRAW,
+    ACTION_SEVEN_CARD_STUD,
     ACTION_ADD_CASH,
     ACTION_ZERO_CASH,
+    ACTION_ADD_RATING,
+    ACTION_SUB_RATING,
     ACTION_ADD_XP,
     ACTION_LEVEL_3,
     ACTION_LEVEL_6,
     ACTION_LEVEL_10,
+    ACTION_LEVEL_MAX,
     ACTION_CLOSE,
-    ACTION_ROULETTE,
-    ACTION_TEXAS_HOLDEM
 )
 
 from profile import (
@@ -533,7 +548,9 @@ HOW_TO_PLAY_CONTENT = {
             "",
             "Different difficulty levels in game may limit stock passes, hints, and undo history.",
             "",
-            "Career challenges may use special rules such as No Undo or No Hints.",
+            "Options can use random deals or Verified Solvable deals with a known winning line.",
+            "",
+            "Career challenges may use special rules such as No Undo, No Hints, or All or Nothing.",
         ],
     },
 
@@ -582,6 +599,7 @@ NPC_PORTRAIT_STYLES = {
 
 help_expanded_categories = {
     "solitaire": True,
+    "poker": False,
     "score_four": False,
     "roulette": False,
     "career": False,
@@ -603,6 +621,18 @@ HELP_NAVIGATION = {
             ("solitaire_controls", "Controls"),
             ("solitaire_strategy", "Strategy"),
             ("solitaire_variants", "Variants"),
+        ],
+    },
+
+    "poker": {
+        "name": "Poker",
+        "pages": [
+            ("holdem_basics", "Hold'em Basics"),
+            ("holdem_controls", "Hold'em Controls"),
+            ("draw_basics", "Five-Card Draw"),
+            ("draw_controls", "Draw Controls"),
+            ("stud_basics", "Seven-Card Stud"),
+            ("stud_controls", "Stud Controls"),
         ],
     },
 
@@ -654,6 +684,86 @@ HELP_CONTENT = {
     "solitaire_variants": HOW_TO_PLAY_CONTENT[
         "variants"
     ],
+
+    "holdem_basics": {
+        "title": "Texas Hold'em: Basics",
+        "lines": [
+            "Each player receives two private hole cards.",
+            "",
+            "Five community cards are dealt across the flop, turn, and river. Make the best five-card poker hand using any combination of your hole cards and the board.",
+            "",
+            "The dealer button, small blind, and big blind rotate around the table. Heads-up play uses the standard dealer/small-blind exception.",
+            "",
+            "Hold'em uses no-limit betting, so legal raises may range from the minimum raise up to all-in.",
+        ],
+    },
+
+    "holdem_controls": {
+        "title": "Texas Hold'em: Controls",
+        "lines": [
+            "FOLD leaves the current hand.",
+            "",
+            "CHECK/CALL checks when no wager is owed or calls the current amount when facing a bet.",
+            "",
+            "BET/RAISE uses the slider, preset buttons, or manual amount field. When raising, the displayed amount is the total raise-to amount.",
+            "",
+            "The Game Log records betting and showdown details, while Chat shows table conversation. Options controls table speed, auto-deal, and table chat.",
+            "",
+            "All-ins and side pots are handled automatically.",
+        ],
+    },
+
+    "draw_basics": {
+        "title": "Five-Card Draw: Basics",
+        "lines": [
+            "Each player receives five private cards.",
+            "",
+            "After the first betting round, players may discard cards and draw replacements once. A second betting round follows before showdown.",
+            "",
+            "Players may also stand pat and keep all five cards.",
+            "",
+            "The best five-card poker hand wins the pot.",
+        ],
+    },
+
+    "draw_controls": {
+        "title": "Five-Card Draw: Controls",
+        "lines": [
+            "Use FOLD, CHECK/CALL, and BET/RAISE during betting rounds.",
+            "",
+            "During the draw phase, click cards to mark them for replacement. Selected cards lift visually from the hand.",
+            "",
+            "Choose DRAW to replace the selected cards. With no cards selected, DRAW stands pat.",
+            "",
+            "Bet sizing supports the slider, presets, and manual numeric entry just like Hold'em.",
+        ],
+    },
+
+    "stud_basics": {
+        "title": "Seven-Card Stud: Basics",
+        "lines": [
+            "Seven-Card Stud has no community cards and no dealer blinds.",
+            "",
+            "Each live player antes. Third Street begins with two cards face-down and one face-up. The lowest exposed card posts the bring-in.",
+            "",
+            "Fourth, Fifth, and Sixth Streets are dealt face-up. Seventh Street is dealt face-down.",
+            "",
+            "The strongest exposed hand acts first on later streets. The best five-card hand made from your seven cards wins at showdown.",
+        ],
+    },
+
+    "stud_controls": {
+        "title": "Seven-Card Stud: Controls",
+        "lines": [
+            "Stud uses fixed-limit betting rather than a free-form wager slider.",
+            "",
+            "Use FOLD, CHECK/CALL, and BET/RAISE when action reaches you.",
+            "",
+            "Third and Fourth Street use the small bet. Fifth, Sixth, and Seventh Street use the big bet.",
+            "",
+            "After a full opening wager, the table allows up to three additional full raises in a betting round.",
+        ],
+    },
 
     "score_four_basics": {
         "title": "Score-Four: Basics",
@@ -1102,6 +1212,10 @@ CAREER_CHALLENGES = [
     {
         "id": "no_hints",
         "name": "No Hints",
+    },
+    {
+        "id": "all_or_nothing",
+        "name": "All or Nothing",
     },
 ]
 
@@ -1574,7 +1688,8 @@ def auto_save_career():
     )
 
 def advance_career_day(
-        completed=True
+        completed=True,
+        save_after=True
 ):
     global career_day
     global career_day_of_month
@@ -1657,7 +1772,8 @@ def advance_career_day(
             build_default_career_schedule()
         )
 
-    auto_save_career()
+    if save_after:
+        auto_save_career()
 
 def complete_career_work_day():
     global career_cash
@@ -1683,15 +1799,139 @@ def complete_career_work_day():
     return pay
 
 def skip_career_day():
+    reset_career_hub_runtime()
+    advance_career_day(completed=False)
 
-    advance_career_day(
-        completed=False
+
+def reset_career_hub_runtime():
+    """Clear calendar/event selections before advancing or loading a profile."""
+    global pending_career_activity_index, pending_career_activity_type
+    global pending_career_challenge_id, career_event_entry
+    global career_event_has_activity, career_event_summary_title
+    global career_event_summary_lines, career_news_page, career_leaderboard_page
+    pending_career_activity_index = None
+    pending_career_activity_type = None
+    pending_career_challenge_id = None
+    career_event_entry = None
+    career_event_has_activity = False
+    career_event_summary_title = ""
+    career_event_summary_lines = []
+    career_news_page = 0
+    career_leaderboard_page = 0
+    career_hub_controls.reset()
+    game.clear_challenge()
+
+
+def skip_to_selected_career_day():
+    ensure_career_schedule()
+    skipped = career_hub_controls.days_to_skip(
+        career_current_schedule, career_day_of_month
     )
+    if not skipped:
+        return
+    reset_career_hub_runtime()
+    # Use the existing calendar bookkeeping, with one save after the whole jump.
+    # The selected day stays unplayed. Skipped activities grant no rewards.
+    for _ in range(skipped):
+        advance_career_day(completed=False, save_after=False)
+    auto_save_career()
+    career_hub_controls.show_message(
+        f"Skipped {skipped} day{'s' if skipped != 1 else ''}. "
+        f"Day {career_day_of_month} is ready to play.", pygame.time.get_ticks()
+    )
+
+
+def save_career_from_hub():
+    if guest_mode or current_profile_slot is None:
+        career_hub_controls.show_message(
+            "Guest progress is temporary. Choose a profile to save.",
+            pygame.time.get_ticks()
+        )
+        return True
+    try:
+        auto_save_career()
+    except OSError:
+        career_hub_controls.show_message(
+            "Could not save. Check the saves folder and try again.",
+            pygame.time.get_ticks()
+        )
+        return False
+    career_hub_controls.show_message(
+        f"Profile saved to slot {current_profile_slot}.", pygame.time.get_ticks()
+    )
+    return True
+
+
+def begin_career_profile_switch():
+    global profile_switch_snapshot, profile_select_return_state
+    global profile_name_active, gender_dropdown_open, profile_message
+    global pending_profile_slot, profile_creation_mode
+    global confirm_delete_profile, profile_delete_slot, current_state
+    if not save_career_from_hub():
+        return
+    # A snapshot lets Back restore even a guest or an abandoned empty slot.
+    profile_switch_snapshot = (
+        current_profile_slot, guest_mode, copy.deepcopy(build_profile_save_data())
+    )
+    profile_select_return_state = STATE_CAREER_HUB
+    profile_name_active = False
+    gender_dropdown_open = False
+    profile_message = ""
+    pending_profile_slot = None
+    profile_creation_mode = False
+    confirm_delete_profile = False
+    profile_delete_slot = None
+    current_state = STATE_PROFILE_SELECT
+
+
+def finish_profile_selection():
+    global current_state, current_game_mode, profile_select_return_state
+    global profile_return_state, profile_switch_snapshot
+    global profile_name_active, gender_dropdown_open
+    destination = profile_select_return_state
+    profile_select_return_state = STATE_MENU
+    profile_switch_snapshot = None
+    profile_name_active = False
+    gender_dropdown_open = False
+    if destination == STATE_CAREER_HUB:
+        reset_career_hub_runtime()
+        current_game_mode = "career"
+        ensure_career_schedule()
+        ensure_career_leaderboard()
+        ensure_career_news()
+        auto_save_career()
+    profile_return_state = destination
+    current_state = destination
+
+
+def cancel_career_profile_switch():
+    global current_profile_slot, guest_mode, profile_creation_mode
+    global pending_profile_slot, profile_message
+    if profile_switch_snapshot is not None:
+        slot, was_guest, data = profile_switch_snapshot
+        current_profile_slot = slot
+        guest_mode = was_guest
+        apply_profile_save_data(copy.deepcopy(data))
+        sync_unlocks_for_current_level()
+    profile_creation_mode = False
+    pending_profile_slot = None
+    profile_message = ""
+    finish_profile_selection()
+
 
 def build_default_career_schedule():
     schedule = []
 
     challenge_index = 0
+
+    # There are three challenge days per Career month. Pick three
+    # different challenge types so newer rules, including All or Nothing,
+    # actually rotate into the calendar instead of being stranded at the
+    # end of a fixed list.
+    monthly_challenges = random.sample(
+        CAREER_CHALLENGES,
+        min(3, len(CAREER_CHALLENGES))
+    )
 
     # ==================================================
     # Choose 3 different card-event types
@@ -1800,10 +2040,10 @@ def build_default_career_schedule():
             elif activity_type == CAREER_ACTIVITY_CHALLENGE:
 
                 challenge = (
-                    CAREER_CHALLENGES[
+                    monthly_challenges[
                         challenge_index
                         % len(
-                            CAREER_CHALLENGES
+                            monthly_challenges
                         )
                     ]
                 )
@@ -2128,7 +2368,7 @@ FPS = 60
 # MENU BACKGROUND DRIFT
 # ==================================================
 
-MENU_DRIFT_SCALE = 4
+MENU_DRIFT_SCALE = 3
 MENU_DRIFT_MARGIN = 35
 
 MENU_DRIFT_X = 20
@@ -2139,6 +2379,16 @@ MENU_DRIFT_PERIOD_X = 50.0
 MENU_DRIFT_PERIOD_Y = 80.0
 
 WINDOW_WIDTH, WINDOW_HEIGHT = DEFAULT_WINDOW_SIZE
+
+# Remember the user's normal window size so fullscreen can
+# return to it cleanly. Fullscreen uses the desktop size.
+WINDOWED_WIDTH, WINDOWED_HEIGHT = DEFAULT_WINDOW_SIZE
+fullscreen_enabled = False
+
+# Reused destination surface for the final game -> window
+# scale. Reusing it avoids allocating a new full-screen
+# surface every frame.
+scaled_surface_cache = None
 
 screen = pygame.display.set_mode(
     (
@@ -2166,6 +2416,11 @@ confirm_return_to_menu = False
 
 game_pause_menu_open = False
 options_return_state = STATE_MENU
+customize_return_state = STATE_MENU
+profile_return_state = STATE_MENU
+profile_select_return_state = STATE_MENU
+profile_switch_snapshot = None
+career_hub_controls = CareerHubControls()
 
 # ==================================================
 # GAME
@@ -2958,6 +3213,10 @@ selected_title = (
     DEFAULT_SELECTED_TITLE
 )
 
+# Cursor cosmetics are unlocked by default. The actual
+# available IDs are discovered from assets/ui/cursors.
+selected_cursor = "cursor"
+
 
 # ==================================================
 # PROFILE STATE
@@ -3203,9 +3462,20 @@ play_background_image = pygame.transform.smoothscale(
 )
 
 # ----------------------------
-# Oversized copies used for
+# Supersampled copies used for
 # slow menu background drifting
 # ----------------------------
+#
+# The original drift rendered at 4x resolution. That looked
+# smooth because the quarter-pixel movement survived the
+# downsample, but it was expensive. The first performance
+# pass dropped this to a direct 1x blit, which was fast but
+# made very slow movement advance in obvious whole-pixel
+# steps.
+#
+# A 3x drift buffer is the compromise: it restores subpixel-
+# looking motion while processing substantially fewer pixels
+# than the old 4x path.
 
 menu_background_drift_surfaces = {}
 
@@ -3244,7 +3514,7 @@ menu_drift_render_surface = pygame.Surface(
         BASE_HEIGHT
         * MENU_DRIFT_SCALE
     )
-)
+).convert()
 
 felt_surfaces = {}
 for asset_id, asset_data in FELTS.items():
@@ -3260,19 +3530,172 @@ for asset_id, asset_data in TITLES.items():
     ).convert_alpha()
 
 # ==================================================
-# CUSTOM CURSOR
+# CUSTOM CURSORS
 # ==================================================
 
-cursor_image = pygame.image.load(
-    "assets/ui/cursors/cursor.png"
-).convert_alpha()
+CURSOR_FOLDER = "assets/ui/cursors"
+CURSOR_PREVIEW_FOLDER = os.path.join(
+    CURSOR_FOLDER,
+    "previews"
+)
+CURSOR_RUNTIME_SIZE = (34, 30)
+CURSOR_PREVIEW_MAX_SIZE = (150, 115)
 
-cursor_image = pygame.transform.smoothscale(
-    cursor_image,
-    (34, 30)
+cursor_cosmetics = {}
+cursor_surfaces = {}
+cursor_preview_surfaces = {}
+cursor_runtime_surfaces = {}
+
+if os.path.isdir(CURSOR_FOLDER):
+    cursor_files = [
+        filename
+        for filename in os.listdir(CURSOR_FOLDER)
+        if filename.lower().endswith(".png")
+    ]
+else:
+    cursor_files = []
+
+# Keep the original cursor.png first, then sort additional
+# customization assets alphabetically for stable ordering.
+cursor_files.sort(
+    key=lambda filename: (
+        0 if filename.lower() == "cursor.png" else 1,
+        filename.lower()
+    )
 )
 
-pygame.mouse.set_visible(False)
+for cursor_index, filename in enumerate(cursor_files):
+    asset_id = os.path.splitext(filename)[0]
+    path = os.path.join(CURSOR_FOLDER, filename)
+
+    source = pygame.image.load(path).convert_alpha()
+
+    cursor_surfaces[asset_id] = source
+    cursor_runtime_surfaces[asset_id] = (
+        pygame.transform.smoothscale(
+            source,
+            CURSOR_RUNTIME_SIZE
+        )
+    )
+
+    # Prefer dedicated large preview artwork when present.
+    # Otherwise build a crisp nearest-neighbor thumbnail once
+    # at startup instead of smooth-scaling the tiny live cursor
+    # every time the Customize screen is drawn.
+    preview_path = os.path.join(
+        CURSOR_PREVIEW_FOLDER,
+        filename
+    )
+
+    if os.path.isfile(preview_path):
+        preview_source = pygame.image.load(
+            preview_path
+        ).convert_alpha()
+    else:
+        preview_source = source
+
+    preview_width = preview_source.get_width()
+    preview_height = preview_source.get_height()
+
+    if preview_width > 0 and preview_height > 0:
+        preview_scale = min(
+            CURSOR_PREVIEW_MAX_SIZE[0] / preview_width,
+            CURSOR_PREVIEW_MAX_SIZE[1] / preview_height
+        )
+
+        # Never shrink dedicated preview art unnecessarily.
+        # Tiny cursor sprites are enlarged with nearest-neighbor
+        # scaling so pixel edges stay sharp.
+        if preview_scale > 1.0:
+            preview_size = (
+                max(1, int(preview_width * preview_scale)),
+                max(1, int(preview_height * preview_scale))
+            )
+            preview_surface = pygame.transform.scale(
+                preview_source,
+                preview_size
+            )
+        else:
+            preview_surface = pygame.transform.smoothscale(
+                preview_source,
+                (
+                    max(1, int(preview_width * preview_scale)),
+                    max(1, int(preview_height * preview_scale))
+                )
+            )
+    else:
+        preview_surface = preview_source
+
+    cursor_preview_surfaces[asset_id] = preview_surface
+
+    if asset_id == "cursor":
+        display_name = "Default"
+    else:
+        display_name = (
+            asset_id
+            .replace("cursor_", "")
+            .replace("_", " ")
+            .strip()
+            .title()
+        )
+
+        if not display_name:
+            display_name = asset_id
+
+    cursor_cosmetics[asset_id] = {
+        "name": display_name,
+        "path": path,
+        "order": (cursor_index + 1) * 10,
+    }
+
+unlocked_cursors = set(cursor_cosmetics.keys())
+
+if selected_cursor not in cursor_runtime_surfaces:
+    if "cursor" in cursor_runtime_surfaces:
+        selected_cursor = "cursor"
+    elif cursor_files:
+        selected_cursor = os.path.splitext(cursor_files[0])[0]
+
+cursor_image = (
+    cursor_runtime_surfaces.get(selected_cursor)
+)
+
+# Modern pygame/SDL can use an RGBA Surface as a true OS
+# cursor. That cursor is updated independently from the
+# game's 60 FPS loop, which removes the sluggish feel the
+# old software-drawn cursor could have. A software fallback
+# remains for platforms that reject color cursors.
+software_cursor_fallback = False
+
+def apply_selected_cursor():
+    global cursor_image
+    global software_cursor_fallback
+
+    cursor_image = cursor_runtime_surfaces.get(
+        selected_cursor
+    )
+
+    if cursor_image is None:
+        pygame.mouse.set_visible(True)
+        software_cursor_fallback = False
+        return
+
+    try:
+        native_cursor = pygame.cursors.Cursor(
+            (0, 0),
+            cursor_image
+        )
+
+        pygame.mouse.set_cursor(native_cursor)
+        pygame.mouse.set_visible(True)
+        software_cursor_fallback = False
+
+    except (pygame.error, TypeError, ValueError):
+        pygame.mouse.set_visible(False)
+        software_cursor_fallback = True
+
+
+apply_selected_cursor()
 
 # ==================================================
 # COSMETIC SYNC
@@ -3470,14 +3893,7 @@ profile_gender_option_rects = [
 profile_save_rect = pygame.Rect(
     590,
     530,
-    180,
-    55
-)
-
-profile_load_rect = pygame.Rect(
-    790,
-    530,
-    180,
+    380,
     55
 )
 
@@ -3500,23 +3916,30 @@ profile_back_rect = pygame.Rect(
 # ==================================================
 
 customize_backgrounds_rect = pygame.Rect(
-    345,
+    250,
     120,
-    210,
+    200,
     50
 )
 
 customize_felts_rect = pygame.Rect(
-    578,
+    472,
     120,
-    210,
+    200,
     50
 )
 
 customize_titles_rect = pygame.Rect(
-    811,
+    694,
     120,
-    210,
+    200,
+    50
+)
+
+customize_cursors_rect = pygame.Rect(
+    916,
+    120,
+    200,
     50
 )
 
@@ -4273,36 +4696,66 @@ double_both_rect = pygame.Rect(
 
 
 # ----------------------------
+# Solitaire deal mode
+# ----------------------------
+
+deal_random_rect = pygame.Rect(
+    430,
+    540,
+    180,
+    42
+)
+
+deal_verified_rect = pygame.Rect(
+    630,
+    540,
+    300,
+    42
+)
+
+
+# ----------------------------
 # Resolution
 # ----------------------------
 
 resolution_rects = [
     pygame.Rect(
         440,
-        575,
+        598,
         125,
-        45
+        38
     ),
     pygame.Rect(
         575,
-        575,
+        598,
         125,
-        45
+        38
     ),
     pygame.Rect(
         710,
-        575,
+        598,
         125,
-        45
+        38
     ),
     pygame.Rect(
         845,
-        575,
+        598,
         125,
-        45
+        38
     ),
 ]
 
+
+# ----------------------------
+# Fullscreen
+# ----------------------------
+
+fullscreen_toggle_rect = pygame.Rect(
+    760,
+    646,
+    210,
+    38
+)
 
 # ----------------------------
 # Back
@@ -4310,9 +4763,9 @@ resolution_rects = [
 
 options_back_rect = pygame.Rect(
     533,
-    670,
+    705,
     300,
-    55
+    42
 )
 
 # ==================================================
@@ -4322,6 +4775,7 @@ options_back_rect = pygame.Rect(
 CUSTOMIZE_BACKGROUNDS = "backgrounds"
 CUSTOMIZE_FELTS = "felts"
 CUSTOMIZE_TITLES = "titles"
+CUSTOMIZE_CURSORS = "cursors"
 
 customize_category = CUSTOMIZE_BACKGROUNDS
 customize_page = 0
@@ -7121,6 +7575,133 @@ def debug_open_roulette():
         STATE_ROULETTE
     )
 
+def debug_prepare_poker_night():
+    global career_event_entry
+    global career_event_has_activity
+
+    game_ids = (
+        CAREER_EVENT_GAMES[
+            CAREER_ACTIVITY_POKER_NIGHT
+        ].copy()
+    )
+
+    career_event_entry = {
+        "activity_type": CAREER_ACTIVITY_POKER_NIGHT,
+        "title": "Poker Night",
+        "game_ids": game_ids,
+        "high_stakes_game_id": random.choice(
+            game_ids
+        ) if game_ids else None,
+    }
+
+    career_event_has_activity = False
+
+
+def debug_open_poker_night():
+    global current_state
+
+    debug_prepare_poker_night()
+
+    current_state = (
+        STATE_CAREER_EVENT_SELECT
+    )
+
+
+def debug_open_solitaire_challenge(
+        challenge_id
+):
+    global current_state
+    global current_game_mode
+    global pending_career_activity_index
+    global pending_career_activity_type
+    global pending_career_challenge_id
+
+    pending_career_activity_index = None
+    pending_career_activity_type = None
+    pending_career_challenge_id = None
+
+    current_game_mode = "debug"
+
+    game.clear_challenge()
+    game.set_difficulty(
+        DEFAULT_DIFFICULTY
+    )
+
+    if not game.set_challenge(
+            challenge_id
+    ):
+        return False
+
+    game.new_game()
+
+    current_state = (
+        STATE_PLAYING
+    )
+
+    return True
+
+
+def debug_set_player_level(
+        target_level
+):
+    global player_level
+    global player_xp
+    global player_xp_to_next
+
+    target_level = max(
+        1,
+        min(
+            int(target_level),
+            max(LEVEL_XP_THRESHOLDS)
+        )
+    )
+
+    player_level = target_level
+    player_xp = LEVEL_XP_THRESHOLDS.get(
+        target_level,
+        0
+    )
+    player_xp_to_next = get_next_level_xp(
+        target_level
+    )
+
+    sync_unlocks_for_current_level()
+
+
+def debug_start_next_career_month():
+    global career_year
+    global career_month
+    global career_day
+    global career_day_of_month
+    global career_weekday_index
+    global career_current_schedule
+
+    remaining_days = max(
+        1,
+        len(career_current_schedule)
+        - career_day_of_month
+        + 1
+    )
+
+    career_day += remaining_days
+    career_month += 1
+
+    if career_month > 12:
+        career_month = 1
+        career_year += 1
+
+    career_day_of_month = 1
+    career_weekday_index = 0
+
+    update_career_leaderboard_ratings()
+
+    career_current_schedule = (
+        build_default_career_schedule()
+    )
+
+    auto_save_career()
+
+
 def is_game_unlocked(
         game_id
 ):
@@ -7235,6 +7816,7 @@ def apply_fresh_profile():
     global selected_menu_background
     global selected_felt
     global selected_title
+    global selected_cursor
 
     global unlocked_menu_backgrounds
     global unlocked_felts
@@ -7518,6 +8100,10 @@ def build_profile_save_data():
     ] = selected_title
 
     cosmetics[
+        "selected_cursor"
+    ] = selected_cursor
+
+    cosmetics[
         "unlocked_menu_backgrounds"
     ] = list(
         unlocked_menu_backgrounds
@@ -7538,6 +8124,19 @@ def build_profile_save_data():
     # Card backs exist in the game
     # now, but are not part of the
     # customization system yet.
+
+    # ----------------------------
+    # Gameplay settings
+    # ----------------------------
+
+    profile_settings = profile_data.setdefault(
+        "settings",
+        {}
+    )
+
+    profile_settings[
+        "solitaire_deal_mode"
+    ] = game.deal_mode
 
     return profile_data
 
@@ -7585,6 +8184,7 @@ def apply_profile_save_data(
     global selected_menu_background
     global selected_felt
     global selected_title
+    global selected_cursor
 
     global unlocked_menu_backgrounds
     global unlocked_felts
@@ -7879,6 +8479,19 @@ def apply_profile_save_data(
         "title_default"
     )
 
+    selected_cursor = cosmetics.get(
+        "selected_cursor",
+        "cursor"
+    )
+
+    if selected_cursor not in cursor_runtime_surfaces:
+        if "cursor" in cursor_runtime_surfaces:
+            selected_cursor = "cursor"
+        elif cursor_runtime_surfaces:
+            selected_cursor = next(
+                iter(cursor_runtime_surfaces)
+            )
+
     unlocked_menu_backgrounds = set(
         cosmetics.get(
             "unlocked_menu_backgrounds",
@@ -7906,7 +8519,20 @@ def apply_profile_save_data(
         )
     )
 
+    gameplay_settings = data.get(
+        "settings",
+        {}
+    )
+
+    game.set_deal_mode(
+        gameplay_settings.get(
+            "solitaire_deal_mode",
+            "random"
+        )
+    )
+
     sync_selected_cosmetics()
+    apply_selected_cursor()
 
 def draw_wrapped_text_limited(
         text,
@@ -9923,13 +10549,28 @@ def draw_score_four_mode_select():
 # WINDOW HELPERS
 # ==================================================
 
+def invalidate_scaled_surface_cache():
+    global scaled_surface_cache
+    scaled_surface_cache = None
+
+
 def set_window_size(width, height):
     global screen
     global WINDOW_WIDTH
     global WINDOW_HEIGHT
+    global WINDOWED_WIDTH
+    global WINDOWED_HEIGHT
+    global fullscreen_enabled
 
-    WINDOW_WIDTH = width
-    WINDOW_HEIGHT = height
+    WINDOWED_WIDTH = int(width)
+    WINDOWED_HEIGHT = int(height)
+
+    # Choosing a window size while fullscreen is active
+    # returns the game to a normal window at that size.
+    fullscreen_enabled = False
+
+    WINDOW_WIDTH = WINDOWED_WIDTH
+    WINDOW_HEIGHT = WINDOWED_HEIGHT
 
     screen = pygame.display.set_mode(
         (
@@ -9937,6 +10578,54 @@ def set_window_size(width, height):
             WINDOW_HEIGHT
         )
     )
+
+    invalidate_scaled_surface_cache()
+    apply_selected_cursor()
+
+
+def set_fullscreen_enabled(enabled):
+    global screen
+    global WINDOW_WIDTH
+    global WINDOW_HEIGHT
+    global WINDOWED_WIDTH
+    global WINDOWED_HEIGHT
+    global fullscreen_enabled
+
+    enabled = bool(enabled)
+
+    if enabled == fullscreen_enabled:
+        return
+
+    if enabled:
+        WINDOWED_WIDTH = WINDOW_WIDTH
+        WINDOWED_HEIGHT = WINDOW_HEIGHT
+
+        screen = pygame.display.set_mode(
+            (0, 0),
+            pygame.FULLSCREEN
+        )
+
+        WINDOW_WIDTH, WINDOW_HEIGHT = (
+            screen.get_size()
+        )
+
+        fullscreen_enabled = True
+
+    else:
+        WINDOW_WIDTH = WINDOWED_WIDTH
+        WINDOW_HEIGHT = WINDOWED_HEIGHT
+
+        screen = pygame.display.set_mode(
+            (
+                WINDOW_WIDTH,
+                WINDOW_HEIGHT
+            )
+        )
+
+        fullscreen_enabled = False
+
+    invalidate_scaled_surface_cache()
+    apply_selected_cursor()
 
 
 def window_to_game_coords(pos):
@@ -10021,11 +10710,19 @@ def get_customize_data():
             selected_felt
         )
 
+    if customize_category == CUSTOMIZE_TITLES:
+        return (
+            TITLES,
+            title_surfaces,
+            unlocked_titles,
+            selected_title
+        )
+
     return (
-        TITLES,
-        title_surfaces,
-        unlocked_titles,
-        selected_title
+        cursor_cosmetics,
+        cursor_preview_surfaces,
+        unlocked_cursors,
+        selected_cursor
     )
 
 
@@ -10070,6 +10767,7 @@ def equip_customize_item(asset_id):
     global selected_menu_background
     global selected_felt
     global selected_title
+    global selected_cursor
 
     if customize_category == CUSTOMIZE_BACKGROUNDS:
         if asset_id not in unlocked_menu_backgrounds:
@@ -10090,6 +10788,13 @@ def equip_customize_item(asset_id):
             return
 
         selected_title = asset_id
+
+    elif customize_category == CUSTOMIZE_CURSORS:
+        if asset_id not in unlocked_cursors:
+            return
+
+        selected_cursor = asset_id
+        apply_selected_cursor()
 
 def get_unlock_asset_data(
     unlock_type,
@@ -11779,16 +12484,16 @@ career_play_rect = pygame.Rect(
 
 career_jobs_rect = pygame.Rect(
     740,
-    710,
+    703,
     390,
-    45
+    26
 )
 
 career_real_estate_rect = pygame.Rect(
     335,
-    710,
+    703,
     390,
-    45
+    26
 )
 
 career_leaderboards_rect = pygame.Rect(
@@ -12902,6 +13607,8 @@ def draw_career_hub():
             // rows
     )
 
+    career_hub_controls.begin_calendar(career_current_schedule, career_day_of_month)
+
     # Reset these every frame.
     career_calendar_action_rect = pygame.Rect(
         0,
@@ -12991,11 +13698,18 @@ def draw_career_hub():
             cell_rect
         )
 
+        career_hub_controls.register_day(entry["day_number"], cell_rect)
+        if career_hub_controls.selected_day == entry["day_number"]:
+            cell_fill = (220, 238, 255)
+            pygame.draw.rect(game_surface, cell_fill, cell_rect)
+
         # Current day gets a red outline like
         # your Photoshop mock-up.
         border_color = (
             (220, 0, 0)
             if is_current_day
+            else (35, 110, 190)
+            if career_hub_controls.selected_day == entry["day_number"]
             else (0, 0, 0)
         )
 
@@ -13791,12 +14505,18 @@ def draw_career_hub():
 
     draw_button(
         career_real_estate_rect,
-        "Visit RealEstate.apt"
+        "Visit RealEstate.apt",
+        font=difficulty_detail_font
     )
 
     draw_button(
         career_jobs_rect,
-        "Visit JimbosJobFinder.sk"
+        "Visit JimbosJobFinder.sk",
+        font=difficulty_detail_font
+    )
+
+    career_hub_controls.draw_toolbar(
+        game_surface, draw_button, career_hub_controls.font, pygame.time.get_ticks()
     )
 
     draw_button(
@@ -15787,6 +16507,127 @@ def draw_career_event():
         "Random career events will appear here."
     )
 
+POKER_NIGHT_SELECTION_IMAGE_SIZE = (
+    288,
+    162
+)
+
+POKER_NIGHT_SELECTION_IMAGE_PATHS = {
+    "texas_holdem":
+        "assets/poker/poker_night/texas_holdem.png",
+    "seven_card_stud":
+        "assets/poker/poker_night/seven_card_stud.png",
+    "five_card_draw":
+        "assets/poker/poker_night/five_card_draw.png",
+}
+
+_poker_night_selection_image_cache = {}
+
+
+def get_poker_night_selection_image(
+        game_id
+):
+    path = POKER_NIGHT_SELECTION_IMAGE_PATHS.get(
+        game_id
+    )
+
+    if not path:
+        return None
+
+    cache_key = (
+        game_id,
+        POKER_NIGHT_SELECTION_IMAGE_SIZE
+    )
+
+    if cache_key in _poker_night_selection_image_cache:
+        return _poker_night_selection_image_cache[
+            cache_key
+        ]
+
+    try:
+        image = pygame.image.load(
+            path
+        ).convert_alpha()
+
+        image = pygame.transform.smoothscale(
+            image,
+            POKER_NIGHT_SELECTION_IMAGE_SIZE
+        )
+
+        _poker_night_selection_image_cache[
+            cache_key
+        ] = image
+
+        return image
+
+    except (
+            pygame.error,
+            FileNotFoundError
+    ):
+        return None
+
+
+def draw_poker_night_high_stakes_label(
+        surface,
+        center
+):
+    label = "HIGH STAKES"
+
+    # Several soft offset passes make the gold lettering glow
+    # without requiring a separate asset.
+    for offset_x, offset_y, alpha in (
+            (-3, 0, 60),
+            (3, 0, 60),
+            (0, -3, 60),
+            (0, 3, 60),
+            (-2, -2, 50),
+            (2, -2, 50),
+            (-2, 2, 50),
+            (2, 2, 50),
+    ):
+        glow = difficulty_detail_font.render(
+            label,
+            True,
+            (
+                255,
+                185,
+                45
+            )
+        )
+        glow.set_alpha(
+            alpha
+        )
+        glow_rect = glow.get_rect(
+            center=(
+                center[0] + offset_x,
+                center[1] + offset_y
+            )
+        )
+        surface.blit(
+            glow,
+            glow_rect
+        )
+
+    text_surface = difficulty_detail_font.render(
+        label,
+        True,
+        (
+            255,
+            230,
+            95
+        )
+    )
+
+    text_rect = text_surface.get_rect(
+        center=center
+    )
+
+    surface.blit(
+        text_surface,
+        text_rect
+    )
+
+
 def draw_career_event_select():
     game_surface.fill(
         (
@@ -15805,6 +16646,11 @@ def draw_career_event_select():
         career_event_entry.get(
             "activity_type"
         )
+    )
+
+    is_poker_night = (
+        activity_type
+        == CAREER_ACTIVITY_POKER_NIGHT
     )
 
     event_title = (
@@ -15830,7 +16676,7 @@ def draw_career_event_select():
         title_surface.get_rect(
             center=(
                 BASE_WIDTH // 2,
-                90
+                78
             )
         )
     )
@@ -15842,7 +16688,11 @@ def draw_career_event_select():
 
     subtitle_surface = (
         difficulty_detail_font.render(
-            "Choose a game",
+            (
+                "Choose your table"
+                if is_poker_night
+                else "Choose a game"
+            ),
             True,
             (
                 230,
@@ -15856,7 +16706,7 @@ def draw_career_event_select():
         subtitle_surface.get_rect(
             center=(
                 BASE_WIDTH // 2,
-                145
+                128
             )
         )
     )
@@ -15873,10 +16723,16 @@ def draw_career_event_select():
         )
     )
 
-
-    card_width = 270
-    card_height = 250
-    card_gap = 35
+    if is_poker_night:
+        card_width = 300
+        card_height = 330
+        card_gap = 30
+        card_y = 170
+    else:
+        card_width = 270
+        card_height = 250
+        card_gap = 35
+        card_y = 220
 
     total_width = (
         card_width * len(game_ids)
@@ -15892,8 +16748,6 @@ def draw_career_event_select():
         - total_width // 2
     )
 
-    card_y = 220
-
     game_names = {
         "score_four": "Score-Four",
         "bango": "Bango",
@@ -15908,6 +16762,21 @@ def draw_career_event_select():
         "five_o_poker": "Five-O Poker",
         "blind_mans_bluff": (
             "Blind Man's Bluff"
+        ),
+    }
+
+    poker_descriptions = {
+        "texas_holdem": (
+            "Community cards, blinds,",
+            "and no-limit betting."
+        ),
+        "seven_card_stud": (
+            "Seven cards, exposed streets,",
+            "and fixed-limit betting."
+        ),
+        "five_card_draw": (
+            "Classic draw poker with",
+            "one discard-and-draw round."
         ),
     }
 
@@ -15936,35 +16805,72 @@ def draw_career_event_select():
             )
         )
 
-        if unlocked:
-            fill_color = (
-                45,
-                120,
-                65
+        hovered = (
+            unlocked
+            and game_mouse_pos is not None
+            and rect.collidepoint(
+                game_mouse_pos
             )
+        )
+
+        if not unlocked:
+            fill_color = (
+                55,
+                55,
+                58
+            )
+
+            border_color = (
+                125,
+                125,
+                130
+            )
+
+            border_width = 3
+
+        elif hovered:
+            fill_color = (
+                48,
+                112,
+                66
+            )
+
+            border_color = (
+                255,
+                225,
+                120
+            )
+
+            border_width = 5
 
         else:
             fill_color = (
-                65,
-                65,
-                65
+                38,
+                92,
+                53
             )
+
+            border_color = (
+                235,
+                235,
+                235
+            )
+
+            border_width = 3
 
         pygame.draw.rect(
             game_surface,
             fill_color,
-            rect
+            rect,
+            border_radius=10
         )
 
         pygame.draw.rect(
             game_surface,
-            (
-                255,
-                255,
-                255
-            ),
+            border_color,
             rect,
-            3
+            border_width,
+            border_radius=10
         )
 
         game_name = (
@@ -15975,135 +16881,273 @@ def draw_career_event_select():
         )
 
         is_high_stakes = (
-                activity_type
-                == CAREER_ACTIVITY_POKER_NIGHT
+                is_poker_night
                 and game_id
                 == career_event_entry.get(
-            "high_stakes_game_id"
-        )
-        )
-
-
-        name_surface = (
-            option_label_font.render(
-                game_name,
-                True,
-                (
-                    255,
-                    255,
-                    255
+                    "high_stakes_game_id"
                 )
+        )
+
+        if is_poker_night:
+            image_rect = pygame.Rect(
+                rect.x + 6,
+                rect.y + 17,
+                *POKER_NIGHT_SELECTION_IMAGE_SIZE
             )
-        )
 
-        name_rect = (
-            name_surface.get_rect(
-                center=(
-                    rect.centerx,
-                    rect.y + 60
-                )
-            )
-        )
-
-        game_surface.blit(
-            name_surface,
-            name_rect
-        )
-
-        if unlocked:
-            status_text = "Available"
-
-        else:
-            required_level = (
-                get_game_unlock_level(
+            image = (
+                get_poker_night_selection_image(
                     game_id
                 )
             )
 
-            status_text = (
-                f"LOCKED - Level "
-                f"{required_level}"
-            )
-
-        status_surface = (
-            difficulty_detail_font.render(
-                status_text,
-                True,
-                (
-                    230,
-                    230,
-                    230
+            if image is not None:
+                game_surface.blit(
+                    image,
+                    image_rect
                 )
-            )
-        )
 
-        status_rect = (
-            status_surface.get_rect(
-                center=(
-                    rect.centerx,
-                    rect.y + 125
+            else:
+                pygame.draw.rect(
+                    game_surface,
+                    (
+                        24,
+                        28,
+                        31
+                    ),
+                    image_rect,
+                    border_radius=6
                 )
-            )
-        )
 
-        game_surface.blit(
-            status_surface,
-            status_rect
-        )
+                pygame.draw.rect(
+                    game_surface,
+                    (
+                        115,
+                        125,
+                        130
+                    ),
+                    image_rect,
+                    2,
+                    border_radius=6
+                )
 
-        if unlocked:
-            detail_text_by_game = {
-                "score_four":
-                    "Make 24 using all four cards.",
+                missing_surface = (
+                    difficulty_detail_font.render(
+                        "POKER NIGHT ART",
+                        True,
+                        (
+                            185,
+                            190,
+                            195
+                        )
+                    )
+                )
 
-                "texas_holdem":
-                    "Community-card poker.",
+                game_surface.blit(
+                    missing_surface,
+                    missing_surface.get_rect(
+                        center=image_rect.center
+                    )
+                )
 
-                "five_card_draw":
-                    "Classic draw poker.",
+            if not unlocked:
+                lock_overlay = pygame.Surface(
+                    image_rect.size,
+                    pygame.SRCALPHA
+                )
+                lock_overlay.fill(
+                    (
+                        0,
+                        0,
+                        0,
+                        145
+                    )
+                )
+                game_surface.blit(
+                    lock_overlay,
+                    image_rect.topleft
+                )
 
-                "seven_card_stud":
-                    "Seven cards with four exposed streets.",
-            }
+                required_level = (
+                    get_game_unlock_level(
+                        game_id
+                    )
+                )
 
-            detail_text = (
-                detail_text_by_game.get(
+                lock_surface = (
+                    difficulty_detail_font.render(
+                        f"LOCKED - LEVEL {required_level}",
+                        True,
+                        (
+                            240,
+                            240,
+                            240
+                        )
+                    )
+                )
+
+                game_surface.blit(
+                    lock_surface,
+                    lock_surface.get_rect(
+                        center=image_rect.center
+                    )
+                )
+
+            if is_high_stakes:
+                draw_poker_night_high_stakes_label(
+                    game_surface,
+                    (
+                        rect.centerx,
+                        rect.y + 230
+                    )
+                )
+
+            description_lines = (
+                poker_descriptions.get(
                     game_id,
-                    "Coming soon"
+                    (
+                        "Poker Night game.",
+                        ""
+                    )
                 )
             )
+
+            description_y = (
+                rect.y + 264
+                if is_high_stakes
+                else rect.y + 245
+            )
+
+            for line_index, line in enumerate(
+                    description_lines
+            ):
+                if not line:
+                    continue
+
+                line_surface = (
+                    difficulty_detail_font.render(
+                        line,
+                        True,
+                        (
+                            220,
+                            223,
+                            225
+                        )
+                    )
+                )
+
+                game_surface.blit(
+                    line_surface,
+                    line_surface.get_rect(
+                        center=(
+                            rect.centerx,
+                            description_y
+                            + line_index * 25
+                        )
+                    )
+                )
 
         else:
-            detail_text = (
-                "Reach the required level "
-                "to unlock."
-            )
-
-        detail_surface = (
-            difficulty_detail_font.render(
-                detail_text,
-                True,
-                (
-                    210,
-                    210,
-                    210
+            name_surface = (
+                option_label_font.render(
+                    game_name,
+                    True,
+                    (
+                        255,
+                        255,
+                        255
+                    )
                 )
             )
-        )
 
-        detail_rect = (
-            detail_surface.get_rect(
-                center=(
-                    rect.centerx,
-                    rect.y + 185
+            name_rect = (
+                name_surface.get_rect(
+                    center=(
+                        rect.centerx,
+                        rect.y + 60
+                    )
                 )
             )
-        )
 
-        game_surface.blit(
-            detail_surface,
-            detail_rect
-        )
+            game_surface.blit(
+                name_surface,
+                name_rect
+            )
+
+            if unlocked:
+                detail_text_by_game = {
+                    "score_four":
+                        "Make 24 using all four cards.",
+                }
+
+                detail_text = (
+                    detail_text_by_game.get(
+                        game_id,
+                        "Coming soon"
+                    )
+                )
+
+                detail_surface = (
+                    difficulty_detail_font.render(
+                        detail_text,
+                        True,
+                        (
+                            210,
+                            210,
+                            210
+                        )
+                    )
+                )
+
+                detail_rect = (
+                    detail_surface.get_rect(
+                        center=(
+                            rect.centerx,
+                            rect.y + 185
+                        )
+                    )
+                )
+
+                game_surface.blit(
+                    detail_surface,
+                    detail_rect
+                )
+
+            else:
+                required_level = (
+                    get_game_unlock_level(
+                        game_id
+                    )
+                )
+
+                status_surface = (
+                    difficulty_detail_font.render(
+                        (
+                            f"LOCKED - Level "
+                            f"{required_level}"
+                        ),
+                        True,
+                        (
+                            230,
+                            230,
+                            230
+                        )
+                    )
+                )
+
+                status_rect = (
+                    status_surface.get_rect(
+                        center=(
+                            rect.centerx,
+                            rect.y + 125
+                        )
+                    )
+                )
+
+                game_surface.blit(
+                    status_surface,
+                    status_rect
+                )
 
         career_event_card_rects.append(
             (
@@ -16112,33 +17156,6 @@ def draw_career_event_select():
             )
         )
 
-        if is_high_stakes:
-            high_stakes_surface = (
-                difficulty_detail_font.render(
-                    "HIGH STAKES",
-                    True,
-                    (
-                        255,
-                        215,
-                        0
-                    )
-                )
-            )
-
-            high_stakes_rect = (
-                high_stakes_surface.get_rect(
-                    center=(
-                        rect.centerx,
-                        rect.y + 90
-                    )
-                )
-            )
-
-            game_surface.blit(
-                high_stakes_surface,
-                high_stakes_rect
-            )
-
     draw_button(
         career_event_return_rect,
         "Return",
@@ -16146,12 +17163,6 @@ def draw_career_event_select():
     )
 
     if career_event_entry is not None:
-        activity_type = (
-            career_event_entry.get(
-                "activity_type"
-            )
-        )
-
         event_name = (
             CAREER_EVENT_NAMES.get(
                 activity_type,
@@ -16277,6 +17288,7 @@ def draw_gameplay_ui():
             "draw_3": "3 DRAW",
             "no_undo": "NO UNDO",
             "no_hints": "NO HINTS",
+            "all_or_nothing": "ALL OR NOTHING",
         }
 
         difficulty_name = (
@@ -16308,9 +17320,7 @@ def draw_gameplay_ui():
         )
 
     multiplier = (
-        DIFFICULTY_RULES[
-            game.difficulty
-        ]["reward_multiplier"]
+        game.reward_multiplier
     )
 
     status_line_1 = (
@@ -16351,6 +17361,7 @@ def draw_gameplay_ui():
         f"{difficulty_name}  "
         f"x{multiplier:.2f}     "
         f"{stock_text}"
+        f"     DEAL: {game.get_deal_status_label()}"
     )
 
 
@@ -16365,6 +17376,9 @@ def draw_gameplay_ui():
 
             "no_hints":
                 "NO HINTS",
+
+            "all_or_nothing":
+                "ALL OR NOTHING",
         }
 
         challenge_name = (
@@ -16817,6 +17831,10 @@ def draw_profile_select_screen():
         guest_surface,
         guest_rect
     )
+
+    if profile_select_return_state == STATE_CAREER_HUB:
+        draw_button(career_hub_controls.profile_cancel_rect, "Back to Career",
+                    font=option_value_font)
 
 def draw_game_pause_menu():
     overlay = pygame.Surface(
@@ -17437,11 +18455,9 @@ def draw_drifting_menu_background():
         * MENU_DRIFT_Y
     )
 
-    # ----------------------------
-    # Convert movement to our
-    # higher-resolution space.
-    # ----------------------------
-
+    # Convert movement into the supersampled drift space.
+    # At 3x, one source-pixel step becomes one third of a
+    # logical game pixel after the downsample.
     draw_x = round(
         (
             -MENU_DRIFT_MARGIN
@@ -17458,10 +18474,6 @@ def draw_drifting_menu_background():
         * MENU_DRIFT_SCALE
     )
 
-    # ----------------------------
-    # Draw at 4x resolution
-    # ----------------------------
-
     menu_drift_render_surface.blit(
         background,
         (
@@ -17470,10 +18482,8 @@ def draw_drifting_menu_background():
         )
     )
 
-    # ----------------------------
-    # Downsample to game resolution
-    # ----------------------------
-
+    # Downsample only the drifting background. UI/text is
+    # drawn afterward at the normal 1366x768 design size.
     pygame.transform.smoothscale(
         menu_drift_render_surface,
         (
@@ -17906,6 +18916,50 @@ def draw_options_menu():
     )
 
     # ----------------------------
+    # Solitaire deal mode
+    # ----------------------------
+
+    label = option_label_font.render(
+        "New Deals",
+        True,
+        (
+            255,
+            255,
+            255
+        )
+    )
+
+    game_surface.blit(
+        label,
+        (
+            250,
+            550
+        )
+    )
+
+    draw_menu_button(
+        deal_random_rect,
+        "Random",
+        game_mouse_pos,
+        selected=(
+                game.deal_mode
+                == "random"
+        ),
+        font=option_value_font
+    )
+
+    draw_menu_button(
+        deal_verified_rect,
+        "Verified Solvable",
+        game_mouse_pos,
+        selected=(
+                game.deal_mode
+                == "verified"
+        ),
+        font=option_value_font
+    )
+
+    # ----------------------------
     # Window size
     # ----------------------------
 
@@ -17923,7 +18977,7 @@ def draw_options_menu():
         label,
         (
             250,
-            585
+            608
         )
     )
 
@@ -17933,8 +18987,8 @@ def draw_options_menu():
         width, height = resolution
 
         selected = (
-            WINDOW_WIDTH == width
-            and WINDOW_HEIGHT == height
+            WINDOWED_WIDTH == width
+            and WINDOWED_HEIGHT == height
         )
 
         text = (
@@ -17948,6 +19002,36 @@ def draw_options_menu():
             selected=selected,
             font=option_value_font
         )
+
+    # ----------------------------
+    # Fullscreen
+    # ----------------------------
+
+    label = option_label_font.render(
+        "Fullscreen",
+        True,
+        (
+            255,
+            255,
+            255
+        )
+    )
+
+    game_surface.blit(
+        label,
+        (
+            250,
+            654
+        )
+    )
+
+    draw_menu_button(
+        fullscreen_toggle_rect,
+        "On" if fullscreen_enabled else "Off",
+        game_mouse_pos,
+        selected=fullscreen_enabled,
+        font=option_value_font
+    )
 
     # ----------------------------
     # Back
@@ -18033,6 +19117,17 @@ def draw_customize_menu():
         selected=(
                 customize_category
                 == CUSTOMIZE_TITLES
+        ),
+        font=difficulty_detail_font
+    )
+
+    draw_menu_button(
+        customize_cursors_rect,
+        "Cursors",
+        game_mouse_pos,
+        selected=(
+                customize_category
+                == CUSTOMIZE_CURSORS
         ),
         font=difficulty_detail_font
     )
@@ -18196,13 +19291,16 @@ def draw_customize_menu():
                 ]
             )
 
-            preview = (
-                scale_surface_to_fit(
-                    source_surface,
-                    rect.width - 30,
-                    rect.height - 60
+            if customize_category == CUSTOMIZE_CURSORS:
+                preview = source_surface
+            else:
+                preview = (
+                    scale_surface_to_fit(
+                        source_surface,
+                        rect.width - 30,
+                        rect.height - 60
+                    )
                 )
-            )
 
             preview_rect = (
                 preview.get_rect(
@@ -18889,14 +19987,6 @@ def draw_profile_screen():
         font=option_value_font
     )
 
-    if not profile_creation_mode:
-        draw_menu_button(
-            profile_load_rect,
-            "Load",
-            game_mouse_pos,
-            font=option_value_font
-        )
-
     back_button_text = (
         "Cancel"
         if profile_creation_mode
@@ -18995,6 +20085,7 @@ def draw_round_recap():
             "draw_3": "3 Draw",
             "no_undo": "No Undo",
             "no_hints": "No Hints",
+            "all_or_nothing": "All or Nothing",
         }
 
         challenge_surface = (
@@ -19556,6 +20647,19 @@ while running:
         )
 
         # ==================================================
+        # GLOBAL FULLSCREEN HOTKEY
+        # ==================================================
+
+        if (
+                event.type == pygame.KEYDOWN
+                and event.key == pygame.K_F11
+        ):
+            set_fullscreen_enabled(
+                not fullscreen_enabled
+            )
+            continue
+
+        # ==================================================
         # GLOBAL DEBUG MENU HOTKEY
         # ==================================================
 
@@ -19621,228 +20725,160 @@ while running:
                 )
 
                 # ==========================================
-                # Career Hub
+                # Career / event navigation
                 # ==========================================
 
                 if debug_action == ACTION_CAREER_HUB:
-
-                    audio.play_sound(
-                        "button_click"
-                    )
-
-                    current_state = (
-                        STATE_CAREER_HUB
-                    )
-
-                # ==========================================
-                # Casual Cards
-                # ==========================================
+                    audio.play_sound("button_click")
+                    current_state = STATE_CAREER_HUB
 
                 elif debug_action == ACTION_CASUAL_CARDS:
-
-                    audio.play_sound(
-                        "button_click"
-                    )
-
+                    audio.play_sound("button_click")
                     debug_open_casual_cards()
 
-                # ==========================================
-                # Casino Night
-                # ==========================================
+                elif debug_action == ACTION_POKER_NIGHT:
+                    audio.play_sound("button_click")
+                    debug_open_poker_night()
 
                 elif debug_action == ACTION_CASINO_NIGHT:
-
-                    audio.play_sound(
-                        "button_click"
-                    )
-
+                    audio.play_sound("button_click")
                     debug_open_casino_night()
 
+                elif debug_action == ACTION_ADVANCE_CAREER_DAY:
+                    audio.play_sound("button_click")
+                    advance_career_day(
+                        completed=False
+                    )
+                    current_state = STATE_CAREER_HUB
+
+                elif debug_action == ACTION_NEW_CAREER_MONTH:
+                    audio.play_sound("button_click")
+                    debug_start_next_career_month()
+                    current_state = STATE_CAREER_HUB
+
                 # ==========================================
-                # Score-Four Solo
+                # Solitaire challenges
+                # ==========================================
+
+                elif debug_action == ACTION_CHALLENGE_DRAW_3:
+                    audio.play_sound("button_click")
+                    debug_open_solitaire_challenge(
+                        "draw_3"
+                    )
+
+                elif debug_action == ACTION_CHALLENGE_NO_UNDO:
+                    audio.play_sound("button_click")
+                    debug_open_solitaire_challenge(
+                        "no_undo"
+                    )
+
+                elif debug_action == ACTION_CHALLENGE_NO_HINTS:
+                    audio.play_sound("button_click")
+                    debug_open_solitaire_challenge(
+                        "no_hints"
+                    )
+
+                elif debug_action == ACTION_CHALLENGE_ALL_OR_NOTHING:
+                    audio.play_sound("button_click")
+                    debug_open_solitaire_challenge(
+                        "all_or_nothing"
+                    )
+
+                # ==========================================
+                # Minigames
                 # ==========================================
 
                 elif debug_action == ACTION_SCORE_FOUR_SOLO:
-
-                    audio.play_sound(
-                        "button_click"
-                    )
-
+                    audio.play_sound("button_click")
                     debug_open_score_four_solo()
 
-                # ==========================================
-                # Score-Four Competitive
-                # ==========================================
-
-                elif (
-                        debug_action
-                        == ACTION_SCORE_FOUR_COMPETITIVE
-                ):
-
-                    audio.play_sound(
-                        "button_click"
-                    )
-
+                elif debug_action == ACTION_SCORE_FOUR_COMPETITIVE:
+                    audio.play_sound("button_click")
                     debug_open_score_four_competitive()
 
-                # ==========================================
-                # Blackjack
-                # ==========================================
-
                 elif debug_action == ACTION_BLACKJACK:
-
-                    audio.play_sound(
-                        "button_click"
-                    )
-
+                    audio.play_sound("button_click")
                     debug_open_blackjack()
 
-                # ==========================================
-                # Roulette
-                # ==========================================
-
                 elif debug_action == ACTION_ROULETTE:
-
-                    audio.play_sound(
-                        "button_click"
-                    )
-
+                    audio.play_sound("button_click")
                     debug_open_roulette()
 
-                # ==========================================
-                # Texas Hold'em
-                # ==========================================
-
                 elif debug_action == ACTION_TEXAS_HOLDEM:
-
-                    audio.play_sound(
-                        "button_click"
-                    )
-
+                    audio.play_sound("button_click")
+                    debug_prepare_poker_night()
                     start_texas_holdem_session()
 
+                elif debug_action == ACTION_FIVE_CARD_DRAW:
+                    audio.play_sound("button_click")
+                    debug_prepare_poker_night()
+                    start_five_card_draw_session()
+
+                elif debug_action == ACTION_SEVEN_CARD_STUD:
+                    audio.play_sound("button_click")
+                    debug_prepare_poker_night()
+                    start_seven_card_stud_session()
+
                 # ==========================================
-                # Add cash
+                # Progression controls
                 # ==========================================
 
                 elif debug_action == ACTION_ADD_CASH:
-
-                    audio.play_sound(
-                        "button_click"
-                    )
-
+                    audio.play_sound("button_click")
                     career_cash += 5000
-
-                    print(
-                        "Cash:",
-                        career_cash
-                    )
-
-                # ==========================================
-                # Zero cash
-                # ==========================================
+                    print("Cash:", career_cash)
 
                 elif debug_action == ACTION_ZERO_CASH:
-
-                    audio.play_sound(
-                        "button_click"
-                    )
-
+                    audio.play_sound("button_click")
                     career_cash = 0
+                    print("Cash:", career_cash)
 
-                    print(
-                        "Cash:",
-                        career_cash
-                    )
+                elif debug_action == ACTION_ADD_RATING:
+                    audio.play_sound("button_click")
+                    career_rating += 100
+                    print("Rating:", career_rating)
 
-                # ==========================================
-                # Add XP
-                # ==========================================
+                elif debug_action == ACTION_SUB_RATING:
+                    audio.play_sound("button_click")
+                    career_rating = max(100, career_rating - 100)
+                    print("Rating:", career_rating)
 
                 elif debug_action == ACTION_ADD_XP:
-
-                    audio.play_sound(
-                        "button_click"
-                    )
-
-                    player_xp += 1000
-
-                    print(
-                        "XP:",
-                        player_xp
-                    )
-
-                # ==========================================
-                # Level 3
-                # ==========================================
+                    audio.play_sound("button_click")
+                    add_player_xp(1000)
+                    print("XP:", player_xp, "Level:", player_level)
 
                 elif debug_action == ACTION_LEVEL_3:
-
-                    audio.play_sound(
-                        "button_click"
-                    )
-
-                    player_level = 3
-
-                    sync_unlocks_for_current_level()
-
-                    print(
-                        "Level:",
-                        player_level
-                    )
-
-                # ==========================================
-                # Level 6
-                # ==========================================
+                    audio.play_sound("button_click")
+                    debug_set_player_level(3)
+                    print("Level:", player_level)
 
                 elif debug_action == ACTION_LEVEL_6:
-
-                    audio.play_sound(
-                        "button_click"
-                    )
-
-                    player_level = 6
-
-                    sync_unlocks_for_current_level()
-
-                    print(
-                        "Level:",
-                        player_level
-                    )
-
-                # ==========================================
-                # Level 10
-                # ==========================================
+                    audio.play_sound("button_click")
+                    debug_set_player_level(6)
+                    print("Level:", player_level)
 
                 elif debug_action == ACTION_LEVEL_10:
+                    audio.play_sound("button_click")
+                    debug_set_player_level(10)
+                    print("Level:", player_level)
 
-                    audio.play_sound(
-                        "button_click"
+                elif debug_action == ACTION_LEVEL_MAX:
+                    audio.play_sound("button_click")
+                    debug_set_player_level(
+                        max(LEVEL_XP_THRESHOLDS)
                     )
-
-                    player_level = 10
-
-                    sync_unlocks_for_current_level()
-
-                    print(
-                        "Level:",
-                        player_level
-                    )
+                    print("Level:", player_level)
 
                 # ==========================================
                 # Close
                 # ==========================================
 
                 elif debug_action == ACTION_CLOSE:
-
-                    audio.play_sound(
-                        "button_click"
-                    )
+                    audio.play_sound("button_click")
 
                     if debug_previous_state is not None:
-                        current_state = (
-                            debug_previous_state
-                        )
+                        current_state = debug_previous_state
 
             continue
 
@@ -19909,6 +20945,12 @@ while running:
 
                     continue
 
+                if (profile_select_return_state == STATE_CAREER_HUB
+                        and career_hub_controls.profile_cancel_rect.collidepoint(game_mouse_pos)):
+                    audio.play_sound("button_click")
+                    cancel_career_profile_switch()
+                    continue
+
                 delete_clicked = False
 
                 for index, delete_rect in enumerate(
@@ -19918,6 +20960,8 @@ while running:
 
                     if (
                             profile_exists(slot)
+                            and not (profile_switch_snapshot is not None
+                                     and profile_switch_snapshot[0] == slot)
                             and delete_rect.collidepoint(
                         game_mouse_pos
                         )
@@ -19974,6 +21018,7 @@ while running:
 
                         profile_creation_mode = True
                         guest_mode = False
+                        current_profile_slot = None
 
                         apply_fresh_profile()
 
@@ -20008,9 +21053,7 @@ while running:
 
                         profile_message = ""
 
-                        current_state = (
-                            STATE_MENU
-                        )
+                        finish_profile_selection()
 
                 # ----------------------------
                 # Guest
@@ -20031,9 +21074,7 @@ while running:
 
                     profile_message = ""
 
-                    current_state = (
-                        STATE_MENU
-                    )
+                    finish_profile_selection()
 
         # ==========================================
         # MAIN MENU
@@ -20064,6 +21105,7 @@ while running:
                         "button_click"
                     )
 
+                    customize_return_state = STATE_MENU
                     customize_category = (
                         CUSTOMIZE_BACKGROUNDS
                     )
@@ -20107,6 +21149,8 @@ while running:
                         "button_click"
                     )
 
+                    profile_return_state = STATE_MENU
+                    profile_select_return_state = STATE_MENU
                     profile_name_text = player_name
 
                     current_state = STATE_PROFILE
@@ -20231,6 +21275,35 @@ while running:
                     == pygame.MOUSEBUTTONDOWN
                     and event.button == 1
             ):
+
+                hub_action = career_hub_controls.get_action(game_mouse_pos)
+                if hub_action is not None:
+                    audio.play_sound("button_click")
+                    if hub_action == "skip_to_day":
+                        skip_to_selected_career_day()
+                    elif hub_action == "save":
+                        save_career_from_hub()
+                    elif hub_action == "switch":
+                        begin_career_profile_switch()
+                    elif hub_action == "profile":
+                        profile_return_state = STATE_CAREER_HUB
+                        profile_name_text = player_name
+                        profile_name_active = False
+                        gender_dropdown_open = False
+                        profile_message = ""
+                        current_state = STATE_PROFILE
+                    elif hub_action == "options":
+                        options_return_state = STATE_CAREER_HUB
+                        current_state = STATE_OPTIONS
+                    elif hub_action == "customize":
+                        customize_return_state = STATE_CAREER_HUB
+                        customize_category = CUSTOMIZE_BACKGROUNDS
+                        customize_page = 0
+                        current_state = STATE_CUSTOMIZE
+                    continue
+                if career_hub_controls.select_day_at(game_mouse_pos):
+                    audio.play_sound("button_click")
+                    continue
 
                 if career_play_rect.collidepoint(
                         game_mouse_pos
@@ -20704,9 +21777,19 @@ while running:
                         == STUD_ACTION_NEXT_HAND
                 ):
                     if (
+                            seven_card_stud_game.all_npcs_busted()
+                            and not seven_card_stud_game.player_busted
+                    ):
+                        audio.play_sound(
+                            "button_click"
+                        )
+
+                        process_seven_card_stud_showdown()
+                        finish_seven_card_stud_session()
+
+                    elif (
                             seven_card_stud_game.player_stack > 0
                             and not seven_card_stud_game.player_busted
-                            and not seven_card_stud_game.all_npcs_busted()
                     ):
                         audio.play_sound(
                             "button_click"
@@ -20996,9 +22079,19 @@ while running:
                 ):
 
                     if (
+                            five_card_draw_game.all_npcs_busted()
+                            and not five_card_draw_game.player_busted
+                    ):
+                        audio.play_sound(
+                            "button_click"
+                        )
+
+                        process_five_card_draw_showdown()
+                        finish_five_card_draw_session()
+
+                    elif (
                             five_card_draw_game.player_stack > 0
                             and not five_card_draw_game.player_busted
-                            and not five_card_draw_game.all_npcs_busted()
                     ):
                         audio.play_sound(
                             "button_click"
@@ -21522,9 +22615,19 @@ while running:
                         ):
 
                             if (
+                                    texas_holdem_game.all_npcs_busted()
+                                    and not texas_holdem_game.player_busted
+                            ):
+                                audio.play_sound(
+                                    "button_click"
+                                )
+
+                                process_texas_holdem_showdown()
+                                finish_texas_holdem_session()
+
+                            elif (
                                     texas_holdem_game.player_stack > 0
                                     and not texas_holdem_game.player_busted
-                                    and not texas_holdem_game.all_npcs_busted()
                             ):
                                 audio.play_sound(
                                     "button_click"
@@ -23631,6 +24734,45 @@ while running:
                     )
 
                 # ----------------------------
+                # Solitaire deal mode
+                # ----------------------------
+
+                elif deal_random_rect.collidepoint(
+                        game_mouse_pos
+                ):
+                    audio.play_sound(
+                        "button_click"
+                    )
+                    game.set_deal_mode(
+                        "random"
+                    )
+
+                elif deal_verified_rect.collidepoint(
+                        game_mouse_pos
+                ):
+                    audio.play_sound(
+                        "button_click"
+                    )
+                    game.set_deal_mode(
+                        "verified"
+                    )
+
+                # ----------------------------
+                # Fullscreen
+                # ----------------------------
+
+                elif fullscreen_toggle_rect.collidepoint(
+                        game_mouse_pos
+                ):
+                    audio.play_sound(
+                        "button_click"
+                    )
+
+                    set_fullscreen_enabled(
+                        not fullscreen_enabled
+                    )
+
+                # ----------------------------
                 # Resolution
                 # ----------------------------
 
@@ -23680,9 +24822,9 @@ while running:
                         music_slider_dragging = False
                         sfx_slider_dragging = False
 
-                        current_state = (
-                            options_return_state
-                        )
+                        if options_return_state == STATE_CAREER_HUB:
+                            save_career_from_hub()
+                        current_state = options_return_state
 
             # ==================================================
             # Slider dragging
@@ -23833,6 +24975,19 @@ while running:
 
                     customize_page = 0
 
+                elif customize_cursors_rect.collidepoint(
+                        game_mouse_pos
+                ):
+                    audio.play_sound(
+                        "button_click"
+                    )
+
+                    customize_category = (
+                        CUSTOMIZE_CURSORS
+                    )
+
+                    customize_page = 0
+
                 # ----------------------------
                 # Previous page
                 # ----------------------------
@@ -23879,9 +25034,9 @@ while running:
                         "button_click"
                     )
 
-                    current_state = (
-                        STATE_MENU
-                    )
+                    if customize_return_state == STATE_CAREER_HUB:
+                        save_career_from_hub()
+                    current_state = customize_return_state
 
                 # ----------------------------
                 # Cosmetic items
@@ -24229,9 +25384,7 @@ while running:
                             "button_click"
                         )
 
-                        current_state = (
-                            STATE_MENU
-                        )
+                        finish_profile_selection()
 
                     else:
 
@@ -24260,46 +25413,6 @@ while running:
                         )
 
                 # ----------------------------
-                # Load
-                # ----------------------------
-
-                elif (
-                        not profile_creation_mode
-                        and profile_load_rect.collidepoint(
-                    game_mouse_pos
-                )
-                ):
-
-                    loaded = load_profile(
-                        current_profile_slot
-                    )
-
-                    if loaded is not None:
-
-                        apply_profile_save_data(
-                            loaded
-                        )
-
-                        sync_unlocks_for_current_level()
-
-                        profile_message = (
-                            f"Loaded profile slot "
-                            f"{current_profile_slot}."
-                        )
-
-                    else:
-
-                        profile_message = (
-                            "No save file found."
-                        )
-
-                    profile_name_active = False
-
-                    audio.play_sound(
-                        "button_click"
-                    )
-
-                # ----------------------------
                 # Switch Profile
                 # ----------------------------
 
@@ -24314,6 +25427,10 @@ while running:
                         "button_click"
                     )
 
+                    if profile_return_state == STATE_CAREER_HUB:
+                        begin_career_profile_switch()
+                        continue
+                    profile_select_return_state = STATE_MENU
                     profile_name_active = False
                     gender_dropdown_open = False
                     profile_message = ""
@@ -24353,9 +25470,9 @@ while running:
 
                     else:
 
-                        current_state = (
-                            STATE_MENU
-                        )
+                        if profile_return_state == STATE_CAREER_HUB:
+                            save_career_from_hub()
+                        current_state = profile_return_state
 
 
         # ==========================================
@@ -24668,6 +25785,9 @@ while running:
 
                         "no_hints":
                             "No Hints",
+
+                        "all_or_nothing":
+                            "All or Nothing",
                     }
 
                     challenge_name = (
@@ -25724,36 +26844,66 @@ while running:
     # to the selected actual window size.
     # ----------------------------------------------
 
-    scaled_surface = (
+    if (
+            WINDOW_WIDTH == BASE_WIDTH
+            and WINDOW_HEIGHT == BASE_HEIGHT
+    ):
+        screen.blit(
+            game_surface,
+            (0, 0)
+        )
+
+    else:
+        if (
+                scaled_surface_cache is None
+                or scaled_surface_cache.get_size()
+                != (WINDOW_WIDTH, WINDOW_HEIGHT)
+        ):
+            scaled_surface_cache = pygame.Surface(
+                (
+                    WINDOW_WIDTH,
+                    WINDOW_HEIGHT
+                )
+            ).convert()
+
+        # Keep the cached destination surface from the
+        # performance pass, but use filtered scaling again.
+        # Plain transform.scale() made the entire 1366x768
+        # frame, especially text, visibly blurry/blocky when
+        # enlarged to 1920x1080 or 2560x1440.
         pygame.transform.smoothscale(
             game_surface,
             (
                 WINDOW_WIDTH,
                 WINDOW_HEIGHT
+            ),
+            scaled_surface_cache
+        )
+
+        screen.blit(
+            scaled_surface_cache,
+            (0, 0)
+        )
+
+    # ----------------------------
+    # Software cursor fallback
+    # ----------------------------
+
+    if (
+            software_cursor_fallback
+            and cursor_image is not None
+    ):
+        mouse_x, mouse_y = (
+            pygame.mouse.get_pos()
+        )
+
+        screen.blit(
+            cursor_image,
+            (
+                mouse_x,
+                mouse_y
             )
         )
-    )
-
-    screen.blit(
-        scaled_surface,
-        (0, 0)
-    )
-
-    # ----------------------------
-    # Custom cursor
-    # ----------------------------
-
-    mouse_x, mouse_y = (
-        pygame.mouse.get_pos()
-    )
-
-    screen.blit(
-        cursor_image,
-        (
-            mouse_x,
-            mouse_y
-        )
-    )
 
     pygame.display.flip()
 

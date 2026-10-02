@@ -1,6 +1,7 @@
 import pygame
 import copy
 import random
+import math
 
 from card import CARD_WIDTH, CARD_HEIGHT
 from deck import create_deck, deal_tableau
@@ -16,6 +17,14 @@ from settings import (
     DIFFICULTY_RULES,
     DEFAULT_DIFFICULTY,
     CAREER_CHALLENGE_RULES,
+)
+from solitaire_assist import (
+    DEAL_MODE_RANDOM,
+    DEAL_MODE_VERIFIED,
+    build_verified_deal,
+    get_complete_suit_run,
+    is_same_suit_descending_step,
+    normalize_deal_mode,
 )
 
 # ----------------------------
@@ -50,7 +59,7 @@ FACE_DOWN_SPACING = 30
 FACE_UP_SPACING = 48
 
 FLIP_DURATION_MS = 220
-HINT_DURATION_MS = 1500
+HINT_DURATION_MS = 2200
 
 VICTORY_DURATION_MS = 6500
 VICTORY_CARD_DELAY_MS = 85
@@ -179,10 +188,16 @@ class Game:
         # ----------------------------
 
         self.challenge_id = None
+        self.challenge_notice_start_ticks = 0
 
         # Number of cards drawn from stock
         # with one stock click.
         self.stock_draw_count = 1
+
+        # New-deal behavior. Random deals are never labeled solvable.
+        # Verified deals use a constructive arrangement with a known win path.
+        self.deal_mode = DEAL_MODE_RANDOM
+        self.deal_status = "random"
 
         self.apply_difficulty_rules()
 
@@ -193,6 +208,17 @@ class Game:
         # "foundation"
         # "foundation_and_tableau"
         self.double_click_mode = "foundation_and_tableau"
+
+        self.challenge_title_font = pygame.font.SysFont(
+            "cambria",
+            21,
+            bold=True
+        )
+        self.challenge_body_font = pygame.font.SysFont(
+            "cambria",
+            14,
+            bold=True
+        )
 
         # ----------------------------
         # Stock and waste locations
@@ -382,17 +408,54 @@ class Game:
         )
 
     # --------------------------------------------------
+    # Deal mode / status
+    # --------------------------------------------------
+
+    def set_deal_mode(self, mode):
+        normalized = normalize_deal_mode(mode)
+        if normalized == self.deal_mode:
+            return False
+
+        self.deal_mode = normalized
+        return True
+
+    def get_deal_status_label(self):
+        labels = {
+            "verified": "VERIFIED SOLVABLE",
+            "random": "RANDOM / UNVERIFIED",
+            "modified": "SHUFFLED / UNVERIFIED",
+            "challenge_unverified": "CHALLENGE / UNVERIFIED",
+        }
+        return labels.get(
+            self.deal_status,
+            "UNVERIFIED"
+        )
+
+    # --------------------------------------------------
     # New game
     # --------------------------------------------------
 
     def new_game(self, play_shuffle=True):
         deck = create_deck()
 
-        self.tableau = deal_tableau(
-            deck
-        )
+        if self.deal_mode == DEAL_MODE_VERIFIED:
+            self.tableau, self.stock = build_verified_deal(
+                deck,
+                draw_count=self.stock_draw_count
+            )
 
-        self.stock = deck
+            if self.challenge_id == "all_or_nothing":
+                self.deal_status = "challenge_unverified"
+            else:
+                self.deal_status = "verified"
+
+        else:
+            self.tableau = deal_tableau(
+                deck
+            )
+
+            self.stock = deck
+            self.deal_status = "random"
 
         self.waste = []
 
@@ -422,6 +485,11 @@ class Game:
 
         self.hint_data = None
         self.hint_start_ticks = 0
+
+        if self.challenge_id is not None:
+            self.challenge_notice_start_ticks = pygame.time.get_ticks()
+        else:
+            self.challenge_notice_start_ticks = 0
 
         self.round_won = False
 
@@ -1233,9 +1301,23 @@ class Game:
             == target_card.value - 1
         )
 
-        return different_color and correct_rank
+        standard_move = different_color and correct_rank
+
+        if self.challenge_id == "all_or_nothing":
+            return (
+                standard_move
+                or is_same_suit_descending_step(
+                    moving_card,
+                    target_card
+                )
+            )
+
+        return standard_move
 
     def can_place_on_foundation(self, moving_card, foundation):
+        if self.challenge_id == "all_or_nothing":
+            return False
+
         if not foundation:
             return moving_card.rank == "A"
 
@@ -1253,11 +1335,82 @@ class Game:
 
         return same_suit and next_rank
 
+    def get_all_or_nothing_stack(
+            self,
+            source_column_index,
+            selected_card=None
+    ):
+        if self.challenge_id != "all_or_nothing":
+            return None
+
+        if not (
+                0 <= source_column_index < len(self.tableau)
+        ):
+            return None
+
+        return get_complete_suit_run(
+            self.tableau[source_column_index],
+            selected_card=selected_card
+        )
+
+    def move_all_or_nothing_stack_to_foundation(
+            self,
+            source_column_index,
+            selected_card,
+            foundation_index
+    ):
+        if self.challenge_id != "all_or_nothing":
+            return False
+
+        if not (0 <= foundation_index < len(self.foundations)):
+            return False
+
+        foundation = self.foundations[foundation_index]
+        if foundation:
+            return False
+
+        run = self.get_all_or_nothing_stack(
+            source_column_index,
+            selected_card=selected_card
+        )
+
+        if run is None:
+            return False
+
+        source_column = self.tableau[source_column_index]
+
+        self.save_undo_state()
+
+        del source_column[-13:]
+
+        # Tableau run is K..A from top to playable end. Foundations store
+        # A..K so the completed suit behaves like a normal finished pile.
+        foundation.extend(reversed(run))
+
+        self.record_move()
+        self.audio.play_sound("card_move")
+
+        if (
+                source_column
+                and not source_column[-1].face_up
+        ):
+            self.start_flip_animation(
+                source_column[-1]
+            )
+            self.audio.play_sound("card_flip")
+
+        self.clear_selection()
+        self.check_for_win()
+        return True
+
     # --------------------------------------------------
     # Utility / Check Methods
     # --------------------------------------------------
 
     def can_auto_solve(self):
+
+        if self.challenge_id == "all_or_nothing":
+            return False
 
         if self.victory_animation is not None:
             return False
@@ -1433,6 +1586,37 @@ class Game:
         return False
 
     def find_hint(self):
+
+        # ==================================================
+        # ALL OR NOTHING: completed suit -> foundation
+        # ==================================================
+
+        if self.challenge_id == "all_or_nothing":
+            empty_foundation_index = next(
+                (
+                    index
+                    for index, foundation in enumerate(self.foundations)
+                    if not foundation
+                ),
+                None
+            )
+
+            if empty_foundation_index is not None:
+                for column_index, column in enumerate(self.tableau):
+                    run = get_complete_suit_run(column)
+                    if run is None:
+                        continue
+
+                    return {
+                        "source_rect": self.get_tableau_card_rect(
+                            column_index,
+                            run[0]
+                        ),
+                        "target_rect": self.foundation_rects[
+                            empty_foundation_index
+                        ],
+                        "text": "Move complete suit to foundation",
+                    }
 
         # ==================================================
         # 1. Tableau -> foundation
@@ -1849,37 +2033,49 @@ class Game:
             "target_rect"
         ]
 
-        # ----------------------------
-        # Source highlight
-        # ----------------------------
+        # A bright pulse is much easier to follow than the old static
+        # outline, especially when source and destination are far apart.
+        phase = (elapsed % 520) / 520.0
+        pulse = (
+            math.sin(phase * math.tau)
+            + 1.0
+        ) / 2.0
 
-        if source_rect is not None:
-            pygame.draw.rect(
-                self.screen,
-                (
-                    255,
-                    215,
-                    0
-                ),
-                source_rect,
-                5
+        border_width = 3 + int(round(pulse * 4))
+        highlight_color = (
+            255,
+            int(185 + 70 * pulse),
+            int(25 + 120 * pulse)
+        )
+
+        def draw_pulsing_outline(rect):
+            if rect is None:
+                return
+
+            outer = rect.inflate(
+                int(4 + pulse * 6),
+                int(4 + pulse * 6)
             )
 
-        # ----------------------------
-        # Destination highlight
-        # ----------------------------
-
-        if target_rect is not None:
             pygame.draw.rect(
                 self.screen,
-                (
-                    255,
-                    215,
-                    0
-                ),
-                target_rect,
-                5
+                highlight_color,
+                outer,
+                border_width,
+                border_radius=5
             )
+
+            if pulse >= 0.55:
+                pygame.draw.rect(
+                    self.screen,
+                    (255, 255, 255),
+                    rect.inflate(2, 2),
+                    2,
+                    border_radius=4
+                )
+
+        draw_pulsing_outline(source_rect)
+        draw_pulsing_outline(target_rect)
 
     # --------------------------------------------------
     # Stock
@@ -1978,6 +2174,7 @@ class Game:
 
         self.stock = cards
         self.waste = []
+        self.deal_status = "modified"
 
         self.clear_selection()
         self.flip_animation = None
@@ -2150,6 +2347,13 @@ class Game:
         selected_card,
         foundation_index
     ):
+        if self.challenge_id == "all_or_nothing":
+            return self.move_all_or_nothing_stack_to_foundation(
+                source_column_index,
+                selected_card,
+                foundation_index
+            )
+
         source_column = self.tableau[
             source_column_index
         ]
@@ -2205,6 +2409,9 @@ class Game:
         foundation_index,
         target_column_index
     ):
+        if self.challenge_id == "all_or_nothing":
+            return False
+
         foundation = self.foundations[
             foundation_index
         ]
@@ -2380,12 +2587,14 @@ class Game:
             )
 
         self.undo_stack = []
+        self.challenge_notice_start_ticks = 0
 
         return True
 
     def clear_challenge(self):
 
         self.challenge_id = None
+        self.challenge_notice_start_ticks = 0
 
         self.stock_draw_count = 1
 
@@ -2402,6 +2611,28 @@ class Game:
             card,
             source
     ):
+        if self.challenge_id == "all_or_nothing":
+            if (
+                    source is None
+                    or source[0] != "tableau"
+            ):
+                return False
+
+            for foundation_index, foundation in enumerate(
+                    self.foundations
+            ):
+                if foundation:
+                    continue
+
+                if self.move_all_or_nothing_stack_to_foundation(
+                        source[1],
+                        card,
+                        foundation_index
+                ):
+                    return True
+
+            return False
+
         for foundation_index, foundation in enumerate(
                 self.foundations
         ):
@@ -2504,6 +2735,8 @@ class Game:
                 self.stock_passes_used,
             "hints_remaining":
                 self.hints_remaining,
+            "deal_status":
+                self.deal_status,
         }
 
         self.undo_stack.append(
@@ -2546,6 +2779,11 @@ class Game:
             state[
                 "hints_remaining"
             ]
+        )
+
+        self.deal_status = state.get(
+            "deal_status",
+            self.deal_status
         )
 
         self.selected_card = None
@@ -3651,6 +3889,7 @@ class Game:
         self.draw_foundations()
         self.draw_tableau()
 
+        self.draw_challenge_notice()
         self.draw_hint()
 
         # Draw moving cards above all normal piles.
@@ -3658,6 +3897,106 @@ class Game:
 
         self.update_victory_animation()
         self.draw_victory_animation()
+
+    def draw_challenge_notice(self):
+        if self.challenge_id is None:
+            return
+
+        if self.challenge_notice_start_ticks <= 0:
+            return
+
+        rules = CAREER_CHALLENGE_RULES.get(
+            self.challenge_id,
+            {}
+        )
+
+        notice_title = rules.get(
+            "notice_title",
+            rules.get(
+                "name",
+                "CHALLENGE"
+            ).upper()
+        )
+
+        notice_lines = list(
+            rules.get(
+                "notice_lines",
+                []
+            )
+        )
+
+        if not notice_lines:
+            return
+
+        elapsed = (
+            pygame.time.get_ticks()
+            - self.challenge_notice_start_ticks
+        )
+
+        if elapsed >= 7500:
+            return
+
+        panel_rect = pygame.Rect(375, 58, 350, 112)
+        panel = pygame.Surface(
+            panel_rect.size,
+            pygame.SRCALPHA
+        )
+
+        alpha = 225
+        if elapsed >= 6200:
+            alpha = max(0, int(225 * (7500 - elapsed) / 1300))
+
+        pygame.draw.rect(
+            panel,
+            (15, 24, 18, alpha),
+            panel.get_rect(),
+            border_radius=12
+        )
+        pygame.draw.rect(
+            panel,
+            (255, 220, 90, alpha),
+            panel.get_rect(),
+            2,
+            border_radius=12
+        )
+
+        title = self.challenge_title_font.render(
+            notice_title,
+            True,
+            (255, 225, 105)
+        )
+        title.set_alpha(alpha)
+
+        panel.blit(
+            title,
+            title.get_rect(center=(panel_rect.width // 2, 27))
+        )
+
+        line_y_positions = (64, 87)
+
+        for line_index, line_text in enumerate(
+                notice_lines[:2]
+        ):
+            line_surface = self.challenge_body_font.render(
+                line_text,
+                True,
+                (245, 245, 245)
+            )
+            line_surface.set_alpha(alpha)
+            panel.blit(
+                line_surface,
+                line_surface.get_rect(
+                    center=(
+                        panel_rect.width // 2,
+                        line_y_positions[line_index]
+                    )
+                )
+            )
+
+        self.screen.blit(
+            panel,
+            panel_rect.topleft
+        )
 
     def draw_stock(self):
         if self.stock:
@@ -3739,28 +4078,55 @@ class Game:
                 index
             ]
 
+            dragging_this_card = (
+                    self.dragging
+                    and self.drag_source
+                    == (
+                        "foundation",
+                        index
+                    )
+            )
+
+            # While the top foundation card is being dragged,
+            # keep the source pile visible underneath it.
+            #
+            # If another card remains in the pile, show that
+            # newly exposed card. If the dragged card was the
+            # only card, show the normal empty foundation slot.
+            if dragging_this_card:
+
+                if len(foundation) >= 2:
+                    exposed_card = foundation[-2]
+
+                    self.draw_card_sprite(
+                        exposed_card,
+                        rect.x,
+                        rect.y,
+                        selected=False
+                    )
+
+                else:
+                    pygame.draw.rect(
+                        self.screen,
+                        PLACEHOLDER,
+                        rect,
+                        2
+                    )
+
+                continue
+
             if foundation:
                 card = foundation[-1]
 
-                dragging_this_card = (
-                        self.dragging
-                        and self.drag_source
-                        == (
-                            "foundation",
-                            index
-                        )
-                )
-
-                if not dragging_this_card:
-                    self.draw_card_sprite(
-                        card,
-                        rect.x,
-                        rect.y,
-                        selected=(
-                                self.selected_card
-                                is card
-                        )
+                self.draw_card_sprite(
+                    card,
+                    rect.x,
+                    rect.y,
+                    selected=(
+                            self.selected_card
+                            is card
                     )
+                )
 
             else:
                 pygame.draw.rect(

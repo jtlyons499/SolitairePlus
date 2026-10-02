@@ -4,7 +4,9 @@ from itertools import combinations
 
 from poker_core import (
     PokerHandHistory,
+    describe_poker_score,
     format_poker_cards,
+    format_poker_display_name,
 )
 
 from poker_ai import (
@@ -1998,7 +2000,7 @@ class TexasHoldemGame:
                 player_index - 1
         )
 
-        return (
+        return format_poker_display_name(
             self.npcs[
                 npc_index
             ].get(
@@ -4330,12 +4332,17 @@ class TexasHoldemGame:
                 result[0][0]
             ]
 
+            hand_detail = describe_poker_score(
+                result[0],
+                compact=True
+            )
+
             self.log_hand_event(
                 "showdown_hand",
                 (
                     f"{prefix} "
                     f"{format_poker_cards(cards)} "
-                    f"({category})."
+                    f"({hand_detail})."
                 ),
                 actor_index=player_index,
                 cards=[
@@ -4343,7 +4350,8 @@ class TexasHoldemGame:
                     for card in cards
                     if card
                 ],
-                hand_name=category
+                hand_name=category,
+                hand_detail=hand_detail
             )
 
         # ==================================================
@@ -4516,11 +4524,16 @@ class TexasHoldemGame:
                 ]
             )
 
+            hand_detail = describe_poker_score(
+                winner_result[0],
+                compact=True
+            )
+
             if winner_index == 0:
 
                 self.result_text = (
                     f"You win ${winnings:,} "
-                    f"with {category}!"
+                    f"with {hand_detail}!"
                 )
 
             else:
@@ -4534,7 +4547,7 @@ class TexasHoldemGame:
                 self.result_text = (
                     f"{winner_name} wins "
                     f"${winnings:,} with "
-                    f"{category}."
+                    f"{hand_detail}."
                 )
 
         # ------------------------------------------

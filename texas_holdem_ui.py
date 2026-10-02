@@ -682,6 +682,434 @@ HOLDEM_WAGER_SWEEP_DELAY = 200
 HOLDEM_WAGER_SWEEP_DURATION = 700
 
 # ==================================================
+# POT DISPLAY / PAYOUT ANIMATION
+# ==================================================
+
+_holdem_payout_fx_key = None
+_holdem_payout_fx_started_at = 0
+
+HOLDEM_PAYOUT_FX_DURATION = 1050
+
+
+def _holdem_chip_key_for_amount(
+        amount,
+        base_unit
+):
+    base_unit = max(
+        1,
+        int(base_unit)
+    )
+
+    if amount >= base_unit * 20:
+        return "black"
+
+    if amount >= base_unit * 10:
+        return "yellow"
+
+    if amount >= base_unit * 5:
+        return "green"
+
+    if amount >= base_unit * 2:
+        return "blue"
+
+    return "red"
+
+
+def _holdem_pot_chip_count(
+        amount,
+        base_unit
+):
+    if amount <= 0:
+        return 0
+
+    ratio = (
+        float(amount)
+        / max(
+            1.0,
+            float(base_unit)
+        )
+    )
+
+    if ratio < 2:
+        return 1
+    if ratio < 5:
+        return 2
+    if ratio < 10:
+        return 3
+    if ratio < 20:
+        return 4
+    if ratio < 40:
+        return 5
+    if ratio < 80:
+        return 6
+
+    return 7
+
+
+def draw_holdem_pot_stack(
+        surface,
+        amount,
+        center,
+        base_unit
+):
+    amount = max(
+        0,
+        int(amount)
+    )
+
+    count = _holdem_pot_chip_count(
+        amount,
+        base_unit
+    )
+
+    if count <= 0:
+        return
+
+    chip_images = get_poker_chip_images()
+    chip_key = _holdem_chip_key_for_amount(
+        amount,
+        base_unit
+    )
+    chip = chip_images.get(
+        chip_key
+    )
+
+    if chip is None:
+        return
+
+    chip_size = 21
+    spacing = 11
+    row_capacity = 4
+
+    for index in range(count):
+        row = index // row_capacity
+        column = index % row_capacity
+
+        items_in_row = min(
+            row_capacity,
+            count - row * row_capacity
+        )
+
+        row_width = (
+            (items_in_row - 1)
+            * spacing
+        )
+
+        draw_x = (
+            center[0]
+            - row_width // 2
+            + column * spacing
+        )
+
+        draw_y = (
+            center[1]
+            - row * 7
+        )
+
+        scaled = pygame.transform.smoothscale(
+            chip,
+            (
+                chip_size,
+                chip_size
+            )
+        )
+
+        surface.blit(
+            scaled,
+            scaled.get_rect(
+                center=(
+                    draw_x,
+                    draw_y
+                )
+            )
+        )
+
+
+def get_holdem_payout_fx_progress(
+        holdem_game
+):
+    global _holdem_payout_fx_key
+    global _holdem_payout_fx_started_at
+
+    if (
+            holdem_game.current_stage
+            != "showdown"
+            or not holdem_game.hand_complete
+            or not holdem_game.winner_indexes
+            or holdem_game.get_display_pot_amount()
+            <= 0
+    ):
+        return None
+
+    key = (
+        getattr(
+            holdem_game,
+            "hand_number",
+            0
+        ),
+        tuple(
+            holdem_game.winner_indexes
+        ),
+        int(
+            holdem_game.get_display_pot_amount()
+        )
+    )
+
+    now = pygame.time.get_ticks()
+
+    if key != _holdem_payout_fx_key:
+        _holdem_payout_fx_key = key
+        _holdem_payout_fx_started_at = now
+
+    progress = (
+        now
+        - _holdem_payout_fx_started_at
+    ) / HOLDEM_PAYOUT_FX_DURATION
+
+    progress = max(
+        0.0,
+        min(
+            1.0,
+            progress
+        )
+    )
+
+    return get_holdem_chip_ease(
+        progress
+    )
+
+
+def draw_holdem_payout_animation(
+        surface,
+        holdem_game,
+        npc_anchors,
+        base_unit
+):
+    progress = get_holdem_payout_fx_progress(
+        holdem_game
+    )
+
+    if (
+            progress is None
+            or progress >= 1.0
+    ):
+        return
+
+    winners = list(
+        holdem_game.winner_indexes
+    )
+
+    if not winners:
+        return
+
+    amount = max(
+        1,
+        int(
+            holdem_game.get_display_pot_amount()
+        )
+    )
+
+    chip_images = get_poker_chip_images()
+    chip = chip_images.get(
+        _holdem_chip_key_for_amount(
+            amount,
+            base_unit
+        )
+    )
+
+    if chip is None:
+        return
+
+    start = (
+        683,
+        242
+    )
+
+    target_by_player = {
+        0: (
+            683,
+            696
+        )
+    }
+
+    for index, anchor in enumerate(
+            npc_anchors
+    ):
+        target_by_player[
+            index + 1
+        ] = (
+            anchor[0] + 82,
+            anchor[1] + 28
+        )
+
+    chip_count = max(
+        3,
+        min(
+            8,
+            _holdem_pot_chip_count(
+                amount,
+                base_unit
+            ) + 1
+        )
+    )
+
+    for chip_index in range(
+            chip_count
+    ):
+        winner_index = winners[
+            chip_index
+            % len(winners)
+        ]
+
+        target = target_by_player.get(
+            winner_index,
+            start
+        )
+
+        local_progress = max(
+            0.0,
+            min(
+                1.0,
+                progress
+                * 1.18
+                - chip_index * 0.035
+            )
+        )
+
+        draw_x = int(
+            start[0]
+            + (
+                target[0]
+                - start[0]
+            )
+            * local_progress
+        )
+
+        draw_y = int(
+            start[1]
+            + (
+                target[1]
+                - start[1]
+            )
+            * local_progress
+        )
+
+        draw_y -= int(
+            math.sin(
+                local_progress
+                * math.pi
+            )
+            * 34
+        )
+
+        draw_x += (
+            chip_index % 3
+            - 1
+        ) * 7
+
+        scaled = pygame.transform.smoothscale(
+            chip,
+            (
+                24,
+                24
+            )
+        )
+
+        surface.blit(
+            scaled,
+            scaled.get_rect(
+                center=(
+                    draw_x,
+                    draw_y
+                )
+            )
+        )
+
+
+def draw_holdem_showdown_banner(
+        surface,
+        holdem_game
+):
+    if (
+            holdem_game.current_stage
+            != "showdown"
+            or not holdem_game.result_text
+    ):
+        return
+
+    fonts = get_holdem_fonts()
+
+    player_won = (
+        0 in holdem_game.winner_indexes
+    )
+
+    phase = (
+        pygame.time.get_ticks()
+        % 1200
+    ) / 1200.0
+
+    pulse = (
+        0.5
+        + 0.5
+        * math.sin(
+            phase
+            * math.tau
+        )
+    )
+
+    border = (
+        (
+            255,
+            int(
+                190
+                + 55 * pulse
+            ),
+            65
+        )
+        if player_won
+        else (
+            185,
+            190,
+            195
+        )
+    )
+
+    rect = pygame.Rect(
+        358,
+        452,
+        650,
+        48
+    )
+
+    draw_translucent_panel(
+        surface,
+        rect,
+        (
+            10,
+            12,
+            14,
+            225
+        ),
+        border_color=border,
+        border_width=(
+            4
+            if player_won
+            else 2
+        ),
+        radius=12
+    )
+
+    blit_text_fit(
+        surface,
+        holdem_game.result_text,
+        fonts["small"],
+        WHITE,
+        rect,
+        padding=18
+    )
+
+
+# ==================================================
 # CARD HELPERS // OTHER HELPERS
 # ==================================================
 
@@ -2624,6 +3052,7 @@ def draw_holdem_log_panel(
     if active_tab == "log":
 
         visible_line_count = 3
+        line_spacing = 23
 
         end_index = (
             len(log_lines)
@@ -2651,7 +3080,8 @@ def draw_holdem_log_panel(
 
     else:
 
-        visible_line_count = 3
+        visible_line_count = 4
+        line_spacing = 18
 
         end_index = (
 
@@ -2705,8 +3135,6 @@ def draw_holdem_log_panel(
     # ==================================================
     # Draw lines
     # ==================================================
-
-    line_spacing = 23
 
     text_y = (
         inner_rect.y + 9
@@ -3177,10 +3605,15 @@ def draw_holdem_side_panel(
             draw_modern_button(
                 surface,
                 holdem_next_hand_rect,
-                "TABLE CLEARED",
+                "TABLE CLEARED +100",
                 mouse_pos,
                 holdem_small_font,
-                enabled=False
+                enabled=True,
+                accent_color=(
+                    105,
+                    82,
+                    32
+                )
             )
 
             return
@@ -3488,7 +3921,11 @@ def draw_holdem_side_panel(
         manual_label = f"${holdem_manual_bet_text}"
         manual_color = WHITE if manual_enabled else (150, 150, 155)
     else:
-        manual_label = "TYPE $"
+        manual_label = (
+            "BET $"
+            if holdem_game.current_bet == 0
+            else "RAISE $"
+        )
         manual_color = (165, 170, 178) if manual_enabled else (120, 120, 125)
 
     manual_surface = holdem_small_font.render(
@@ -4987,6 +5424,29 @@ def draw_texas_holdem(
     )
 
     # ==================================================
+    # Center table information backdrop
+    #
+    # Draw this before the seats so upper NPC HUDs/cards
+    # always sit on top of it, matching Draw and Stud.
+    # ==================================================
+
+    info_panel_rect = pygame.Rect(
+        table_rect.centerx - 142,
+        184,
+        284,
+        88
+    )
+
+    draw_translucent_panel(
+        game_surface,
+        info_panel_rect,
+        (0, 0, 0, 82),
+        border_color=(110, 120, 115),
+        border_width=1,
+        radius=10
+    )
+
+    # ==================================================
     # NPC SEAT ANCHORS
     # ==================================================
 
@@ -5525,7 +5985,9 @@ def draw_texas_holdem(
 
         blit_text_fit(
             game_surface,
-            npc["name"],
+            holdem_game.get_table_player_name(
+                index + 1
+            ),
             holdem_name_font,
             name_text_color,
             name_rect,
@@ -5886,26 +6348,6 @@ def draw_texas_holdem(
     )
 
     # ==================================================
-    # Center table information backdrop
-    # ==================================================
-
-    info_panel_rect = pygame.Rect(
-        table_rect.centerx - 142,
-        184,
-        284,
-        88
-    )
-
-    draw_translucent_panel(
-        game_surface,
-        info_panel_rect,
-        (0, 0, 0, 82),
-        border_color=(110, 120, 115),
-        border_width=1,
-        radius=10
-    )
-
-    # ==================================================
     # Pot
     # ==================================================
 
@@ -5913,6 +6355,27 @@ def draw_texas_holdem(
         holdem_game.get_display_pot_amount()
         if hasattr(holdem_game, "get_display_pot_amount")
         else holdem_game.pot
+    )
+
+    pot_base_unit = max(
+        1,
+        int(
+            getattr(
+                holdem_game,
+                "ante",
+                1
+            )
+        )
+    )
+
+    draw_holdem_pot_stack(
+        game_surface,
+        display_pot,
+        (
+            table_rect.centerx,
+            community_y - 48
+        ),
+        pot_base_unit
     )
 
     pot_surface = holdem_small_font.render(
@@ -5925,7 +6388,7 @@ def draw_texas_holdem(
         pot_surface.get_rect(
             center=(
                 table_rect.centerx,
-                community_y - 26
+                community_y - 18
             )
         )
     )
@@ -6240,6 +6703,25 @@ def draw_texas_holdem(
         )
     )
 
+    draw_holdem_payout_animation(
+        game_surface,
+        holdem_game,
+        npc_anchors,
+        max(
+            1,
+            getattr(
+                holdem_game,
+                "ante",
+                1
+            )
+        )
+    )
+
+    draw_holdem_showdown_banner(
+        game_surface,
+        holdem_game
+    )
+
     # ==================================================
     # Game log content
     # ==================================================
@@ -6249,23 +6731,61 @@ def draw_texas_holdem(
     )
 
     # ==================================================
-    # Small Hold'em title above log
+    # Hold'em table title / logo treatment
     # ==================================================
 
-    holdem_title_surface = (
-        holdem_small_font.render(
+    holdem_title_shadow = (
+        holdem_title_font.render(
             "TEXAS HOLD'EM",
             True,
-            WHITE
+            (
+                20,
+                20,
+                20
+            )
+        )
+    )
+
+    holdem_title_surface = (
+        holdem_title_font.render(
+            "TEXAS HOLD'EM",
+            True,
+            (
+                245,
+                238,
+                205
+            )
+        )
+    )
+
+    title_anchor = (
+        table_rect.right - 12,
+        table_rect.y - 12
+    )
+
+    shadow_rect = (
+        holdem_title_shadow.get_rect(
+            bottomright=(
+                title_anchor[0] + 2,
+                title_anchor[1] + 2
+            )
+        )
+    )
+
+    title_rect = (
+        holdem_title_surface.get_rect(
+            bottomright=title_anchor
         )
     )
 
     game_surface.blit(
+        holdem_title_shadow,
+        shadow_rect
+    )
+
+    game_surface.blit(
         holdem_title_surface,
-        (
-            22,
-            580
-        )
+        title_rect
     )
 
     # ==================================================

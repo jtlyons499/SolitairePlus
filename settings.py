@@ -449,6 +449,11 @@ CAREER_CHALLENGE_RULES = {
         "undo_history_limit": 10,
         "reward_multiplier": 1.35,
         "clean_stock_bonus": 1.0,
+        "notice_title": "3 DRAW",
+        "notice_lines": [
+            "Draw three cards from the stock at a time.",
+            "You have three stock passes for the round.",
+        ],
     },
 
     "no_undo": {
@@ -459,6 +464,11 @@ CAREER_CHALLENGE_RULES = {
         "undo_history_limit": 0,
         "reward_multiplier": 1.40,
         "clean_stock_bonus": 1.0,
+        "notice_title": "NO UNDO",
+        "notice_lines": [
+            "Undo is disabled for this round.",
+            "Plan each move before you commit it.",
+        ],
     },
 
     "no_hints": {
@@ -469,6 +479,26 @@ CAREER_CHALLENGE_RULES = {
         "undo_history_limit": 10,
         "reward_multiplier": 1.40,
         "clean_stock_bonus": 1.0,
+        "notice_title": "NO HINTS",
+        "notice_lines": [
+            "Hints are disabled for this round.",
+            "Solve the deal without hint assistance.",
+        ],
+    },
+
+    "all_or_nothing": {
+        "name": "All or Nothing",
+        "stock_draw_count": 1,
+        "stock_pass_limit": 5,
+        "hint_limit": 3,
+        "undo_history_limit": 10,
+        "reward_multiplier": 1.55,
+        "clean_stock_bonus": 1.0,
+        "notice_title": "ALL OR NOTHING",
+        "notice_lines": [
+            "Build complete same-suit K to A runs in the tableau.",
+            "Foundations accept the full 13-card suit at once.",
+        ],
     },
 }
 

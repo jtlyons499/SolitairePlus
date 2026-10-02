@@ -140,6 +140,9 @@ def make_default_profile():
             "selected_card_back":
                 "back_default",
 
+            "selected_cursor":
+                "cursor",
+
             "unlocked_menu_backgrounds": [
                 "bg_default"
             ],

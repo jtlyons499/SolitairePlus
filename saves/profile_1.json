@@ -1,8 +1,8 @@
 {
     "profile_version": 2,
     "identity": {
-        "name": "Player",
-        "gender": "non-binary",
+        "name": "Dessin",
+        "gender": "male",
         "avatar": {
             "base": "base_07",
             "eyes": "eyes_07",
@@ -12,211 +12,211 @@
         }
     },
     "progression": {
-        "level": 10,
-        "xp": 77,
-        "solitaire_points": 38
+        "level": 13,
+        "xp": 3728,
+        "solitaire_points": 163
     },
     "career": {
         "unlocked": false,
-        "rating": 1135,
-        "cash": 31384,
+        "rating": 1360,
+        "cash": 49822,
         "fans": 1000,
         "leaderboard_state": {
             "monkus_carlton": {
-                "rating": 2246,
-                "last_change": -40
+                "rating": 2209,
+                "last_change": -36
             },
             "gary_undo": {
-                "rating": 2299,
-                "last_change": -45
+                "rating": 2224,
+                "last_change": 28
             },
             "big_mike": {
-                "rating": 2625,
-                "last_change": -28
+                "rating": 2667,
+                "last_change": -42
             },
             "shelly_barn": {
-                "rating": 2603,
-                "last_change": 24
+                "rating": 2673,
+                "last_change": 15
             },
             "molly_courts": {
-                "rating": 1740,
-                "last_change": -43
+                "rating": 1693,
+                "last_change": -37
             },
             "rosalie_de_leon": {
-                "rating": 2006,
-                "last_change": 8
+                "rating": 1915,
+                "last_change": 35
             },
             "danny_de_leon": {
-                "rating": 1554,
-                "last_change": -46
-            },
-            "olga_mire": {
-                "rating": 2109,
-                "last_change": -43
-            },
-            "chet_hanks": {
-                "rating": 1493,
-                "last_change": -52
-            },
-            "nurse_ratched": {
-                "rating": 1566,
-                "last_change": 0
-            },
-            "bob_gumble": {
-                "rating": 1466,
-                "last_change": 22
-            },
-            "evelyn_smythe": {
-                "rating": 1570,
-                "last_change": -9
-            },
-            "gringo_starr": {
-                "rating": 1150,
-                "last_change": 34
-            },
-            "rupert_craft": {
-                "rating": 1097,
-                "last_change": -45
-            },
-            "chum_whopper": {
-                "rating": 2764,
-                "last_change": 50
-            },
-            "melinda_cromwell": {
-                "rating": 2501,
-                "last_change": 49
-            },
-            "luke_jingle": {
-                "rating": 1612,
-                "last_change": -6
-            },
-            "gunther_hindenburg": {
-                "rating": 1791,
-                "last_change": 44
-            },
-            "crikey_dingo": {
-                "rating": 1896,
-                "last_change": -22
-            },
-            "jairo_ponytail": {
-                "rating": 1659,
-                "last_change": 37
-            },
-            "iona_mcdougal": {
-                "rating": 2008,
-                "last_change": 43
-            },
-            "jiu_wang": {
-                "rating": 1701,
-                "last_change": -37
-            },
-            "jacques_rousseau": {
-                "rating": 1731,
-                "last_change": -6
-            },
-            "palina_pepper": {
-                "rating": 2009,
-                "last_change": -2
-            },
-            "kurwa_kryzbywlewski": {
-                "rating": 2028,
-                "last_change": -33
-            },
-            "rusty_lewis": {
-                "rating": 1826,
-                "last_change": -14
-            },
-            "lionel_braggart": {
-                "rating": 966,
-                "last_change": -37
-            },
-            "inshallah_intifada": {
-                "rating": 1019,
-                "last_change": -21
-            },
-            "manuel_nadal": {
-                "rating": 798,
+                "rating": 1638,
                 "last_change": 5
             },
+            "olga_mire": {
+                "rating": 2163,
+                "last_change": -4
+            },
+            "chet_hanks": {
+                "rating": 1322,
+                "last_change": -37
+            },
+            "nurse_ratched": {
+                "rating": 1724,
+                "last_change": 42
+            },
+            "bob_gumble": {
+                "rating": 1686,
+                "last_change": -22
+            },
+            "evelyn_smythe": {
+                "rating": 1651,
+                "last_change": 1
+            },
+            "gringo_starr": {
+                "rating": 1068,
+                "last_change": -24
+            },
+            "rupert_craft": {
+                "rating": 1124,
+                "last_change": 34
+            },
+            "chum_whopper": {
+                "rating": 2770,
+                "last_change": 42
+            },
+            "melinda_cromwell": {
+                "rating": 2733,
+                "last_change": 30
+            },
+            "luke_jingle": {
+                "rating": 1560,
+                "last_change": -5
+            },
+            "gunther_hindenburg": {
+                "rating": 1792,
+                "last_change": -12
+            },
+            "crikey_dingo": {
+                "rating": 1765,
+                "last_change": 10
+            },
+            "jairo_ponytail": {
+                "rating": 1781,
+                "last_change": -3
+            },
+            "iona_mcdougal": {
+                "rating": 1872,
+                "last_change": -12
+            },
+            "jiu_wang": {
+                "rating": 1717,
+                "last_change": -28
+            },
+            "jacques_rousseau": {
+                "rating": 1717,
+                "last_change": 8
+            },
+            "palina_pepper": {
+                "rating": 1963,
+                "last_change": 20
+            },
+            "kurwa_kryzbywlewski": {
+                "rating": 2000,
+                "last_change": -32
+            },
+            "rusty_lewis": {
+                "rating": 1727,
+                "last_change": -29
+            },
+            "lionel_braggart": {
+                "rating": 956,
+                "last_change": 37
+            },
+            "inshallah_intifada": {
+                "rating": 934,
+                "last_change": 34
+            },
+            "manuel_nadal": {
+                "rating": 896,
+                "last_change": 53
+            },
             "mary_lafleur": {
-                "rating": 960,
+                "rating": 1093,
                 "last_change": 0
             },
             "chiara_sammartano": {
-                "rating": 1667,
-                "last_change": 26
+                "rating": 1558,
+                "last_change": -31
             },
             "memphis_van_dijk": {
-                "rating": 1203,
-                "last_change": 10
+                "rating": 1223,
+                "last_change": -27
             },
             "harpreet_rajah": {
-                "rating": 2242,
-                "last_change": 45
+                "rating": 2365,
+                "last_change": 37
             },
             "betty_bleep": {
-                "rating": 856,
-                "last_change": -45
-            },
-            "max_goblet": {
-                "rating": 1429,
-                "last_change": -25
-            },
-            "hugh_minx": {
-                "rating": 1956,
+                "rating": 840,
                 "last_change": 14
             },
+            "max_goblet": {
+                "rating": 1469,
+                "last_change": -49
+            },
+            "hugh_minx": {
+                "rating": 1984,
+                "last_change": 7
+            },
             "addled_grandfather": {
-                "rating": 2126,
-                "last_change": 1
+                "rating": 2061,
+                "last_change": -3
             },
             "hog_shots": {
-                "rating": 1343,
-                "last_change": 30
+                "rating": 1201,
+                "last_change": -57
             },
             "loopy_valez": {
-                "rating": 1007,
-                "last_change": -30
+                "rating": 1005,
+                "last_change": 35
             },
             "mimi_roquanda": {
-                "rating": 914,
-                "last_change": -51
+                "rating": 861,
+                "last_change": -60
             },
             "captain_steve": {
-                "rating": 701,
-                "last_change": -55
+                "rating": 810,
+                "last_change": -20
             },
             "elinur_butter": {
-                "rating": 1649,
-                "last_change": -28
+                "rating": 1702,
+                "last_change": -6
             },
             "sultan_griffin": {
-                "rating": 1929,
-                "last_change": 33
+                "rating": 1855,
+                "last_change": -50
             },
             "ami_amica": {
-                "rating": 2208,
-                "last_change": 24
+                "rating": 2163,
+                "last_change": 41
             },
             "bubbles_romney": {
-                "rating": 2492,
-                "last_change": -34
+                "rating": 2524,
+                "last_change": 27
             },
             "jack_zitbomb": {
-                "rating": 3080,
-                "last_change": -12
+                "rating": 3241,
+                "last_change": 53
             },
             "doon_ficus": {
-                "rating": 2199,
-                "last_change": 30
+                "rating": 2335,
+                "last_change": 45
             }
         },
         "leaderboard_star_id": "jack_zitbomb",
-        "year": 2026,
-        "month": 8,
-        "day": 9,
-        "weekday_index": 3,
-        "career_day": 114,
+        "year": 2027,
+        "month": 5,
+        "day": 15,
+        "weekday_index": 4,
+        "career_day": 255,
         "residence": "card_castle",
         "owned_residences": [
             "dingy_apartment",
@@ -224,9 +224,9 @@
             "card_castle"
         ],
         "job": "custodian",
-        "rounds_won": 1,
+        "rounds_won": 4,
         "challenges_won": 0,
-        "total_moves": 144,
+        "total_moves": 513,
         "completed_days": [
             {
                 "year": 2026,
@@ -1018,6 +1018,993 @@
                 "day": 8,
                 "completed": false,
                 "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 9,
+                "completed": false,
+                "activity_type": "poker_night"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 10,
+                "completed": true,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 11,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 12,
+                "completed": false,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 13,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 14,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 15,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 1,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 2,
+                "completed": false,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 3,
+                "completed": true,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 4,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 5,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 6,
+                "completed": true,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 7,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 8,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 9,
+                "completed": false,
+                "activity_type": "poker_night"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 10,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 11,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 12,
+                "completed": false,
+                "activity_type": "niche_night"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 13,
+                "completed": true,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 14,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 15,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 1,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 2,
+                "completed": false,
+                "activity_type": "casino_night"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 3,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 4,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 5,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 6,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 7,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 8,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 9,
+                "completed": false,
+                "activity_type": "poker_night"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 10,
+                "completed": true,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 11,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 12,
+                "completed": false,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 13,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 14,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 15,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 1,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 2,
+                "completed": false,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 3,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 4,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 5,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 6,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 7,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 8,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 9,
+                "completed": false,
+                "activity_type": "poker_night"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 10,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 11,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 12,
+                "completed": false,
+                "activity_type": "casino_night"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 13,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 14,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 15,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 12,
+                "day": 1,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 12,
+                "day": 2,
+                "completed": false,
+                "activity_type": "casino_night"
+            },
+            {
+                "year": 2026,
+                "month": 12,
+                "day": 3,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 12,
+                "day": 4,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 12,
+                "day": 5,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 12,
+                "day": 6,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 12,
+                "day": 7,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 12,
+                "day": 8,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 12,
+                "day": 9,
+                "completed": false,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2026,
+                "month": 12,
+                "day": 10,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 12,
+                "day": 11,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 12,
+                "day": 12,
+                "completed": false,
+                "activity_type": "poker_night"
+            },
+            {
+                "year": 2026,
+                "month": 12,
+                "day": 13,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 12,
+                "day": 14,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 12,
+                "day": 15,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2027,
+                "month": 1,
+                "day": 1,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 1,
+                "day": 2,
+                "completed": false,
+                "activity_type": "casino_night"
+            },
+            {
+                "year": 2027,
+                "month": 1,
+                "day": 3,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2027,
+                "month": 1,
+                "day": 4,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 1,
+                "day": 5,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2027,
+                "month": 1,
+                "day": 6,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2027,
+                "month": 1,
+                "day": 7,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 1,
+                "day": 8,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2027,
+                "month": 1,
+                "day": 9,
+                "completed": true,
+                "activity_type": "poker_night"
+            },
+            {
+                "year": 2027,
+                "month": 1,
+                "day": 10,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 1,
+                "day": 11,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2027,
+                "month": 1,
+                "day": 12,
+                "completed": false,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2027,
+                "month": 1,
+                "day": 13,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2027,
+                "month": 1,
+                "day": 14,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 1,
+                "day": 15,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2027,
+                "month": 2,
+                "day": 1,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 2,
+                "day": 2,
+                "completed": false,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2027,
+                "month": 2,
+                "day": 3,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2027,
+                "month": 2,
+                "day": 4,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 2,
+                "day": 5,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2027,
+                "month": 2,
+                "day": 6,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2027,
+                "month": 2,
+                "day": 7,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 2,
+                "day": 8,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2027,
+                "month": 2,
+                "day": 9,
+                "completed": false,
+                "activity_type": "poker_night"
+            },
+            {
+                "year": 2027,
+                "month": 2,
+                "day": 10,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 2,
+                "day": 11,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2027,
+                "month": 2,
+                "day": 12,
+                "completed": false,
+                "activity_type": "casino_night"
+            },
+            {
+                "year": 2027,
+                "month": 2,
+                "day": 13,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2027,
+                "month": 2,
+                "day": 14,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 2,
+                "day": 15,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2027,
+                "month": 3,
+                "day": 1,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 3,
+                "day": 2,
+                "completed": false,
+                "activity_type": "poker_night"
+            },
+            {
+                "year": 2027,
+                "month": 3,
+                "day": 3,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2027,
+                "month": 3,
+                "day": 4,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 3,
+                "day": 5,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2027,
+                "month": 3,
+                "day": 6,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2027,
+                "month": 3,
+                "day": 7,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 3,
+                "day": 8,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2027,
+                "month": 3,
+                "day": 9,
+                "completed": false,
+                "activity_type": "niche_night"
+            },
+            {
+                "year": 2027,
+                "month": 3,
+                "day": 10,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 3,
+                "day": 11,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2027,
+                "month": 3,
+                "day": 12,
+                "completed": false,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2027,
+                "month": 3,
+                "day": 13,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2027,
+                "month": 3,
+                "day": 14,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 3,
+                "day": 15,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2027,
+                "month": 4,
+                "day": 1,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 4,
+                "day": 2,
+                "completed": false,
+                "activity_type": "casino_night"
+            },
+            {
+                "year": 2027,
+                "month": 4,
+                "day": 3,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2027,
+                "month": 4,
+                "day": 4,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 4,
+                "day": 5,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2027,
+                "month": 4,
+                "day": 6,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2027,
+                "month": 4,
+                "day": 7,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 4,
+                "day": 8,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2027,
+                "month": 4,
+                "day": 9,
+                "completed": false,
+                "activity_type": "niche_night"
+            },
+            {
+                "year": 2027,
+                "month": 4,
+                "day": 10,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 4,
+                "day": 11,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2027,
+                "month": 4,
+                "day": 12,
+                "completed": false,
+                "activity_type": "poker_night"
+            },
+            {
+                "year": 2027,
+                "month": 4,
+                "day": 13,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2027,
+                "month": 4,
+                "day": 14,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 4,
+                "day": 15,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2027,
+                "month": 5,
+                "day": 1,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 5,
+                "day": 2,
+                "completed": false,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2027,
+                "month": 5,
+                "day": 3,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2027,
+                "month": 5,
+                "day": 4,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 5,
+                "day": 5,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2027,
+                "month": 5,
+                "day": 6,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2027,
+                "month": 5,
+                "day": 7,
+                "completed": true,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 5,
+                "day": 8,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2027,
+                "month": 5,
+                "day": 9,
+                "completed": false,
+                "activity_type": "casino_night"
+            },
+            {
+                "year": 2027,
+                "month": 5,
+                "day": 10,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2027,
+                "month": 5,
+                "day": 11,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2027,
+                "month": 5,
+                "day": 12,
+                "completed": false,
+                "activity_type": "poker_night"
+            },
+            {
+                "year": 2027,
+                "month": 5,
+                "day": 13,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2027,
+                "month": 5,
+                "day": 14,
+                "completed": false,
+                "activity_type": "round"
             }
         ],
         "current_schedule": [
@@ -1031,13 +2018,13 @@
             {
                 "day_number": 2,
                 "weekday_index": 1,
-                "activity_type": "casino_night",
+                "activity_type": "casual_cards",
                 "completed": false,
-                "title": "Casino Night",
+                "title": "Casual Cards",
                 "game_ids": [
-                    "blackjack",
-                    "roulette",
-                    "horse_races"
+                    "score_four",
+                    "bango",
+                    "crazy_eights"
                 ]
             },
             {
@@ -1045,7 +2032,7 @@
                 "weekday_index": 2,
                 "activity_type": "work",
                 "completed": false,
-                "title": "Start Fire"
+                "title": "Wax Floors"
             },
             {
                 "day_number": 4,
@@ -1060,21 +2047,21 @@
                 "activity_type": "challenge",
                 "completed": false,
                 "title": "Challenge Round",
-                "challenge_id": "draw_3",
-                "challenge_name": "3 Draw"
+                "challenge_id": "all_or_nothing",
+                "challenge_name": "All or Nothing"
             },
             {
                 "day_number": 6,
                 "weekday_index": 0,
                 "activity_type": "work",
                 "completed": false,
-                "title": "Clean Toilets"
+                "title": "Mop Spill"
             },
             {
                 "day_number": 7,
                 "weekday_index": 1,
                 "activity_type": "round",
-                "completed": false,
+                "completed": true,
                 "title": "Play Solitaire"
             },
             {
@@ -1089,15 +2076,14 @@
             {
                 "day_number": 9,
                 "weekday_index": 3,
-                "activity_type": "poker_night",
+                "activity_type": "casino_night",
                 "completed": false,
-                "title": "Poker Night",
+                "title": "Casino Night",
                 "game_ids": [
-                    "texas_holdem",
-                    "seven_card_stud",
-                    "five_card_draw"
-                ],
-                "high_stakes_game_id": "texas_holdem"
+                    "blackjack",
+                    "roulette",
+                    "horse_races"
+                ]
             },
             {
                 "day_number": 10,
@@ -1117,14 +2103,15 @@
             {
                 "day_number": 12,
                 "weekday_index": 1,
-                "activity_type": "casual_cards",
+                "activity_type": "poker_night",
                 "completed": false,
-                "title": "Casual Cards",
+                "title": "Poker Night",
                 "game_ids": [
-                    "score_four",
-                    "bango",
-                    "crazy_eights"
-                ]
+                    "texas_holdem",
+                    "seven_card_stud",
+                    "five_card_draw"
+                ],
+                "high_stakes_game_id": "five_card_draw"
             },
             {
                 "day_number": 13,
@@ -1151,6 +2138,222 @@
             }
         ],
         "news_items": [
+            {
+                "headline": "ROUGH MONTH FOR MOLLY COURTS",
+                "body": "Molly Courts fell 3 places in the international rankings and now sits at world #28.",
+                "category": "leaderboard",
+                "month": 5,
+                "year": 2027,
+                "career_day": 241
+            },
+            {
+                "headline": "NURSE RATCHED SURGES UP RANKINGS",
+                "body": "Nurse Ratched climbed 5 places this month and now sits at world #24.",
+                "category": "leaderboard",
+                "month": 5,
+                "year": 2027,
+                "career_day": 241
+            },
+            {
+                "headline": "JACK ZITBOMB RETAINS WORLD #1",
+                "body": "Jack Zitbomb remains atop the international rankings with a rating of 3,241.",
+                "category": "leaderboard",
+                "month": 5,
+                "year": 2027,
+                "career_day": 241
+            },
+            {
+                "headline": "ROUGH MONTH FOR JIU WANG",
+                "body": "Jiu Wang fell 3 places in the international rankings and now sits at world #24.",
+                "category": "leaderboard",
+                "month": 4,
+                "year": 2027,
+                "career_day": 226
+            },
+            {
+                "headline": "JAIRO PONYTAIL SURGES UP RANKINGS",
+                "body": "Jairo Ponytail climbed 4 places this month and now sits at world #21.",
+                "category": "leaderboard",
+                "month": 4,
+                "year": 2027,
+                "career_day": 226
+            },
+            {
+                "headline": "JACK ZITBOMB RETAINS WORLD #1",
+                "body": "Jack Zitbomb remains atop the international rankings with a rating of 3,188.",
+                "category": "leaderboard",
+                "month": 4,
+                "year": 2027,
+                "career_day": 226
+            },
+            {
+                "headline": "ROUGH MONTH FOR IONA MCDOUGAL",
+                "body": "Iona McDougal fell 2 places in the international rankings and now sits at world #19.",
+                "category": "leaderboard",
+                "month": 3,
+                "year": 2027,
+                "career_day": 211
+            },
+            {
+                "headline": "HUGH MINX SURGES UP RANKINGS",
+                "body": "Hugh Minx climbed 2 places this month and now sits at world #16.",
+                "category": "leaderboard",
+                "month": 3,
+                "year": 2027,
+                "career_day": 211
+            },
+            {
+                "headline": "JACK ZITBOMB RETAINS WORLD #1",
+                "body": "Jack Zitbomb remains atop the international rankings with a rating of 3,140.",
+                "category": "leaderboard",
+                "month": 3,
+                "year": 2027,
+                "career_day": 211
+            },
+            {
+                "headline": "ROUGH MONTH FOR ROSALIE DE LEON",
+                "body": "Rosalie de Leon fell 2 places in the international rankings and now sits at world #19.",
+                "category": "leaderboard",
+                "month": 2,
+                "year": 2027,
+                "career_day": 196
+            },
+            {
+                "headline": "IONA MCDOUGAL SURGES UP RANKINGS",
+                "body": "Iona McDougal climbed 2 places this month and now sits at world #17.",
+                "category": "leaderboard",
+                "month": 2,
+                "year": 2027,
+                "career_day": 196
+            },
+            {
+                "headline": "JACK ZITBOMB RETAINS WORLD #1",
+                "body": "Jack Zitbomb remains atop the international rankings with a rating of 3,141.",
+                "category": "leaderboard",
+                "month": 2,
+                "year": 2027,
+                "career_day": 196
+            },
+            {
+                "headline": "ROUGH MONTH FOR AMI AMICA",
+                "body": "Ami Amica fell 2 places in the international rankings and now sits at world #13.",
+                "category": "leaderboard",
+                "month": 1,
+                "year": 2027,
+                "career_day": 181
+            },
+            {
+                "headline": "KURWA KRYZBYWLESKI SURGES UP RANKINGS",
+                "body": "Kurwa Kryzbywleski climbed 4 places this month and now sits at world #14.",
+                "category": "leaderboard",
+                "month": 1,
+                "year": 2027,
+                "career_day": 181
+            },
+            {
+                "headline": "JACK ZITBOMB RETAINS WORLD #1",
+                "body": "Jack Zitbomb remains atop the international rankings with a rating of 3,129.",
+                "category": "leaderboard",
+                "month": 1,
+                "year": 2027,
+                "career_day": 181
+            },
+            {
+                "headline": "ROUGH MONTH FOR CHIARA SAMMY",
+                "body": "Chiara Sammy fell 3 places in the international rankings and now sits at world #28.",
+                "category": "leaderboard",
+                "month": 12,
+                "year": 2026,
+                "career_day": 166
+            },
+            {
+                "headline": "MELINDA CROMWELL SURGES UP RANKINGS",
+                "body": "Melinda Cromwell climbed 2 places this month and now sits at world #4.",
+                "category": "leaderboard",
+                "month": 12,
+                "year": 2026,
+                "career_day": 166
+            },
+            {
+                "headline": "JACK ZITBOMB RETAINS WORLD #1",
+                "body": "Jack Zitbomb remains atop the international rankings with a rating of 3,142.",
+                "category": "leaderboard",
+                "month": 12,
+                "year": 2026,
+                "career_day": 166
+            },
+            {
+                "headline": "ROUGH MONTH FOR KURWA KRYZBYWLESKI",
+                "body": "Kurwa Kryzbywleski fell 2 places in the international rankings and now sits at world #17.",
+                "category": "leaderboard",
+                "month": 11,
+                "year": 2026,
+                "career_day": 151
+            },
+            {
+                "headline": "ROSALIE DE LEON SURGES UP RANKINGS",
+                "body": "Rosalie de Leon climbed 4 places this month and now sits at world #14.",
+                "category": "leaderboard",
+                "month": 11,
+                "year": 2026,
+                "career_day": 151
+            },
+            {
+                "headline": "JACK ZITBOMB RETAINS WORLD #1",
+                "body": "Jack Zitbomb remains atop the international rankings with a rating of 3,109.",
+                "category": "leaderboard",
+                "month": 11,
+                "year": 2026,
+                "career_day": 151
+            },
+            {
+                "headline": "ROUGH MONTH FOR HUGH MINX",
+                "body": "Hugh Minx fell 3 places in the international rankings and now sits at world #19.",
+                "category": "leaderboard",
+                "month": 10,
+                "year": 2026,
+                "career_day": 136
+            },
+            {
+                "headline": "PALINA PEPPER SURGES UP RANKINGS",
+                "body": "Palina Pepper climbed 4 places this month and now sits at world #14.",
+                "category": "leaderboard",
+                "month": 10,
+                "year": 2026,
+                "career_day": 136
+            },
+            {
+                "headline": "JACK ZITBOMB RETAINS WORLD #1",
+                "body": "Jack Zitbomb remains atop the international rankings with a rating of 3,119.",
+                "category": "leaderboard",
+                "month": 10,
+                "year": 2026,
+                "career_day": 136
+            },
+            {
+                "headline": "ROUGH MONTH FOR PALINA PEPPER",
+                "body": "Palina Pepper fell 3 places in the international rankings and now sits at world #18.",
+                "category": "leaderboard",
+                "month": 9,
+                "year": 2026,
+                "career_day": 121
+            },
+            {
+                "headline": "HARPREET RAJAH SURGES UP RANKINGS",
+                "body": "Harpreet Rajah climbed 2 places this month and now sits at world #7.",
+                "category": "leaderboard",
+                "month": 9,
+                "year": 2026,
+                "career_day": 121
+            },
+            {
+                "headline": "JACK ZITBOMB RETAINS WORLD #1",
+                "body": "Jack Zitbomb remains atop the international rankings with a rating of 3,132.",
+                "category": "leaderboard",
+                "month": 9,
+                "year": 2026,
+                "career_day": 121
+            },
             {
                 "headline": "ROUGH MONTH FOR ELINUR BUTTER",
                 "body": "Elinur Butter fell 2 places in the international rankings and now sits at world #28.",
@@ -1338,56 +2541,66 @@
         ]
     },
     "cosmetics": {
-        "selected_menu_background": "bg_blue_doodle",
+        "selected_menu_background": "bg_chichen",
         "selected_felt": "f_crystalized",
-        "selected_title": "title_default",
+        "selected_title": "title_penciled",
         "selected_card_back": "back_default",
+        "selected_cursor": "ali",
         "unlocked_menu_backgrounds": [
-            "bg_brazil",
-            "bg_et",
-            "bg_chichen",
-            "bg_blue_doodle",
-            "bg_noodle",
-            "bg_default",
+            "bg_mausoleum",
             "bg_gardens",
+            "bg_noodle",
+            "bg_microscope",
             "bg_wall",
-            "bg_petra",
-            "bg_microscope"
+            "bg_blue_doodle",
+            "bg_chichen",
+            "bg_giza",
+            "bg_et",
+            "bg_default",
+            "bg_lighthouse",
+            "bg_brazil",
+            "bg_petra"
         ],
         "unlocked_felts": [
-            "f_blanky",
-            "f_high_society",
-            "f_gordon",
-            "f_rock_candy",
-            "f_crystalized",
-            "f_fun_felt",
-            "f_light_touch",
-            "f_crystalized_grain",
             "f_game_night",
-            "f_default"
+            "f_grain",
+            "f_blanky",
+            "f_fun_felt",
+            "f_crystalized_grain",
+            "f_default",
+            "f_crystalized",
+            "f_rock_candy",
+            "f_high_society",
+            "f_blue",
+            "f_light_touch",
+            "f_gordon",
+            "f_sponge"
         ],
         "unlocked_titles": [
-            "title_top_dog",
-            "title_isolation",
-            "title_soli_tare_red",
-            "title_penciled",
-            "title_high_roller",
-            "title_neon",
-            "title_cards",
-            "title_default",
+            "title_penciled_inv",
             "title_patience_creep",
+            "title_high_roller",
             "title_soli_tare_blue",
+            "title_neon",
             "title_solitary",
             "title_shatter_1",
+            "title_cardshark",
+            "title_penciled",
+            "title_top_dog",
+            "title_default",
+            "title_cards",
+            "title_tacit",
             "title_solitaire_pixel",
             "title_patience_dare",
-            "title_cardshark"
+            "title_isolation",
+            "title_soli_tare_red"
         ],
         "unlocked_card_backs": [
             "back_default"
         ]
     },
     "settings": {
-        "preferred_difficulty": "normal"
+        "preferred_difficulty": "normal",
+        "solitaire_deal_mode": "verified"
     }
 }

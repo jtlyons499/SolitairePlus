@@ -2,7 +2,7 @@ import random
 from collections import Counter
 from itertools import combinations
 
-from poker_core import format_poker_cards
+from poker_core import describe_poker_score, format_poker_cards
 from poker_ai import (
     get_poker_personality,
     get_poker_skill_factor,
@@ -806,12 +806,16 @@ class FiveCardDrawGame(TexasHoldemGame):
                 )
 
             category = HAND_NAMES[result[0][0]]
+            hand_detail = describe_poker_score(
+                result[0],
+                compact=True,
+            )
 
             self.log_hand_event(
                 "showdown_hand",
                 (
                     f"{prefix} {format_poker_cards(cards)} "
-                    f"({category})."
+                    f"({hand_detail})."
                 ),
                 actor_index=player_index,
                 cards=[
@@ -820,6 +824,7 @@ class FiveCardDrawGame(TexasHoldemGame):
                     if card
                 ],
                 hand_name=category,
+                hand_detail=hand_detail,
             )
 
         side_pots = self.build_side_pots()
@@ -908,10 +913,14 @@ class FiveCardDrawGame(TexasHoldemGame):
             category = HAND_NAMES[
                 results[winner_index][0][0]
             ]
+            hand_detail = describe_poker_score(
+                results[winner_index][0],
+                compact=True,
+            )
 
             if winner_index == 0:
                 self.result_text = (
-                    f"You win ${winnings:,} with {category}!"
+                    f"You win ${winnings:,} with {hand_detail}!"
                 )
             else:
                 winner_name = self.get_table_player_name(
@@ -919,7 +928,7 @@ class FiveCardDrawGame(TexasHoldemGame):
                 )
                 self.result_text = (
                     f"{winner_name} wins ${winnings:,} "
-                    f"with {category}."
+                    f"with {hand_detail}."
                 )
         else:
             payout_parts = []

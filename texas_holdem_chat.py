@@ -78,37 +78,37 @@ NPC_ACTION_CHAT = {
     "opportunist": {
 
         "check": [
-            "Nothing to see here.",
-            "Go ahead.",
+            "nothing to see here.",
+            "go ahead.",
             "I'll wait.",
-            "Your move.",
+            "ur move",
         ],
 
         "call": [
             "I'll pay to see it.",
-            "Interesting.",
-            "I'm still here.",
-            "Let's keep going.",
+            "neat...",
+            "i'm sticking in it",
+            "let's keep going.",
         ],
 
         "bet": [
-            "Time to make this interesting.",
+            "spicing it up rn",
             "Let's put some pressure on.",
-            "I've seen enough.",
-            "Now we're playing.",
+            "I've seen enough",
+            "now we're playing",
         ],
 
         "raise": [
             "I think you missed something.",
             "Let's make it expensive.",
             "That's not enough.",
-            "I'll raise.",
+            "raise da r00f",
         ],
 
         "fold": [
-            "Not worth it.",
-            "I'll wait for a better spot.",
-            "You got this one.",
+            "nah not worth it",
+            "I'll wait for another shot",
+            "gl every1 else",
             "Bad price. I'm out.",
         ],
 
@@ -124,21 +124,21 @@ NPC_ACTION_CHAT = {
     "aggressive": {
 
         "check": [
-            "Don't get comfortable.",
+            "don't get comfortable",
             "Fine. Check.",
             "I'll give you one free card.",
-            "For now.",
+            "nuthin...for now",
         ],
 
         "call": [
             "That's all?",
-            "Easy call.",
+            "easy call tbh",
             "I'm not going anywhere.",
-            "Keep betting.",
+            "keep betting",
         ],
 
         "bet": [
-            "Let's go.",
+            "Leggooo",
             "Pay up.",
             "Make a decision.",
             "Here's something to think about.",
@@ -180,8 +180,8 @@ NPC_ACTION_CHAT = {
         "call": [
             "Turt for tart.",
             "I'll match it.",
-            "You started this.",
-            "Fine by me.",
+            "you started this",
+            "fine by me",
         ],
 
         "bet": [
@@ -193,9 +193,9 @@ NPC_ACTION_CHAT = {
 
         "raise": [
             "You wanted to bet?",
-            "Let's raise the stakes.",
+            "let's raise the stakes",
             "I'll see that and add some.",
-            "You opened the door.",
+            "You opened the door, pal.",
             "Careful what you start.",
         ],
 
@@ -207,10 +207,10 @@ NPC_ACTION_CHAT = {
         ],
 
         "all_in": [
-            "You wanted bigger. Here you go.",
-            "Let's take this all the way.",
+            "you wanted big moves, here ya go.",
+            "all the way.",
             "No half measures.",
-            "Your move now.",
+            "Your move fellas.",
         ],
     },
 
@@ -218,9 +218,9 @@ NPC_ACTION_CHAT = {
     "unpredictable": {
 
         "check": [
-            "Hmm.",
-            "Check.",
-            "Maybe.",
+            "Hmmm",
+            "Check 4 me",
+            "Maybeeee...nah",
             "Nothing happening here.",
             "*raises spork*",
         ],
@@ -233,16 +233,16 @@ NPC_ACTION_CHAT = {
         ],
 
         "bet": [
-            "Let's do something weird.",
-            "This feels right.",
+            "let's do something weird",
+            "this feels right",
             "I have a plan. Probably.",
             "Money goes here.",
         ],
 
         "raise": [
             "Time to suffer!",
-            "Let's make this worse.",
-            "I changed my mind.",
+            "Let's make this worse...",
+            "I changed my mind",
             "More.",
             "Well, that escalated quickly xD",
         ],
@@ -255,10 +255,10 @@ NPC_ACTION_CHAT = {
         ],
 
         "all_in": [
-            "YOLO.",
+            "YOLO",
             "ALL of it.",
             "I have made a decision.",
-            "Future me can deal with this.",
+            "future me can deal with this",
         ],
     },
 
@@ -266,21 +266,21 @@ NPC_ACTION_CHAT = {
     "balanced": {
 
         "check": [
-            "Check check.",
+            "check check",
             "I'll check.",
             "Let's see another.",
-            "Checkbacca."
+            "Checkbacca"
         ],
 
         "call": [
-            "Call.",
+            "call-ee-oohh",
             "I'll stay in.",
-            "I'm good with that.",
+            "i'm good w/ that.",
         ],
 
         "bet": [
             "I'll bet.",
-            "Let's put something out there.",
+            "let's put something out there",
             "I'll lead.",
         ],
 
@@ -292,14 +292,14 @@ NPC_ACTION_CHAT = {
 
         "fold": [
             "Fold.",
-            "I'm out.",
-            "Not this one.",
+            "i'm out",
+            "not this one",
         ],
 
         "all_in": [
-            "All in.",
-            "Everything I've got.",
-            "Let's see it.",
+            "All in, I do declare.",
+            "everything I've got fr",
+            "let's see it.",
         ],
     },
 }
@@ -350,7 +350,7 @@ PLAYER_REACTION_CHAT = {
         "all_in": [
             "That's a decision.",
             "Let's see if you mean it.",
-            "Now this is interesting.",
+            "Ooooh ok ok.",
         ],
     },
 
@@ -372,7 +372,7 @@ PLAYER_REACTION_CHAT = {
         "all_in": [
             "Let's go!",
             "That's more like it.",
-            "Hurt me more.",
+            "Hurt me more!",
         ],
     },
 
@@ -429,8 +429,8 @@ PLAYER_REACTION_CHAT = {
         ],
 
         "raise": [
-            "That's a raise.",
-            "All right.",
+            "That's a raise, alright.",
+            "aight ok",
         ],
 
         "all_in": [
@@ -484,6 +484,17 @@ def get_npc_name(
             < len(holdem_game.npcs)
     ):
         return "Opponent"
+
+    get_name = getattr(
+        holdem_game,
+        "get_table_player_name",
+        None
+    )
+
+    if callable(get_name):
+        return get_name(
+            npc_index + 1
+        )
 
     return (
         holdem_game.npcs[

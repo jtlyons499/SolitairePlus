@@ -1,7 +1,7 @@
 import random
 from collections import Counter
 
-from poker_core import format_poker_card, format_poker_cards
+from poker_core import describe_poker_score, format_poker_card, format_poker_cards
 from poker_ai import (
     get_poker_personality_profile,
 )
@@ -1575,12 +1575,17 @@ class SevenCardStudGame(TexasHoldemGame):
                 result[0][0]
             ]
 
+            hand_detail = describe_poker_score(
+                result[0],
+                compact=True,
+            )
+
             self.log_hand_event(
                 "showdown_hand",
                 (
                     f"{prefix} "
                     f"{format_poker_cards(cards)} "
-                    f"({category})."
+                    f"({hand_detail})."
                 ),
                 actor_index=player_index,
                 cards=[
@@ -1589,6 +1594,7 @@ class SevenCardStudGame(TexasHoldemGame):
                     if card
                 ],
                 hand_name=category,
+                hand_detail=hand_detail,
             )
 
         side_pots = (
@@ -1721,10 +1727,15 @@ class SevenCardStudGame(TexasHoldemGame):
                 ][0][0]
             ]
 
+            hand_detail = describe_poker_score(
+                results[winner_index][0],
+                compact=True,
+            )
+
             if winner_index == 0:
                 self.result_text = (
                     f"You win ${winnings:,} "
-                    f"with {category}!"
+                    f"with {hand_detail}!"
                 )
             else:
                 winner_name = (
@@ -1736,7 +1747,7 @@ class SevenCardStudGame(TexasHoldemGame):
                 self.result_text = (
                     f"{winner_name} wins "
                     f"${winnings:,} with "
-                    f"{category}."
+                    f"{hand_detail}."
                 )
 
         else:

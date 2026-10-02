@@ -550,6 +550,422 @@ def draw_wager_marker(
 
 
 # ==================================================
+# POT DISPLAY / PAYOUT ANIMATION
+# ==================================================
+
+_stud_payout_fx_key = None
+_stud_payout_fx_started_at = 0
+
+STUD_PAYOUT_FX_DURATION = 1050
+
+
+def _stud_pot_chip_count(
+        amount,
+        base_unit
+):
+    if amount <= 0:
+        return 0
+
+    ratio = (
+        float(amount)
+        / max(
+            1.0,
+            float(base_unit)
+        )
+    )
+
+    if ratio < 2:
+        return 1
+    if ratio < 5:
+        return 2
+    if ratio < 10:
+        return 3
+    if ratio < 20:
+        return 4
+    if ratio < 40:
+        return 5
+    if ratio < 80:
+        return 6
+
+    return 7
+
+
+def draw_stud_pot_stack(
+        surface,
+        amount,
+        center,
+        base_unit
+):
+    amount = max(
+        0,
+        int(amount)
+    )
+
+    count = _stud_pot_chip_count(
+        amount,
+        base_unit
+    )
+
+    if count <= 0:
+        return
+
+    chips = get_stud_chip_images()
+    chip = chips.get(
+        get_chip_key(
+            amount,
+            base_unit
+        )
+    )
+
+    if chip is None:
+        return
+
+    chip_size = 21
+    spacing = 11
+    row_capacity = 4
+
+    for index in range(count):
+        row = index // row_capacity
+        column = index % row_capacity
+
+        items_in_row = min(
+            row_capacity,
+            count - row * row_capacity
+        )
+
+        row_width = (
+            (items_in_row - 1)
+            * spacing
+        )
+
+        draw_x = (
+            center[0]
+            - row_width // 2
+            + column * spacing
+        )
+
+        draw_y = (
+            center[1]
+            - row * 7
+        )
+
+        scaled = pygame.transform.smoothscale(
+            chip,
+            (
+                chip_size,
+                chip_size
+            )
+        )
+
+        surface.blit(
+            scaled,
+            scaled.get_rect(
+                center=(
+                    draw_x,
+                    draw_y
+                )
+            )
+        )
+
+
+def get_stud_payout_fx_progress(
+        game
+):
+    global _stud_payout_fx_key
+    global _stud_payout_fx_started_at
+
+    if (
+            game.current_stage != "showdown"
+            or not game.hand_complete
+            or not game.winner_indexes
+            or game.get_display_pot_amount() <= 0
+    ):
+        return None
+
+    key = (
+        getattr(
+            game,
+            "hand_number",
+            0
+        ),
+        tuple(
+            game.winner_indexes
+        ),
+        int(
+            game.get_display_pot_amount()
+        )
+    )
+
+    now = pygame.time.get_ticks()
+
+    if key != _stud_payout_fx_key:
+        _stud_payout_fx_key = key
+        _stud_payout_fx_started_at = now
+
+    progress = (
+        now
+        - _stud_payout_fx_started_at
+    ) / STUD_PAYOUT_FX_DURATION
+
+    progress = max(
+        0.0,
+        min(
+            1.0,
+            progress
+        )
+    )
+
+    return _ease_out_cubic(
+        progress
+    )
+
+
+def draw_stud_payout_animation(
+        surface,
+        game,
+        npc_anchors
+):
+    progress = get_stud_payout_fx_progress(
+        game
+    )
+
+    if (
+            progress is None
+            or progress >= 1.0
+    ):
+        return
+
+    winners = list(
+        game.winner_indexes
+    )
+
+    if not winners:
+        return
+
+    amount = max(
+        1,
+        int(
+            game.get_display_pot_amount()
+        )
+    )
+
+    base_unit = max(
+        1,
+        int(
+            getattr(
+                game,
+                "small_bet",
+                1
+            )
+        )
+    )
+
+    chips = get_stud_chip_images()
+    chip = chips.get(
+        get_chip_key(
+            amount,
+            base_unit
+        )
+    )
+
+    if chip is None:
+        return
+
+    start = (
+        683,
+        242
+    )
+
+    target_by_player = {
+        0: (
+            683,
+            708
+        )
+    }
+
+    for index, anchor in enumerate(
+            npc_anchors
+    ):
+        target_by_player[
+            index + 1
+        ] = (
+            anchor[0] + 82,
+            anchor[1] + 28
+        )
+
+    chip_count = max(
+        3,
+        min(
+            8,
+            _stud_pot_chip_count(
+                amount,
+                base_unit
+            ) + 1
+        )
+    )
+
+    for chip_index in range(
+            chip_count
+    ):
+        winner_index = winners[
+            chip_index
+            % len(winners)
+        ]
+
+        target = target_by_player.get(
+            winner_index,
+            start
+        )
+
+        local_progress = max(
+            0.0,
+            min(
+                1.0,
+                progress
+                * 1.18
+                - chip_index * 0.035
+            )
+        )
+
+        draw_x = int(
+            start[0]
+            + (
+                target[0]
+                - start[0]
+            )
+            * local_progress
+        )
+
+        draw_y = int(
+            start[1]
+            + (
+                target[1]
+                - start[1]
+            )
+            * local_progress
+        )
+
+        draw_y -= int(
+            math.sin(
+                local_progress
+                * math.pi
+            )
+            * 34
+        )
+
+        draw_x += (
+            chip_index % 3
+            - 1
+        ) * 7
+
+        scaled = pygame.transform.smoothscale(
+            chip,
+            (
+                24,
+                24
+            )
+        )
+
+        surface.blit(
+            scaled,
+            scaled.get_rect(
+                center=(
+                    draw_x,
+                    draw_y
+                )
+            )
+        )
+
+
+def draw_stud_showdown_banner(
+        surface,
+        game
+):
+    if (
+            game.current_stage != "showdown"
+            or not game.result_text
+    ):
+        return
+
+    fonts = get_stud_fonts()
+
+    player_won = (
+        0 in game.winner_indexes
+    )
+
+    phase = (
+        pygame.time.get_ticks()
+        % 1200
+    ) / 1200.0
+
+    pulse = (
+        0.5
+        + 0.5
+        * math.sin(
+            phase
+            * math.tau
+        )
+    )
+
+    border = (
+        (
+            255,
+            int(
+                190
+                + 55 * pulse
+            ),
+            65
+        )
+        if player_won
+        else (
+            185,
+            190,
+            195
+        )
+    )
+
+    rect = pygame.Rect(
+        358,
+        448,
+        650,
+        48
+    )
+
+    draw_panel(
+        surface,
+        rect,
+        (
+            10,
+            12,
+            14,
+            225
+        ),
+        border=border,
+        radius=12,
+        border_width=(
+            4
+            if player_won
+            else 2
+        )
+    )
+
+    result_surface = render_text_fit(
+        game.result_text,
+        fonts["small"],
+        WHITE,
+        rect.width - 30,
+        minimum_size=12
+    )
+
+    surface.blit(
+        result_surface,
+        result_surface.get_rect(
+            center=rect.center
+        )
+    )
+
+
+# ==================================================
 # POLISHED CARD / CHIP ANIMATION HELPERS
 # ==================================================
 
@@ -1358,7 +1774,16 @@ def draw_log_panel(
         )
         scroll = _stud_log_scroll
 
-    visible_count = 3
+    visible_count = (
+        4
+        if _stud_active_tab == "chat"
+        else 3
+    )
+    line_step = (
+        19
+        if _stud_active_tab == "chat"
+        else 29
+    )
 
     max_scroll = max(
         0,
@@ -1411,7 +1836,7 @@ def draw_log_panel(
             )
         )
 
-        y += 29
+        y += line_step
 
 
 # ==================================================
@@ -1681,8 +2106,13 @@ def draw_npc_seat(
 
     draw_panel(surface, name_rect, name_fill, name_border, radius=10,
                border_width=4 if winner else (3 if current else 2))
-    name_surface = render_text_fit(npc.get("name", "Opponent"), fonts["name"],
-                                   name_color, name_rect.width - 14, minimum_size=12)
+    name_surface = render_text_fit(
+        game.get_table_player_name(index + 1),
+        fonts["name"],
+        name_color,
+        name_rect.width - 14,
+        minimum_size=12
+    )
     surface.blit(name_surface, name_surface.get_rect(center=name_rect.center))
 
     money_rect = pygame.Rect(name_rect.centerx - 59, name_rect.bottom - 2, 118, 28)
@@ -1756,11 +2186,33 @@ def draw_action_panel(
     draw_panel(surface, STUD_ACTION_PANEL_RECT, (10, 15, 15, 235), (115, 125, 120), radius=12)
 
     if game.hand_complete:
-        label = "NEXT HAND"
-        if next_hand_seconds is not None and next_hand_seconds > 0:
-            label += f" ({next_hand_seconds})"
-        enabled = game.player_stack > 0 and not game.player_busted and not game.all_npcs_busted()
-        draw_button(surface, STUD_NEXT_HAND_RECT, label, mouse_pos, fonts["small"], enabled=enabled, attention=enabled)
+        table_cleared = (
+            game.all_npcs_busted()
+            and not game.player_busted
+        )
+
+        if table_cleared:
+            label = "TABLE CLEARED +100"
+            enabled = True
+
+        else:
+            label = "NEXT HAND"
+            if next_hand_seconds is not None and next_hand_seconds > 0:
+                label += f" ({next_hand_seconds})"
+            enabled = (
+                game.player_stack > 0
+                and not game.player_busted
+            )
+
+        draw_button(
+            surface,
+            STUD_NEXT_HAND_RECT,
+            label,
+            mouse_pos,
+            fonts["small"],
+            enabled=enabled,
+            attention=enabled
+        )
         return
 
     if game.player_all_in or game.player_stack <= 0:
@@ -1879,8 +2331,29 @@ def draw_seven_card_stud(
     surface.blit(limits_surface, limits_surface.get_rect(center=(683, 228)))
 
     display_pot = game.get_display_pot_amount() if hasattr(game, "get_display_pot_amount") else game.pot
+    pot_base_unit = max(
+        1,
+        int(
+            getattr(
+                game,
+                "small_bet",
+                1
+            )
+        )
+    )
+
+    draw_stud_pot_stack(
+        surface,
+        display_pot,
+        (
+            683,
+            244
+        ),
+        pot_base_unit
+    )
+
     pot_surface = fonts["small"].render(f"Pot: ${display_pot:,}", True, WHITE)
-    surface.blit(pot_surface, pot_surface.get_rect(center=(683, 256)))
+    surface.blit(pot_surface, pot_surface.get_rect(center=(683, 266)))
 
     npc_anchors = [(180, 325), (450, 120), (900, 120), (1090, 325)]
     for index, npc in enumerate(game.npcs[:4]):
@@ -1955,7 +2428,7 @@ def draw_seven_card_stud(
             hand_surface = fonts["small"].render(f"Your hand: {hand_name}", True, GOLD)
             surface.blit(hand_surface, hand_surface.get_rect(center=(683, 505)))
 
-    if game.result_text:
+    if game.result_text and game.current_stage != "showdown":
         result_surface = render_text_fit(game.result_text, fonts["small"], WHITE, 650, minimum_size=12)
         surface.blit(result_surface, result_surface.get_rect(center=(683, 470)))
 
@@ -1964,6 +2437,18 @@ def draw_seven_card_stud(
         surface.blit(action_surface, action_surface.get_rect(center=(683, 662)))
 
     draw_player_hud(surface, game, player_name)
+
+    draw_stud_payout_animation(
+        surface,
+        game,
+        npc_anchors
+    )
+
+    draw_stud_showdown_banner(
+        surface,
+        game
+    )
+
     draw_log_panel(surface, game)
 
     current_hand = game.get_player_hand_name() if len(game.player_hand) >= 5 else None
