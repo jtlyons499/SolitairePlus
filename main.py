@@ -1491,7 +1491,7 @@ CAREER_JOBS = {
     "custodian": {
         "name": "Custodian",
         "required_rating": 0,
-        "pay": 100,
+        "pay": 75,
         "image":
             "assets/career/jobs/"
             "custodian.png",
@@ -1500,7 +1500,7 @@ CAREER_JOBS = {
     "satellite_repair": {
         "name": "Satellite Repair",
         "required_rating": 1200,
-        "pay": 150,
+        "pay": 125,
         "image":
             "assets/career/jobs/"
             "satellite_repair.png",
@@ -1509,7 +1509,7 @@ CAREER_JOBS = {
     "videographer": {
         "name": "Videographer",
         "required_rating": 1500,
-        "pay": 225,
+        "pay": 200,
         "image":
             "assets/career/jobs/"
             "videographer.png",
@@ -1518,7 +1518,7 @@ CAREER_JOBS = {
     "airline_pilot": {
         "name": "Airline Pilot",
         "required_rating": 1900,
-        "pay": 350,
+        "pay": 300,
         "image":
             "assets/career/jobs/"
             "airline_pilot.png",
@@ -1527,7 +1527,7 @@ CAREER_JOBS = {
     "spiritual_guru": {
         "name": "Spiritual Guru",
         "required_rating": 2000,
-        "pay": 550,
+        "pay": 450,
         "image":
             "assets/career/jobs/"
             "spiritual_guru.png",
@@ -1536,7 +1536,7 @@ CAREER_JOBS = {
     "solitaire_pensioner": {
         "name": "Solitaire Pensioner",
         "required_rating": 2500,
-        "pay": 750,
+        "pay": 650,
         "image":
             "assets/career/jobs/"
             "solitaire_pensioner.png",
@@ -26310,7 +26310,7 @@ while running:
                     and event.button in (1, 3)
                     and game_mouse_pos is not None
             ):
-                faro_action = get_faro_action(game_mouse_pos)
+                faro_action = get_faro_action(game_mouse_pos, event.button, faro_game)
                 is_right_click = (event.button == 3)
 
                 if faro_action == FARO_ACTION_CHIP_10:
