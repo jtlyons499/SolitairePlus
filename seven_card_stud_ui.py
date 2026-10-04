@@ -2,8 +2,7 @@ import math
 
 import pygame
 
-from poker_speech import PokerSpeechOverlay, is_poker_chat_popups_enabled
-from poker_ui_assets import draw_poker_logo
+from poker_speech import PokerSpeechOverlay
 
 
 # ==================================================
@@ -1501,7 +1500,7 @@ def add_seven_card_stud_chat_message(
     if not message:
         return
 
-    if speaker and is_poker_chat_popups_enabled():
+    if speaker:
         _stud_speech_overlay.post(
             speaker,
             message
@@ -1627,9 +1626,8 @@ def get_seven_card_stud_action(
     if STUD_OPTIONS_RECT.collidepoint(mouse_pos):
         return ACTION_OPTIONS
 
-    if (
-            game.hand_complete
-            and STUD_EXIT_RECT.collidepoint(mouse_pos)
+    if STUD_EXIT_RECT.collidepoint(
+            mouse_pos
     ):
         return ACTION_RETURN
 
@@ -2099,6 +2097,17 @@ def draw_npc_seat(
                 else:
                     draw_card_back(surface, card_back, x, y, card_w, card_h)
 
+            # Stud exposure cue: every face-up/public card gets a gold underline.
+            # This includes the Third Street upcard (card index 2).
+            if exposed and game.current_stage != "showdown":
+                pygame.draw.line(
+                    surface,
+                    GOLD,
+                    (x + 7, y + card_h + 2),
+                    (x + card_w - 7, y + card_h + 2),
+                    3,
+                )
+
             if folded:
                 fold_tint = pygame.Surface((card_w, card_h), pygame.SRCALPHA)
                 fold_tint.fill((105, 105, 105, 185))
@@ -2126,6 +2135,13 @@ def draw_npc_seat(
         minimum_size=12
     )
     surface.blit(name_surface, name_surface.get_rect(center=name_rect.center))
+
+    _stud_speech_overlay.draw(
+        surface,
+        game.get_table_player_name(index + 1),
+        name_rect,
+        fonts["tiny"]
+    )
 
     money_rect = pygame.Rect(name_rect.centerx - 59, name_rect.bottom - 2, 118, 28)
     stack = game.npc_stacks[index] if index < len(game.npc_stacks) else 0
@@ -2309,14 +2325,11 @@ def draw_seven_card_stud(
 
     draw_table(surface, felt_surface)
 
-    draw_poker_logo(
-        surface,
-        "seven_card_stud",
-        pygame.Rect(32, 66, 280, 75)
-    )
+    title = fonts["small"].render("SEVEN-CARD STUD", True, WHITE)
+    surface.blit(title, (22, 580))
 
     draw_button(surface, STUD_OPTIONS_RECT, "OPTIONS", mouse_pos, fonts["tiny"], enabled=True)
-    draw_button(surface, STUD_EXIT_RECT, "EXIT", mouse_pos, fonts["tiny"], enabled=bool(game.hand_complete))
+    draw_button(surface, STUD_EXIT_RECT, "EXIT", mouse_pos, fonts["tiny"], enabled=True)
 
     draw_panel(
         surface,
@@ -2426,9 +2439,13 @@ def draw_seven_card_stud(
         else:
             draw_card_face(surface, card, x, y, card_fronts, card_w, card_h)
 
-        # The first three cards are the starting hand. Every later street card
-        # gets a gold underline, including the face-down Seventh Street card.
-        if card_index >= 3 and game.current_stage != "showdown":
+        # Gold underline marks every public/showing card. On Third Street the
+        # first two cards are private hole cards and the third card is exposed.
+        # Fourth through Sixth Street are exposed; Seventh Street is private.
+        if (
+                game.current_stage != "showdown"
+                and game.is_stud_card_exposed(card_index)
+        ):
             pygame.draw.line(
                 surface,
                 GOLD,
@@ -2472,15 +2489,3 @@ def draw_seven_card_stud(
         surface.blit(hand_surface, hand_surface.get_rect(bottomright=(STUD_ACTION_PANEL_RECT.right - 6, STUD_ACTION_PANEL_RECT.y - 8)))
 
     draw_action_panel(surface, mouse_pos, game, next_hand_seconds=next_hand_seconds)
-
-    # Final speech-bubble overlay pass keeps chatter above cards and chips.
-    if is_poker_chat_popups_enabled():
-        for index, _npc in enumerate(game.npcs[:4]):
-            anchor_x, anchor_y = npc_anchors[index]
-            name_rect = pygame.Rect(anchor_x, anchor_y + 6, 165, 40)
-            _stud_speech_overlay.draw(
-                surface,
-                game.get_table_player_name(index + 1),
-                name_rect,
-                fonts["tiny"]
-            )

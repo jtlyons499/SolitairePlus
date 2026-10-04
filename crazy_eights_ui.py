@@ -21,6 +21,7 @@ _SUIT_RECTS = {
 
 _player_card_rects = []
 _fonts = None
+_suit_icon_cache = {}
 
 
 SUIT_NAMES = {
@@ -30,12 +31,30 @@ SUIT_NAMES = {
     "S": "Spades",
 }
 
-SUIT_SYMBOLS = {
-    "C": "♣",
-    "D": "♦",
-    "H": "♥",
-    "S": "♠",
+SUIT_ICON_PATHS = {
+    "C": "assets/ui/suits/clubs.png",
+    "D": "assets/ui/suits/diamonds.png",
+    "H": "assets/ui/suits/hearts.png",
+    "S": "assets/ui/suits/spades.png",
 }
+
+
+def _get_suit_icon(suit, size):
+    key = (suit, int(size))
+    if key in _suit_icon_cache:
+        return _suit_icon_cache[key]
+
+    path = SUIT_ICON_PATHS.get(suit)
+    image = None
+    if path:
+        try:
+            source = pygame.image.load(path).convert_alpha()
+            image = pygame.transform.smoothscale(source, (int(size), int(size)))
+        except (pygame.error, FileNotFoundError):
+            image = None
+
+    _suit_icon_cache[key] = image
+    return image
 
 
 def _get_fonts():
@@ -236,12 +255,18 @@ def draw_crazy_eights(
     surface.blit(discard_label, discard_label.get_rect(center=(discard_rect.centerx, discard_rect.bottom + 18)))
 
     suit_color = (235, 65, 70) if game.current_suit in ("D", "H") else (245, 245, 235)
-    suit_text = (
-        f"Active suit: {SUIT_SYMBOLS.get(game.current_suit, '')} "
-        f"{game.get_active_suit_name()}"
+    suit_surface = fonts["large"].render(
+        f"Active suit: {game.get_active_suit_name()}",
+        True,
+        suit_color,
     )
-    suit_surface = fonts["large"].render(suit_text, True, suit_color)
-    surface.blit(suit_surface, suit_surface.get_rect(center=(683, 425)))
+    suit_icon = _get_suit_icon(game.current_suit, 30)
+    total_width = suit_surface.get_width() + (38 if suit_icon is not None else 0)
+    left = 683 - total_width // 2
+    if suit_icon is not None:
+        surface.blit(suit_icon, (left, 410))
+        left += 38
+    surface.blit(suit_surface, (left, 410))
 
     if game.game_over:
         turn_text = game.result_text
@@ -319,8 +344,10 @@ def draw_crazy_eights(
         surface.blit(header, header.get_rect(center=(683, 337)))
 
         for suit, rect in _SUIT_RECTS.items():
-            label = f"{SUIT_SYMBOLS[suit]} {SUIT_NAMES[suit]}"
-            _draw_button(surface, rect, label, mouse_pos, fonts["small"], enabled=True)
+            _draw_button(surface, rect, SUIT_NAMES[suit], mouse_pos, fonts["small"], enabled=True)
+            icon = _get_suit_icon(suit, 20)
+            if icon is not None:
+                surface.blit(icon, (rect.x + 7, rect.centery - 10))
 
     # Game over result overlay.
     if game.game_over:

@@ -17,43 +17,45 @@
         }
     },
     "progression": {
-        "level": 6,
-        "xp": 907,
+        "level": 10,
+        "xp": 2642,
         "solitaire_points": 452
     },
     "career": {
         "unlocked": false,
-        "rating": 2506,
+        "rating": 2850,
         "ratings": {
-            "overall": 2506,
-            "solitaire": 1701,
+            "overall": 2850,
+            "solitaire": 1780,
             "texas_holdem": 1000,
             "five_card_draw": 1000,
             "seven_card_stud": 1000,
             "blackjack": 1000,
             "roulette": 1000,
-            "score_four": 1600
+            "score_four": 1700
         },
-        "cash": 11579,
-        "fans": 50651,
+        "cash": 78,
+        "fans": 122166,
         "fan_rewarded_jobs": [
             "airline_pilot",
             "satellite_repair",
+            "solitaire_pensioner",
             "spiritual_guru",
             "videographer"
         ],
         "fan_news_milestones": [
             1000,
             10000,
-            50000
+            50000,
+            100000
         ],
         "leaderboard_state": {
             "monkus_carlton": {
-                "rating": 3146,
-                "last_change": 2,
+                "rating": 3177,
+                "last_change": 44,
                 "ratings": {
-                    "overall": 3146,
-                    "solitaire": 3146,
+                    "overall": 3177,
+                    "solitaire": 3177,
                     "texas_holdem": 2515,
                     "five_card_draw": 2632,
                     "seven_card_stud": 2417,
@@ -61,17 +63,17 @@
                     "roulette": 2581,
                     "score_four": 2793
                 },
-                "age": 46,
+                "age": 47,
                 "birthday_month": 10,
                 "public_appeal": "magnetic",
                 "fans": 1000000
             },
             "gary_undo": {
-                "rating": 2331,
-                "last_change": -14,
+                "rating": 2336,
+                "last_change": -10,
                 "ratings": {
-                    "overall": 2331,
-                    "solitaire": 2331,
+                    "overall": 2336,
+                    "solitaire": 2336,
                     "texas_holdem": 2350,
                     "five_card_draw": 2359,
                     "seven_card_stud": 2548,
@@ -79,17 +81,17 @@
                     "roulette": 2583,
                     "score_four": 2259
                 },
-                "age": 38,
+                "age": 39,
                 "birthday_month": 10,
                 "public_appeal": "steady",
-                "fans": 280036
+                "fans": 282539
             },
             "big_mike": {
-                "rating": 2335,
-                "last_change": -34,
+                "rating": 2349,
+                "last_change": -3,
                 "ratings": {
-                    "overall": 2335,
-                    "solitaire": 2335,
+                    "overall": 2349,
+                    "solitaire": 2349,
                     "texas_holdem": 2444,
                     "five_card_draw": 2246,
                     "seven_card_stud": 2409,
@@ -97,17 +99,17 @@
                     "roulette": 2485,
                     "score_four": 2213
                 },
-                "age": 24,
+                "age": 25,
                 "birthday_month": 10,
                 "public_appeal": "reserved",
-                "fans": 248193
+                "fans": 254423
             },
             "shelly_barn": {
-                "rating": 2734,
-                "last_change": -42,
+                "rating": 2655,
+                "last_change": -39,
                 "ratings": {
-                    "overall": 2734,
-                    "solitaire": 2734,
+                    "overall": 2655,
+                    "solitaire": 2655,
                     "texas_holdem": 2693,
                     "five_card_draw": 2818,
                     "seven_card_stud": 2806,
@@ -118,14 +120,14 @@
                 "age": 42,
                 "birthday_month": 1,
                 "public_appeal": "magnetic",
-                "fans": 693249
+                "fans": 617411
             },
             "molly_courts": {
-                "rating": 1686,
-                "last_change": -20,
+                "rating": 1670,
+                "last_change": -22,
                 "ratings": {
-                    "overall": 1686,
-                    "solitaire": 1686,
+                    "overall": 1670,
+                    "solitaire": 1670,
                     "texas_holdem": 1581,
                     "five_card_draw": 1683,
                     "seven_card_stud": 1629,
@@ -136,14 +138,14 @@
                 "age": 7,
                 "birthday_month": 5,
                 "public_appeal": "charming",
-                "fans": 76352
+                "fans": 72887
             },
             "rosalie_de_leon": {
-                "rating": 1871,
-                "last_change": -8,
+                "rating": 1849,
+                "last_change": -29,
                 "ratings": {
-                    "overall": 1871,
-                    "solitaire": 1871,
+                    "overall": 1849,
+                    "solitaire": 1849,
                     "texas_holdem": 1990,
                     "five_card_draw": 2070,
                     "seven_card_stud": 2065,
@@ -151,17 +153,17 @@
                     "roulette": 1990,
                     "score_four": 1863
                 },
-                "age": 10,
+                "age": 11,
                 "birthday_month": 7,
                 "public_appeal": "charming",
-                "fans": 124735
+                "fans": 118135
             },
             "danny_de_leon": {
-                "rating": 1847,
-                "last_change": 14,
+                "rating": 1896,
+                "last_change": 30,
                 "ratings": {
-                    "overall": 1847,
-                    "solitaire": 1847,
+                    "overall": 1896,
+                    "solitaire": 1896,
                     "texas_holdem": 1647,
                     "five_card_draw": 1661,
                     "seven_card_stud": 1717,
@@ -172,14 +174,14 @@
                 "age": 9,
                 "birthday_month": 4,
                 "public_appeal": "steady",
-                "fans": 101333
+                "fans": 114250
             },
             "olga_mire": {
-                "rating": 2687,
-                "last_change": -2,
+                "rating": 2779,
+                "last_change": 4,
                 "ratings": {
-                    "overall": 2687,
-                    "solitaire": 2687,
+                    "overall": 2779,
+                    "solitaire": 2779,
                     "texas_holdem": 2808,
                     "five_card_draw": 2681,
                     "seven_card_stud": 2905,
@@ -190,14 +192,14 @@
                 "age": 31,
                 "birthday_month": 6,
                 "public_appeal": "camera_shy",
-                "fans": 358574
+                "fans": 409350
             },
             "chet_hanks": {
-                "rating": 1348,
-                "last_change": -52,
+                "rating": 1425,
+                "last_change": 39,
                 "ratings": {
-                    "overall": 1348,
-                    "solitaire": 1348,
+                    "overall": 1425,
+                    "solitaire": 1425,
                     "texas_holdem": 1471,
                     "five_card_draw": 1380,
                     "seven_card_stud": 1573,
@@ -208,14 +210,14 @@
                 "age": 39,
                 "birthday_month": 2,
                 "public_appeal": "steady",
-                "fans": 20373
+                "fans": 27758
             },
             "nurse_ratched": {
-                "rating": 1276,
-                "last_change": 4,
+                "rating": 1372,
+                "last_change": 47,
                 "ratings": {
-                    "overall": 1276,
-                    "solitaire": 1276,
+                    "overall": 1372,
+                    "solitaire": 1372,
                     "texas_holdem": 1332,
                     "five_card_draw": 1227,
                     "seven_card_stud": 1208,
@@ -226,14 +228,14 @@
                 "age": 46,
                 "birthday_month": 6,
                 "public_appeal": "charming",
-                "fans": 17161
+                "fans": 26112
             },
             "bob_gumble": {
-                "rating": 1673,
-                "last_change": 54,
+                "rating": 1755,
+                "last_change": 33,
                 "ratings": {
-                    "overall": 1673,
-                    "solitaire": 1673,
+                    "overall": 1755,
+                    "solitaire": 1755,
                     "texas_holdem": 1446,
                     "five_card_draw": 1372,
                     "seven_card_stud": 1655,
@@ -244,14 +246,14 @@
                 "age": 76,
                 "birthday_month": 5,
                 "public_appeal": "steady",
-                "fans": 63387
+                "fans": 79793
             },
             "evelyn_smythe": {
-                "rating": 1622,
-                "last_change": -3,
+                "rating": 1532,
+                "last_change": -52,
                 "ratings": {
-                    "overall": 1622,
-                    "solitaire": 1622,
+                    "overall": 1532,
+                    "solitaire": 1532,
                     "texas_holdem": 1619,
                     "five_card_draw": 1762,
                     "seven_card_stud": 1580,
@@ -262,14 +264,14 @@
                 "age": 34,
                 "birthday_month": 3,
                 "public_appeal": "steady",
-                "fans": 54421
+                "fans": 40749
             },
             "gringo_starr": {
-                "rating": 1231,
-                "last_change": 4,
+                "rating": 1292,
+                "last_change": -35,
                 "ratings": {
-                    "overall": 1231,
-                    "solitaire": 1231,
+                    "overall": 1292,
+                    "solitaire": 1292,
                     "texas_holdem": 1090,
                     "five_card_draw": 1095,
                     "seven_card_stud": 1137,
@@ -280,14 +282,14 @@
                 "age": 68,
                 "birthday_month": 5,
                 "public_appeal": "charming",
-                "fans": 13801
+                "fans": 18479
             },
             "rupert_craft": {
-                "rating": 1003,
-                "last_change": 2,
+                "rating": 957,
+                "last_change": -59,
                 "ratings": {
-                    "overall": 1003,
-                    "solitaire": 1003,
+                    "overall": 957,
+                    "solitaire": 957,
                     "texas_holdem": 1189,
                     "five_card_draw": 1127,
                     "seven_card_stud": 935,
@@ -298,14 +300,14 @@
                 "age": 64,
                 "birthday_month": 6,
                 "public_appeal": "reserved",
-                "fans": 2587
+                "fans": 1807
             },
             "chum_whopper": {
-                "rating": 2744,
-                "last_change": -41,
+                "rating": 2738,
+                "last_change": 48,
                 "ratings": {
-                    "overall": 2744,
-                    "solitaire": 2744,
+                    "overall": 2738,
+                    "solitaire": 2738,
                     "texas_holdem": 2623,
                     "five_card_draw": 2717,
                     "seven_card_stud": 2634,
@@ -316,14 +318,14 @@
                 "age": 29,
                 "birthday_month": 11,
                 "public_appeal": "camera_shy",
-                "fans": 389504
+                "fans": 386167
             },
             "melinda_cromwell": {
-                "rating": 2268,
-                "last_change": -40,
+                "rating": 2276,
+                "last_change": 44,
                 "ratings": {
-                    "overall": 2268,
-                    "solitaire": 2268,
+                    "overall": 2276,
+                    "solitaire": 2276,
                     "texas_holdem": 2383,
                     "five_card_draw": 2083,
                     "seven_card_stud": 2370,
@@ -334,14 +336,14 @@
                 "age": 52,
                 "birthday_month": 6,
                 "public_appeal": "reserved",
-                "fans": 219783
+                "fans": 223055
             },
             "luke_jingle": {
-                "rating": 1965,
-                "last_change": -12,
+                "rating": 1886,
+                "last_change": -8,
                 "ratings": {
-                    "overall": 1965,
-                    "solitaire": 1965,
+                    "overall": 1886,
+                    "solitaire": 1886,
                     "texas_holdem": 2145,
                     "five_card_draw": 2122,
                     "seven_card_stud": 1900,
@@ -352,14 +354,14 @@
                 "age": 37,
                 "birthday_month": 12,
                 "public_appeal": "reserved",
-                "fans": 118130
+                "fans": 98146
             },
             "gunther_hindenburg": {
-                "rating": 1810,
-                "last_change": 2,
+                "rating": 1716,
+                "last_change": -33,
                 "ratings": {
-                    "overall": 1810,
-                    "solitaire": 1810,
+                    "overall": 1716,
+                    "solitaire": 1716,
                     "texas_holdem": 1651,
                     "five_card_draw": 1629,
                     "seven_card_stud": 1754,
@@ -367,17 +369,17 @@
                     "roulette": 1782,
                     "score_four": 1759
                 },
-                "age": 44,
+                "age": 45,
                 "birthday_month": 7,
                 "public_appeal": "magnetic",
-                "fans": 119932
+                "fans": 93177
             },
             "crikey_dingo": {
-                "rating": 1870,
-                "last_change": -5,
+                "rating": 1863,
+                "last_change": -23,
                 "ratings": {
-                    "overall": 1870,
-                    "solitaire": 1870,
+                    "overall": 1863,
+                    "solitaire": 1863,
                     "texas_holdem": 2082,
                     "five_card_draw": 1894,
                     "seven_card_stud": 2068,
@@ -385,17 +387,17 @@
                     "roulette": 1961,
                     "score_four": 1933
                 },
-                "age": 26,
+                "age": 27,
                 "birthday_month": 9,
                 "public_appeal": "charming",
-                "fans": 124430
+                "fans": 122307
             },
             "jairo_ponytail": {
-                "rating": 1770,
-                "last_change": -5,
+                "rating": 1664,
+                "last_change": -48,
                 "ratings": {
-                    "overall": 1770,
-                    "solitaire": 1770,
+                    "overall": 1664,
+                    "solitaire": 1664,
                     "texas_holdem": 1655,
                     "five_card_draw": 1598,
                     "seven_card_stud": 1742,
@@ -403,17 +405,17 @@
                     "roulette": 1773,
                     "score_four": 1781
                 },
-                "age": 32,
+                "age": 33,
                 "birthday_month": 10,
                 "public_appeal": "charming",
-                "fans": 96364
+                "fans": 71616
             },
             "iona_mcdougal": {
-                "rating": 2117,
-                "last_change": 26,
+                "rating": 2067,
+                "last_change": -30,
                 "ratings": {
-                    "overall": 2117,
-                    "solitaire": 2117,
+                    "overall": 2067,
+                    "solitaire": 2067,
                     "texas_holdem": 2330,
                     "five_card_draw": 2099,
                     "seven_card_stud": 2193,
@@ -421,17 +423,17 @@
                     "roulette": 2019,
                     "score_four": 2211
                 },
-                "age": 58,
+                "age": 59,
                 "birthday_month": 10,
                 "public_appeal": "steady",
-                "fans": 186241
+                "fans": 167874
             },
             "jiu_wang": {
-                "rating": 2124,
-                "last_change": -6,
+                "rating": 2033,
+                "last_change": -34,
                 "ratings": {
-                    "overall": 2124,
-                    "solitaire": 2124,
+                    "overall": 2033,
+                    "solitaire": 2033,
                     "texas_holdem": 2007,
                     "five_card_draw": 2087,
                     "seven_card_stud": 1991,
@@ -442,14 +444,14 @@
                 "age": 22,
                 "birthday_month": 3,
                 "public_appeal": "reserved",
-                "fans": 166245
+                "fans": 137370
             },
             "jacques_rousseau": {
-                "rating": 1920,
-                "last_change": -35,
+                "rating": 1843,
+                "last_change": -23,
                 "ratings": {
-                    "overall": 1920,
-                    "solitaire": 1920,
+                    "overall": 1843,
+                    "solitaire": 1843,
                     "texas_holdem": 1929,
                     "five_card_draw": 1894,
                     "seven_card_stud": 2020,
@@ -460,14 +462,14 @@
                 "age": 46,
                 "birthday_month": 1,
                 "public_appeal": "steady",
-                "fans": 120959
+                "fans": 100324
             },
             "palina_pepper": {
-                "rating": 2008,
-                "last_change": -22,
+                "rating": 2019,
+                "last_change": 38,
                 "ratings": {
-                    "overall": 2008,
-                    "solitaire": 2008,
+                    "overall": 2019,
+                    "solitaire": 2019,
                     "texas_holdem": 1821,
                     "five_card_draw": 2058,
                     "seven_card_stud": 1822,
@@ -478,14 +480,14 @@
                 "age": 36,
                 "birthday_month": 3,
                 "public_appeal": "magnetic",
-                "fans": 192150
+                "fans": 196846
             },
             "kurwa_kryzbywlewski": {
-                "rating": 1958,
-                "last_change": -39,
+                "rating": 1999,
+                "last_change": -18,
                 "ratings": {
-                    "overall": 1958,
-                    "solitaire": 1958,
+                    "overall": 1999,
+                    "solitaire": 1999,
                     "texas_holdem": 1900,
                     "five_card_draw": 1814,
                     "seven_card_stud": 2052,
@@ -493,17 +495,17 @@
                     "roulette": 2045,
                     "score_four": 2181
                 },
-                "age": 47,
+                "age": 48,
                 "birthday_month": 9,
                 "public_appeal": "steady",
-                "fans": 132112
+                "fans": 144895
             },
             "rusty_lewis": {
-                "rating": 1626,
-                "last_change": -8,
+                "rating": 1518,
+                "last_change": -6,
                 "ratings": {
-                    "overall": 1626,
-                    "solitaire": 1626,
+                    "overall": 1518,
+                    "solitaire": 1518,
                     "texas_holdem": 1630,
                     "five_card_draw": 1660,
                     "seven_card_stud": 1547,
@@ -514,14 +516,14 @@
                 "age": 31,
                 "birthday_month": 11,
                 "public_appeal": "charming",
-                "fans": 63906
+                "fans": 45073
             },
             "lionel_braggart": {
-                "rating": 1024,
-                "last_change": 39,
+                "rating": 937,
+                "last_change": -19,
                 "ratings": {
-                    "overall": 1024,
-                    "solitaire": 1024,
+                    "overall": 937,
+                    "solitaire": 937,
                     "texas_holdem": 1015,
                     "five_card_draw": 900,
                     "seven_card_stud": 824,
@@ -529,17 +531,17 @@
                     "roulette": 817,
                     "score_four": 834
                 },
-                "age": 62,
+                "age": 63,
                 "birthday_month": 8,
                 "public_appeal": "steady",
-                "fans": 3430
+                "fans": 1742
             },
             "inshallah_intifada": {
-                "rating": 963,
-                "last_change": 21,
+                "rating": 1034,
+                "last_change": 36,
                 "ratings": {
-                    "overall": 963,
-                    "solitaire": 963,
+                    "overall": 1034,
+                    "solitaire": 1034,
                     "texas_holdem": 1018,
                     "five_card_draw": 1158,
                     "seven_card_stud": 1110,
@@ -550,14 +552,14 @@
                 "age": 28,
                 "birthday_month": 3,
                 "public_appeal": "reserved",
-                "fans": 1897
+                "fans": 3242
             },
             "manuel_nadal": {
-                "rating": 1220,
-                "last_change": 37,
+                "rating": 1179,
+                "last_change": -51,
                 "ratings": {
-                    "overall": 1220,
-                    "solitaire": 1220,
+                    "overall": 1179,
+                    "solitaire": 1179,
                     "texas_holdem": 1202,
                     "five_card_draw": 1037,
                     "seven_card_stud": 1011,
@@ -565,17 +567,17 @@
                     "roulette": 962,
                     "score_four": 992
                 },
-                "age": 53,
+                "age": 54,
                 "birthday_month": 8,
                 "public_appeal": "steady",
-                "fans": 11254
+                "fans": 9066
             },
             "mary_lafleur": {
-                "rating": 1266,
-                "last_change": -39,
+                "rating": 1235,
+                "last_change": -34,
                 "ratings": {
-                    "overall": 1266,
-                    "solitaire": 1266,
+                    "overall": 1235,
+                    "solitaire": 1235,
                     "texas_holdem": 1118,
                     "five_card_draw": 1211,
                     "seven_card_stud": 1143,
@@ -583,17 +585,17 @@
                     "roulette": 1347,
                     "score_four": 1240
                 },
-                "age": 22,
+                "age": 23,
                 "birthday_month": 9,
                 "public_appeal": "charming",
-                "fans": 16371
+                "fans": 14080
             },
             "chiara_sammartano": {
-                "rating": 1347,
-                "last_change": 12,
+                "rating": 1266,
+                "last_change": -41,
                 "ratings": {
-                    "overall": 1347,
-                    "solitaire": 1347,
+                    "overall": 1266,
+                    "solitaire": 1266,
                     "texas_holdem": 1345,
                     "five_card_draw": 1189,
                     "seven_card_stud": 1245,
@@ -601,17 +603,17 @@
                     "roulette": 1187,
                     "score_four": 1357
                 },
-                "age": 38,
+                "age": 39,
                 "birthday_month": 10,
                 "public_appeal": "charming",
-                "fans": 23533
+                "fans": 16371
             },
             "memphis_van_dijk": {
-                "rating": 1022,
-                "last_change": 42,
+                "rating": 901,
+                "last_change": -30,
                 "ratings": {
-                    "overall": 1022,
-                    "solitaire": 1022,
+                    "overall": 901,
+                    "solitaire": 901,
                     "texas_holdem": 853,
                     "five_card_draw": 771,
                     "seven_card_stud": 865,
@@ -622,14 +624,14 @@
                 "age": 42,
                 "birthday_month": 12,
                 "public_appeal": "steady",
-                "fans": 3381
+                "fans": 1281
             },
             "harpreet_rajah": {
-                "rating": 2526,
-                "last_change": -31,
+                "rating": 2580,
+                "last_change": 44,
                 "ratings": {
-                    "overall": 2526,
-                    "solitaire": 2526,
+                    "overall": 2580,
+                    "solitaire": 2580,
                     "texas_holdem": 2665,
                     "five_card_draw": 2530,
                     "seven_card_stud": 2490,
@@ -637,17 +639,17 @@
                     "roulette": 2737,
                     "score_four": 2376
                 },
-                "age": 34,
+                "age": 35,
                 "birthday_month": 7,
                 "public_appeal": "steady",
-                "fans": 389096
+                "fans": 423642
             },
             "betty_bleep": {
-                "rating": 1024,
-                "last_change": 1,
+                "rating": 996,
+                "last_change": -59,
                 "ratings": {
-                    "overall": 1024,
-                    "solitaire": 1024,
+                    "overall": 996,
+                    "solitaire": 996,
                     "texas_holdem": 982,
                     "five_card_draw": 1145,
                     "seven_card_stud": 978,
@@ -658,14 +660,14 @@
                 "age": 74,
                 "birthday_month": 5,
                 "public_appeal": "charming",
-                "fans": 3979
+                "fans": 3235
             },
             "max_goblet": {
-                "rating": 1246,
-                "last_change": -42,
+                "rating": 1381,
+                "last_change": 39,
                 "ratings": {
-                    "overall": 1246,
-                    "solitaire": 1246,
+                    "overall": 1381,
+                    "solitaire": 1381,
                     "texas_holdem": 1377,
                     "five_card_draw": 1242,
                     "seven_card_stud": 1237,
@@ -676,14 +678,14 @@
                 "age": 82,
                 "birthday_month": 12,
                 "public_appeal": "steady",
-                "fans": 12815
+                "fans": 23350
             },
             "hugh_minx": {
-                "rating": 2003,
-                "last_change": -47,
+                "rating": 1918,
+                "last_change": -46,
                 "ratings": {
-                    "overall": 2003,
-                    "solitaire": 2003,
+                    "overall": 1918,
+                    "solitaire": 1918,
                     "texas_holdem": 1937,
                     "five_card_draw": 2152,
                     "seven_card_stud": 1852,
@@ -694,14 +696,14 @@
                 "age": 14,
                 "birthday_month": 4,
                 "public_appeal": "charming",
-                "fans": 169574
+                "fans": 139652
             },
             "addled_grandfather": {
-                "rating": 2159,
-                "last_change": 34,
+                "rating": 2151,
+                "last_change": 41,
                 "ratings": {
-                    "overall": 2159,
-                    "solitaire": 2159,
+                    "overall": 2151,
+                    "solitaire": 2151,
                     "texas_holdem": 1995,
                     "five_card_draw": 2003,
                     "seven_card_stud": 2073,
@@ -709,17 +711,17 @@
                     "roulette": 1973,
                     "score_four": 1993
                 },
-                "age": 89,
+                "age": 90,
                 "birthday_month": 7,
                 "public_appeal": "charming",
-                "fans": 235095
+                "fans": 231383
             },
             "hog_shots": {
-                "rating": 1117,
-                "last_change": 49,
+                "rating": 1203,
+                "last_change": 50,
                 "ratings": {
-                    "overall": 1117,
-                    "solitaire": 1117,
+                    "overall": 1203,
+                    "solitaire": 1203,
                     "texas_holdem": 988,
                     "five_card_draw": 1052,
                     "seven_card_stud": 923,
@@ -730,14 +732,14 @@
                 "age": 33,
                 "birthday_month": 11,
                 "public_appeal": "steady",
-                "fans": 6347
+                "fans": 10307
             },
             "loopy_valez": {
-                "rating": 1343,
-                "last_change": 55,
+                "rating": 1339,
+                "last_change": -7,
                 "ratings": {
-                    "overall": 1343,
-                    "solitaire": 1343,
+                    "overall": 1339,
+                    "solitaire": 1339,
                     "texas_holdem": 1274,
                     "five_card_draw": 1148,
                     "seven_card_stud": 1111,
@@ -748,14 +750,14 @@
                 "age": 666,
                 "birthday_month": 1,
                 "public_appeal": "reserved",
-                "fans": 17552
+                "fans": 17256
             },
             "mimi_roquanda": {
-                "rating": 814,
-                "last_change": 23,
+                "rating": 879,
+                "last_change": 41,
                 "ratings": {
-                    "overall": 814,
-                    "solitaire": 814,
+                    "overall": 879,
+                    "solitaire": 879,
                     "texas_holdem": 673,
                     "five_card_draw": 764,
                     "seven_card_stud": 656,
@@ -766,14 +768,14 @@
                 "age": 73,
                 "birthday_month": 1,
                 "public_appeal": "camera_shy",
-                "fans": 439
+                "fans": 761
             },
             "captain_steve": {
-                "rating": 1359,
-                "last_change": -8,
+                "rating": 1480,
+                "last_change": 13,
                 "ratings": {
-                    "overall": 1359,
-                    "solitaire": 1359,
+                    "overall": 1480,
+                    "solitaire": 1480,
                     "texas_holdem": 1138,
                     "five_card_draw": 1163,
                     "seven_card_stud": 1120,
@@ -784,14 +786,14 @@
                 "age": 24,
                 "birthday_month": 6,
                 "public_appeal": "charming",
-                "fans": 24748
+                "fans": 39460
             },
             "elinur_butter": {
-                "rating": 2181,
-                "last_change": -27,
+                "rating": 2234,
+                "last_change": 14,
                 "ratings": {
-                    "overall": 2181,
-                    "solitaire": 2181,
+                    "overall": 2234,
+                    "solitaire": 2234,
                     "texas_holdem": 2051,
                     "five_card_draw": 2162,
                     "seven_card_stud": 2076,
@@ -802,14 +804,14 @@
                 "age": 24,
                 "birthday_month": 2,
                 "public_appeal": "charming",
-                "fans": 245511
+                "fans": 271857
             },
             "sultan_griffin": {
-                "rating": 1988,
-                "last_change": 38,
+                "rating": 1956,
+                "last_change": 1,
                 "ratings": {
-                    "overall": 1988,
-                    "solitaire": 1988,
+                    "overall": 1956,
+                    "solitaire": 1956,
                     "texas_holdem": 1965,
                     "five_card_draw": 1862,
                     "seven_card_stud": 2075,
@@ -820,14 +822,14 @@
                 "age": 22,
                 "birthday_month": 11,
                 "public_appeal": "magnetic",
-                "fans": 183804
+                "fans": 170961
             },
             "ami_amica": {
-                "rating": 1694,
-                "last_change": -44,
+                "rating": 1647,
+                "last_change": 14,
                 "ratings": {
-                    "overall": 1694,
-                    "solitaire": 1694,
+                    "overall": 1647,
+                    "solitaire": 1647,
                     "texas_holdem": 1639,
                     "five_card_draw": 1996,
                     "seven_card_stud": 1900,
@@ -838,14 +840,14 @@
                 "age": 23,
                 "birthday_month": 2,
                 "public_appeal": "steady",
-                "fans": 67349
+                "fans": 58702
             },
             "bubbles_romney": {
-                "rating": 2472,
-                "last_change": -39,
+                "rating": 2413,
+                "last_change": -9,
                 "ratings": {
-                    "overall": 2472,
-                    "solitaire": 2472,
+                    "overall": 2413,
+                    "solitaire": 2413,
                     "texas_holdem": 2323,
                     "five_card_draw": 2433,
                     "seven_card_stud": 2587,
@@ -856,14 +858,14 @@
                 "age": 15,
                 "birthday_month": 4,
                 "public_appeal": "charming",
-                "fans": 413521
+                "fans": 374674
             },
             "jack_zitbomb": {
-                "rating": 2628,
-                "last_change": -8,
+                "rating": 2554,
+                "last_change": -29,
                 "ratings": {
-                    "overall": 2628,
-                    "solitaire": 2628,
+                    "overall": 2554,
+                    "solitaire": 2554,
                     "texas_holdem": 2355,
                     "five_card_draw": 2519,
                     "seven_card_stud": 2790,
@@ -871,17 +873,17 @@
                     "roulette": 2704,
                     "score_four": 2740
                 },
-                "age": 26,
+                "age": 27,
                 "birthday_month": 7,
                 "public_appeal": "steady",
-                "fans": 456016
+                "fans": 406764
             },
             "doon_ficus": {
-                "rating": 2640,
-                "last_change": 18,
+                "rating": 2725,
+                "last_change": 39,
                 "ratings": {
-                    "overall": 2640,
-                    "solitaire": 2640,
+                    "overall": 2725,
+                    "solitaire": 2725,
                     "texas_holdem": 2747,
                     "five_card_draw": 2530,
                     "seven_card_stud": 2388,
@@ -889,24 +891,78 @@
                     "roulette": 2799,
                     "score_four": 2425
                 },
-                "age": 28,
+                "age": 29,
                 "birthday_month": 9,
                 "public_appeal": "reserved",
-                "fans": 408637
+                "fans": 463227
+            },
+            "chad_whiskey": {
+                "age": 22,
+                "birthday_month": 12,
+                "rating": 974,
+                "ratings": {
+                    "overall": 974,
+                    "solitaire": 974,
+                    "texas_holdem": 934,
+                    "five_card_draw": 955,
+                    "seven_card_stud": 1125,
+                    "blackjack": 840,
+                    "roulette": 954,
+                    "score_four": 1178
+                },
+                "last_change": -26,
+                "public_appeal": "reserved",
+                "fans": 2070
+            },
+            "mohammed_ramadan": {
+                "age": 29,
+                "birthday_month": 4,
+                "rating": 955,
+                "ratings": {
+                    "overall": 955,
+                    "solitaire": 955,
+                    "texas_holdem": 772,
+                    "five_card_draw": 953,
+                    "seven_card_stud": 961,
+                    "blackjack": 842,
+                    "roulette": 1185,
+                    "score_four": 870
+                },
+                "last_change": -45,
+                "public_appeal": "charming",
+                "fans": 2344
+            },
+            "em_marley": {
+                "age": 24,
+                "birthday_month": 3,
+                "rating": 1000,
+                "ratings": {
+                    "overall": 1000,
+                    "solitaire": 1000,
+                    "texas_holdem": 1040,
+                    "five_card_draw": 1055,
+                    "seven_card_stud": 819,
+                    "blackjack": 1038,
+                    "roulette": 1196,
+                    "score_four": 863
+                },
+                "last_change": 0,
+                "public_appeal": "steady",
+                "fans": 2874
             }
         },
         "leaderboard_star_id": "monkus_carlton",
         "year": 2026,
-        "month": 6,
-        "day": 2,
-        "weekday_index": 1,
-        "career_day": 152,
+        "month": 10,
+        "day": 15,
+        "weekday_index": 4,
+        "career_day": 285,
         "residence": "hippie_commune",
         "owned_residences": [
             "dingy_apartment",
             "hippie_commune"
         ],
-        "job": "spiritual_guru",
+        "job": "solitaire_pensioner",
         "rounds_won": 7,
         "challenges_won": 1,
         "total_moves": 1024,
@@ -1967,6 +2023,937 @@
                 "day": 1,
                 "completed": false,
                 "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 2,
+                "completed": false,
+                "activity_type": "poker_night"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 3,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 4,
+                "completed": true,
+                "activity_type": "casino_night"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 5,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 6,
+                "completed": true,
+                "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 7,
+                "completed": false,
+                "activity_type": "casino_night"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 8,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 9,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 10,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 11,
+                "completed": true,
+                "activity_type": "niche_night"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 12,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 13,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 14,
+                "completed": false,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 15,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 16,
+                "completed": true,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 17,
+                "completed": false,
+                "activity_type": "casino_night"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 18,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 19,
+                "completed": false,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 20,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 21,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 22,
+                "completed": false,
+                "activity_type": "casino_night"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 23,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 24,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 25,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 26,
+                "completed": false,
+                "activity_type": "niche_night"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 27,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 28,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 29,
+                "completed": false,
+                "activity_type": "poker_night"
+            },
+            {
+                "year": 2026,
+                "month": 6,
+                "day": 30,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 1,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 2,
+                "completed": false,
+                "activity_type": "casino_night"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 3,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 4,
+                "completed": false,
+                "activity_type": "casino_night"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 5,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 6,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 7,
+                "completed": false,
+                "activity_type": "poker_night"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 8,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 9,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 10,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 11,
+                "completed": false,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 12,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 13,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 14,
+                "completed": false,
+                "activity_type": "niche_night"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 15,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 16,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 17,
+                "completed": false,
+                "activity_type": "casino_night"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 18,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 19,
+                "completed": false,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 20,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 21,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 22,
+                "completed": false,
+                "activity_type": "poker_night"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 23,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 24,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 25,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 26,
+                "completed": false,
+                "activity_type": "niche_night"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 27,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 28,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 29,
+                "completed": false,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2026,
+                "month": 7,
+                "day": 30,
+                "completed": true,
+                "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 1,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 2,
+                "completed": false,
+                "activity_type": "poker_night"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 3,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 4,
+                "completed": false,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 5,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 6,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 7,
+                "completed": false,
+                "activity_type": "niche_night"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 8,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 9,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 10,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 11,
+                "completed": false,
+                "activity_type": "casino_night"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 12,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 13,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 14,
+                "completed": false,
+                "activity_type": "poker_night"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 15,
+                "completed": true,
+                "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 16,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 17,
+                "completed": false,
+                "activity_type": "casino_night"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 18,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 19,
+                "completed": false,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 20,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 21,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 22,
+                "completed": false,
+                "activity_type": "niche_night"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 23,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 24,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 25,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 26,
+                "completed": false,
+                "activity_type": "poker_night"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 27,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 28,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 29,
+                "completed": false,
+                "activity_type": "casino_night"
+            },
+            {
+                "year": 2026,
+                "month": 8,
+                "day": 30,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 1,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 2,
+                "completed": true,
+                "activity_type": "niche_night"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 3,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 4,
+                "completed": false,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 5,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 6,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 7,
+                "completed": false,
+                "activity_type": "poker_night"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 8,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 9,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 10,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 11,
+                "completed": false,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 12,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 13,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 14,
+                "completed": false,
+                "activity_type": "casino_night"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 15,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 16,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 17,
+                "completed": false,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 18,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 19,
+                "completed": false,
+                "activity_type": "casino_night"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 20,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 21,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 22,
+                "completed": true,
+                "activity_type": "niche_night"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 23,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 24,
+                "completed": true,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 25,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 26,
+                "completed": true,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 27,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 28,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 29,
+                "completed": false,
+                "activity_type": "poker_night"
+            },
+            {
+                "year": 2026,
+                "month": 9,
+                "day": 30,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 1,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 2,
+                "completed": false,
+                "activity_type": "poker_night"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 3,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 4,
+                "completed": true,
+                "activity_type": "casino_night"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 5,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 6,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 7,
+                "completed": false,
+                "activity_type": "niche_night"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 8,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 9,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 10,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 11,
+                "completed": false,
+                "activity_type": "poker_night"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 12,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 13,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 10,
+                "day": 14,
+                "completed": false,
+                "activity_type": "casual_cards"
             }
         ],
         "current_schedule": [
@@ -1988,20 +2975,20 @@
                     "seven_card_stud",
                     "five_card_draw"
                 ],
-                "high_stakes_game_id": "seven_card_stud"
+                "high_stakes_game_id": "texas_holdem"
             },
             {
                 "day_number": 3,
                 "weekday_index": 2,
                 "activity_type": "work",
                 "completed": false,
-                "title": "Guide Vision Quest"
+                "title": "Watch Television"
             },
             {
                 "day_number": 4,
                 "weekday_index": 3,
                 "activity_type": "casino_night",
-                "completed": false,
+                "completed": true,
                 "title": "Casino Night",
                 "game_ids": [
                     "blackjack",
@@ -2015,27 +3002,27 @@
                 "activity_type": "challenge",
                 "completed": false,
                 "title": "Challenge Round",
-                "challenge_id": "draw_3",
-                "challenge_name": "3 Draw"
+                "challenge_id": "no_hints",
+                "challenge_name": "No Hints"
             },
             {
                 "day_number": 6,
                 "weekday_index": 0,
                 "activity_type": "event",
                 "completed": false,
-                "title": "Head-to-Head",
-                "event_id": "head_to_head_01"
+                "title": "Sign Autographs",
+                "event_id": "sign_autographs_01"
             },
             {
                 "day_number": 7,
                 "weekday_index": 1,
-                "activity_type": "casino_night",
+                "activity_type": "niche_night",
                 "completed": false,
-                "title": "Casino Night",
+                "title": "Niche Game Night",
                 "game_ids": [
-                    "blackjack",
-                    "roulette",
-                    "horse_races"
+                    "faro",
+                    "five_o_poker",
+                    "blind_mans_bluff"
                 ]
             },
             {
@@ -2052,7 +3039,7 @@
                 "weekday_index": 3,
                 "activity_type": "work",
                 "completed": false,
-                "title": "Go on Podcast"
+                "title": "Play Golf"
             },
             {
                 "day_number": 10,
@@ -2064,21 +3051,22 @@
             {
                 "day_number": 11,
                 "weekday_index": 0,
-                "activity_type": "niche_night",
+                "activity_type": "poker_night",
                 "completed": false,
-                "title": "Niche Game Night",
+                "title": "Poker Night",
                 "game_ids": [
-                    "faro",
-                    "five_o_poker",
-                    "blind_mans_bluff"
-                ]
+                    "texas_holdem",
+                    "seven_card_stud",
+                    "five_card_draw"
+                ],
+                "high_stakes_game_id": "five_card_draw"
             },
             {
                 "day_number": 12,
                 "weekday_index": 1,
                 "activity_type": "work",
                 "completed": false,
-                "title": "Manage Cult"
+                "title": "Play Golf"
             },
             {
                 "day_number": 13,
@@ -2086,8 +3074,8 @@
                 "activity_type": "challenge",
                 "completed": false,
                 "title": "Challenge Round",
-                "challenge_id": "no_hints",
-                "challenge_name": "No Hints"
+                "challenge_id": "draw_3",
+                "challenge_name": "3 Draw"
             },
             {
                 "day_number": 14,
@@ -2106,8 +3094,8 @@
                 "weekday_index": 4,
                 "activity_type": "event",
                 "completed": false,
-                "title": "Sign Autographs",
-                "event_id": "sign_autographs_01"
+                "title": "Head-to-Head",
+                "event_id": "head_to_head_01"
             },
             {
                 "day_number": 16,
@@ -2133,19 +3121,20 @@
                 "weekday_index": 2,
                 "activity_type": "work",
                 "completed": false,
-                "title": "Lead Retreat"
+                "title": "Watch Television"
             },
             {
                 "day_number": 19,
                 "weekday_index": 3,
-                "activity_type": "casual_cards",
+                "activity_type": "poker_night",
                 "completed": false,
-                "title": "Casual Cards",
+                "title": "Poker Night",
                 "game_ids": [
-                    "score_four",
-                    "bango",
-                    "crazy_eights"
-                ]
+                    "texas_holdem",
+                    "seven_card_stud",
+                    "five_card_draw"
+                ],
+                "high_stakes_game_id": "texas_holdem"
             },
             {
                 "day_number": 20,
@@ -2161,19 +3150,19 @@
                 "weekday_index": 0,
                 "activity_type": "event",
                 "completed": false,
-                "title": "Sign Autographs",
-                "event_id": "sign_autographs_01"
+                "title": "Head-to-Head",
+                "event_id": "head_to_head_01"
             },
             {
                 "day_number": 22,
                 "weekday_index": 1,
-                "activity_type": "casino_night",
+                "activity_type": "casual_cards",
                 "completed": false,
-                "title": "Casino Night",
+                "title": "Casual Cards",
                 "game_ids": [
-                    "blackjack",
-                    "roulette",
-                    "horse_races"
+                    "score_four",
+                    "bango",
+                    "crazy_eights"
                 ]
             },
             {
@@ -2182,15 +3171,15 @@
                 "activity_type": "challenge",
                 "completed": false,
                 "title": "Challenge Round",
-                "challenge_id": "no_undo",
-                "challenge_name": "No Undo"
+                "challenge_id": "no_hints",
+                "challenge_name": "No Hints"
             },
             {
                 "day_number": 24,
                 "weekday_index": 3,
                 "activity_type": "work",
                 "completed": false,
-                "title": "Manage Cult"
+                "title": "Complain"
             },
             {
                 "day_number": 25,
@@ -2202,6 +3191,34 @@
             {
                 "day_number": 26,
                 "weekday_index": 0,
+                "activity_type": "casual_cards",
+                "completed": false,
+                "title": "Casual Cards",
+                "game_ids": [
+                    "score_four",
+                    "bango",
+                    "crazy_eights"
+                ]
+            },
+            {
+                "day_number": 27,
+                "weekday_index": 1,
+                "activity_type": "work",
+                "completed": false,
+                "title": "Watch Television"
+            },
+            {
+                "day_number": 28,
+                "weekday_index": 2,
+                "activity_type": "challenge",
+                "completed": false,
+                "title": "Challenge Round",
+                "challenge_id": "all_or_nothing",
+                "challenge_name": "All or Nothing"
+            },
+            {
+                "day_number": 29,
+                "weekday_index": 3,
                 "activity_type": "niche_night",
                 "completed": false,
                 "title": "Niche Game Night",
@@ -2210,35 +3227,6 @@
                     "five_o_poker",
                     "blind_mans_bluff"
                 ]
-            },
-            {
-                "day_number": 27,
-                "weekday_index": 1,
-                "activity_type": "work",
-                "completed": false,
-                "title": "Manage Cult"
-            },
-            {
-                "day_number": 28,
-                "weekday_index": 2,
-                "activity_type": "challenge",
-                "completed": false,
-                "title": "Challenge Round",
-                "challenge_id": "no_hints",
-                "challenge_name": "No Hints"
-            },
-            {
-                "day_number": 29,
-                "weekday_index": 3,
-                "activity_type": "poker_night",
-                "completed": false,
-                "title": "Poker Night",
-                "game_ids": [
-                    "texas_holdem",
-                    "seven_card_stud",
-                    "five_card_draw"
-                ],
-                "high_stakes_game_id": "texas_holdem"
             },
             {
                 "day_number": 30,
@@ -2250,6 +3238,206 @@
             }
         ],
         "news_items": [
+            {
+                "headline": "RIBEYE SURPASSES 100,000 FANS",
+                "body": "Ribeye has crossed the 100,000-fan mark. The latest surge followed achievement: monster pot.",
+                "category": "fans",
+                "month": 10,
+                "year": 2026,
+                "career_day": 275
+            },
+            {
+                "headline": "TEXAS HOLD'EM COSTS RIBEYE $10,000",
+                "body": "Ribeye absorbed a $10,000 loss in Texas Hold'em during the latest Poker Night appearance.",
+                "category": "poker",
+                "month": 10,
+                "year": 2026,
+                "career_day": 274
+            },
+            {
+                "headline": "ROUGH MONTH FOR RUPERT CRAFT",
+                "body": "Rupert Craft fell 3 places in the international rankings and now sits at world #46.",
+                "category": "leaderboard",
+                "month": 10,
+                "year": 2026,
+                "career_day": 271
+            },
+            {
+                "headline": "INSHALLAH INTIFADA SURGES UP RANKINGS",
+                "body": "Inshallah Intifada climbed 5 places this month and now sits at world #42.",
+                "category": "leaderboard",
+                "month": 10,
+                "year": 2026,
+                "career_day": 271
+            },
+            {
+                "headline": "MONKUS CARLTON RETAINS WORLD #1",
+                "body": "Monkus Carlton remains atop the international rankings with a rating of 3,177.",
+                "category": "leaderboard",
+                "month": 10,
+                "year": 2026,
+                "career_day": 271
+            },
+            {
+                "headline": "TEXAS HOLD'EM COSTS RIBEYE $9,000",
+                "body": "Ribeye absorbed a $9,000 loss in Texas Hold'em during the latest Poker Night appearance.",
+                "category": "poker",
+                "month": 9,
+                "year": 2026,
+                "career_day": 266
+            },
+            {
+                "headline": "RIBEYE TAKES ON SCORE-FOUR",
+                "body": "Ribeye logged another appearance in Score-Four during Casual Cards week.",
+                "category": "cards",
+                "month": 9,
+                "year": 2026,
+                "career_day": 262
+            },
+            {
+                "headline": "SEVEN-CARD STUD COSTS RIBEYE $5,145",
+                "body": "Ribeye absorbed a $5,145 loss in Seven-Card Stud during the latest Poker Night appearance.",
+                "category": "poker",
+                "month": 9,
+                "year": 2026,
+                "career_day": 242
+            },
+            {
+                "headline": "MYSTERY FIFTH SUIT DESCRIBED IN ANCIENT TOME",
+                "body": "A local solitaire historian at Arlen Community College came across an ancient book that described the mysterious Swords suit.",
+                "category": "strange",
+                "month": 9,
+                "year": 2026,
+                "career_day": 241
+            },
+            {
+                "headline": "ROUGH MONTH FOR MARY LAFLEUR",
+                "body": "Mary LaFleur fell 4 places in the international rankings and now sits at world #39.",
+                "category": "leaderboard",
+                "month": 9,
+                "year": 2026,
+                "career_day": 241
+            },
+            {
+                "headline": "LOOPY VALEZ SURGES UP RANKINGS",
+                "body": "Loopy Valez climbed 3 places this month and now sits at world #34.",
+                "category": "leaderboard",
+                "month": 9,
+                "year": 2026,
+                "career_day": 241
+            },
+            {
+                "headline": "MONKUS CARLTON RETAINS WORLD #1",
+                "body": "Monkus Carlton remains atop the international rankings with a rating of 3,133.",
+                "category": "leaderboard",
+                "month": 9,
+                "year": 2026,
+                "career_day": 241
+            },
+            {
+                "headline": "RIBEYE TAKES NEW SIDE JOB",
+                "body": "Ribeye has accepted work as Solitaire Pensioner. Sources close to the situation say the decision was largely financial.",
+                "category": "job",
+                "month": 8,
+                "year": 2026,
+                "career_day": 229
+            },
+            {
+                "headline": "RIBEYE WINS HEAD-TO-HEAD SOLITAIRE RACE",
+                "body": "Ribeye beat Harpreet Rajah to the final foundation card in 2:31 in a direct Klondike race.",
+                "category": "competition",
+                "month": 8,
+                "year": 2026,
+                "career_day": 225
+            },
+            {
+                "headline": "CHIARA SAMMY BUYS 400 GREEN VISORS",
+                "body": "Chiara Sammy says the bulk order was 'for professional reasons.' Local retailers have reported an unexplained shortage.",
+                "category": "players",
+                "month": 8,
+                "year": 2026,
+                "career_day": 211
+            },
+            {
+                "headline": "ROUGH MONTH FOR CHIARA SAMMY",
+                "body": "Chiara Sammy fell 4 places in the international rankings and now sits at world #38.",
+                "category": "leaderboard",
+                "month": 8,
+                "year": 2026,
+                "career_day": 211
+            },
+            {
+                "headline": "RUPERT CRAFT SURGES UP RANKINGS",
+                "body": "Rupert Craft climbed 3 places this month and now sits at world #43.",
+                "category": "leaderboard",
+                "month": 8,
+                "year": 2026,
+                "career_day": 211
+            },
+            {
+                "headline": "MONKUS CARLTON RETAINS WORLD #1",
+                "body": "Monkus Carlton remains atop the international rankings with a rating of 3,125.",
+                "category": "leaderboard",
+                "month": 8,
+                "year": 2026,
+                "career_day": 211
+            },
+            {
+                "headline": "BUBBLES ROM EDGES RIBEYE IN KLONDIKE RACE",
+                "body": "Bubbles Rom reached 52 foundation cards before Ribeye in 3:43 in the latest Head-to-Head event.",
+                "category": "competition",
+                "month": 7,
+                "year": 2026,
+                "career_day": 210
+            },
+            {
+                "headline": "UNATTENDED DECK FOUND PERFECTLY SORTED BY SUIT",
+                "body": "Security footage shows nobody approaching the table for nearly two hours before the deck was discovered in exact Ace-to-King order.",
+                "category": "strange",
+                "month": 7,
+                "year": 2026,
+                "career_day": 181
+            },
+            {
+                "headline": "ROUGH MONTH FOR JACQUES ROUSSEAU",
+                "body": "Jacques Rousseau fell 3 places in the international rankings and now sits at world #24.",
+                "category": "leaderboard",
+                "month": 7,
+                "year": 2026,
+                "career_day": 181
+            },
+            {
+                "headline": "KURWA KRYZBYWLESKI SURGES UP RANKINGS",
+                "body": "Kurwa Kryzbywleski climbed 3 places this month and now sits at world #17.",
+                "category": "leaderboard",
+                "month": 7,
+                "year": 2026,
+                "career_day": 181
+            },
+            {
+                "headline": "MONKUS CARLTON RETAINS WORLD #1",
+                "body": "Monkus Carlton remains atop the international rankings with a rating of 3,125.",
+                "category": "leaderboard",
+                "month": 7,
+                "year": 2026,
+                "career_day": 181
+            },
+            {
+                "headline": "RIBEYE SPLITS FIVE-O POKER SESSION",
+                "body": "After building five poker hands at once, Ribeye left the Five-O table exactly even.",
+                "category": "cards",
+                "month": 6,
+                "year": 2026,
+                "career_day": 161
+            },
+            {
+                "headline": "CASINO NIGHT TAKES $1,280 FROM RIBEYE",
+                "body": "The largest setback came at Blackjack, and Ribeye finished Casino Night $1,280 in the red overall.",
+                "category": "casino",
+                "month": 6,
+                "year": 2026,
+                "career_day": 154
+            },
             {
                 "headline": "RIBEYE SURPASSES 50,000 FANS",
                 "body": "Ribeye has crossed the 50,000-fan mark. The latest surge followed achievement: table profit.",
@@ -2449,206 +3637,6 @@
                 "month": 3,
                 "year": 2026,
                 "career_day": 86
-            },
-            {
-                "headline": "RIBEYE TAKES ON SCORE-FOUR",
-                "body": "Ribeye logged another appearance in Score-Four during Casual Cards week.",
-                "category": "cards",
-                "month": 3,
-                "year": 2026,
-                "career_day": 62
-            },
-            {
-                "headline": "MIMI ROQUANDA REPORTEDLY PRACTICES CRAZY EIGHTS WITH EIGHT DECKS",
-                "body": "Sources say Mimi Roquanda insists the method improves concentration. Nobody has been able to verify this.",
-                "category": "players",
-                "month": 3,
-                "year": 2026,
-                "career_day": 61
-            },
-            {
-                "headline": "ROUGH MONTH FOR MARY LAFLEUR",
-                "body": "Mary LaFleur fell 3 places in the international rankings and now sits at world #37.",
-                "category": "leaderboard",
-                "month": 3,
-                "year": 2026,
-                "career_day": 61
-            },
-            {
-                "headline": "MAX GOBLET SURGES UP RANKINGS",
-                "body": "Max Goblet climbed 3 places this month and now sits at world #35.",
-                "category": "leaderboard",
-                "month": 3,
-                "year": 2026,
-                "career_day": 61
-            },
-            {
-                "headline": "MONKUS CARLTON RETAINS WORLD #1",
-                "body": "Monkus Carlton remains atop the international rankings with a rating of 3,107.",
-                "category": "leaderboard",
-                "month": 3,
-                "year": 2026,
-                "career_day": 61
-            },
-            {
-                "headline": "RIBEYE TAKES NEW SIDE JOB",
-                "body": "Ribeye has accepted work as Videographer. Sources close to the situation say the decision was largely financial.",
-                "category": "job",
-                "month": 2,
-                "year": 2026,
-                "career_day": 59
-            },
-            {
-                "headline": "RIBEYE TAKES NEW SIDE JOB",
-                "body": "Ribeye has accepted work as Satellite Repair. Sources close to the situation say the decision was largely financial.",
-                "category": "job",
-                "month": 2,
-                "year": 2026,
-                "career_day": 59
-            },
-            {
-                "headline": "RIBEYE TAKES NEW SIDE JOB",
-                "body": "Ribeye has accepted work as Videographer. Sources close to the situation say the decision was largely financial.",
-                "category": "job",
-                "month": 2,
-                "year": 2026,
-                "career_day": 59
-            },
-            {
-                "headline": "RIBEYE WINS HEAD-TO-HEAD SOLITAIRE RACE",
-                "body": "Ribeye beat Molly Courts to the final foundation card in 1:16 in a direct Klondike race.",
-                "category": "competition",
-                "month": 2,
-                "year": 2026,
-                "career_day": 51
-            },
-            {
-                "headline": "RIBEYE LEAVES TEXAS HOLD'EM UP $48",
-                "body": "The biggest swing of the night came in Texas Hold'em, where Ribeye finished the session $48 ahead.",
-                "category": "poker",
-                "month": 2,
-                "year": 2026,
-                "career_day": 49
-            },
-            {
-                "headline": "TEXAS HOLD'EM COSTS RIBEYE $146",
-                "body": "Ribeye absorbed a $146 loss in Texas Hold'em during the latest Poker Night appearance.",
-                "category": "poker",
-                "month": 2,
-                "year": 2026,
-                "career_day": 44
-            },
-            {
-                "headline": "TEXAS HOLD'EM COSTS RIBEYE $134",
-                "body": "Ribeye absorbed a $134 loss in Texas Hold'em during the latest Poker Night appearance.",
-                "category": "poker",
-                "month": 2,
-                "year": 2026,
-                "career_day": 37
-            },
-            {
-                "headline": "RIBEYE PURCHASES HIPPIE COMMUNE",
-                "body": "The competitive Solitaire player has reportedly moved into Hippie Commune after completing the purchase.",
-                "category": "residence",
-                "month": 2,
-                "year": 2026,
-                "career_day": 35
-            },
-            {
-                "headline": "RIBEYE FINISHES CASINO NIGHT UP $100",
-                "body": "A profitable Roulette session helped Ribeye leave Casino Night $100 ahead overall.",
-                "category": "casino",
-                "month": 2,
-                "year": 2026,
-                "career_day": 34
-            },
-            {
-                "headline": "EIGHT IS ENOUGH FOR RIBEYE",
-                "body": "A timely wild eight helped Ribeye finish first in a crowded Casual Cards match.",
-                "category": "cards",
-                "month": 2,
-                "year": 2026,
-                "career_day": 32
-            },
-            {
-                "headline": "CARD ROOM GRANDFATHER CLOCK RUNS BACKWARD",
-                "body": "Card players recently noticed the room's grandfather clock was running backwards mere days after the room was used for a seance.",
-                "category": "strange",
-                "month": 2,
-                "year": 2026,
-                "career_day": 31
-            },
-            {
-                "headline": "ROUGH MONTH FOR MAX GOBLET",
-                "body": "Max Goblet fell 3 places in the international rankings and now sits at world #38.",
-                "category": "leaderboard",
-                "month": 2,
-                "year": 2026,
-                "career_day": 31
-            },
-            {
-                "headline": "ELINUR BUTTER SURGES UP RANKINGS",
-                "body": "Elinur Butter climbed 3 places this month and now sits at world #12.",
-                "category": "leaderboard",
-                "month": 2,
-                "year": 2026,
-                "career_day": 31
-            },
-            {
-                "headline": "MONKUS CARLTON RETAINS WORLD #1",
-                "body": "Monkus Carlton remains atop the international rankings with a rating of 3,101.",
-                "category": "leaderboard",
-                "month": 2,
-                "year": 2026,
-                "career_day": 31
-            },
-            {
-                "headline": "RIBEYE WINS HEAD-TO-HEAD SOLITAIRE RACE",
-                "body": "Ribeye beat Chiara Sammy to the final foundation card in 1:02 in a direct Klondike race.",
-                "category": "competition",
-                "month": 1,
-                "year": 2026,
-                "career_day": 30
-            },
-            {
-                "headline": "RIBEYE FINISHES CASINO NIGHT UP $7",
-                "body": "A profitable Blackjack session helped Ribeye leave Casino Night $7 ahead overall.",
-                "category": "casino",
-                "month": 1,
-                "year": 2026,
-                "career_day": 22
-            },
-            {
-                "headline": "RIBEYE SURPASSES 10,000 FANS",
-                "body": "Ribeye has crossed the 10,000-fan mark. The latest surge followed press interview.",
-                "category": "fans",
-                "month": 1,
-                "year": 2026,
-                "career_day": 21
-            },
-            {
-                "headline": "RIBEYE TAKES ON SCORE-FOUR",
-                "body": "Ribeye logged another appearance in Score-Four during Casual Cards week.",
-                "category": "cards",
-                "month": 1,
-                "year": 2026,
-                "career_day": 19
-            },
-            {
-                "headline": "RIBEYE TAKES ON SCORE-FOUR",
-                "body": "Ribeye logged another appearance in Score-Four during Casual Cards week.",
-                "category": "cards",
-                "month": 1,
-                "year": 2026,
-                "career_day": 11
-            },
-            {
-                "headline": "RIBEYE FINISHES CASINO NIGHT UP $4",
-                "body": "A profitable Blackjack session helped Ribeye leave Casino Night $4 ahead overall.",
-                "category": "casino",
-                "month": 1,
-                "year": 2026,
-                "career_day": 7
             }
         ]
     },
@@ -2657,33 +3645,47 @@
         "selected_felt": "f_default",
         "selected_title": "title_default",
         "selected_card_back": "back_default",
-        "selected_cursor": "halloween",
+        "selected_cursor": "cursor",
         "unlocked_menu_backgrounds": [
-            "bg_default",
-            "bg_chichen",
             "bg_noodle",
-            "bg_petra",
             "bg_microscope",
-            "bg_wall"
+            "bg_petra",
+            "bg_chichen",
+            "bg_brazil",
+            "bg_et",
+            "bg_wall",
+            "bg_blue_doodle",
+            "bg_gardens",
+            "bg_default"
         ],
         "unlocked_felts": [
+            "f_blanky",
             "f_high_society",
-            "f_crystalized",
-            "f_game_night",
             "f_default",
-            "f_fun_felt",
-            "f_gordon"
+            "f_gordon",
+            "f_game_night",
+            "f_crystalized_grain",
+            "f_crystalized",
+            "f_rock_candy",
+            "f_light_touch",
+            "f_fun_felt"
         ],
         "unlocked_titles": [
-            "title_shatter_1",
-            "title_default",
+            "title_soli_tare_blue",
+            "title_cards",
             "title_patience_dare",
+            "title_cardshark",
             "title_patience_creep",
-            "title_neon",
-            "title_solitary",
+            "title_default",
             "title_solitaire_pixel",
+            "title_solitary",
+            "title_isolation",
             "title_high_roller",
-            "title_cards"
+            "title_neon",
+            "title_penciled",
+            "title_soli_tare_red",
+            "title_top_dog",
+            "title_shatter_1"
         ],
         "unlocked_card_backs": [
             "back_default"
@@ -2695,27 +3697,35 @@
             "under_100_moves",
             "under_5_minutes",
             "challenge_no_hints",
+            "first_blackjack",
             "blackjack_double_win",
             "first_roulette_win",
             "first_holdem_win",
             "holdem_1000_win",
+            "holdem_25000_win",
             "holdem_5000_total",
+            "holdem_10_wins",
+            "holdem_straight_flush",
             "first_score_four_win"
         ],
         "stats": {
             "solitaire_wins": 8,
-            "score_four_wins": 10,
-            "blackjack_wins": 4,
+            "score_four_wins": 11,
+            "blackjack_wins": 14,
             "blackjack_double_win": true,
-            "blackjack_total_profit": 36,
+            "blackjack_total_profit": 2507,
             "roulette_wins": 1,
             "roulette_total_profit": 100,
             "solitaire_under_100_moves": true,
             "solitaire_under_5_minutes": true,
-            "holdem_hand_wins": 4,
-            "holdem_total_winnings": 6604,
+            "holdem_hand_wins": 15,
+            "holdem_total_winnings": 117604,
             "challenge_no_hints": true,
-            "holdem_1000_win": true
+            "holdem_1000_win": true,
+            "blackjack_naturals": 1,
+            "score_four_comp_wins": 1,
+            "holdem_straight_flush": true,
+            "holdem_25000_win": true
         }
     },
     "settings": {

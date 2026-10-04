@@ -136,6 +136,7 @@ from seven_card_stud_ui import (
 )
 
 from npc_manager import (
+    NPCS,
     get_random_npc,
     get_random_blackjack_dealer,
     get_score_four_opponent_choices,
@@ -223,12 +224,24 @@ from blind_mans_bluff import BlindMansBluffGame
 from blind_mans_bluff_ui import (
     draw_blind_mans_bluff,
     get_blind_mans_bluff_action,
+    get_blind_mans_bluff_bet_amount,
     ACTION_RETURN as BLUFF_ACTION_RETURN,
     ACTION_NEXT_HAND as BLUFF_ACTION_NEXT_HAND,
     ACTION_CHECK as BLUFF_ACTION_CHECK,
     ACTION_BET as BLUFF_ACTION_BET,
     ACTION_CALL as BLUFF_ACTION_CALL,
     ACTION_FOLD as BLUFF_ACTION_FOLD,
+)
+
+from debug_poker_select import (
+    draw_debug_poker_npc_select,
+    get_debug_poker_select_action,
+    make_default_selection as make_debug_poker_default_selection,
+    cycle_selection as cycle_debug_poker_selection,
+    ACTION_BACK as DEBUG_POKER_ACTION_BACK,
+    ACTION_START as DEBUG_POKER_ACTION_START,
+    ACTION_RANDOMIZE as DEBUG_POKER_ACTION_RANDOMIZE,
+    ACTION_CYCLE as DEBUG_POKER_ACTION_CYCLE,
 )
 
 from head_to_head import (
@@ -643,6 +656,7 @@ STATE_CAREER_EVENT = "career_event"
 STATE_CAREER_EVENT_SELECT = "career_event_select"
 
 STATE_DEBUG_MENU = "debug_menu"
+STATE_DEBUG_POKER_NPC_SELECT = "debug_poker_npc_select"
 
 HOW_TO_PLAY_CONTENT = {
 
@@ -1310,7 +1324,7 @@ HELP_CONTENT = {
             "",
             "Both racers are trying to move all 52 cards to their foundations. Your opponent's progress appears in the race HUD while you play the real Solitaire board.",
             "",
-            "Head-to-Head uses a race-only constructive deal so the player's board has a winning path. Race deals use Draw 3 and extra randomization to avoid repeating the old tutorial-like layout.",
+            "Head-to-Head currently uses a standard shuffled Draw-1 deal. The experimental Verified Solvable generator is disabled while its deal construction is rebuilt.",
         ],
     },
 }
@@ -3205,6 +3219,8 @@ score_four_opponent_choices = []
 score_four_opponent_npc = None
 
 debug_previous_state = None
+debug_poker_select_game_id = None
+debug_poker_selected_ids = []
 
 
 career_event_entry = None
@@ -7111,7 +7127,8 @@ def get_texas_holdem_opponents():
     return opponents
 
 def start_texas_holdem_session(
-        starting_stack=None
+        starting_stack=None,
+        opponents=None
 ):
 
     global career_cash
@@ -7173,9 +7190,10 @@ def start_texas_holdem_session(
     # Choose opponents
     # ==================================================
 
-    opponents = (
-        get_texas_holdem_opponents()
-    )
+    if opponents is None:
+        opponents = get_texas_holdem_opponents()
+    else:
+        opponents = list(opponents)[:4]
 
     if len(opponents) < 4:
 
@@ -7351,7 +7369,8 @@ def schedule_five_card_draw_npc_action():
 
 
 def start_five_card_draw_session(
-        starting_stack=None
+        starting_stack=None,
+        opponents=None
 ):
 
     global career_cash
@@ -7399,9 +7418,10 @@ def start_five_card_draw_session(
         high_stakes=False
     )
 
-    opponents = (
-        get_five_card_draw_opponents()
-    )
+    if opponents is None:
+        opponents = get_five_card_draw_opponents()
+    else:
+        opponents = list(opponents)[:4]
 
     if len(opponents) < 4:
         print(
@@ -7719,7 +7739,8 @@ def schedule_seven_card_stud_npc_action():
 
 
 def start_seven_card_stud_session(
-        starting_stack=None
+        starting_stack=None,
+        opponents=None
 ):
     global career_cash
 
@@ -7766,9 +7787,10 @@ def start_seven_card_stud_session(
         high_stakes=False
     )
 
-    opponents = (
-        get_seven_card_stud_opponents()
-    )
+    if opponents is None:
+        opponents = get_seven_card_stud_opponents()
+    else:
+        opponents = list(opponents)[:4]
 
     if len(opponents) < 4:
         print(
@@ -9205,6 +9227,49 @@ def debug_open_poker_night():
     current_state = (
         STATE_CAREER_EVENT_SELECT
     )
+
+
+def open_debug_poker_npc_select(game_id):
+    global current_state
+    global current_game_mode
+    global debug_poker_select_game_id
+    global debug_poker_selected_ids
+
+    debug_prepare_poker_night()
+    current_game_mode = "debug"
+    debug_poker_select_game_id = str(game_id)
+    debug_poker_selected_ids = make_debug_poker_default_selection(
+        NPCS,
+        count=4,
+    )
+    current_state = STATE_DEBUG_POKER_NPC_SELECT
+
+
+def get_debug_poker_selected_npcs():
+    selected = []
+    selected_ids = set(debug_poker_selected_ids)
+    for npc_id in debug_poker_selected_ids:
+        for npc in NPCS:
+            if npc.get("id") == npc_id:
+                selected.append(npc)
+                break
+    return selected[:4]
+
+
+def start_debug_selected_poker_table():
+    global current_state
+
+    opponents = get_debug_poker_selected_npcs()
+    if len(opponents) < 4:
+        return False
+
+    if debug_poker_select_game_id == "texas_holdem":
+        return start_texas_holdem_session(opponents=opponents)
+    if debug_poker_select_game_id == "five_card_draw":
+        return start_five_card_draw_session(opponents=opponents)
+    if debug_poker_select_game_id == "seven_card_stud":
+        return start_seven_card_stud_session(opponents=opponents)
+    return False
 
 
 def debug_open_solitaire_challenge(
@@ -14308,15 +14373,15 @@ def draw_menu_button(
 def get_hint_tooltip_text():
 
     if not game.hints_enabled:
-        return "Hints disabled"
+        return "Hint (H): disabled"
 
     if game.hints_remaining is None:
-        return "Unlimited hints"
+        return "Hint (H): unlimited"
 
     if game.hints_remaining == 1:
-        return "1 hint remaining"
+        return "Hint (H): 1 remaining"
 
-    return f"{game.hints_remaining} hints remaining"
+    return f"Hint (H): {game.hints_remaining} remaining"
 
 
 def get_undo_tooltip_text():
@@ -18894,11 +18959,12 @@ def begin_selected_head_to_head_race():
     game.clear_challenge()
     game.set_difficulty(DEFAULT_DIFFICULTY)
 
-    # Race deals keep the constructive solvable path for fairness, but use
-    # draw-three and the newly randomized suit progression so the stock/tableau
-    # no longer feel like the same tutorial hand every race.
-    game.stock_draw_count = 3
-    game.set_deal_mode("verified")
+    # The experimental constructive generator still produces conspicuously
+    # low-card-heavy openings. Head-to-Head temporarily uses an ordinary
+    # shuffled Draw-1 deal so races feel like real Solitaire instead of a
+    # tutorial layout. Verified Solvable remains disabled until its rebuild.
+    game.stock_draw_count = 1
+    game.set_deal_mode("random")
     game.new_game()
 
     head_to_head_race.prepare(
@@ -23365,6 +23431,52 @@ while running:
             menu_mouse_pos = game_mouse_pos
 
         # ==================================================
+        # DEBUG POKER NPC SELECT INPUT
+        # ==================================================
+
+        if current_state == STATE_DEBUG_POKER_NPC_SELECT:
+            if (
+                    event.type == pygame.MOUSEBUTTONDOWN
+                    and event.button == 1
+                    and game_mouse_pos is not None
+            ):
+                selector_action = get_debug_poker_select_action(
+                    game_mouse_pos,
+                    can_start=(career_cash >= 100),
+                )
+
+                if selector_action is not None:
+                    action_name, action_value = selector_action
+
+                    if action_name == DEBUG_POKER_ACTION_BACK:
+                        audio.play_sound("button_click")
+                        current_state = STATE_DEBUG_MENU
+
+                    elif action_name == DEBUG_POKER_ACTION_RANDOMIZE:
+                        audio.play_sound("button_click")
+                        debug_poker_selected_ids = make_debug_poker_default_selection(
+                            NPCS,
+                            count=4,
+                        )
+
+                    elif action_name == DEBUG_POKER_ACTION_CYCLE:
+                        audio.play_sound("button_click")
+                        slot_index, direction = action_value
+                        debug_poker_selected_ids = cycle_debug_poker_selection(
+                            NPCS,
+                            debug_poker_selected_ids,
+                            slot_index,
+                            direction,
+                        )
+
+                    elif action_name == DEBUG_POKER_ACTION_START:
+                        audio.play_sound("button_click")
+                        if not start_debug_selected_poker_table():
+                            show_debug_message("Add cash to play")
+
+            continue
+
+        # ==================================================
         # DEBUG MENU INPUT
         # ==================================================
 
@@ -23500,21 +23612,15 @@ while running:
 
                 elif debug_action == ACTION_TEXAS_HOLDEM:
                     audio.play_sound("button_click")
-                    debug_prepare_poker_night()
-                    if not start_texas_holdem_session():
-                        show_debug_message("Add cash to play")
+                    open_debug_poker_npc_select("texas_holdem")
 
                 elif debug_action == ACTION_FIVE_CARD_DRAW:
                     audio.play_sound("button_click")
-                    debug_prepare_poker_night()
-                    if not start_five_card_draw_session():
-                        show_debug_message("Add cash to play")
+                    open_debug_poker_npc_select("five_card_draw")
 
                 elif debug_action == ACTION_SEVEN_CARD_STUD:
                     audio.play_sound("button_click")
-                    debug_prepare_poker_night()
-                    if not start_seven_card_stud_session():
-                        show_debug_message("Add cash to play")
+                    open_debug_poker_npc_select("seven_card_stud")
 
                 # ==========================================
                 # Progression controls
@@ -26654,7 +26760,10 @@ while running:
                         audio.play_sound("poker_check")
 
                 elif bluff_action == BLUFF_ACTION_BET:
-                    if blind_mans_bluff_game.player_bet():
+                    bluff_bet_amount = get_blind_mans_bluff_bet_amount(
+                        blind_mans_bluff_game
+                    )
+                    if blind_mans_bluff_game.player_bet(bluff_bet_amount):
                         play_texas_holdem_chip_sound()
 
                 elif bluff_action == BLUFF_ACTION_CALL:
@@ -30397,6 +30506,24 @@ while running:
 
             finish_five_card_draw_session()
 
+
+    elif current_state == STATE_DEBUG_POKER_NPC_SELECT:
+
+        debug_game_labels = {
+            "texas_holdem": "Texas Hold'em",
+            "five_card_draw": "Five-Card Draw",
+            "seven_card_stud": "Seven-Card Stud",
+        }
+        draw_debug_poker_npc_select(
+            game_surface,
+            game_mouse_pos,
+            debug_game_labels.get(debug_poker_select_game_id, "Poker"),
+            NPCS,
+            debug_poker_selected_ids,
+            portrait_loader=get_npc_portrait_surface,
+            can_start=(career_cash >= 100),
+            cash=career_cash,
+        )
 
     elif current_state == STATE_DEBUG_MENU:
 

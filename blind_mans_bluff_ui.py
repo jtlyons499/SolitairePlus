@@ -11,6 +11,14 @@ ACTION_BET = "bet"
 ACTION_CALL = "call"
 ACTION_FOLD = "fold"
 
+BET_PRESET_RECTS = {
+    "MIN": pygame.Rect(785, 640, 100, 34),
+    "1/2 POT": pygame.Rect(895, 640, 100, 34),
+    "POT": pygame.Rect(1005, 640, 100, 34),
+    "MAX": pygame.Rect(1115, 640, 100, 34),
+}
+_selected_bet_label = "POT"
+
 WHITE = (245, 245, 240)
 CREAM = (236, 221, 181)
 GOLD = (226, 187, 78)
@@ -110,7 +118,24 @@ def _draw_button(surface, rect, text, mouse_pos, font, enabled=True, accent=Fals
     surface.blit(label, label.get_rect(center=rect.center))
 
 
+def get_blind_mans_bluff_bet_amount(game):
+    presets = game.get_player_bet_presets()
+    if not presets:
+        return 0
+
+    by_label = {label: amount for label, amount in presets}
+    if _selected_bet_label in by_label:
+        return by_label[_selected_bet_label]
+
+    # POT can collapse into another amount when stacks are short. Prefer the
+    # largest non-all-in option, then fall back to the maximum legal bet.
+    if len(presets) >= 2:
+        return presets[-2][1]
+    return presets[-1][1]
+
+
 def get_blind_mans_bluff_action(mouse_pos, game):
+    global _selected_bet_label
     if mouse_pos is None:
         return None
     if game.hand_complete:
@@ -120,6 +145,14 @@ def get_blind_mans_bluff_action(mouse_pos, game):
             return ACTION_NEXT_HAND
 
     actions = set(game.get_player_actions())
+
+    if ACTION_BET in actions:
+        available_labels = {label for label, _ in game.get_player_bet_presets()}
+        for label, rect in BET_PRESET_RECTS.items():
+            if label in available_labels and rect.collidepoint(mouse_pos):
+                _selected_bet_label = label
+                return None
+
     for action in (ACTION_FOLD, ACTION_CHECK, ACTION_CALL, ACTION_BET):
         if action in actions and BLUFF_ACTION_RECTS[action].collidepoint(mouse_pos):
             return action
@@ -228,7 +261,7 @@ def draw_blind_mans_bluff(
     pot = label_font.render(f"Pot: ${game.pot:,}", True, GOLD)
     surface.blit(pot, pot.get_rect(center=(683, 330)))
     stakes = detail_font.render(
-        f"Ante ${game.ante:,}  •  Fixed bet ${game.bet_unit:,}",
+        f"Ante ${game.ante:,}  •  Open ${game.get_min_open_bet():,}-${game.get_max_open_bet():,}",
         True,
         CREAM,
     )
@@ -250,7 +283,7 @@ def draw_blind_mans_bluff(
     if game.bet_state == "player_response" and not game.hand_complete:
         response_text = f"Facing ${game.current_bet:,}: call blind or fold."
     elif game.bet_state == "player_last_open" and not game.hand_complete:
-        response_text = "Everyone checked before you. Check behind or make the bet."
+        response_text = "Everyone checked before you. Check behind or choose an opening size."
     elif not game.hand_complete:
         response_text = "Everyone else can see your card. Read their betting, not your own hand."
     else:
@@ -269,7 +302,29 @@ def draw_blind_mans_bluff(
         if ACTION_CALL in actions:
             _draw_button(surface, BLUFF_ACTION_RECTS[ACTION_CALL], f"CALL ${game.current_bet:,}", mouse_pos, label_font)
         if ACTION_BET in actions:
-            _draw_button(surface, BLUFF_ACTION_RECTS[ACTION_BET], f"BET ${game.get_effective_bet_unit():,}", mouse_pos, label_font, accent=True)
+            presets = game.get_player_bet_presets()
+            available = {label: amount for label, amount in presets}
+            for label, rect in BET_PRESET_RECTS.items():
+                if label not in available:
+                    continue
+                selected = (label == _selected_bet_label)
+                _draw_button(
+                    surface,
+                    rect,
+                    f"{label} ${available[label]:,}",
+                    mouse_pos,
+                    detail_font,
+                    accent=selected,
+                )
+            bet_amount = get_blind_mans_bluff_bet_amount(game)
+            _draw_button(
+                surface,
+                BLUFF_ACTION_RECTS[ACTION_BET],
+                f"BET ${bet_amount:,}",
+                mouse_pos,
+                label_font,
+                accent=True,
+            )
 
     if game.hand_complete:
         result = detail_font.render(game.result_text, True, WHITE)

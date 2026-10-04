@@ -20,9 +20,9 @@ class BlindMansBluffGame:
     Every player can see every opponent's card but not their own. Highest rank
     wins after one betting round. Suits do not break ties.
 
-    As with Five-O, the supplied rules do not define a betting limit. The game
-    uses a compact fixed wager with no raises so the bluffing information puzzle
-    remains the center of play.
+    The game uses one betting round with variable opening sizes and no raises.
+    Players can check, open for different amounts, call, or fold while still
+    never seeing their own card.
     """
 
     def __init__(self, rng=None):
@@ -224,14 +224,8 @@ class BlindMansBluffGame:
         npc = self.get_npc(table_index)
         strength = self._npc_hidden_card_strength(table_index)
         amount_to_call = self.current_bet if facing_bet else 0
-        max_open = max(
-            0,
-            min(
-                self.bet_unit,
-                self._stack_for(table_index),
-                *(self._stack_for(index) for index in self.get_active_indexes() if index != table_index),
-            ) if len(self.get_active_indexes()) > 1 else 0,
-        )
+        max_open = self.get_max_open_bet()
+        min_open = self.get_min_open_bet()
         context = {
             "stage": "forehead_bet",
             "position": "unknown",
@@ -243,7 +237,7 @@ class BlindMansBluffGame:
             "current_bet": self.current_bet,
             "can_raise": False,
             "opponents_remaining": max(1, len(self.get_active_indexes()) - 1),
-            "minimum_open_bet": max_open,
+            "minimum_open_bet": min_open,
             "maximum_open_bet": max_open,
         }
         return decide_poker_action(
@@ -252,12 +246,82 @@ class BlindMansBluffGame:
             rng=self.rng,
         )
 
-    def get_effective_bet_unit(self):
+    def get_max_open_bet(self):
         active = self.get_active_indexes()
         if len(active) < 2:
             return 0
         stacks = [self._stack_for(index) for index in active]
-        return max(0, min([self.bet_unit] + stacks))
+        return max(0, min(stacks))
+
+    def get_min_open_bet(self):
+        maximum = self.get_max_open_bet()
+        if maximum <= 0:
+            return 0
+        minimum = max(self.ante, round_chip_amount(self.starting_stack * 0.01, minimum=5))
+        return min(maximum, minimum)
+
+    def get_player_bet_presets(self):
+        minimum = self.get_min_open_bet()
+        maximum = self.get_max_open_bet()
+        if maximum <= 0:
+            return []
+
+        pot = max(1, int(self.pot))
+        raw = [
+            ("MIN", minimum),
+            ("1/2 POT", max(minimum, round_chip_amount(pot * 0.5, minimum=minimum))),
+            ("POT", max(minimum, round_chip_amount(pot, minimum=minimum))),
+            ("MAX", maximum),
+        ]
+
+        presets = []
+        seen = set()
+        for label, amount in raw:
+            amount = max(minimum, min(int(amount), maximum))
+            if amount in seen:
+                continue
+            seen.add(amount)
+            presets.append((label, amount))
+        return presets
+
+    def _choose_npc_open_bet(self, table_index, strength, decision):
+        minimum = self.get_min_open_bet()
+        maximum = self.get_max_open_bet()
+        if maximum <= 0:
+            return 0
+
+        pot = max(1, int(self.pot))
+        personality = str(
+            decision.get("effective_personality")
+            or get_poker_personality(self.get_npc(table_index))
+            or "balanced"
+        ).lower()
+
+        # Variable sizing keeps the one-round format quick while letting
+        # personality, confidence and bluffs change the pressure of a hand.
+        multiplier = 0.50
+        if strength >= 0.72:
+            multiplier = self.rng.choice((0.85, 1.0, 1.35))
+        elif strength >= 0.50:
+            multiplier = self.rng.choice((0.55, 0.75, 1.0))
+        elif decision.get("bluff"):
+            multiplier = self.rng.choice((0.65, 0.90, 1.15))
+        else:
+            multiplier = self.rng.choice((0.40, 0.50, 0.65))
+
+        if personality in ("aggressive", "escalator"):
+            multiplier *= 1.25
+        elif personality == "timid":
+            multiplier *= 0.75
+        elif personality == "unpredictable":
+            multiplier *= self.rng.uniform(0.65, 1.45)
+
+        amount = round_chip_amount(pot * multiplier, minimum=minimum)
+        return max(minimum, min(int(amount), maximum))
+
+    def get_effective_bet_unit(self):
+        # Backward-compatible helper used by older UI paths.
+        return self.get_min_open_bet()
 
     def get_player_actions(self):
         if self.phase != "betting" or self.hand_complete or self.folded[0]:
@@ -292,8 +356,12 @@ class BlindMansBluffGame:
 
             if bettor is None:
                 decision = self._npc_decision(table_index, facing_bet=False)
-                if decision.get("action") == "bet" and self.get_effective_bet_unit() > 0:
-                    amount = self.get_effective_bet_unit()
+                if decision.get("action") == "bet" and self.get_max_open_bet() > 0:
+                    amount = self._choose_npc_open_bet(
+                        table_index,
+                        self._npc_hidden_card_strength(table_index),
+                        decision,
+                    )
                     self.current_bet = self._commit(table_index, amount)
                     self.bettor_index = table_index
                     self.last_actions[table_index] = f"Bet ${self.current_bet:,}"
@@ -329,12 +397,20 @@ class BlindMansBluffGame:
             self._process_npcs_after_player_check()
         return True
 
-    def player_bet(self):
+    def player_bet(self, amount=None):
         if "bet" not in self.get_player_actions():
             return False
-        amount = self.get_effective_bet_unit()
-        if amount <= 0:
+        minimum = self.get_min_open_bet()
+        maximum = self.get_max_open_bet()
+        if maximum <= 0:
             return False
+        if amount is None:
+            amount = max(minimum, min(maximum, self.pot))
+        try:
+            amount = int(amount)
+        except (TypeError, ValueError):
+            amount = minimum
+        amount = max(minimum, min(amount, maximum))
         self.current_bet = self._commit(0, amount)
         self.bettor_index = 0
         self.last_actions[0] = f"Bet ${self.current_bet:,}"
@@ -364,8 +440,12 @@ class BlindMansBluffGame:
 
         for table_index in active_npcs:
             decision = self._npc_decision(table_index, facing_bet=False)
-            if decision.get("action") == "bet" and self.get_effective_bet_unit() > 0:
-                amount = self.get_effective_bet_unit()
+            if decision.get("action") == "bet" and self.get_max_open_bet() > 0:
+                amount = self._choose_npc_open_bet(
+                    table_index,
+                    self._npc_hidden_card_strength(table_index),
+                    decision,
+                )
                 self.current_bet = self._commit(table_index, amount)
                 self.bettor_index = table_index
                 self.last_actions[table_index] = f"Bet ${self.current_bet:,}"

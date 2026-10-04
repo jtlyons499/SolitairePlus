@@ -513,7 +513,7 @@
     "favorite_suit": "Spades",
     "skill_tier": "strong",
     "portrait": "assets/npcs/sultan_griffin.png",
-    "game_personality": "timid"
+    "game_personality": "unpredictable"
   },
   {
     "id": "ami_amica",
@@ -562,5 +562,41 @@
     "skill_tier": "elite",
     "portrait": "assets/npcs/doon_ficus.png",
     "game_personality": "opportunist"
+  },
+  {
+    "id": "chad_whiskey",
+    "name": "Chad Whiskey",
+    "bio": "A god with a human complex.",
+    "country": "NOR",
+    "age": 22,
+    "hometown": "Lillehammer, Norway",
+    "favorite_suit": "Spades",
+    "skill_tier": "strong",
+    "portrait": "assets/npcs/chad_whiskey.png",
+    "game_personality": "opportunist"
+  },
+  {
+    "id": "mohammed_ramadan",
+    "name": "Mohammed Ramadan",
+    "bio": "He is on the no-entry list for twelve countries as a result of immigration scams.",
+    "country": "SAU",
+    "age": 29,
+    "hometown": "Jeddah, Saudi Arabia",
+    "favorite_suit": "Spades",
+    "skill_tier": "elite",
+    "portrait": "assets/npcs/mohammed_ramadan.png",
+    "game_personality": "aggressive"
+  },
+  {
+    "id": "em_marley",
+    "name": "Em Marley",
+    "bio": "Was raised in the marijuana fields with her father, Bob.",
+    "country": "JAM",
+    "age": 24,
+    "hometown": "Kingston, Jamaica",
+    "favorite_suit": "Diamonds",
+    "skill_tier": "strong",
+    "portrait": "assets/npcs/em_marley.png",
+    "game_personality": "timid"
   }
 ]
