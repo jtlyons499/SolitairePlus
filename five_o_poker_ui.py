@@ -18,9 +18,9 @@ GREEN = (61, 173, 97)
 RED = (194, 74, 74)
 DARK = (19, 25, 25)
 
-CARD_SIZE = (62, 87)
-DRAW_CARD_SIZE = (74, 104)
-STACK_OFFSET = 24
+CARD_SIZE = (88, 123)
+DRAW_CARD_SIZE = (90, 126)
+STACK_OFFSET = 16
 
 FIVE_O_RETURN_RECT = pygame.Rect(1130, 25, 195, 44)
 FIVE_O_NEXT_RECT = pygame.Rect(905, 690, 205, 44)
@@ -32,7 +32,7 @@ FIVE_O_ACTION_RECTS = {
 }
 
 FIVE_O_PLAYER_COLUMN_RECTS = [
-    pygame.Rect(390 + index * 118, 452, 92, 190)
+    pygame.Rect(360 + index * 125, 452, 110, 190)
     for index in range(5)
 ]
 
@@ -118,7 +118,7 @@ def _draw_column(
 ):
     cards = list(column or [])
     for index, card in enumerate(cards):
-        card_rect = pygame.Rect(rect.x + 15, rect.y + index * STACK_OFFSET, *CARD_SIZE)
+        card_rect = pygame.Rect(rect.centerx - CARD_SIZE[0] // 2, rect.y + index * STACK_OFFSET, *CARD_SIZE)
         face_up = not (
             hidden_to_viewer
             and index == 3
@@ -230,24 +230,34 @@ def draw_five_o_poker(
     opener = detail_font.render(f"Opened this hand: {opener_name}", True, (204, 214, 208))
     surface.blit(opener, (132, 586))
 
+    revealed_count = (
+        game.get_showdown_revealed_count()
+        if hasattr(game, "get_showdown_revealed_count")
+        else (5 if game.hand_complete else 0)
+    )
     showdown = bool(game.hand_complete)
     available = set(game.get_available_player_columns()) if game.phase == "placement" else set()
     for index in range(5):
-        x = 390 + index * 118
-        npc_rect = pygame.Rect(x, 95, 92, 190)
+        x = 360 + index * 125
+        npc_rect = pygame.Rect(x, 95, 110, 190)
         player_rect = FIVE_O_PLAYER_COLUMN_RECTS[index]
 
         pygame.draw.rect(surface, (25, 58, 46), npc_rect, border_radius=8)
         pygame.draw.rect(surface, (25, 58, 46), player_rect, border_radius=8)
 
-        result = game.column_results[index] if index < len(game.column_results) else None
+        column_revealed = index < revealed_count
+        result = (
+            game.column_results[index]
+            if column_revealed and index < len(game.column_results)
+            else None
+        )
         result_color = {
             "player": GREEN,
             "npc": RED,
             "tie": GOLD,
         }.get(result, (135, 145, 140))
 
-        pygame.draw.rect(surface, result_color if showdown else (135, 145, 140), npc_rect, 2, border_radius=8)
+        pygame.draw.rect(surface, result_color if column_revealed else (135, 145, 140), npc_rect, 2, border_radius=8)
         border = GOLD if index in available else (135, 145, 140)
         width = 4 if index in available else 2
         pygame.draw.rect(surface, border, player_rect, width, border_radius=8)
@@ -260,7 +270,7 @@ def draw_five_o_poker(
             card_fronts,
             card_back_surface,
             hidden_to_viewer=True,
-            showdown=showdown,
+            showdown=column_revealed,
         )
         _draw_column(
             surface,
@@ -270,13 +280,13 @@ def draw_five_o_poker(
             card_fronts,
             card_back_surface,
             hidden_to_viewer=True,
-            showdown=showdown,
+            showdown=column_revealed,
         )
 
         number = detail_font.render(str(index + 1), True, CREAM)
         surface.blit(number, number.get_rect(center=(player_rect.centerx, 652)))
 
-        if showdown:
+        if column_revealed:
             result_text = {"player": "WIN", "npc": "LOSS", "tie": "TIE"}.get(result, "")
             tag = detail_font.render(result_text, True, result_color)
             surface.blit(tag, tag.get_rect(center=(player_rect.centerx, 432)))
@@ -327,15 +337,19 @@ def draw_five_o_poker(
         surface.blit(note, note.get_rect(center=(742, 386)))
 
     else:
-        score = label_font.render(
-            f"Columns: You {game.player_column_wins}  •  {game.get_npc_name()} {game.npc_column_wins}",
-            True,
-            GOLD,
-        )
+        if game.hand_complete:
+            header_text = (
+                f"Columns: You {game.player_column_wins}  •  "
+                f"{game.get_npc_name()} {game.npc_column_wins}"
+            )
+        else:
+            header_text = game.result_text
+
+        score = _fit_line(label_font, header_text, 900, GOLD)
         surface.blit(score, score.get_rect(center=(742, 318)))
 
-        y = 342
-        for index in range(5):
+        y = 336
+        for index in range(min(revealed_count, 5)):
             result = game.column_results[index] if index < len(game.column_results) else None
             player_desc = game.get_column_description("player", index)
             npc_desc = game.get_column_description("npc", index)
@@ -350,7 +364,11 @@ def draw_five_o_poker(
                 color = (239, 218, 155)
             line = _fit_line(detail_font, comparison, 900, color)
             surface.blit(line, (280, y))
-            y += 19
+            y += 18
+
+        if game.hand_complete:
+            final_line = _fit_line(detail_font, game.result_text, 900, WHITE)
+            surface.blit(final_line, final_line.get_rect(center=(742, 425)))
 
     actions = set(game.get_player_actions())
     if game.phase == "betting" and not game.hand_complete:

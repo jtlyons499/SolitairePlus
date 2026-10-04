@@ -486,7 +486,7 @@ class Game:
         self.hint_data = None
         self.hint_start_ticks = 0
 
-        if self.challenge_id is not None:
+        if self.challenge_id == "all_or_nothing":
             self.challenge_notice_start_ticks = pygame.time.get_ticks()
         else:
             self.challenge_notice_start_ticks = 0
@@ -520,11 +520,6 @@ class Game:
     # --------------------------------------------------
 
     def record_move(self):
-        # Any successful move invalidates the visual hint. Leaving the old
-        # source rectangle on screen after the card has moved is confusing.
-        self.hint_data = None
-        self.hint_start_ticks = 0
-
         if not self.round_won:
             self.move_count += 1
 
@@ -1515,6 +1510,79 @@ class Game:
                 if self.move_waste_to_foundation(
                         foundation_index
                 ):
+                    return
+
+        # ==================================================
+        # USEFUL TABLEAU -> TABLEAU
+        #
+        # Auto-solve used to stop as soon as every face-up top card was
+        # temporarily blocked from the foundations.  Before giving up, move a
+        # legal face-up stack when doing so exposes a card that can immediately
+        # advance a foundation.  This keeps the convenience feature conservative
+        # while handling the common "last few cards" stall.
+        # ==================================================
+
+        for source_index, source_column in enumerate(self.tableau):
+            if len(source_column) < 2:
+                continue
+
+            for card_index in range(1, len(source_column)):
+                selected_card = source_column[card_index]
+                if not selected_card.face_up:
+                    continue
+
+                exposed_after_move = source_column[card_index - 1]
+                if not exposed_after_move.face_up:
+                    continue
+
+                exposes_foundation_move = any(
+                    self.can_place_on_foundation(
+                        exposed_after_move,
+                        foundation,
+                    )
+                    for foundation in self.foundations
+                )
+                if not exposes_foundation_move:
+                    continue
+
+                for target_index, target_column in enumerate(self.tableau):
+                    if target_index == source_index:
+                        continue
+
+                    if target_column:
+                        legal = self.can_place_on_tableau(
+                            selected_card,
+                            target_column[-1],
+                        )
+                    else:
+                        legal = selected_card.rank == "K"
+
+                    if legal and self.move_tableau_stack(
+                        source_index,
+                        selected_card,
+                        target_index,
+                    ):
+                        return
+
+        # ==================================================
+        # WASTE -> TABLEAU
+        #
+        # Moving a blocked waste card onto the tableau can uncover the next
+        # stock card and is required for some otherwise auto-solvable endings.
+        # ==================================================
+
+        if self.waste:
+            moving_card = self.waste[-1]
+            for target_index, target_column in enumerate(self.tableau):
+                if target_column:
+                    legal = self.can_place_on_tableau(
+                        moving_card,
+                        target_column[-1],
+                    )
+                else:
+                    legal = moving_card.rank == "K"
+
+                if legal and self.move_waste_to_tableau(target_index):
                     return
 
         # ==================================================
@@ -3904,33 +3972,10 @@ class Game:
         self.draw_victory_animation()
 
     def draw_challenge_notice(self):
-        if self.challenge_id is None:
+        if self.challenge_id != "all_or_nothing":
             return
 
         if self.challenge_notice_start_ticks <= 0:
-            return
-
-        rules = CAREER_CHALLENGE_RULES.get(
-            self.challenge_id,
-            {}
-        )
-
-        notice_title = rules.get(
-            "notice_title",
-            rules.get(
-                "name",
-                "CHALLENGE"
-            ).upper()
-        )
-
-        notice_lines = list(
-            rules.get(
-                "notice_lines",
-                []
-            )
-        )
-
-        if not notice_lines:
             return
 
         elapsed = (
@@ -3966,37 +4011,36 @@ class Game:
         )
 
         title = self.challenge_title_font.render(
-            notice_title,
+            "ALL OR NOTHING",
             True,
             (255, 225, 105)
         )
-        title.set_alpha(alpha)
+        line_1 = self.challenge_body_font.render(
+            "Build complete same-suit K to A runs in the tableau.",
+            True,
+            (245, 245, 245)
+        )
+        line_2 = self.challenge_body_font.render(
+            "Foundations accept the full 13-card suit at once.",
+            True,
+            (245, 245, 245)
+        )
+
+        for surface in (title, line_1, line_2):
+            surface.set_alpha(alpha)
 
         panel.blit(
             title,
             title.get_rect(center=(panel_rect.width // 2, 27))
         )
-
-        line_y_positions = (64, 87)
-
-        for line_index, line_text in enumerate(
-                notice_lines[:2]
-        ):
-            line_surface = self.challenge_body_font.render(
-                line_text,
-                True,
-                (245, 245, 245)
-            )
-            line_surface.set_alpha(alpha)
-            panel.blit(
-                line_surface,
-                line_surface.get_rect(
-                    center=(
-                        panel_rect.width // 2,
-                        line_y_positions[line_index]
-                    )
-                )
-            )
+        panel.blit(
+            line_1,
+            line_1.get_rect(center=(panel_rect.width // 2, 64))
+        )
+        panel.blit(
+            line_2,
+            line_2.get_rect(center=(panel_rect.width // 2, 87))
+        )
 
         self.screen.blit(
             panel,

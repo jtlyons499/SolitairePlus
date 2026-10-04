@@ -1,4 +1,3 @@
-import os
 import pygame
 
 
@@ -31,73 +30,12 @@ SUIT_NAMES = {
     "S": "Spades",
 }
 
-SUIT_ICON_PATHS = {
-    "C": "assets/ui/suits/clubs.png",
-    "D": "assets/ui/suits/diamonds.png",
-    "H": "assets/ui/suits/hearts.png",
-    "S": "assets/ui/suits/spades.png",
+SUIT_SYMBOLS = {
+    "C": "♣",
+    "D": "♦",
+    "H": "♥",
+    "S": "♠",
 }
-
-_suit_icon_cache = {}
-
-def _get_suit_icon(suit, size):
-    cache_key = (suit, tuple(size))
-    if cache_key in _suit_icon_cache:
-        return _suit_icon_cache[cache_key]
-
-    path = SUIT_ICON_PATHS.get(suit)
-    image = None
-    if path and os.path.exists(path):
-        try:
-            image = pygame.image.load(path).convert_alpha()
-            image = pygame.transform.smoothscale(image, size)
-        except pygame.error:
-            image = None
-
-    _suit_icon_cache[cache_key] = image
-    return image
-
-def _draw_suit_label(surface, suit, suit_name, center, font, text_color=(245, 245, 235), icon_size=26):
-    prefix = font.render("Active suit:", True, text_color)
-    name = font.render(suit_name, True, text_color)
-    icon = _get_suit_icon(suit, (icon_size, icon_size))
-    gap = 8
-    icon_width = icon_size if icon is not None else font.size(suit)[0]
-    total_width = prefix.get_width() + gap + icon_width + gap + name.get_width()
-    x = center[0] - total_width // 2
-    y = center[1]
-
-    surface.blit(prefix, prefix.get_rect(midleft=(x, y)))
-    x += prefix.get_width() + gap
-
-    if icon is not None:
-        surface.blit(icon, icon.get_rect(center=(x + icon_width // 2, y)))
-    else:
-        fallback = font.render(suit, True, text_color)
-        surface.blit(fallback, fallback.get_rect(center=(x + icon_width // 2, y)))
-    x += icon_width + gap
-    surface.blit(name, name.get_rect(midleft=(x, y)))
-
-def _draw_suit_button(surface, rect, suit, mouse_pos, font):
-    hovered = mouse_pos is not None and rect.collidepoint(mouse_pos)
-    fill = (60, 105, 72) if hovered else (45, 75, 54)
-    border = (255, 225, 120) if hovered else (210, 215, 210)
-    pygame.draw.rect(surface, fill, rect, border_radius=9)
-    pygame.draw.rect(surface, border, rect, 2, border_radius=9)
-
-    icon = _get_suit_icon(suit, (22, 22))
-    label = font.render(SUIT_NAMES[suit], True, (255, 255, 255))
-    gap = 7
-    icon_width = 22 if icon is not None else font.size(suit)[0]
-    total = icon_width + gap + label.get_width()
-    x = rect.centerx - total // 2
-
-    if icon is not None:
-        surface.blit(icon, icon.get_rect(center=(x + icon_width // 2, rect.centery)))
-    else:
-        fallback = font.render(suit, True, (255, 255, 255))
-        surface.blit(fallback, fallback.get_rect(center=(x + icon_width // 2, rect.centery)))
-    surface.blit(label, label.get_rect(midleft=(x + icon_width + gap, rect.centery)))
 
 
 def _get_fonts():
@@ -297,15 +235,13 @@ def draw_crazy_eights(
     )
     surface.blit(discard_label, discard_label.get_rect(center=(discard_rect.centerx, discard_rect.bottom + 18)))
 
-    _draw_suit_label(
-        surface,
-        game.current_suit,
-        game.get_active_suit_name(),
-        (683, 425),
-        fonts["large"],
-        text_color=(245, 245, 235),
-        icon_size=26,
+    suit_color = (235, 65, 70) if game.current_suit in ("D", "H") else (245, 245, 235)
+    suit_text = (
+        f"Active suit: {SUIT_SYMBOLS.get(game.current_suit, '')} "
+        f"{game.get_active_suit_name()}"
     )
+    suit_surface = fonts["large"].render(suit_text, True, suit_color)
+    surface.blit(suit_surface, suit_surface.get_rect(center=(683, 425)))
 
     if game.game_over:
         turn_text = game.result_text
@@ -327,9 +263,6 @@ def draw_crazy_eights(
     # Player hand.
     player_hand = game.hands[0] if game.hands else []
     _player_card_rects = _player_hand_layout(len(player_hand))
-
-    player_label = fonts["medium"].render("YOUR HAND", True, (250, 245, 225))
-    surface.blit(player_label, (70, 565))
 
     for index, (card, rect) in enumerate(zip(player_hand, _player_card_rects)):
         hovered = mouse_pos is not None and rect.collidepoint(mouse_pos)
@@ -386,7 +319,8 @@ def draw_crazy_eights(
         surface.blit(header, header.get_rect(center=(683, 337)))
 
         for suit, rect in _SUIT_RECTS.items():
-            _draw_suit_button(surface, rect, suit, mouse_pos, fonts["small"])
+            label = f"{SUIT_SYMBOLS[suit]} {SUIT_NAMES[suit]}"
+            _draw_button(surface, rect, label, mouse_pos, fonts["small"], enabled=True)
 
     # Game over result overlay.
     if game.game_over:

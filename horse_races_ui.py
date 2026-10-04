@@ -318,12 +318,12 @@ def _draw_field_panel(surface, mouse_pos, game):
         name = _font(14, True).render(horse["name"], True, WHITE)
         surface.blit(name, (rect.x + 31, rect.y + 5))
 
-        odds = _font(11).render(
+        odds = _font(14, True).render(
             f"W {horse['win_odds']:.1f}:1   P {horse['place_odds']:.1f}:1   S {horse['show_odds']:.1f}:1",
             True,
             MUTED,
         )
-        surface.blit(odds, (rect.x + 31, rect.y + 25))
+        surface.blit(odds, (rect.x + 31, rect.y + 24))
 
         if game.stage == "results" and index in game.result_order:
             place = game.result_order.index(index) + 1

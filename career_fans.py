@@ -190,3 +190,29 @@ def fan_change_from_autograph_accuracy(accuracy, current_fans=0, current_rating=
     if multiplier < 0:
         return min(-5, change)
     return 0
+
+
+def fan_loss_from_bad_result(current_fans=0, net_loss=0, severity=1.0):
+    """Return a modest positive fan-loss amount after a poor performance.
+
+    Losses scale gently with the size of the existing fanbase and, for casino
+    games, with money lost.  The intent is to make bad nights matter without
+    erasing hours of progress from one unlucky result.
+    """
+    try:
+        current_fans = max(0, int(current_fans))
+        net_loss = max(0, int(net_loss))
+        severity = max(0.25, float(severity))
+    except (TypeError, ValueError):
+        return 0
+
+    if current_fans <= 0:
+        return 0
+
+    audience_component = 5.0 + math.sqrt(current_fans) * 0.32
+    cash_component = math.sqrt(net_loss) * 0.85 if net_loss > 0 else 0.0
+    loss = int(round((audience_component + cash_component) * severity))
+
+    # Keep a single bad result noticeable but not catastrophic.
+    maximum = max(10, int(round(current_fans * 0.035)))
+    return max(1, min(current_fans, maximum, loss))

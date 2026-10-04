@@ -472,6 +472,7 @@ class ScoreFourGame:
 
         self.match_complete = False
         self.match_winner = None
+        self.session_complete = False
 
         self.round_complete = False
         self.round_result = None
@@ -560,19 +561,30 @@ class ScoreFourGame:
         # First to 3 wins the match
         # ----------------------------------------------
 
+        reward_table = {
+            "low": {"win": 45, "loss": 10},
+            "mid": {"win": 60, "loss": 15},
+            "strong": {"win": 80, "loss": 20},
+            "elite": {"win": 100, "loss": 25},
+        }
+        rewards = reward_table.get(
+            getattr(self, "npc_skill_tier", "mid"),
+            reward_table["mid"],
+        )
+
         if self.player_score >= 3:
 
             self.match_complete = True
             self.match_winner = "player"
 
-            self.competitive_reward = 60
+            self.competitive_reward = rewards["win"]
 
         elif self.npc_score >= 3:
 
             self.match_complete = True
             self.match_winner = "npc"
 
-            self.competitive_reward = 45
+            self.competitive_reward = rewards["loss"]
 
 
     # ==================================================

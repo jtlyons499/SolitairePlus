@@ -28,12 +28,6 @@ def normalize_deal_mode(mode):
 
 
 def _ordered_cards_by_foundation_progress(deck, rng):
-    """Create a randomized foundation-safe ordering.
-
-    Each suit must still appear A through K, but the four suits are interleaved
-    randomly. This preserves the constructive winning path without producing
-    the obvious A,A,A,A,2,2,2,2 stock pattern.
-    """
     cards_by_key = {
         (card.suit, card.rank): card
         for card in deck
@@ -44,8 +38,10 @@ def _ordered_cards_by_foundation_progress(deck, rng):
         for suit in PREFERRED_SUITS
         if any(card.suit == suit for card in deck)
     ]
+
     extras = sorted({
-        card.suit for card in deck
+        card.suit
+        for card in deck
         if card.suit not in suits
     })
     suits.extend(extras)
@@ -55,37 +51,29 @@ def _ordered_cards_by_foundation_progress(deck, rng):
             "Verified Solitaire deals require exactly four suits."
         )
 
+    # Build a randomized interleaving of the four suit progressions while
+    # preserving A->K order within each individual suit.  The old generator
+    # walked rank-major (all aces, all twos, ...), which made the stock look
+    # obviously patterned and caused race deals to feel nearly identical.
     next_rank_index = {suit: 0 for suit in suits}
     ordered = []
 
     while len(ordered) < 52:
         available_suits = [
-            suit for suit in suits
+            suit
+            for suit in suits
             if next_rank_index[suit] < len(RANKS)
         ]
-        if not available_suits:
-            break
-
-        # Slightly discourage repeating the same suit several times in a row,
-        # while retaining real randomness in the visible stock sequence.
-        choices = list(available_suits)
-        if ordered and len(choices) > 1:
-            previous_suit = ordered[-1].suit
-            choices.extend(
-                suit for suit in available_suits
-                if suit != previous_suit
-            )
-
-        suit = rng.choice(choices)
+        suit = rng.choice(available_suits)
         rank = RANKS[next_rank_index[suit]]
+        next_rank_index[suit] += 1
+
         card = cards_by_key.get((suit, rank))
         if card is None:
             raise ValueError(
                 f"Verified deal is missing {rank} of {suit}."
             )
-
         ordered.append(card)
-        next_rank_index[suit] += 1
 
     if len(ordered) != 52:
         raise ValueError(
@@ -149,17 +137,45 @@ def _build_verified_stock(stock_sequence, draw_count):
 def build_verified_deal(deck, draw_count=1, rng=None):
     """Return a standard Klondike deal with a known winning line.
 
-    The first 28 cards are distributed across 1..7-card tableau columns
-    while preserving a foundation-safe reveal order. The remaining 24 are
-    arranged for the configured stock draw count. The deal remains ordinary
-    Klondike: only the exposed tableau card is face-up and stock starts down.
+    A randomized foundation-safe progression is distributed across the seven
+    tableau reveal queues and the stock queue.  Each queue preserves its own
+    safe order, while the global assignment varies the exposed cards and stock
+    substantially from race to race.  The deal remains ordinary Klondike: only
+    the exposed tableau card is face-up and stock starts down.
     """
     if rng is None:
         rng = random
 
     ordered = _ordered_cards_by_foundation_progress(deck, rng)
-    tableau = _build_verified_tableau(ordered[:28], rng)
-    stock = _build_verified_stock(ordered[28:], draw_count)
+
+    # Randomly distribute the single foundation-safe progression across all
+    # seven tableau reveal queues *and* the stock queue.  Earlier versions put
+    # the first 28 safe cards in the tableau and the final 24 in stock, which
+    # made every verified game visibly low-cards-first and tutorial-easy.
+    capacities = [1, 2, 3, 4, 5, 6, 7, 24]
+    queues = [[] for _ in capacities]
+    remaining = list(capacities)
+
+    for card in ordered:
+        weighted_choices = []
+        for index, capacity in enumerate(remaining):
+            weighted_choices.extend([index] * max(0, capacity))
+        if not weighted_choices:
+            raise ValueError("Verified deal queue allocation exhausted early.")
+        queue_index = rng.choice(weighted_choices)
+        queues[queue_index].append(card)
+        remaining[queue_index] -= 1
+
+    tableau = []
+    for reveal_order in queues[:7]:
+        column = list(reversed(reveal_order))
+        for card in column:
+            card.face_up = False
+        if column:
+            column[-1].face_up = True
+        tableau.append(column)
+
+    stock = _build_verified_stock(queues[7], draw_count)
     return tableau, stock
 
 

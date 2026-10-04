@@ -311,6 +311,7 @@ from career_fans import (
     fan_gain_from_cash_win,
     fan_gain_from_rating_win,
     fan_change_from_autograph_accuracy,
+    fan_loss_from_bad_result,
     get_public_appeal_display_name,
 )
 
@@ -733,7 +734,7 @@ HOW_TO_PLAY_CONTENT = {
             "",
             "Different difficulty levels in game may limit stock passes, hints, and undo history.",
             "",
-            "Options can use random deals or Verified Solvable deals with a known winning line.",
+            "Random deals are currently the standard. Verified Solvable deals are temporarily disabled while that generator is being rebuilt.",
             "",
             "Career challenges may use special rules such as No Undo, No Hints, or All or Nothing.",
         ],
@@ -1309,7 +1310,7 @@ HELP_CONTENT = {
             "",
             "Both racers are trying to move all 52 cards to their foundations. Your opponent's progress appears in the race HUD while you play the real Solitaire board.",
             "",
-            "Head-to-Head uses a Verified Solvable deal so the player's race is never decided by an impossible random layout.",
+            "Head-to-Head uses a race-only constructive deal so the player's board has a winning path. Race deals use Draw 3 and extra randomization to avoid repeating the old tutorial-like layout.",
         ],
     },
 }
@@ -2729,6 +2730,21 @@ def record_career_event_result(game_id, won=None, **details):
     entry.update(details)
     career_event_result_log.append(entry)
 
+    # Career popularity can move in both directions now. A single loss only
+    # costs a modest number of fans, while a genuinely bad money session has
+    # a somewhat larger effect.
+    if current_game_mode == "career" and won is False:
+        net_value = details.get("net", 0)
+        try:
+            net_loss = max(0, -int(net_value))
+        except (TypeError, ValueError):
+            net_loss = 0
+        lose_fans_for_bad_result(
+            f"Poor {FREE_PLAY_GAME_NAMES.get(game_id, game_id.replace('_', ' ').title())} result",
+            net_loss=net_loss,
+            severity=1.0,
+        )
+
 
 def reset_career_event_session_totals(activity_type):
     global texas_holdem_session_net
@@ -3244,6 +3260,7 @@ head_to_head_opponents = []
 head_to_head_selected_index = None
 head_to_head_previous_deal_mode = None
 head_to_head_previous_difficulty = None
+head_to_head_previous_stock_draw_count = None
 
 career_year = 2026
 career_month = 1
@@ -4978,6 +4995,7 @@ blackjack_change_bet_rect = pygame.Rect(0, 0, 0, 0)
 blackjack_hit_rect = pygame.Rect(430, 660, 150, 50)
 blackjack_stand_rect = pygame.Rect(595, 660, 150, 50)
 blackjack_double_rect = pygame.Rect(760, 660, 165, 50)
+blackjack_split_rect = pygame.Rect(940, 660, 150, 50)
 blackjack_return_rect = pygame.Rect(1105, 660, 185, 50)
 blackjack_deal_again_rect = pygame.Rect(570, 660, 225, 50)
 
@@ -5437,6 +5455,13 @@ recap_no_rect = pygame.Rect(
     55
 )
 
+level_up_continue_rect = pygame.Rect(
+    533,
+    690,
+    300,
+    48
+)
+
 # ----------------------------
 # Music mode
 # ----------------------------
@@ -5523,6 +5548,11 @@ deal_verified_rect = pygame.Rect(
     300,
     42
 )
+
+# Temporarily keep the experimental verified-deal generator out of ordinary
+# play while it is being rebuilt. Head-to-Head still uses its race-only
+# constructive deal path.
+VERIFIED_DEALS_ENABLED = False
 
 
 # ----------------------------
@@ -5945,54 +5975,141 @@ def draw_blackjack():
     )
     game_surface.blit(dealer_value_surface, dealer_value_rect)
 
-    player_heading = blackjack_heading_font.render(
-        "YOUR HAND",
-        True,
-        (245, 235, 205)
-    )
-    game_surface.blit(
-        player_heading,
-        player_heading.get_rect(center=(686, 390))
-    )
-
-    player_count = max(1, len(blackjack_game.player_hand))
-    player_spacing = min(92, 430 // max(1, player_count - 1))
-    player_total_width = 100 + max(0, player_count - 1) * player_spacing
-    player_x = 686 - player_total_width // 2
-    player_y = 420
-
-    for index, card in enumerate(blackjack_game.player_hand):
-        target_x = player_x + index * player_spacing
-        position = get_blackjack_animated_position(
-            "player",
-            index,
-            target_x,
-            player_y
+    if blackjack_game.is_split_round():
+        player_heading = blackjack_heading_font.render(
+            "YOUR SPLIT HANDS",
+            True,
+            (245, 235, 205)
         )
-        if position is None:
-            continue
-
-        x, y = position
-        card_key = get_card_key(card)
         game_surface.blit(
-            game.card_fronts[card_key],
-            (x, y)
+            player_heading,
+            player_heading.get_rect(center=(686, 382))
         )
 
-    player_value_surface = blackjack_body_font.render(
-        f"Hand total: {blackjack_game.player_value()}",
-        True,
-        (245, 245, 240)
-    )
-    player_value_rect = player_value_surface.get_rect(center=(686, 602))
-    player_bg = player_value_rect.inflate(28, 14)
-    _draw_blackjack_panel(
-        player_bg,
-        fill=(8, 24, 18, 205),
-        border=(173, 190, 179),
-        radius=8
-    )
-    game_surface.blit(player_value_surface, player_value_rect)
+        split_centers = (535, 835)
+        hands = blackjack_game.get_player_hands()
+
+        for hand_index, hand in enumerate(hands):
+            center_x = split_centers[hand_index]
+            active = (
+                not blackjack_game.round_complete
+                and not blackjack_game.player_stood
+                and blackjack_game.active_hand_index == hand_index
+                and not blackjack_game.player_hand_done[hand_index]
+            )
+
+            hand_label = blackjack_small_font.render(
+                f"HAND {hand_index + 1}",
+                True,
+                (255, 224, 120) if active else (215, 220, 216)
+            )
+            game_surface.blit(
+                hand_label,
+                hand_label.get_rect(center=(center_x, 408))
+            )
+
+            card_count = max(1, len(hand))
+            card_spacing = min(70, 205 // max(1, card_count - 1))
+            total_width = 100 + max(0, card_count - 1) * card_spacing
+            start_x = center_x - total_width // 2
+            card_y = 428
+
+            for index, card in enumerate(hand):
+                target_x = start_x + index * card_spacing
+                position = get_blackjack_animated_position(
+                    f"player_{hand_index}",
+                    index,
+                    target_x,
+                    card_y
+                )
+                if position is None:
+                    continue
+                x, y = position
+                card_key = get_card_key(card)
+                game_surface.blit(game.card_fronts[card_key], (x, y))
+
+            value = blackjack_game.get_hand_value_at(hand_index)
+            wager = blackjack_game.player_hand_bets[hand_index]
+            detail = blackjack_small_font.render(
+                f"Total {value}   |   Bet ${wager:,}",
+                True,
+                (255, 232, 148) if active else (240, 240, 236)
+            )
+            detail_rect = detail.get_rect(center=(center_x, 594))
+            detail_bg = detail_rect.inflate(20, 10)
+            _draw_blackjack_panel(
+                detail_bg,
+                fill=(8, 24, 18, 205),
+                border=(232, 198, 95) if active else (173, 190, 179),
+                radius=8
+            )
+            game_surface.blit(detail, detail_rect)
+
+            if blackjack_game.round_complete:
+                hand_result = blackjack_game.get_hand_result(hand_index)
+                result_names = {
+                    "player": "WIN",
+                    "push": "PUSH",
+                    "dealer": "LOSS",
+                }
+                result_label = blackjack_small_font.render(
+                    result_names.get(hand_result, ""),
+                    True,
+                    (255, 224, 120)
+                )
+                game_surface.blit(
+                    result_label,
+                    result_label.get_rect(center=(center_x, 625))
+                )
+    else:
+        player_heading = blackjack_heading_font.render(
+            "YOUR HAND",
+            True,
+            (245, 235, 205)
+        )
+        game_surface.blit(
+            player_heading,
+            player_heading.get_rect(center=(686, 390))
+        )
+
+        player_count = max(1, len(blackjack_game.player_hand))
+        player_spacing = min(92, 430 // max(1, player_count - 1))
+        player_total_width = 100 + max(0, player_count - 1) * player_spacing
+        player_x = 686 - player_total_width // 2
+        player_y = 420
+
+        for index, card in enumerate(blackjack_game.player_hand):
+            target_x = player_x + index * player_spacing
+            position = get_blackjack_animated_position(
+                "player",
+                index,
+                target_x,
+                player_y
+            )
+            if position is None:
+                continue
+
+            x, y = position
+            card_key = get_card_key(card)
+            game_surface.blit(
+                game.card_fronts[card_key],
+                (x, y)
+            )
+
+        player_value_surface = blackjack_body_font.render(
+            f"Hand total: {blackjack_game.player_value()}",
+            True,
+            (245, 245, 240)
+        )
+        player_value_rect = player_value_surface.get_rect(center=(686, 602))
+        player_bg = player_value_rect.inflate(28, 14)
+        _draw_blackjack_panel(
+            player_bg,
+            fill=(8, 24, 18, 205),
+            border=(173, 190, 179),
+            radius=8
+        )
+        game_surface.blit(player_value_surface, player_value_rect)
 
     # ==================================================
     # Bankroll / next wager panel
@@ -6079,27 +6196,36 @@ def draw_blackjack():
 
     if blackjack_game.round_complete:
         net_result = blackjack_game.get_net_result()
-        dealer_natural = (
-            len(blackjack_game.dealer_hand) == 2
-            and blackjack_game.dealer_value() == 21
-        )
-        player_natural = (
-            len(blackjack_game.player_hand) == 2
-            and blackjack_game.player_value() == 21
-        )
 
-        if blackjack_game.result == "blackjack":
-            result_text = f"BLACKJACK!  +${net_result:,}"
-        elif blackjack_game.result == "player":
-            result_text = f"YOU WIN  +${net_result:,}"
-        elif blackjack_game.result == "push" and dealer_natural and player_natural:
-            result_text = "BOTH BLACKJACK - PUSH"
-        elif blackjack_game.result == "push":
-            result_text = "PUSH - BET RETURNED"
-        elif dealer_natural:
-            result_text = "DEALER BLACKJACK"
+        if blackjack_game.is_split_round():
+            if net_result > 0:
+                result_text = f"SPLIT HANDS  +${net_result:,}"
+            elif net_result < 0:
+                result_text = f"SPLIT HANDS  -${abs(net_result):,}"
+            else:
+                result_text = "SPLIT HANDS  EVEN"
         else:
-            result_text = f"DEALER WINS  ${blackjack_game.bet:,}"
+            dealer_natural = (
+                len(blackjack_game.dealer_hand) == 2
+                and blackjack_game.dealer_value() == 21
+            )
+            player_natural = (
+                len(blackjack_game.player_hand) == 2
+                and blackjack_game.player_value() == 21
+            )
+
+            if blackjack_game.result == "blackjack":
+                result_text = f"BLACKJACK!  +${net_result:,}"
+            elif blackjack_game.result == "player":
+                result_text = f"YOU WIN  +${net_result:,}"
+            elif blackjack_game.result == "push" and dealer_natural and player_natural:
+                result_text = "BOTH BLACKJACK - PUSH"
+            elif blackjack_game.result == "push":
+                result_text = "PUSH - BET RETURNED"
+            elif dealer_natural:
+                result_text = "DEALER BLACKJACK"
+            else:
+                result_text = f"DEALER WINS  ${blackjack_game.bet:,}"
 
         result_surface = blackjack_heading_font.render(
             result_text,
@@ -6149,11 +6275,22 @@ def draw_blackjack():
         )
         if (
                 blackjack_game.can_double_down()
-                and career_cash >= blackjack_game.bet
+                and career_cash >= blackjack_game.current_hand_bet()
         ):
             draw_menu_button(
                 blackjack_double_rect,
                 "Double",
+                game_mouse_pos,
+                font=blackjack_body_font
+            )
+
+        if (
+                blackjack_game.can_split()
+                and career_cash >= blackjack_game.current_hand_bet()
+        ):
+            draw_menu_button(
+                blackjack_split_rect,
+                "Split",
                 game_mouse_pos,
                 font=blackjack_body_font
             )
@@ -6341,6 +6478,48 @@ def award_fans_for_cash_win(net_win, reason="Casino win"):
         current_rating=career_rating
     )
     return award_career_fans(gain, reason)
+
+
+def lose_fans_for_bad_result(reason="Poor performance", net_loss=0, severity=1.0):
+    loss = fan_loss_from_bad_result(
+        current_fans=career_fans,
+        net_loss=net_loss,
+        severity=severity,
+    )
+    if loss <= 0:
+        return 0
+    return award_career_fans(-loss, reason)
+
+
+# XP values intentionally stay modest because many of these games can be
+# played repeatedly inside one Career event.  Solitaire keeps its score-based
+# XP system; everything else now contributes to profile progression too.
+GAME_XP_VALUES = {
+    "crazy_eights": (45, 90),
+    "bango": (30, 65),
+    "score_four_solo": (55, 85),
+    "score_four_competitive": (55, 105),
+    "blackjack": (18, 38),
+    "roulette": (15, 32),
+    "horse_races": (20, 42),
+    "faro": (55, 95),
+    "five_o_poker": (60, 110),
+    "blind_mans_bluff": (60, 110),
+    "texas_holdem": (70, 125),
+    "five_card_draw": (65, 115),
+    "seven_card_stud": (70, 125),
+    "head_to_head": (65, 135),
+}
+
+
+def award_game_xp(game_id, won=False, bonus=0):
+    values = GAME_XP_VALUES.get(game_id, (25, 50))
+    amount = values[1] if won else values[0]
+    amount = max(1, int(amount) + int(bonus or 0))
+    result = add_player_xp(amount)
+    if result.get("level_up_screens"):
+        level_up_queue.extend(result["level_up_screens"])
+    return amount
 
 
 def award_achievement_fans(difficulty="normal", achievement_name="Achievement"):
@@ -7021,6 +7200,7 @@ def start_texas_holdem_session(
     texas_holdem_session_net = 0
 
     texas_holdem_buy_in_active = True
+    texas_holdem_game.session_xp_rewarded = False
 
     # ==================================================
     # Reset runtime timers
@@ -7085,6 +7265,19 @@ def finish_texas_holdem_session():
         career_event_has_activity = True
 
     texas_holdem_hand_win_sound_at = 0
+
+    if (
+            texas_holdem_game.current_stage != "ready"
+            and not getattr(texas_holdem_game, "session_xp_rewarded", False)
+    ):
+        won_session = texas_holdem_session_net > 0
+        award_game_xp("texas_holdem", won=won_session)
+        if current_game_mode == "career" and texas_holdem_session_net < 0:
+            lose_fans_for_bad_result(
+                "Rough Hold'em session",
+                net_loss=abs(texas_holdem_session_net),
+            )
+        texas_holdem_game.session_xp_rewarded = True
 
     if current_game_mode == "free":
         finish_free_play_sandbox()
@@ -7226,6 +7419,7 @@ def start_five_card_draw_session(
 
     five_card_draw_session_net = 0
     five_card_draw_buy_in_active = True
+    five_card_draw_game.session_xp_rewarded = False
 
     five_card_draw_next_npc_action_at = 0
     five_card_draw_round_advance_at = 0
@@ -7298,6 +7492,19 @@ def finish_five_card_draw_session():
     five_card_draw_round_advance_at = 0
     five_card_draw_next_hand_at = 0
     five_card_draw_session_end_at = 0
+
+    if (
+            five_card_draw_game.current_stage != "ready"
+            and not getattr(five_card_draw_game, "session_xp_rewarded", False)
+    ):
+        won_session = five_card_draw_session_net > 0
+        award_game_xp("five_card_draw", won=won_session)
+        if current_game_mode == "career" and five_card_draw_session_net < 0:
+            lose_fans_for_bad_result(
+                "Rough Five-Card Draw session",
+                net_loss=abs(five_card_draw_session_net),
+            )
+        five_card_draw_game.session_xp_rewarded = True
 
     if current_game_mode == "free":
         finish_free_play_sandbox()
@@ -7579,6 +7786,7 @@ def start_seven_card_stud_session(
 
     seven_card_stud_session_net = 0
     seven_card_stud_buy_in_active = True
+    seven_card_stud_game.session_xp_rewarded = False
 
     seven_card_stud_next_npc_action_at = 0
     seven_card_stud_round_advance_at = 0
@@ -7649,6 +7857,19 @@ def finish_seven_card_stud_session():
     seven_card_stud_round_advance_at = 0
     seven_card_stud_next_hand_at = 0
     seven_card_stud_session_end_at = 0
+
+    if (
+            seven_card_stud_game.current_stage != "ready"
+            and not getattr(seven_card_stud_game, "session_xp_rewarded", False)
+    ):
+        won_session = seven_card_stud_session_net > 0
+        award_game_xp("seven_card_stud", won=won_session)
+        if current_game_mode == "career" and seven_card_stud_session_net < 0:
+            lose_fans_for_bad_result(
+                "Rough Seven-Card Stud session",
+                net_loss=abs(seven_card_stud_session_net),
+            )
+        seven_card_stud_game.session_xp_rewarded = True
 
     if current_game_mode == "free":
         finish_free_play_sandbox()
@@ -7981,6 +8202,18 @@ def settle_roulette_round():
             net_result,
             "Roulette win"
         )
+    elif current_game_mode == "career" and net_result <= -500:
+        lose_fans_for_bad_result(
+            "Rough Roulette spin",
+            net_loss=abs(net_result),
+            severity=0.65,
+        )
+
+    award_game_xp(
+        "roulette",
+        won=(net_result > 0),
+        bonus=8 if net_result >= 1000 else 0,
+    )
 
     process_achievement_event(
         "roulette_round",
@@ -8021,17 +8254,42 @@ def settle_blackjack_round():
             net_result,
             "Blackjack win"
         )
+    elif current_game_mode == "career" and net_result <= -500:
+        lose_fans_for_bad_result(
+            "Rough Blackjack hand",
+            net_loss=abs(net_result),
+            severity=0.65,
+        )
+
+    award_game_xp(
+        "blackjack",
+        won=(net_result > 0),
+        bonus=12 if blackjack_game.result == "blackjack" else 0,
+    )
+
+    blackjack_hand_values = [
+        blackjack_game.get_hand_value(hand)
+        for hand in blackjack_game.get_player_hands()
+    ]
 
     process_achievement_event(
         "blackjack_round",
         result=blackjack_game.result,
         net=net_result,
-        natural=(len(blackjack_game.player_hand) == 2 and blackjack_game.player_value() == 21),
+        natural=(
+            not blackjack_game.is_split_round()
+            and len(blackjack_game.player_hand) == 2
+            and blackjack_game.player_value() == 21
+        ),
         doubled=blackjack_round_doubled,
         all_in=blackjack_round_all_in,
         stood=bool(getattr(blackjack_game, "player_stood", False)),
-        player_total=blackjack_game.player_value(),
-        hit_count=max(0, len(blackjack_game.player_hand) - 2),
+        player_total=max(blackjack_hand_values, default=0),
+        hit_count=max(
+            0,
+            blackjack_game.get_total_player_cards()
+            - (4 if blackjack_game.is_split_round() else 2)
+        ),
         starting_bet=blackjack_round_start_bet,
     )
 
@@ -8059,6 +8317,11 @@ def settle_horse_race_result():
             horse_races_game.race_net,
             "Horse race win"
         )
+
+    award_game_xp(
+        "horse_races",
+        won=(horse_races_game.race_net > 0),
+    )
 
     return True
 
@@ -8161,6 +8424,7 @@ def claim_crazy_eights_result():
             "Crazy Eights win"
         )
 
+    award_game_xp("crazy_eights", won=player_won)
     crazy_eights_game.reward_claimed = True
 
 
@@ -8205,6 +8469,7 @@ def claim_bango_result():
             "Bango win"
         )
 
+    award_game_xp("bango", won=player_won)
     bango_game.reward_claimed = True
 
 
@@ -8593,6 +8858,11 @@ def claim_faro_session_result():
             "Faro profit"
         )
 
+    award_game_xp(
+        "faro",
+        won=(faro_session_net > 0),
+    )
+
     record_career_event_result(
         "faro",
         won=(faro_session_net > 0),
@@ -8663,6 +8933,7 @@ def start_five_o_poker_session(starting_stack=None):
     five_o_poker_starting_stack = starting_stack
     five_o_poker_session_net = 0
     five_o_poker_buy_in_active = True
+    five_o_poker_game.session_xp_rewarded = False
 
     if not five_o_poker_game.start_session(opponent, starting_stack):
         career_cash += starting_stack
@@ -8692,6 +8963,18 @@ def finish_five_o_poker_session():
     if five_o_poker_game.hands_played > 0:
         career_event_has_activity = True
 
+    won_five_o_session = (
+        five_o_poker_session_net > 0
+        or five_o_poker_game.hands_won > five_o_poker_game.hands_lost
+    )
+
+    if (
+            five_o_poker_game.hands_played > 0
+            and not getattr(five_o_poker_game, "session_xp_rewarded", False)
+    ):
+        award_game_xp("five_o_poker", won=won_five_o_session)
+        five_o_poker_game.session_xp_rewarded = True
+
     if (
             current_game_mode == "career"
             and five_o_poker_game.hands_played > 0
@@ -8709,10 +8992,7 @@ def finish_five_o_poker_session():
         rating_gain = TRAINING_RATING_REWARDS["five_o_poker"][reward_key]
         award_career_rating("overall", rating_gain)
 
-        won_session = (
-            five_o_poker_session_net > 0
-            or five_o_poker_game.hands_won > five_o_poker_game.hands_lost
-        )
+        won_session = won_five_o_session
         if won_session:
             award_fans_for_rating_win(
                 rating_gain,
@@ -8778,6 +9058,7 @@ def start_blind_mans_bluff_session(starting_stack=None):
     blind_mans_bluff_starting_stack = starting_stack
     blind_mans_bluff_session_net = 0
     blind_mans_bluff_buy_in_active = True
+    blind_mans_bluff_game.session_xp_rewarded = False
 
     if not blind_mans_bluff_game.start_session(opponents, starting_stack):
         career_cash += starting_stack
@@ -8808,6 +9089,18 @@ def finish_blind_mans_bluff_session():
     if blind_mans_bluff_game.hands_played > 0:
         career_event_has_activity = True
 
+    won_bluff_session = (
+        blind_mans_bluff_session_net > 0
+        or blind_mans_bluff_game.hands_won > blind_mans_bluff_game.hands_lost
+    )
+
+    if (
+            blind_mans_bluff_game.hands_played > 0
+            and not getattr(blind_mans_bluff_game, "session_xp_rewarded", False)
+    ):
+        award_game_xp("blind_mans_bluff", won=won_bluff_session)
+        blind_mans_bluff_game.session_xp_rewarded = True
+
     if (
             current_game_mode == "career"
             and blind_mans_bluff_game.hands_played > 0
@@ -8823,10 +9116,7 @@ def finish_blind_mans_bluff_session():
         rating_gain = TRAINING_RATING_REWARDS["blind_mans_bluff"][reward_key]
         award_career_rating("overall", rating_gain)
 
-        won_session = (
-            blind_mans_bluff_session_net > 0
-            or blind_mans_bluff_game.hands_won > blind_mans_bluff_game.hands_lost
-        )
+        won_session = won_bluff_session
         if won_session:
             award_fans_for_rating_win(
                 rating_gain,
@@ -10113,12 +10403,13 @@ def apply_profile_save_data(
         {}
     )
 
-    game.set_deal_mode(
-        gameplay_settings.get(
-            "solitaire_deal_mode",
-            "random"
-        )
+    requested_deal_mode = gameplay_settings.get(
+        "solitaire_deal_mode",
+        "random"
     )
+    if not VERIFIED_DEALS_ENABLED and requested_deal_mode == "verified":
+        requested_deal_mode = "random"
+    game.set_deal_mode(requested_deal_mode)
 
     sync_achievement_cosmetic_rewards()
     sync_career_npc_runtime_state()
@@ -11427,7 +11718,7 @@ def draw_score_four():
     # Solo session complete / result
     # ==================================================
 
-    if score_four_game.session_complete:
+    if score_four_game.mode == "solo" and score_four_game.session_complete:
         overlay_rect = pygame.Rect(
             BASE_WIDTH // 2 - 230,
             250,
@@ -18549,6 +18840,7 @@ def start_head_to_head_event():
 def restore_head_to_head_game_settings():
     global head_to_head_previous_deal_mode
     global head_to_head_previous_difficulty
+    global head_to_head_previous_stock_draw_count
 
     if head_to_head_previous_deal_mode is not None:
         game.set_deal_mode(
@@ -18560,9 +18852,13 @@ def restore_head_to_head_game_settings():
             head_to_head_previous_difficulty
         )
 
+    if head_to_head_previous_stock_draw_count is not None:
+        game.stock_draw_count = head_to_head_previous_stock_draw_count
+
     game.clear_challenge()
     head_to_head_previous_deal_mode = None
     head_to_head_previous_difficulty = None
+    head_to_head_previous_stock_draw_count = None
 
 
 def begin_selected_head_to_head_race():
@@ -18570,6 +18866,7 @@ def begin_selected_head_to_head_race():
     global current_game_mode
     global head_to_head_previous_deal_mode
     global head_to_head_previous_difficulty
+    global head_to_head_previous_stock_draw_count
     global career_event_has_activity
 
     if not (
@@ -18592,9 +18889,15 @@ def begin_selected_head_to_head_race():
 
     head_to_head_previous_deal_mode = game.deal_mode
     head_to_head_previous_difficulty = game.difficulty
+    head_to_head_previous_stock_draw_count = game.stock_draw_count
 
     game.clear_challenge()
     game.set_difficulty(DEFAULT_DIFFICULTY)
+
+    # Race deals keep the constructive solvable path for fairness, but use
+    # draw-three and the newly randomized suit progression so the stock/tableau
+    # no longer feel like the same tutorial hand every race.
+    game.stock_draw_count = 3
     game.set_deal_mode("verified")
     game.new_game()
 
@@ -18679,6 +18982,16 @@ def finish_head_to_head_race(
                 rating_change,
                 "Head-to-Head win"
             )
+        else:
+            fans_earned = lose_fans_for_bad_result(
+                "Head-to-Head loss",
+                severity=1.05,
+            )
+
+        award_game_xp(
+            "head_to_head",
+            won=won,
+        )
 
         headline, body, category = build_head_to_head_story(
             player_name,
@@ -18710,7 +19023,11 @@ def finish_head_to_head_race(
         f"Your progress: {player_progress}/52",
         f"Opponent rating: {opponent_rating:,}",
         f"Rating change: +{rating_change:,}" if rating_change else "Rating change: 0",
-        f"Fans earned: +{fans_earned:,}" if fans_earned else "Fans earned: 0",
+        (
+            f"Fan change: {fans_earned:+,}"
+            if fans_earned
+            else "Fan change: 0"
+        ),
         f"Current Fans: {career_fans:,}",
     ]
 
@@ -21571,16 +21888,65 @@ def draw_options_menu():
         font=option_value_font
     )
 
-    draw_menu_button(
-        deal_verified_rect,
-        "Verified Solvable",
-        game_mouse_pos,
-        selected=(
-                game.deal_mode
-                == "verified"
-        ),
-        font=option_value_font
-    )
+    if VERIFIED_DEALS_ENABLED:
+        draw_menu_button(
+            deal_verified_rect,
+            "Verified Solvable",
+            game_mouse_pos,
+            selected=(game.deal_mode == "verified"),
+            font=option_value_font
+        )
+    else:
+        pygame.draw.rect(
+            game_surface,
+            (72, 76, 74),
+            deal_verified_rect,
+            border_radius=8,
+        )
+        pygame.draw.rect(
+            game_surface,
+            (115, 120, 118),
+            deal_verified_rect,
+            2,
+            border_radius=8,
+        )
+        disabled_label = option_value_font.render(
+            "Verified Solvable",
+            True,
+            (155, 158, 156),
+        )
+        game_surface.blit(
+            disabled_label,
+            disabled_label.get_rect(center=deal_verified_rect.center),
+        )
+
+        if (
+                game_mouse_pos is not None
+                and deal_verified_rect.collidepoint(game_mouse_pos)
+        ):
+            tooltip_rect = pygame.Rect(600, 492, 455, 38)
+            pygame.draw.rect(
+                game_surface,
+                (22, 26, 24),
+                tooltip_rect,
+                border_radius=7,
+            )
+            pygame.draw.rect(
+                game_surface,
+                (205, 178, 90),
+                tooltip_rect,
+                2,
+                border_radius=7,
+            )
+            tooltip = difficulty_detail_font.render(
+                "Temporarily disabled while the deal generator is rebuilt.",
+                True,
+                (240, 235, 218),
+            )
+            game_surface.blit(
+                tooltip,
+                tooltip.get_rect(center=tooltip_rect.center),
+            )
 
     # ----------------------------
     # Window size
@@ -22756,334 +23122,164 @@ def draw_round_recap():
 # ==================================================
 
 def draw_level_up_screen():
-    game_surface.fill(
-        (
-            20,
-            190,
-            20
-        )
-    )
+    game_surface.fill((20, 190, 20))
 
     if current_level_up_data is None:
         return
 
-    level = current_level_up_data[
-        "level"
-    ]
-
-    unlocks = current_level_up_data[
-        "unlocks"
-    ]
-
-    # ----------------------------
-    # Main heading
-    # ----------------------------
+    level = current_level_up_data["level"]
+    unlocks = list(current_level_up_data.get("unlocks", []))
 
     heading = menu_title_font.render(
         f"You've reached level {level}!",
         True,
-        (
-            255,
-            255,
-            255
-        )
+        (255, 255, 255),
     )
-
-    heading_rect = heading.get_rect(
-        center=(
-            BASE_WIDTH // 2,
-            70
-        )
-    )
-
     game_surface.blit(
         heading,
-        heading_rect
+        heading.get_rect(center=(BASE_WIDTH // 2, 58)),
     )
-
-    # ----------------------------
-    # Unlock heading
-    # ----------------------------
 
     subheading = options_title_font.render(
         "you've unlocked:",
         True,
-        (
-            255,
-            255,
-            255
-        )
+        (255, 255, 255),
     )
-
-    subheading_rect = (
-        subheading.get_rect(
-            center=(
-                BASE_WIDTH // 2,
-                170
-            )
-        )
-    )
-
     game_surface.blit(
         subheading,
-        subheading_rect
+        subheading.get_rect(center=(BASE_WIDTH // 2, 120)),
     )
 
-    # ----------------------------
-    # Unlock cards
-    # ----------------------------
-
     if unlocks:
-        card_width = 330
-        card_height = 270
-        gap = 105
+        count = len(unlocks)
+        if count <= 2:
+            columns = count
+            card_width, card_height = 360, 220
+        elif count == 4:
+            columns = 2
+            card_width, card_height = 360, 190
+        else:
+            columns = min(3, count)
+            card_width, card_height = 300, 190
 
-        total_width = (
-            len(unlocks)
-            * card_width
-            + (
-                len(unlocks) - 1
-            ) * gap
-        )
+        rows = (count + columns - 1) // columns
+        gap_x = 28
+        gap_y = 20
+        total_height = rows * card_height + max(0, rows - 1) * gap_y
+        start_y = 165 + max(0, (430 - total_height) // 2)
 
-        start_x = (
-            BASE_WIDTH
-            - total_width
-        ) // 2
+        for index, (unlock_type, asset_id) in enumerate(unlocks):
+            row = index // columns
+            column = index % columns
 
-        for index, (
-            unlock_type,
-            asset_id
-        ) in enumerate(unlocks):
-
-            card_x = (
-                start_x
-                + index
-                * (
-                    card_width
-                    + gap
-                )
+            items_this_row = min(columns, count - row * columns)
+            row_width = (
+                items_this_row * card_width
+                + max(0, items_this_row - 1) * gap_x
             )
+            row_start_x = (BASE_WIDTH - row_width) // 2
+            card_x = row_start_x + column * (card_width + gap_x)
+            card_y = start_y + row * (card_height + gap_y)
 
             card_rect = pygame.Rect(
                 card_x,
-                275,
+                card_y,
                 card_width,
-                card_height
-            )
-
-            # White card background
-            pygame.draw.rect(
-                game_surface,
-                (
-                    245,
-                    245,
-                    245
-                ),
-                card_rect
+                card_height,
             )
 
             pygame.draw.rect(
                 game_surface,
-                (
-                    50,
-                    50,
-                    50
-                ),
+                (245, 245, 245),
                 card_rect,
-                2
+                border_radius=10,
+            )
+            pygame.draw.rect(
+                game_surface,
+                (50, 50, 50),
+                card_rect,
+                2,
+                border_radius=10,
             )
 
-            (
-                asset_data,
-                asset_surface,
-                category_name
-            ) = get_unlock_asset_data(
+            asset_data, asset_surface, category_name = get_unlock_asset_data(
                 unlock_type,
-                asset_id
+                asset_id,
             )
 
-            # ------------------------
-            # Preview
-            # ------------------------
-
+            preview_height = 105 if card_height >= 210 else 82
             if asset_surface is not None:
-                preview = (
-                    scale_surface_to_fit(
-                        asset_surface,
-                        card_width - 40,
-                        160
-                    )
+                preview = scale_surface_to_fit(
+                    asset_surface,
+                    card_width - 34,
+                    preview_height,
                 )
-
-                preview_rect = (
-                    preview.get_rect(
-                        center=(
-                            card_rect.centerx,
-                            card_rect.y + 100
-                        )
-                    )
-                )
-
-                game_surface.blit(
-                    preview,
-                    preview_rect
-                )
-
-            # ------------------------
-            # Category label
-            # ------------------------
-
-            category_surface = (
-                option_value_font.render(
-                    category_name,
-                    True,
-                    (
-                        50,
-                        50,
-                        50
-                    )
-                )
-            )
-
-            category_rect = (
-                category_surface.get_rect(
+                preview_rect = preview.get_rect(
                     center=(
                         card_rect.centerx,
-                        card_rect.y + 195
+                        card_rect.y + 18 + preview_height // 2,
                     )
                 )
-            )
+                game_surface.blit(preview, preview_rect)
 
+            category_font = difficulty_detail_font
+            category_surface = category_font.render(
+                category_name,
+                True,
+                (65, 65, 65),
+            )
             game_surface.blit(
                 category_surface,
-                category_rect
+                category_surface.get_rect(
+                    center=(card_rect.centerx, card_rect.bottom - 54)
+                ),
             )
 
-            # ------------------------
-            # Asset name
-            # ------------------------
-
-            name_surface = (
-                option_label_font.render(
-                    asset_data["name"],
-                    True,
-                    (
-                        0,
-                        0,
-                        0
-                    )
-                )
+            name_text = str(asset_data.get("name", asset_id))
+            name_font = option_value_font
+            while name_font.size(name_text)[0] > card_width - 24 and len(name_text) > 4:
+                name_text = name_text[:-4].rstrip() + "..."
+            name_surface = name_font.render(
+                name_text,
+                True,
+                (0, 0, 0),
             )
-
-            name_rect = (
-                name_surface.get_rect(
-                    center=(
-                        card_rect.centerx,
-                        card_rect.y + 230
-                    )
-                )
-            )
-
             game_surface.blit(
                 name_surface,
-                name_rect
+                name_surface.get_rect(
+                    center=(card_rect.centerx, card_rect.bottom - 25)
+                ),
             )
-
     else:
-        no_unlock_text = (
-            option_label_font.render(
-                "No cosmetic unlocks this level.",
-                True,
-                (
-                    255,
-                    255,
-                    255
-                )
-            )
+        no_unlock_text = option_label_font.render(
+            "No cosmetic unlocks this level.",
+            True,
+            (255, 255, 255),
         )
-
-        no_unlock_rect = (
-            no_unlock_text.get_rect(
-                center=(
-                    BASE_WIDTH // 2,
-                    400
-                )
-            )
-        )
-
         game_surface.blit(
             no_unlock_text,
-            no_unlock_rect
+            no_unlock_text.get_rect(center=(BASE_WIDTH // 2, 375)),
         )
-
-    # ----------------------------
-    # Current XP
-    # ----------------------------
 
     if player_xp_to_next is not None:
-        xp_string = (
-            f"{player_name}'s XP: "
-            f"{player_xp:,} / "
-            f"{player_xp_to_next:,}"
-        )
-
+        xp_string = f"{player_name}'s XP: {player_xp:,} / {player_xp_to_next:,}"
     else:
-        xp_string = (
-            f"{player_name}'s XP: "
-            f"{player_xp:,} / MAX"
-        )
+        xp_string = f"{player_name}'s XP: {player_xp:,} / MAX"
 
     xp_surface = option_label_font.render(
         xp_string,
         True,
-        (
-            0,
-            0,
-            0
-        )
+        (0, 0, 0),
     )
-
-    xp_rect = xp_surface.get_rect(
-        center=(
-            BASE_WIDTH // 2,
-            650
-        )
-    )
-
     game_surface.blit(
         xp_surface,
-        xp_rect
+        xp_surface.get_rect(center=(BASE_WIDTH // 2, 650)),
     )
 
-    # ----------------------------
-    # Continue prompt
-    # ----------------------------
-
-    continue_surface = (
-        option_value_font.render(
-            "Press any key to continue",
-            True,
-            (
-                255,
-                255,
-                255
-            )
-        )
-    )
-
-    continue_rect = (
-        continue_surface.get_rect(
-            center=(
-                BASE_WIDTH // 2,
-                720
-            )
-        )
-    )
-
-    game_surface.blit(
-        continue_surface,
-        continue_rect
+    draw_button(
+        level_up_continue_rect,
+        "Continue",
+        font=option_value_font,
     )
 
 # ==================================================
@@ -25627,20 +25823,37 @@ while running:
                     blackjack_game.stand()
 
                 # ==========================================
+                # Split
+                # ==========================================
+
+                elif (
+                        blackjack_game.can_split()
+                        and career_cash >= blackjack_game.current_hand_bet()
+                        and blackjack_split_rect.collidepoint(
+                    game_mouse_pos
+                )
+                ):
+                    additional_bet = blackjack_game.current_hand_bet()
+
+                    if career_cash >= additional_bet:
+                        career_cash -= additional_bet
+                        audio.play_sound("button_click")
+                        audio.play_sound("card_draw")
+                        blackjack_game.split_hand()
+
+                # ==========================================
                 # Double
                 # ==========================================
 
                 elif (
                         blackjack_game.can_double_down()
-                        and career_cash >= blackjack_game.bet
+                        and career_cash >= blackjack_game.current_hand_bet()
                         and blackjack_double_rect.collidepoint(
                     game_mouse_pos
                 )
                 ):
 
-                    additional_bet = (
-                        blackjack_game.bet
-                    )
+                    additional_bet = blackjack_game.current_hand_bet()
 
                     if career_cash >= additional_bet:
                         career_cash -= (
@@ -26562,7 +26775,10 @@ while running:
 
                 # ==========================================
 
-                if score_four_game.session_complete:
+                if (
+                        score_four_game.mode == "solo"
+                        and score_four_game.session_complete
+                ):
 
                     if score_four_complete_rect.collidepoint(
 
@@ -26583,17 +26799,15 @@ while running:
                                 "score_four_win",
                                 mode="solo",
                             )
+                            award_game_xp(
+                                "score_four_solo",
+                                won=True,
+                            )
 
                             record_career_event_result(
                                 "score_four",
                                 won=True,
                                 mode="solo",
-                            )
-
-                            record_career_event_result(
-                                "score_four",
-                                won=(score_four_game.match_winner == "player"),
-                                mode="competitive",
                             )
 
                             score_four_game.reward_claimed = True
@@ -26635,16 +26849,41 @@ while running:
                                 "score_four",
                                 score_four_game.competitive_reward
                             )
-                            if score_four_game.competitive_reward > 0:
+                            player_won_match = (
+                                score_four_game.match_winner == "player"
+                            )
+
+                            if player_won_match:
                                 award_fans_for_rating_win(
                                     score_four_game.competitive_reward,
                                     "Competitive Score-Four win"
                                 )
-                            if score_four_game.match_winner == "player":
                                 process_achievement_event(
                                     "score_four_win",
                                     mode="competitive",
                                 )
+
+                            award_game_xp(
+                                "score_four_competitive",
+                                won=player_won_match,
+                            )
+
+                            record_career_event_result(
+                                "score_four",
+                                won=player_won_match,
+                                mode="competitive",
+                                opponent=(
+                                    score_four_opponent_npc.get("name")
+                                    if isinstance(score_four_opponent_npc, dict)
+                                    else "NPC"
+                                ),
+                                opponent_tier=(
+                                    score_four_opponent_npc.get("skill_tier")
+                                    if isinstance(score_four_opponent_npc, dict)
+                                    else "mid"
+                                ),
+                                rating_reward=score_four_game.competitive_reward,
+                            )
 
                             score_four_game.reward_claimed = True
 
@@ -27881,12 +28120,9 @@ while running:
                 elif deal_verified_rect.collidepoint(
                         game_mouse_pos
                 ):
-                    audio.play_sound(
-                        "button_click"
-                    )
-                    game.set_deal_mode(
-                        "verified"
-                    )
+                    if VERIFIED_DEALS_ENABLED:
+                        audio.play_sound("button_click")
+                        game.set_deal_mode("verified")
 
                 # ----------------------------
                 # Fullscreen
@@ -28273,6 +28509,23 @@ while running:
                         "button_click"
                     )
 
+                    # Stay at the table and deal another hand. If the completed
+                    # round earned one or more levels, show those screens first
+                    # and then return directly to the fresh deal.
+                    game.new_game()
+                    post_round_return_state = STATE_PLAYING
+
+                    if (
+                            last_progression_result
+                            and last_progression_result.get("level_up_screens")
+                    ):
+                        level_up_queue = list(
+                            last_progression_result["level_up_screens"]
+                        )
+                        advance_level_up_screen()
+                    else:
+                        current_state = STATE_PLAYING
+
 
         # ==========================================
         # LEVEL UP
@@ -28280,14 +28533,26 @@ while running:
 
         elif current_state == STATE_LEVEL_UP:
 
-            if (
-                    event.type == pygame.KEYDOWN
-                    or event.type == pygame.MOUSEBUTTONDOWN
-            ):
-                audio.play_sound(
-                    "button_click"
+            continue_level_up = (
+                event.type == pygame.KEYDOWN
+                and event.key in (
+                    pygame.K_RETURN,
+                    pygame.K_KP_ENTER,
+                    pygame.K_SPACE,
+                    pygame.K_ESCAPE,
                 )
+            )
 
+            if (
+                    event.type == pygame.MOUSEBUTTONDOWN
+                    and event.button == 1
+                    and game_mouse_pos is not None
+                    and level_up_continue_rect.collidepoint(game_mouse_pos)
+            ):
+                continue_level_up = True
+
+            if continue_level_up:
+                audio.play_sound("button_click")
                 advance_level_up_screen()
 
 
@@ -28605,6 +28870,18 @@ while running:
         # ==========================================
 
         elif current_state == STATE_PLAYING:
+
+            # H = Hint. This mirrors the on-screen Hint button and respects
+            # difficulty/challenge hint limits.
+            if (
+                    event.type == pygame.KEYDOWN
+                    and event.key == pygame.K_h
+                    and not game_pause_menu_open
+                    and not confirm_return_to_menu
+                    and not game.auto_solving
+            ):
+                if game.request_hint():
+                    audio.play_sound("button_click")
 
             # ----------------------------
             # TEMP DEBUG: fake completed round
@@ -29026,6 +29303,22 @@ while running:
     ):
         stop_horse_race_music(300)
 
+    # Non-Solitaire games award XP too. If that XP crossed a level threshold,
+    # wait until the player has safely returned to a hub/selection screen before
+    # presenting the queued level-up cards.
+    if (
+            level_up_queue
+            and current_level_up_data is None
+            and current_state in (
+                STATE_MENU,
+                STATE_CAREER_HUB,
+                STATE_CAREER_EVENT_SELECT,
+                STATE_FREE_PLAY_SELECT,
+            )
+    ):
+        post_round_return_state = current_state
+        advance_level_up_screen()
+
     # ----------------------------------------------
     # Drawing State Chain // Drawing Chain
     # ----------------------------------------------
@@ -29254,6 +29547,8 @@ while running:
         )
 
     elif current_state == STATE_FIVE_O_POKER:
+
+        five_o_poker_game.update()
 
         draw_five_o_poker(
             game_surface,

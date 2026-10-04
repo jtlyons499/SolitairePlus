@@ -1,4 +1,5 @@
 import random
+import time
 
 from niche_poker_common import (
     build_standard_deck,
@@ -71,6 +72,14 @@ class FiveOPokerGame:
         self.opening_index = 0
         self.placement_opener = 0
 
+        # Reveal the five showdown columns one at a time so the player can
+        # actually read each comparison before the final result appears.
+        self.showdown_revealed_columns = 0
+        self.showdown_reveal_started_at = 0.0
+        self.showdown_reveal_interval = 0.9
+        self.pending_showdown_result_text = ""
+        self.showdown_pending_finish = False
+
     # --------------------------------------------------
     # Session / deck
     # --------------------------------------------------
@@ -142,6 +151,10 @@ class FiveOPokerGame:
         self.last_player_action = ""
         self.opening_index = 0
         self.placement_opener = 0
+        self.showdown_revealed_columns = 0
+        self.showdown_reveal_started_at = 0.0
+        self.pending_showdown_result_text = ""
+        self.showdown_pending_finish = False
 
         self._commit_player(self.ante)
         self._commit_npc(self.ante)
@@ -497,20 +510,26 @@ class FiveOPokerGame:
             self.hands_won += 1
             if self.player_five_o:
                 self.five_o_wins += 1
-                self.result_text = f"FIVE-O! You sweep all five columns and win ${self.pot:,}."
+                final_text = f"FIVE-O! You sweep all five columns and win ${self.pot:,}."
             else:
-                self.result_text = (
-                    f"You win {self.player_column_wins}-{self.npc_column_wins} and take ${self.pot:,}."
+                final_text = (
+                    f"You win {self.player_column_wins}-{self.npc_column_wins} "
+                    f"and take ${self.pot:,}."
                 )
         elif self.npc_column_wins >= 3:
             self.npc_stack += self.pot
             self.last_winner = "npc"
             self.hands_lost += 1
             if self.npc_five_o:
-                self.result_text = f"FIVE-O for {self.get_npc_name()}. You lose all five columns."
+                final_text = (
+                    f"FIVE-O for {self.get_npc_name()}. "
+                    "You lose all five columns."
+                )
             else:
-                self.result_text = (
-                    f"{self.get_npc_name()} wins {self.npc_column_wins}-{self.player_column_wins} and takes ${self.pot:,}."
+                final_text = (
+                    f"{self.get_npc_name()} wins "
+                    f"{self.npc_column_wins}-{self.player_column_wins} "
+                    f"and takes ${self.pot:,}."
                 )
         else:
             player_share = self.pot // 2
@@ -519,12 +538,56 @@ class FiveOPokerGame:
             self.npc_stack += npc_share
             self.last_winner = "tie"
             self.hands_tied += 1
-            self.result_text = (
-                f"The five columns split {self.player_column_wins}-{self.npc_column_wins} with ties. Pot split."
+            final_text = (
+                f"The five columns split {self.player_column_wins}-"
+                f"{self.npc_column_wins} with ties. Pot split."
             )
 
         self.pot = 0
-        self._finish_hand()
+        self.pending_showdown_result_text = final_text
+        self.result_text = "Showdown: revealing column 1 of 5..."
+        self.showdown_revealed_columns = 0
+        self.showdown_reveal_started_at = time.monotonic()
+        self.showdown_pending_finish = True
+
+    def update(self):
+        if not self.showdown_pending_finish or self.hand_complete:
+            return
+
+        elapsed = time.monotonic() - self.showdown_reveal_started_at
+        target_count = min(
+            5,
+            int(elapsed / self.showdown_reveal_interval) + 1,
+        )
+
+        if target_count > self.showdown_revealed_columns:
+            self.showdown_revealed_columns = target_count
+
+        if self.showdown_revealed_columns >= 5:
+            # Let the fifth comparison sit on screen for one reveal interval
+            # before showing the final hand result / Next Hand controls.
+            final_hold = self.showdown_reveal_interval * 5
+            if elapsed >= final_hold:
+                self.result_text = self.pending_showdown_result_text
+                self.showdown_pending_finish = False
+                self._finish_hand()
+            else:
+                self.result_text = (
+                    "Showdown: column 5 resolved. Final result incoming..."
+                )
+        else:
+            next_column = self.showdown_revealed_columns + 1
+            self.result_text = (
+                f"Showdown: column {self.showdown_revealed_columns} resolved. "
+                f"Revealing column {next_column} of 5..."
+            )
+
+    def get_showdown_revealed_count(self):
+        if self.hand_complete:
+            return 5
+        if self.phase == "showdown":
+            return max(0, min(5, int(self.showdown_revealed_columns)))
+        return 0
 
     def _finish_hand(self):
         self.hand_complete = True
