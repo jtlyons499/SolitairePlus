@@ -12,6 +12,9 @@ ACTION_CASINO_NIGHT = "casino_night"
 ACTION_HEAD_TO_HEAD = "head_to_head"
 ACTION_ADVANCE_CAREER_DAY = "advance_career_day"
 ACTION_NEW_CAREER_MONTH = "new_career_month"
+ACTION_ADD_PROSPECT = "add_prospect"
+ACTION_ADD_PRODIGY = "add_prodigy"
+ACTION_CAREER_YEAR = "career_year"
 
 ACTION_CHALLENGE_DRAW_3 = "challenge_draw_3"
 ACTION_CHALLENGE_NO_UNDO = "challenge_no_undo"
@@ -79,6 +82,9 @@ DEBUG_GROUPS = (
             (ACTION_HEAD_TO_HEAD, "Head-to-Head"),
             (ACTION_ADVANCE_CAREER_DAY, "Skip Current Day"),
             (ACTION_NEW_CAREER_MONTH, "Start Next Month"),
+            (ACTION_ADD_PROSPECT, "Add Prospect"),
+            (ACTION_ADD_PRODIGY, "Add Prodigy"),
+            (ACTION_CAREER_YEAR, "Advance 1 Career Year"),
         ),
     ),
     (
@@ -275,3 +281,4 @@ def draw_debug_menu(
         game_surface,
         option_label_font,
     )
+

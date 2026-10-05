@@ -139,6 +139,8 @@ from seven_card_stud_ui import (
 
 from npc_manager import (
     NPCS,
+    BASE_NPCS,
+    PROSPECT_POOL,
     get_random_npc,
     get_random_blackjack_dealer,
     get_score_four_opponent_choices,
@@ -268,6 +270,9 @@ from debug_menu import (
     ACTION_HEAD_TO_HEAD,
     ACTION_ADVANCE_CAREER_DAY,
     ACTION_NEW_CAREER_MONTH,
+    ACTION_ADD_PROSPECT,
+    ACTION_ADD_PRODIGY,
+    ACTION_CAREER_YEAR,
     ACTION_CHALLENGE_DRAW_3,
     ACTION_CHALLENGE_NO_UNDO,
     ACTION_CHALLENGE_NO_HINTS,
@@ -313,9 +318,7 @@ from career_ratings import (
     apply_rating_change,
     boost_npc_overall,
     elo_delta,
-    simulate_npc_rating_month,
     RATING_DISPLAY_NAMES,
-    advance_npc_age_for_month,
     ensure_npc_career_state,
     make_npc_rating_bundle,
     make_player_rating_bundle,
@@ -329,6 +332,10 @@ from career_rating_events import (
     settle_house_result,
     settle_poker_session,
 )
+
+from career_npc_world import ensure_career_world, advance_career_world, add_prospect
+from career_npc_development import development_stage
+from npc_portraits import draw_builtin_portrait
 
 from career_fans import (
     MAX_FANS,
@@ -783,7 +790,7 @@ HOW_TO_PLAY_CONTENT = {
             "",
             "Overall is the rounded average of your seven game ratings. Wins and losses change only the game you played. Overall determines your main international ranking and job eligibility.",
             "",
-            "Random events, news stories, and changing rival ratings make each career save different. Reach #1 to conquer the Solitaire world.",
+            "Rivals age on their own birthdays. Young competitors develop toward varied peaks; veterans decline gently. New prospects enter every few months, with rare prodigies capable of challenging the leaders.",
         ],
     },
 }
@@ -2037,36 +2044,9 @@ def get_career_month_name():
     return "Unknown"
 
 def load_career_leaderboard_players():
+    # One in-place roster feeds rankings, normal game selectors and F10.
+    return NPCS
 
-    path = (
-        "data/"
-        "npcs.json"
-    )
-
-    try:
-        with open(
-            path,
-            "r",
-            encoding="utf-8"
-        ) as file:
-
-            data = json.load(
-                file
-            )
-
-        return data
-
-    except (
-        FileNotFoundError,
-        json.JSONDecodeError
-    ) as error:
-
-        print(
-            "Could not load leaderboard:",
-            error
-        )
-
-        return []
 
 def get_career_weekday_name():
     if (
@@ -2641,7 +2621,8 @@ def ensure_career_schedule():
 def add_career_news(
         headline,
         body,
-        category="general"
+        category="general",
+        *, year=None, month=None
 ):
     news_item = {
         "headline":
@@ -2653,11 +2634,9 @@ def add_career_news(
         "category":
             category,
 
-        "month":
-            career_month,
+        "month": career_month if month is None else month,
 
-        "year":
-            career_year,
+        "year": career_year if year is None else year,
 
         "career_day":
             career_day,
@@ -2871,62 +2850,24 @@ def get_career_news_total_pages(
     )
 
 def update_career_leaderboard_ratings():
-
-    if not career_leaderboard_state:
-        return
-
-    before_rankings = (
-        get_npc_leaderboard_snapshot()
+    global career_npc_world
+    if current_game_mode == "free" or not career_leaderboard_state:
+        return False
+    previous_month = career_npc_world.get("last_simulated_month")
+    before_rankings = get_npc_leaderboard_snapshot()
+    career_npc_world, stories = advance_career_world(
+        career_npc_world, career_leaderboard_state, BASE_NPCS, PROSPECT_POOL,
+        career_year, career_month,
     )
-
-    for npc in CAREER_LEADERBOARD_PLAYERS:
-
-        npc_id = npc.get(
-            "id"
-        )
-
-        if (
-            npc_id is None
-            or npc_id
-            not in career_leaderboard_state
-        ):
-            continue
-
-        npc_state = ensure_npc_career_state(
-            career_leaderboard_state[
-                npc_id
-            ],
-            npc
-        )
-
-        career_leaderboard_state[
-            npc_id
-        ] = npc_state
-
-        # Ages advance on the NPC's own birthday month rather than all at
-        # once in January. Explicit birthday_month values in npcs.json will
-        # override the stable generated month automatically.
-        advance_npc_age_for_month(
-            npc_state,
-            npc,
-            career_month
-        )
-
-        simulate_npc_rating_month(
-            npc_state, npc,
-            star=(npc_id == career_leaderboard_star_id),
-        )
-
     sync_career_npc_runtime_state()
+    if career_npc_world["last_simulated_month"] == previous_month:
+        return False
+    for story in stories:
+        add_career_news(story["headline"], story["body"], story["category"],
+                        year=story["year"], month=story["month"])
+    add_monthly_leaderboard_news(before_rankings, get_npc_leaderboard_snapshot())
+    return True
 
-    after_rankings = (
-        get_npc_leaderboard_snapshot()
-    )
-
-    add_monthly_leaderboard_news(
-        before_rankings,
-        after_rankings
-    )
 
 CAREER_LEADERBOARD_PLAYERS = (
     load_career_leaderboard_players()
@@ -3591,62 +3532,29 @@ def draw_npc_portrait(
             rect.topleft
         )
 
-def get_npc_portrait_surface(
-        npc,
-        size
-):
+def get_npc_portrait_surface(npc, size):
+    portrait_path = npc.get("portrait")
+    if portrait_path:
+        cache_key = (portrait_path, size)
+        if cache_key in npc_icon_cache:
+            return npc_icon_cache[cache_key]
+        try:
+            image = pygame.image.load(portrait_path).convert_alpha()
+            image = pygame.transform.smoothscale(image, (size, size))
+            npc_icon_cache[cache_key] = image
+            return image
+        except (pygame.error, FileNotFoundError):
+            pass
+    return draw_builtin_portrait(npc, size)
 
-    portrait_path = npc.get(
-        "portrait"
-    )
-
-    if not portrait_path:
-        return None
-
-    cache_key = (
-        portrait_path,
-        size
-    )
-
-    if cache_key in npc_icon_cache:
-        return npc_icon_cache[
-            cache_key
-        ]
-
-    try:
-
-        image = pygame.image.load(
-            portrait_path
-        ).convert_alpha()
-
-        image = (
-            pygame.transform.smoothscale(
-                image,
-                (
-                    size,
-                    size
-                )
-            )
-        )
-
-        npc_icon_cache[
-            cache_key
-        ] = image
-
-        return image
-
-    except (
-            pygame.error,
-            FileNotFoundError
-    ):
-
-        return None
 
 _country_flag_cache = {}
 
 COUNTRY_FLAG_ALIASES = {
     "US": "USA",
     "UK": "GBR",
+    "DEU": "GER",
+    "NLD": "NED",
 }
 
 
@@ -3819,6 +3727,7 @@ def get_career_hub_image(
         return None
 
 career_leaderboard_state = {}
+career_npc_world = {}
 career_leaderboard_star_id = None
 
 career_residence = (
@@ -9463,13 +9372,19 @@ def start_free_play_game(game_id):
     return False
 
 
-def debug_start_next_career_month():
+def debug_start_next_career_month(save=True):
+    global current_game_mode
     global career_year
     global career_month
     global career_day
     global career_day_of_month
     global career_weekday_index
     global career_current_schedule
+
+    if current_game_mode == "free":
+        finish_free_play_sandbox()
+    current_game_mode = "career"
+    ensure_career_leaderboard()
 
     remaining_days = max(
         1,
@@ -9495,7 +9410,40 @@ def debug_start_next_career_month():
         build_default_career_schedule()
     )
 
+    if save:
+        auto_save_career()
+
+def debug_add_career_prospect(prodigy=False):
+    global current_state, current_game_mode
+    if current_game_mode == "free":
+        finish_free_play_sandbox()
+    current_game_mode = "career"
+    ensure_career_leaderboard()
+    story = add_prospect(career_npc_world, career_leaderboard_state, PROSPECT_POOL,
+                         career_year, career_month, force_prodigy=prodigy)
+    if story:
+        sync_career_npc_runtime_state()
+        add_career_news(story["headline"], story["body"], story["category"])
+        auto_save_career()
+        show_debug_message("Prodigy added to Career" if prodigy else "Prospect added to Career")
+    else:
+        show_debug_message("All 160 prospects have joined this Career")
+    current_state = STATE_CAREER_HUB
+    return bool(story)
+
+
+def debug_advance_career_year():
+    global current_state, current_game_mode
+    if current_game_mode == "free":
+        finish_free_play_sandbox()
+    current_game_mode = "career"
+    ensure_career_leaderboard()
+    reset_career_hub_runtime()
+    for _ in range(12):
+        debug_start_next_career_month(save=False)
     auto_save_career()
+    current_state = STATE_CAREER_HUB
+
 
 
 def is_game_unlocked(
@@ -9776,7 +9724,7 @@ def build_profile_save_data():
 
     career_data[
         "leaderboard_state"
-    ] = dict(
+    ] = copy.deepcopy(
         career_leaderboard_state
     )
 
@@ -9795,6 +9743,7 @@ def build_profile_save_data():
     )
     career_data["rating_schema_version"] = 2
     career_data["rating_results"] = copy.deepcopy(career_rating_results)
+    career_data["npc_world"] = copy.deepcopy(career_npc_world)
 
     career_data[
         "cash"
@@ -9973,12 +9922,18 @@ def build_profile_save_data():
 def apply_profile_save_data(
         data
 ):
+    global profile_country_text
+    global profile_age_text
+    global profile_hometown_text
+    global profile_bio_text
+    global profile_favorite_suit
     global career_owned_residences
     global career_news_items
 
     global player_solitaire_points
 
     global career_leaderboard_state
+    global career_npc_world
     global career_leaderboard_star_id
     global career_rating
     global career_ratings
@@ -10154,7 +10109,7 @@ def apply_profile_save_data(
         {}
     )
 
-    career_leaderboard_state = dict(
+    career_leaderboard_state = copy.deepcopy(
         career_data.get(
             "leaderboard_state",
             {}
@@ -10166,6 +10121,7 @@ def apply_profile_save_data(
             "leaderboard_star_id"
         )
     )
+    career_npc_world = copy.deepcopy(career_data.get("npc_world", {}))
 
     career_rating = career_data.get(
         "rating",
@@ -12893,7 +12849,7 @@ def add_monthly_leaderboard_news(
             (
                 f"{new_number_one['name']} has overtaken "
                 f"{old_number_one['name']} for the top spot "
-                f"in the international Solitaire rankings."
+                f"in the international Overall rankings."
             ),
             "leaderboard"
         )
@@ -13404,33 +13360,15 @@ def apply_round_rewards(
     return progression_result
 
 def sync_career_npc_runtime_state():
-    """Migrate NPC career metadata and expose it to all minigames."""
-    if not career_leaderboard_state:
-        return
-
-    for npc in CAREER_LEADERBOARD_PLAYERS:
-        npc_id = npc.get(
-            "id"
+    """Migrate at the current date and restore this profile's complete roster."""
+    global career_npc_world
+    if career_leaderboard_state:
+        career_npc_world = ensure_career_world(
+            career_npc_world, career_leaderboard_state, BASE_NPCS,
+            career_year, career_month,
         )
+    sync_npc_runtime_state(career_leaderboard_state, month=career_month)
 
-        if (
-                npc_id is None
-                or npc_id not in career_leaderboard_state
-        ):
-            continue
-
-        career_leaderboard_state[
-            npc_id
-        ] = ensure_npc_career_state(
-            career_leaderboard_state[
-                npc_id
-            ],
-            npc
-        )
-
-    sync_npc_runtime_state(
-        career_leaderboard_state
-    )
 
 
 def ensure_career_leaderboard():
@@ -13444,9 +13382,12 @@ def ensure_career_leaderboard():
 
 def initialize_career_leaderboard():
     global career_leaderboard_state
+    global career_npc_world
     global career_leaderboard_star_id
 
     career_leaderboard_state = {}
+    career_npc_world = {}
+    sync_npc_runtime_state({})
 
     if not CAREER_LEADERBOARD_PLAYERS:
         return
@@ -13692,6 +13633,10 @@ def get_career_leaderboard(
                     "game_personality",
                     "balanced"
                 ),
+                "career_stage": development_stage(npc_state, career_month),
+                "is_prospect": bool(npc_state.get("prospect_record")),
+                "is_prodigy": bool(npc_state.get("development", {}).get("prodigy")),
+                "joined_month": npc_state.get("joined_month"),
                 "fans": npc_state.get("fans", 0),
                 "public_appeal": npc_state.get("public_appeal", "steady"),
                 "npc": npc,
@@ -13743,6 +13688,8 @@ def get_career_leaderboard(
         reverse=True
     )
 
+    for index, entry in enumerate(leaderboard):
+        entry["is_star"] = rating_key == "overall" and index == 0
     return leaderboard
 
 
@@ -17580,7 +17527,16 @@ def draw_career_leaderboard_bio():
         rating_surface.get_rect(center=(BASE_WIDTH // 2, 190))
     )
 
-    if is_star:
+    if entry.get("is_prospect"):
+        joined_year, joined_zero_month = divmod(int(entry["joined_month"]), 12)
+        label = "PRODIGY" if entry.get("is_prodigy") else "PROSPECT"
+        joined = difficulty_detail_font.render(
+            f"{label} · Joined {CAREER_MONTH_NAMES[joined_zero_month + 1]} {joined_year}"
+            + (" · WORLD #1" if is_star else ""),
+            True, (40, 95, 105),
+        )
+        game_surface.blit(joined, joined.get_rect(center=(BASE_WIDTH // 2, 220)))
+    elif is_star:
         star_surface = option_label_font.render(
             "WORLD #1",
             True,
@@ -17602,9 +17558,13 @@ def draw_career_leaderboard_bio():
     if is_player:
         personality = "Player"
 
+    birthday_month = entry.get("birthday_month")
+    birthday_text = (f"  |  Birthday: {CAREER_MONTH_NAMES[birthday_month][:3]}"
+                     if isinstance(birthday_month, int) and 1 <= birthday_month <= 12 else "")
     details = [
         f"Country: {country}",
-        f"Age: {age}",
+        f"Age: {age}" + birthday_text
+        + (f"  |  {entry.get('career_stage', 'Established')}" if not is_player else ""),
         f"Personality: {personality}",
         f"Public Appeal: {appeal}",
         f"Fans: {fans:,}",
@@ -17613,10 +17573,12 @@ def draw_career_leaderboard_bio():
     ]
 
     for index, detail in enumerate(details):
-        detail_surface = option_value_font.render(
+        detail_surface = render_text_fit(
             detail,
-            True,
-            (0, 0, 0)
+            option_value_font,
+            bio_panel_rect.width - 50,
+            (0, 0, 0),
+            minimum_size=20,
         )
         game_surface.blit(
             detail_surface,
@@ -23421,6 +23383,15 @@ while running:
                 elif debug_action == ACTION_NEW_CAREER_MONTH:
                     audio.play_sound("button_click")
                     debug_start_next_career_month()
+                    current_state = STATE_CAREER_HUB
+
+                elif debug_action in (ACTION_ADD_PROSPECT, ACTION_ADD_PRODIGY):
+                    audio.play_sound("button_click")
+                    debug_add_career_prospect(prodigy=debug_action == ACTION_ADD_PRODIGY)
+
+                elif debug_action == ACTION_CAREER_YEAR:
+                    audio.play_sound("button_click")
+                    debug_advance_career_year()
                     current_state = STATE_CAREER_HUB
 
                 # ==========================================

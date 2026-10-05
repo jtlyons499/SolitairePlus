@@ -1,7 +1,11 @@
+import copy
 import json
 import random
 from npc_personality import get_npc_traits
 from pathlib import Path
+
+from career_npc_development import development_stage, rating_tier
+from career_npc_world import career_roster
 
 
 NPC_FILE = (
@@ -11,10 +15,10 @@ NPC_FILE = (
 )
 
 
-def load_npcs():
+def load_npcs(path=NPC_FILE):
 
     with open(
-            NPC_FILE,
+            path,
             "r",
             encoding="utf-8"
     ) as file:
@@ -25,40 +29,40 @@ def load_npcs():
         return roster
 
 
-NPCS = load_npcs()
+# Immutable metadata belongs to data files; the active list is rebuilt per save.
+# Keep NPCS itself alive so all imported references and debug views stay current.
+BASE_NPCS = tuple(copy.deepcopy(load_npcs()))
+PROSPECT_POOL = tuple(copy.deepcopy(load_npcs(NPC_FILE.with_name("npc_prospects.json"))))
+NPCS = copy.deepcopy(list(BASE_NPCS))
 
 
-def sync_npc_runtime_state(career_state):
-    """Apply save-specific NPC age/rating metadata to the live NPC roster.
-
-    The JSON file remains the immutable starting roster. Career Mode owns the
-    changing age/rating state, and this helper lets Poker, Blackjack, Score-Four
-    and other game selectors see the same current age without rewriting JSON.
-    """
-    if not isinstance(career_state, dict):
-        return
-
-    for npc in NPCS:
-        npc_id = npc.get("id")
+def sync_npc_runtime_state(career_state, month=1):
+    """Restore this save's exact roster, resetting ages when switching profiles."""
+    career_state = career_state if isinstance(career_state, dict) else {}
+    live = {npc["id"]: npc for npc in NPCS}
+    active = []
+    for template in career_roster(BASE_NPCS, career_state):
+        npc_id = template["id"]
+        npc = live.get(npc_id, {})
+        npc.clear()
+        npc.update(copy.deepcopy(template))
         state = career_state.get(npc_id)
-
-        if not isinstance(state, dict):
-            continue
-
-        if "age" in state:
-            npc["age"] = state["age"]
-
-        if "birthday_month" in state:
-            npc["birthday_month"] = state["birthday_month"]
-
-        if isinstance(state.get("ratings"), dict):
-            npc["career_ratings"] = dict(state["ratings"])
-
-        if "fans" in state:
-            npc["career_fans"] = state["fans"]
-
-        if "public_appeal" in state:
-            npc["public_appeal"] = state["public_appeal"]
+        if isinstance(state, dict):
+            for key in ("age", "birthday_month", "public_appeal"):
+                if key in state:
+                    npc[key] = state[key]
+            if isinstance(state.get("ratings"), dict):
+                npc["career_ratings"] = dict(state["ratings"])
+                npc["skill_tier"] = rating_tier(state["ratings"]["overall"])
+            if "fans" in state:
+                npc["career_fans"] = state["fans"]
+            if state.get("development"):
+                npc["career_stage"] = development_stage(state, month)
+                npc["is_prodigy"] = bool(state["development"].get("prodigy"))
+            if "joined_month" in state:
+                npc["joined_month"] = state["joined_month"]
+        active.append(npc)
+    NPCS[:] = active
 
 
 def get_random_npc(
@@ -141,7 +145,8 @@ def get_random_score_four_opponent():
 
 def get_random_npc_by_tier(
         skill_tier,
-        exclude_ids=None
+        exclude_ids=None,
+        game_key=None
 ):
 
     if exclude_ids is None:
@@ -150,7 +155,9 @@ def get_random_npc_by_tier(
     candidates = [
         npc for npc in NPCS
         if (
-            npc.get("skill_tier") == skill_tier
+            (rating_tier(npc["career_ratings"][game_key])
+             if game_key and game_key in npc.get("career_ratings", {})
+             else npc.get("skill_tier")) == skill_tier
             and npc.get("id") not in exclude_ids
         )
     ]
@@ -189,7 +196,8 @@ def get_score_four_opponent_choices():
 
         npc = get_random_npc_by_tier(
             tier,
-            exclude_ids=used_ids
+            exclude_ids=used_ids,
+            game_key="score_four",
         )
 
         if npc is not None:

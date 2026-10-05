@@ -10,7 +10,7 @@ from career_ratings import migrate_profile_ratings
 
 SAVE_FOLDER = "saves"
 
-PROFILE_VERSION = 6
+PROFILE_VERSION = 7
 
 PROFILE_SLOT_COUNT = 3
 
@@ -97,6 +97,7 @@ def make_default_profile():
             # ----------------------------
 
             "leaderboard_state": {},
+            "npc_world": {},
             "leaderboard_star_id": None,
 
             # ----------------------------
@@ -209,6 +210,7 @@ def save_profile(
         slot=1
 ):
     migrate_profile_ratings(profile_data)
+    profile_data.setdefault("career", {}).setdefault("npc_world", {})
     profile_data["profile_version"] = PROFILE_VERSION
 
     os.makedirs(
@@ -258,6 +260,7 @@ def load_profile(
         )
 
     migrate_profile_ratings(data)
+    data.setdefault("career", {}).setdefault("npc_world", {})
     data["profile_version"] = PROFILE_VERSION
     return data
 
