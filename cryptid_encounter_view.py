@@ -38,7 +38,12 @@ def draw_encounter(screen,surface,mouse):
     legal=[] if busy else b.legal_actions(0)
     gold=(244,199,108);muted=(174,193,190);text=(240,235,220)
     # A restrained table with clear regions leaves the cards as the main artwork.
-    pygame.draw.rect(surface,(23,41,44),(0,64,1366,534))
+    if screen.renderer._image("background.png") is not None:
+        tint = pygame.Surface((1366, 534), pygame.SRCALPHA)
+        tint.fill((23, 41, 44, 135))
+        surface.blit(tint, (0, 64))
+    else:
+        pygame.draw.rect(surface,(23,41,44),(0,64,1366,534))
     pygame.draw.rect(surface,(32,61,62),(0,598,1366,34))
     screen._text(surface,'RESERVES',16,76,22,muted,True)
     for seat in (1,0):

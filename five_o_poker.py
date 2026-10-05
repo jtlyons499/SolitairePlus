@@ -500,6 +500,10 @@ class FiveOPokerGame:
         self._finish_hand()
 
     def _showdown(self):
+        # Resolution can be reached through either betting path. Re-entry must
+        # never award the same pot or advance session statistics twice.
+        if self.showdown_pending_finish or self.hand_complete:
+            return
         self.phase = "showdown"
         self.column_results = []
         self.player_column_wins = 0

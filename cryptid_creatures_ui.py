@@ -223,6 +223,9 @@ class CryptidScreen:
 
     def draw(self, surface, mouse=None):
         surface.fill(BG)
+        background = self.renderer._image("background.png")
+        if background is not None:
+            surface.blit(pygame.transform.smoothscale(background, surface.get_size()), (0, 0))
         self.buttons, self.cards_on_screen = [], []
         self.controls_page = self.page
         if self.page=='battle' and self.battle:

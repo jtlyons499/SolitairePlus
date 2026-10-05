@@ -111,6 +111,7 @@ class TexasHoldemGame:
         # has actually been behaving at this poker table.
         self.player_model = PokerOpponentModel()
         self.table_reads = PokerTableReads()
+        self.learning_store = None
         self.personality_memory = PokerGrudgeMemory()
 
         # Snapshot of seats that began the current hand. This
@@ -155,6 +156,8 @@ class TexasHoldemGame:
         self.npc_hand_contributions = []
 
         self.last_pot_awards = []
+        self.recap_open = False
+        self.recap_page = 0
 
         # Final pot amount retained after payout so the UI can
         # continue showing the completed hand's pot at showdown.
@@ -244,6 +247,11 @@ class TexasHoldemGame:
         if event_type in ("call", "fold", "check"):
             previous_total = round_total - int(amount or 0) if event_type == "call" else round_total
             facing_amount = max(0, self.current_bet - previous_total)
+        if self.table_reads.learning:
+            self.table_reads.learning.active_observers = {
+                npc_identity(npc, seat) for seat, npc in enumerate(self.npcs, 1)
+                if seat - 1 >= len(self.npc_busted) or not self.npc_busted[seat - 1]
+            }
         self.table_reads.observe(
             event_type, actor_index, hand_number=self.hand_number,
             stage=self.current_stage, amount=amount, round_total=round_total,
@@ -381,6 +389,10 @@ class TexasHoldemGame:
             npcs
         )
 
+        identities = {0: "player"}
+        identities.update({seat: npc_identity(npc, seat) for seat, npc in enumerate(self.npcs, 1)})
+        self.table_reads.bind_learning(self.learning_store, self.rating_game_key, identities)
+
         self.starting_stack = int(
             starting_stack
         )
@@ -449,6 +461,8 @@ class TexasHoldemGame:
         ]
 
         self.last_pot_awards = []
+        self.recap_open = False
+        self.recap_page = 0
         self.last_resolved_pot = 0
 
         # ==================================================
@@ -992,6 +1006,8 @@ class TexasHoldemGame:
         self.winner_indexes = []
         self.result_text = ""
         self.last_pot_awards = []
+        self.recap_open = False
+        self.recap_page = 0
         self.last_resolved_pot = 0
 
         # ==================================================
@@ -1952,6 +1968,13 @@ class TexasHoldemGame:
                     f"split between {', '.join(winner_names)}."
                 )
 
+            detail = pot_award.get("hand", "")
+            if detail:
+                share = int(pot_award.get("share", pot_amount))
+                award_text += f" Winning hand: {detail}. Each receives ${share:,}"
+                if pot_award.get("remainder", 0):
+                    award_text += " (plus odd chips in seat order)"
+                award_text += "."
             self.log_hand_event(
                 "pot_award",
                 award_text,
@@ -2681,7 +2704,7 @@ class TexasHoldemGame:
         context["hand_number"] = self.hand_number
         context["npc_identity"] = npc_identity(self.npcs[npc_index], npc_index + 1)
         context["opponent_reads"] = [
-            self.table_reads.snapshot(seat)
+            self.table_reads.snapshot(seat, observer=context["npc_identity"])
             for seat in active_indexes if seat != npc_index + 1
         ]
         context["public_opponents"] = [
@@ -3306,6 +3329,19 @@ class TexasHoldemGame:
 
         return actionable
 
+    def should_reveal_runout_hands(self):
+        """Expose live hands only once no further betting or outstanding call exists."""
+        if self.current_stage not in ('preflop','flop','turn','river') or self.hand_complete:
+            return False
+        if len(self.get_active_player_indexes())<2 or len(self.get_actionable_player_indexes())>1:
+            return False
+        if not self.player_folded and not self.player_busted and self.player_stack>0 and self.player_round_bet<self.current_bet:
+            return False
+        for index in range(len(self.npcs)):
+            if not self.npc_folded[index] and not self.npc_busted[index] and self.npc_stacks[index]>0 and self.npc_round_bets[index]<self.current_bet:
+                return False
+        return True
+
     def is_betting_round_complete(self):
 
         active_indexes = (
@@ -3784,6 +3820,10 @@ class TexasHoldemGame:
             raise_to
     ):
 
+        # An all-in call uses the same chips as Call; it must remain available
+        # even when the stack cannot reach the opponent's bet.
+        if self.can_player_call() and self.get_player_amount_to_call() >= self.player_stack:
+            return self.player_call()
         if not self.can_player_raise():
             return False
 
@@ -4451,6 +4491,8 @@ class TexasHoldemGame:
         }
 
         self.last_pot_awards = []
+        self.recap_open = False
+        self.recap_page = 0
 
         # ==================================================
         # Resolve each pot separately
@@ -4549,6 +4591,7 @@ class TexasHoldemGame:
 
                     "remainder":
                         remainder,
+                    "hand": describe_poker_score(best_score, compact=True),
                 }
             )
 
@@ -4655,7 +4698,7 @@ class TexasHoldemGame:
                 )
 
                 payout_parts.append(
-                    f"{name} ${winnings:,}"
+                    f"{name} ${winnings:,} with {describe_poker_score(results[player_index][0], compact=True)}"
                 )
 
             self.result_text = (
@@ -4670,6 +4713,8 @@ class TexasHoldemGame:
         # Detailed side-pot history
         # ==================================================
 
+        # Keep the result in the normal payout banner. Detailed review is opt-in.
+        self.recap_open = False
         self.log_detailed_pot_awards(
             results.keys()
         )

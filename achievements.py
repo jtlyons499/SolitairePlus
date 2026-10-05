@@ -5,6 +5,12 @@ from copy import deepcopy
 
 
 ACHIEVEMENT_DEFINITIONS = [
+    {
+        "id": "table_clear", "category": "Poker", "title": "Table Clear",
+        "description": "Knock out every rival at a Hold'em, Draw, or Stud table.",
+        "difficulty": "elite", "icon": "assets/achievements/icons/table_clear.png",
+        "condition": ("stat_gte", "poker_tables_cleared", 1),
+    },
     # ==================================================
     # SOLITAIRE
     # ==================================================
@@ -520,6 +526,9 @@ def record_event(state, event_name, **data):
             if not other_bets and number_values == {"6", "7"} and len(number_bets) == 2:
                 _set_flag(stats, "roulette_only_6_7_win")
 
+    elif event_name == "poker_table_clear":
+        _increment(stats, "poker_tables_cleared")
+
     elif event_name == "holdem_hand_win":
         winnings = max(0, int(data.get("winnings", 0) or 0))
         _increment(stats, "holdem_hand_wins")
@@ -640,3 +649,4 @@ def register_optional_cosmetics(menu_backgrounds, felts, titles):
         for asset_id, metadata in entries.items():
             if os.path.exists(metadata["path"]):
                 target.setdefault(asset_id, dict(metadata))
+

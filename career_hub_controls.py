@@ -5,6 +5,7 @@ owns the Hub's temporary selection, messages, and shared click geometry.
 """
 
 import pygame
+from career_time_warp import WARP_OPTIONS
 
 
 class CareerHubControls:
@@ -19,16 +20,20 @@ class CareerHubControls:
         self.message_until = 0
         self.message_fade_ms = 700
         self.profile_cancel_rect = pygame.Rect(533, 660, 300, 46)
+        self.warp_open = False
+        self.warp_rect = pygame.Rect(0,0,0,0)
+        self.warp_choices = {}
         self.toolbar_rects = {}
         x = 335
         for action, width in (
-            ("save", 82), ("profile", 82), ("switch", 106),
-            ("options", 84), ("customize", 100), ("skip_to_day", 158), ("cryptid",140),
+            ("save", 52), ("profile", 62), ("switch", 108),
+            ("options", 68), ("customize", 86), ("skip_to_day", 140), ("cryptid",122), ("cases",132),
         ):
             self.toolbar_rects[action] = pygame.Rect(x, 733, width, 27)
             x += width + 8
 
     def reset(self):
+        self.warp_open = False
         self.selected_day = None
         self.future_days.clear()
         self.day_rects.clear()
@@ -86,6 +91,15 @@ class CareerHubControls:
     def get_action(self, position):
         if position is None:
             return None
+        if self.warp_rect.collidepoint(position):
+            self.warp_open = not self.warp_open
+            return "warp_menu"
+        if self.warp_open:
+            for months, rect in self.warp_choices.items():
+                if rect.collidepoint(position):
+                    self.warp_open = False
+                    return "warp:" + str(months)
+            self.warp_open = False
         for action, rect in self.toolbar_rects.items():
             if rect.collidepoint(position):
                 if action == "skip_to_day" and self.selected_day not in self.future_days:
@@ -117,7 +131,7 @@ class CareerHubControls:
         labels = {
             "save": "Save", "profile": "Profile", "switch": "Switch Profile",
             "options": "Options", "customize": "Customize",
-            "cryptid": "Cryptid Cards",
+            "cryptid": "Cryptid Cards", "cases": "Cases / trophies",
             "skip_to_day": (
                 f"Skip to day: {self.selected_day}"
                 if self.selected_day in self.future_days
@@ -151,3 +165,13 @@ class CareerHubControls:
             text = font.render(self.message, True, (25, 65, 100))
             text.set_alpha(alpha)
             surface.blit(text, text.get_rect(center=status_rect.center))
+
+    def draw_time_warp(self,surface,header,draw_button,font):
+        self.warp_rect=pygame.Rect(header.right-140,header.bottom-34,130,28)
+        draw_button(self.warp_rect,'Time Warp',font=font)
+        self.warp_choices={}
+        if self.warp_open:
+            for index,(months,label) in enumerate(WARP_OPTIONS):
+                rect=pygame.Rect(header.right-200,header.bottom+4+index*36,190,34)
+                self.warp_choices[months]=rect
+                draw_button(rect,label,font=font)

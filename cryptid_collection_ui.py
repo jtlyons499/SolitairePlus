@@ -198,7 +198,11 @@ class CryptidCollectionView:
             for i,entry in enumerate(receipt['cards']):
                 rect=pygame.Rect(68+i*249,228,226,316)
                 if i>=self.revealed:
-                    self._pack_shape(surface,rect)
+                    back = s.renderer._image('card_back.png')
+                    if back is not None:
+                        surface.blit(pygame.transform.smoothscale(back, rect.size), rect)
+                    else:
+                        self._pack_shape(surface,rect)
                 else:
                     age=elapsed-650-i*330
                     width=max(4,round(rect.w*min(1,max(0,age/180))))

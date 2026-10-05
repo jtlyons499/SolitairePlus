@@ -1,3 +1,4 @@
+from poker_recap import draw_recap, get_recap_action
 import math
 
 import pygame
@@ -3781,10 +3782,11 @@ def draw_holdem_side_panel(
         player_can_act
     )
 
-    raise_enabled = (
-            player_can_act
-            and holdem_game.can_player_raise()
-    )
+    all_in_call = amount_to_call > 0 and amount_to_call >= holdem_game.player_stack
+    if all_in_call:
+        call_text = f"ALL-IN CALL ${holdem_game.player_stack:,}"
+        raise_text = "ALL IN"
+    raise_enabled = player_can_act and (holdem_game.can_player_raise() or all_in_call)
 
     call_accent = None
 
@@ -5778,8 +5780,8 @@ def draw_texas_holdem(
         )
 
         show_npc_cards = (
-                holdem_game.current_stage
-                == "showdown"
+                (holdem_game.current_stage == "showdown"
+                 or holdem_game.should_reveal_runout_hands())
                 and not npc_is_folded
                 and not npc_is_busted
                 and index
@@ -6906,6 +6908,7 @@ def draw_texas_holdem(
         game_surface,
         mouse_pos
     )
+    draw_recap(game_surface, mouse_pos, holdem_game)
 
 
 def get_texas_holdem_action(
@@ -6915,6 +6918,10 @@ def get_texas_holdem_action(
 
     if mouse_pos is None:
         return None
+
+    recap_action = get_recap_action(mouse_pos, holdem_game)
+    if recap_action:
+        return recap_action
 
     if holdem_options_open:
         return None

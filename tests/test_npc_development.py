@@ -20,6 +20,7 @@ from career_npc_world import (add_prospect, advance_career_world, career_roster,
                               ensure_career_world)
 from career_ratings import GAME_RATING_KEYS, derive_overall, normalize_rating_bundle
 from npc_personality import TRAIT_NAMES
+from career_event_progress import store_event_progress
 
 ROOT = Path(__file__).resolve().parents[1]
 MAIN_TREE = ast.parse((ROOT / "main.py").read_text(encoding="utf-8"))
@@ -270,7 +271,7 @@ class MainIntegrationTests(unittest.TestCase):
         game.set_deal_mode = lambda mode: setattr(game, "deal_mode", mode)
         env = main_functions(("apply_profile_save_data", "build_profile_save_data",
                               "sync_career_npc_runtime_state"), dict(
-            copy=copy, game=game, make_default_profile=profiles.make_default_profile,
+            copy=copy, game=game, store_event_progress=store_event_progress, make_default_profile=profiles.make_default_profile,
             avatar_bases=["base_01"], avatar_eyes=["eyes_01"], avatar_hair=["hair_01"],
             avatar_tops=["top_01"], avatar_glasses=[], favorite_suit_options=["Hearts"],
             cursor_runtime_surfaces={"cursor": None}, VERIFIED_DEALS_ENABLED=False,

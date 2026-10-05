@@ -1,4 +1,5 @@
 import random
+from collections import deque
 from niche_poker_common import RANK_VALUES, build_standard_deck, card_key, round_chip_amount
 from poker_ai import (decide_poker_action, get_poker_personality, get_poker_skill_factor,
                       choose_poker_open_bet_amount, choose_poker_raise_to_amount)
@@ -33,6 +34,7 @@ class BlindMansBluffGame:
         self.last_raise_size = 1
         self.personality_memory = PokerGrudgeMemory()
         self.npc_ai_last_decisions = []
+        self.presentation_events = deque(maxlen=128)
 
     def start_session(self, npcs, starting_stack):
         self.npcs = list(npcs or [])[:3]
@@ -56,6 +58,8 @@ class BlindMansBluffGame:
         else:
             self.npc_stacks[seat - 1] -= paid
         self.pot += paid
+        if paid:
+            self.presentation_events.append({"kind": "wager", "seat": seat, "amount": paid})
         self.hand_contributions[seat] += paid
         if round_bet:
             self.round_bets[seat] += paid
@@ -77,6 +81,7 @@ class BlindMansBluffGame:
             self.phase = "session_over"
             self.result_text = "Not enough chips or opponents for another hand."
             return False
+        self.presentation_events.clear()
         self.hand_number += 1
         self.deck = build_standard_deck(self.rng)
         count = len(self.npcs) + 1
@@ -289,6 +294,8 @@ class BlindMansBluffGame:
             self.last_actions[seat] = f"{'Bet' if action == 'bet' else 'Raised to'} ${target:,}"
         else:
             return False
+        if action in ("check", "fold"):
+            self.presentation_events.append({"kind": action, "seat": seat, "amount": 0})
         self.pending.discard(seat)
         self.raise_rights.discard(seat)
         return True
@@ -341,6 +348,8 @@ class BlindMansBluffGame:
         return self._player_action("fold")
 
     def _credit(self, seat, amount):
+        if amount:
+            self.presentation_events.append({"kind": "payout", "seat": seat, "amount": amount})
         if seat == 0:
             self.player_stack += amount
         else:

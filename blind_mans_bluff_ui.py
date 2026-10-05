@@ -1,3 +1,4 @@
+from bluff_presentation import draw_bluff_effects
 import pygame
 
 from niche_poker_common import RANK_VALUES
@@ -272,6 +273,7 @@ def draw_blind_mans_bluff(
     surface.blit(status_panel, status_rect.topleft)
     pygame.draw.rect(surface, (137, 158, 148), status_rect, 2, border_radius=12)
 
+    draw_bluff_effects(surface, game)
     pot = label_font.render(f"Pot: ${game.pot:,}", True, GOLD)
     surface.blit(pot, pot.get_rect(center=(683, 374)))
     stake_text = (f"Bet ${game.current_bet:,}  •  Minimum raise to ${game.get_minimum_raise_to():,}"

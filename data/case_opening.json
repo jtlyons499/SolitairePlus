@@ -1,0 +1,321 @@
+{
+  "cases": {
+    "street": {
+      "name": "Street Case",
+      "minimum": 25,
+      "fraction": 0.015,
+      "weights": {
+        "junk": 55,
+        "cash": 25,
+        "fans": 10,
+        "rating": 5,
+        "trophy": 4,
+        "cosmetic": 1
+      },
+      "image": "cases/street.png",
+      "rating_points": 8,
+      "pool": [
+        "loose_string",
+        "cold_pizza",
+        "crumpled_card",
+        "bent_key",
+        "lonely_button",
+        "receipt",
+        "golden_shuffler",
+        "card_monolith",
+        "velvet_penguin",
+        "neon_ace",
+        "origami_dragon",
+        "pizza_pedestal",
+        "cash_pouch",
+        "cash_bundle",
+        "cash_vault",
+        "fan_club",
+        "standing_ovation",
+        "midnight_felt",
+        "copper_felt",
+        "rating_solitaire",
+        "rating_texas_holdem",
+        "rating_five_card_draw",
+        "rating_seven_card_stud",
+        "rating_blackjack",
+        "rating_roulette",
+        "rating_score_four"
+      ]
+    },
+    "collector": {
+      "name": "Collector Case",
+      "minimum": 100,
+      "fraction": 0.04,
+      "weights": {
+        "junk": 25,
+        "cash": 22,
+        "fans": 18,
+        "rating": 15,
+        "trophy": 17,
+        "cosmetic": 3
+      },
+      "image": "cases/collector.png",
+      "rating_points": 18,
+      "pool": [
+        "loose_string",
+        "cold_pizza",
+        "crumpled_card",
+        "bent_key",
+        "lonely_button",
+        "receipt",
+        "golden_shuffler",
+        "card_monolith",
+        "velvet_penguin",
+        "neon_ace",
+        "origami_dragon",
+        "pizza_pedestal",
+        "cash_pouch",
+        "cash_bundle",
+        "cash_vault",
+        "fan_club",
+        "standing_ovation",
+        "midnight_felt",
+        "copper_felt",
+        "rating_solitaire",
+        "rating_texas_holdem",
+        "rating_five_card_draw",
+        "rating_seven_card_stud",
+        "rating_blackjack",
+        "rating_roulette",
+        "rating_score_four"
+      ]
+    },
+    "prestige": {
+      "name": "Prestige Case",
+      "minimum": 300,
+      "fraction": 0.08,
+      "weights": {
+        "junk": 12,
+        "cash": 16,
+        "fans": 15,
+        "rating": 18,
+        "trophy": 31,
+        "cosmetic": 8
+      },
+      "image": "cases/prestige.png",
+      "rating_points": 35,
+      "pool": [
+        "loose_string",
+        "cold_pizza",
+        "crumpled_card",
+        "bent_key",
+        "lonely_button",
+        "receipt",
+        "golden_shuffler",
+        "card_monolith",
+        "velvet_penguin",
+        "neon_ace",
+        "origami_dragon",
+        "pizza_pedestal",
+        "cash_pouch",
+        "cash_bundle",
+        "cash_vault",
+        "fan_club",
+        "standing_ovation",
+        "midnight_felt",
+        "copper_felt",
+        "rating_solitaire",
+        "rating_texas_holdem",
+        "rating_five_card_draw",
+        "rating_seven_card_stud",
+        "rating_blackjack",
+        "rating_roulette",
+        "rating_score_four"
+      ]
+    }
+  },
+  "items": {
+    "loose_string": {
+      "id": "loose_string",
+      "name": "Loose String",
+      "kind": "junk",
+      "image": "items/loose_string.png"
+    },
+    "cold_pizza": {
+      "id": "cold_pizza",
+      "name": "Cold Pizza",
+      "kind": "junk",
+      "image": "items/cold_pizza.png"
+    },
+    "crumpled_card": {
+      "id": "crumpled_card",
+      "name": "Crumpled Card",
+      "kind": "junk",
+      "image": "items/crumpled_card.png"
+    },
+    "bent_key": {
+      "id": "bent_key",
+      "name": "Bent Key",
+      "kind": "junk",
+      "image": "items/bent_key.png"
+    },
+    "lonely_button": {
+      "id": "lonely_button",
+      "name": "Lonely Button",
+      "kind": "junk",
+      "image": "items/lonely_button.png"
+    },
+    "receipt": {
+      "id": "receipt",
+      "name": "Ancient Receipt",
+      "kind": "junk",
+      "image": "items/receipt.png"
+    },
+    "golden_shuffler": {
+      "id": "golden_shuffler",
+      "name": "Golden Shuffler",
+      "kind": "trophy",
+      "image": "items/golden_shuffler.png"
+    },
+    "card_monolith": {
+      "id": "card_monolith",
+      "name": "Card Monolith",
+      "kind": "trophy",
+      "image": "items/card_monolith.png"
+    },
+    "velvet_penguin": {
+      "id": "velvet_penguin",
+      "name": "Velvet Penguin",
+      "kind": "trophy",
+      "image": "items/velvet_penguin.png"
+    },
+    "neon_ace": {
+      "id": "neon_ace",
+      "name": "Neon Ace",
+      "kind": "trophy",
+      "image": "items/neon_ace.png"
+    },
+    "origami_dragon": {
+      "id": "origami_dragon",
+      "name": "Origami Dragon",
+      "kind": "trophy",
+      "image": "items/origami_dragon.png"
+    },
+    "pizza_pedestal": {
+      "id": "pizza_pedestal",
+      "name": "Pizza on a Pedestal",
+      "kind": "trophy",
+      "image": "items/pizza_pedestal.png"
+    },
+    "cash_pouch": {
+      "id": "cash_pouch",
+      "name": "Cash Pouch",
+      "kind": "cash",
+      "image": "items/cash_pouch.png",
+      "cash_multiplier": 0.8
+    },
+    "cash_bundle": {
+      "id": "cash_bundle",
+      "name": "Cash Bundle",
+      "kind": "cash",
+      "image": "items/cash_bundle.png",
+      "cash_multiplier": 1.8
+    },
+    "cash_vault": {
+      "id": "cash_vault",
+      "name": "Cash Vault",
+      "kind": "cash",
+      "image": "items/cash_vault.png",
+      "cash_multiplier": 6
+    },
+    "fan_club": {
+      "id": "fan_club",
+      "name": "Fan Club",
+      "kind": "fans",
+      "image": "items/fan_club.png",
+      "fan_multiplier": 1,
+      "fan_minimum": 5
+    },
+    "standing_ovation": {
+      "id": "standing_ovation",
+      "name": "Standing Ovation",
+      "kind": "fans",
+      "image": "items/standing_ovation.png",
+      "fan_multiplier": 3,
+      "fan_minimum": 5
+    },
+    "midnight_felt": {
+      "id": "midnight_felt",
+      "name": "Midnight Constellations",
+      "kind": "cosmetic",
+      "image": "items/midnight_felt.png",
+      "felt_path": "assets/case_opening/cosmetics/midnight_felt.png"
+    },
+    "copper_felt": {
+      "id": "copper_felt",
+      "name": "Copper Circuit",
+      "kind": "cosmetic",
+      "image": "items/copper_felt.png",
+      "felt_path": "assets/case_opening/cosmetics/copper_felt.png"
+    },
+    "rating_solitaire": {
+      "id": "rating_solitaire",
+      "name": "Solitaire Rating",
+      "kind": "rating",
+      "game": "solitaire",
+      "image": "items/rating_solitaire.png"
+    },
+    "rating_texas_holdem": {
+      "id": "rating_texas_holdem",
+      "name": "Texas Holdem Rating",
+      "kind": "rating",
+      "game": "texas_holdem",
+      "image": "items/rating_texas_holdem.png"
+    },
+    "rating_five_card_draw": {
+      "id": "rating_five_card_draw",
+      "name": "Five Card Draw Rating",
+      "kind": "rating",
+      "game": "five_card_draw",
+      "image": "items/rating_five_card_draw.png"
+    },
+    "rating_seven_card_stud": {
+      "id": "rating_seven_card_stud",
+      "name": "Seven Card Stud Rating",
+      "kind": "rating",
+      "game": "seven_card_stud",
+      "image": "items/rating_seven_card_stud.png"
+    },
+    "rating_blackjack": {
+      "id": "rating_blackjack",
+      "name": "Blackjack Rating",
+      "kind": "rating",
+      "game": "blackjack",
+      "image": "items/rating_blackjack.png"
+    },
+    "rating_roulette": {
+      "id": "rating_roulette",
+      "name": "Roulette Rating",
+      "kind": "rating",
+      "game": "roulette",
+      "image": "items/rating_roulette.png"
+    },
+    "rating_score_four": {
+      "id": "rating_score_four",
+      "name": "Score Four Rating",
+      "kind": "rating",
+      "game": "score_four",
+      "image": "items/rating_score_four.png"
+    },
+    "hundred_wins": {
+      "id": "hundred_wins",
+      "name": "100 Solitaire Wins",
+      "kind": "trophy",
+      "earned": true,
+      "image": "items/hundred_wins.png"
+    },
+    "table_champion": {
+      "id": "table_champion",
+      "name": "Poker Table Champion",
+      "kind": "trophy",
+      "earned": true,
+      "image": "items/table_champion.png"
+    }
+  }
+}

@@ -1,3 +1,10 @@
+from career_event_progress import store_event_progress, restore_event_progress
+from career_time_warp import advance_months
+from case_opening import new_case_state, normalize_case_state, purchase as purchase_loot_case, award_earned_trophies
+from case_opening_ui import CaseOpeningScreen
+from bluff_presentation import update_bluff_presentation
+from poker_recap import handle_recap_action
+from poker_learning import new_learning, normalize_learning
 import os
 import sys
 import time
@@ -609,6 +616,7 @@ STATE_PROFILE_SELECT = "profile_select"
 STATE_MODE_SELECT = "mode_select"
 STATE_FREE_PLAY_SELECT = "free_play_select"
 STATE_CRYPTID_CREATURES = "cryptid_creatures"
+STATE_CASE_OPENING = "case_opening"
 STATE_HOW_TO_PLAY = "how_to_play"
 STATE_ACHIEVEMENTS = "achievements"
 
@@ -1858,6 +1866,8 @@ def build_career_event_summary():
             blackjack_text,
             roulette_text,
             horse_races_text,
+            f"Total: ${blackjack_session_net + roulette_session_net + horse_races_session_net:+,}",
+            f"Blackjack rating: {blackjack_session_rating_change:+d}",
             f"Current Cash: ${career_cash:,}",
             f"Current Fans: {career_fans:,}",
         ]
@@ -2361,6 +2371,14 @@ def skip_to_selected_career_day():
     )
 
 
+def time_warp_career(months):
+    ensure_career_schedule()
+    reset_career_hub_runtime()
+    skipped=advance_months(months,lambda:(career_year,career_month,career_day_of_month),advance_career_day)
+    auto_save_career()
+    career_hub_controls.show_message(f"Time Warp: skipped {months} month(s), {skipped} days.",pygame.time.get_ticks(),duration=4000)
+
+
 def get_ordinal_day(number):
     try:
         number = int(number)
@@ -2379,6 +2397,40 @@ def get_career_day_entry(day_number):
         if entry.get("day_number") == day_number:
             return entry
     return None
+
+
+def start_career_cases():
+    global current_state, current_game_mode
+    current_game_mode = "career"
+    award_earned_trophies(case_collection_state, achievement_state)
+    case_screen.enter(case_collection_state, career_cash, buy_case_for_screen, career_residence)
+    current_state = STATE_CASE_OPENING
+
+
+def buy_case_for_screen(case_id):
+    global career_cash, career_rating, career_fans
+    if current_game_mode == "free":
+        return purchase_loot_case(case_screen.state, case_id, case_screen.wallet)
+    previous = (copy.deepcopy(case_collection_state), career_cash, copy.deepcopy(career_ratings), career_rating, career_fans, set(unlocked_felts))
+    try:
+        receipt, career_cash = purchase_loot_case(case_collection_state, case_id, career_cash)
+        if receipt["kind"] == "rating":
+            receipt["amount"] = apply_rating_change(career_ratings, receipt["game"], receipt["amount"])
+            career_rating = career_ratings["overall"]
+        elif receipt["kind"] == "fans":
+            actual = clamp_fans(career_fans + receipt["amount"])
+            receipt["amount"] = actual - career_fans
+            career_fans = actual
+        elif receipt["kind"] == "cosmetic":
+            unlocked_felts.add("f_case_" + receipt["item_id"])
+        auto_save_career()
+        return receipt, career_cash
+    except Exception:
+        old_state, career_cash, old_ratings, career_rating, career_fans, old_felts = previous
+        case_collection_state.clear(); case_collection_state.update(old_state)
+        career_ratings.clear(); career_ratings.update(old_ratings)
+        unlocked_felts.clear(); unlocked_felts.update(old_felts)
+        raise
 
 
 def start_career_cryptid():
@@ -2803,6 +2855,7 @@ def reset_career_event_session_totals(activity_type):
     global five_card_draw_session_net
     global seven_card_stud_session_net
     global blackjack_session_net
+    global blackjack_session_rating_change
     global roulette_session_net
     global horse_races_session_net
     global horse_races_last_rewarded_races
@@ -2817,6 +2870,7 @@ def reset_career_event_session_totals(activity_type):
 
     elif activity_type == CAREER_ACTIVITY_CASINO_NIGHT:
         blackjack_session_net = 0
+        blackjack_session_rating_change = 0
         roulette_session_net = 0
         horse_races_session_net = 0
         horse_races_last_rewarded_races = 0
@@ -3106,8 +3160,11 @@ SEVEN_CARD_STUD_TABLE_SWEEP_RATING_BONUS = 100
 
 roulette_game = RouletteGame()
 horse_races_game = HorseRaceGame()
+case_screen = CaseOpeningScreen()
+case_collection_state = new_case_state()
 cryptid_screen = CryptidScreen()
 cryptid_collection_state = new_collection()
+career_poker_learning = new_learning()
 faro_game = FaroGame()
 five_o_poker_game = FiveOPokerGame()
 blind_mans_bluff_game = BlindMansBluffGame()
@@ -3126,6 +3183,7 @@ blind_mans_bluff_session_net = 0
 blind_mans_bluff_buy_in_active = False
 
 blackjack_session_net = 0
+blackjack_session_rating_change = 0
 
 blackjack_selected_bet_percentage = None
 blackjack_bet_dropdown_open = False
@@ -4188,6 +4246,11 @@ menu_drift_render_surface = pygame.Surface(
     )
 ).convert()
 
+from case_opening import ITEMS as CASE_ITEMS
+FELTS.update({
+    "f_case_" + key: {"name": item["name"], "path": item["felt_path"]}
+    for key, item in CASE_ITEMS.items() if item["kind"] == "cosmetic"
+})
 felt_surfaces = {}
 for asset_id, asset_data in FELTS.items():
     felt_surfaces[asset_id] = pygame.image.load(
@@ -4823,6 +4886,7 @@ play_return_rect = pygame.Rect(
 # ==================================================
 
 FREE_PLAY_GAME_IDS = (
+    "case_opening",
     "cryptid_creatures",
     "solitaire",
     "score_four",
@@ -4840,6 +4904,7 @@ FREE_PLAY_GAME_IDS = (
 )
 
 FREE_PLAY_GAME_NAMES = {
+    "case_opening": "Case Opening",
     "solitaire": "Klondike Solitaire",
     "score_four": "Score-Four",
     "crazy_eights": "Crazy Eights",
@@ -6042,6 +6107,8 @@ def draw_blackjack():
     else:
         session_text = "Session: $0"
     info_lines.append(session_text)
+    if current_game_mode == "career":
+        info_lines.append(f"Session rating: {blackjack_session_rating_change:+d}")
 
     for index, text in enumerate(info_lines):
         surface = blackjack_body_font.render(
@@ -6733,6 +6800,7 @@ def process_texas_holdem_showdown():
         fan_gain = 0
 
         if not texas_holdem_table_sweep_rewarded:
+            process_achievement_event("poker_table_clear", game="texas_holdem")
             if current_game_mode == "career":
                 fan_gain = award_fans_for_rating_win(
                     TEXAS_HOLDEM_TABLE_SWEEP_RATING_BONUS,
@@ -7141,6 +7209,7 @@ def start_texas_holdem_session(
     # Start poker session
     # ==================================================
 
+    texas_holdem_game.learning_store = globals().get("career_poker_learning") if current_game_mode == "career" else None
     texas_holdem_game.start_session(
         opponents,
         starting_stack,
@@ -7212,6 +7281,7 @@ def finish_texas_holdem_session():
         current_state = STATE_FREE_PLAY_SELECT
     else:
         current_state = STATE_CAREER_EVENT_SELECT
+        auto_save_career()
 
 # ==================================================
 # FIVE-CARD DRAW HELPERS
@@ -7361,6 +7431,7 @@ def start_five_card_draw_session(
 
     reset_five_card_draw_ui_session()
 
+    five_card_draw_game.learning_store = globals().get("career_poker_learning") if current_game_mode == "career" else None
     five_card_draw_game.start_session(
         opponents,
         starting_stack,
@@ -7442,6 +7513,7 @@ def finish_five_card_draw_session():
         current_state = STATE_FREE_PLAY_SELECT
     else:
         current_state = STATE_CAREER_EVENT_SELECT
+        auto_save_career()
 
 
 def play_five_card_draw_npc_action_sound(
@@ -7563,6 +7635,7 @@ def process_five_card_draw_showdown():
         fan_gain = 0
 
         if not five_card_draw_table_sweep_rewarded:
+            process_achievement_event("poker_table_clear", game="five_card_draw")
             if current_game_mode == "career":
                 fan_gain = award_fans_for_rating_win(
                     FIVE_CARD_DRAW_TABLE_SWEEP_RATING_BONUS,
@@ -7728,6 +7801,7 @@ def start_seven_card_stud_session(
 
     reset_seven_card_stud_ui_session()
 
+    seven_card_stud_game.learning_store = globals().get("career_poker_learning") if current_game_mode == "career" else None
     seven_card_stud_game.start_session(
         opponents,
         starting_stack,
@@ -7807,6 +7881,7 @@ def finish_seven_card_stud_session():
         current_state = STATE_FREE_PLAY_SELECT
     else:
         current_state = STATE_CAREER_EVENT_SELECT
+        auto_save_career()
 
 
 def play_seven_card_stud_npc_action_sound(
@@ -7925,6 +8000,7 @@ def process_seven_card_stud_showdown():
         fan_gain = 0
 
         if not seven_card_stud_table_sweep_rewarded:
+            process_achievement_event("poker_table_clear", game="seven_card_stud")
             if current_game_mode == "career":
                 fan_gain = award_fans_for_rating_win(
                     SEVEN_CARD_STUD_TABLE_SWEEP_RATING_BONUS,
@@ -8156,6 +8232,7 @@ def settle_roulette_round():
 def settle_blackjack_round():
     global career_cash
     global blackjack_session_net
+    global blackjack_session_rating_change
     global blackjack_round_doubled
     global blackjack_round_all_in
     global blackjack_round_start_bet
@@ -8180,6 +8257,7 @@ def settle_blackjack_round():
     )
     blackjack_game.rating_change = (rate_house_game("blackjack", net_result)
                                    if current_game_mode == "career" else None)
+    blackjack_session_rating_change = globals().get("blackjack_session_rating_change", 0) + int(blackjack_game.rating_change or 0)
 
     if net_result > 0:
         award_fans_for_cash_win(
@@ -8503,6 +8581,7 @@ def debug_open_blackjack():
     global blackjack_selected_bet_percentage
     global blackjack_bet_dropdown_open
     global blackjack_session_net
+    global blackjack_session_rating_change
 
     career_event_entry = {
         "activity_type": (
@@ -8525,6 +8604,7 @@ def debug_open_blackjack():
     blackjack_selected_bet_percentage = None
     blackjack_bet_dropdown_open = False
     blackjack_session_net = 0
+    blackjack_session_rating_change = 0
 
     current_state = (
         STATE_BLACKJACK_BET
@@ -9253,6 +9333,7 @@ def begin_free_play_sandbox(use_cash=False):
             "career_total_moves": career_total_moves,
             "career_event_result_log": copy.deepcopy(career_event_result_log),
             "career_event_has_activity": career_event_has_activity,
+            "blackjack_session_rating_change": globals().get("blackjack_session_rating_change", 0),
         }
 
     career_event_entry = None
@@ -9264,6 +9345,7 @@ def begin_free_play_sandbox(use_cash=False):
 
 
 def finish_free_play_sandbox():
+    global blackjack_session_rating_change
     global free_play_snapshot
     global career_rating
     global career_ratings
@@ -9300,6 +9382,9 @@ def finish_free_play_sandbox():
             "career_event_has_activity"
         ]
 
+    if free_play_snapshot is not None:
+        blackjack_session_rating_change = free_play_snapshot.get("blackjack_session_rating_change", 0)
+
     career_event_entry = None
     free_play_snapshot = None
 
@@ -9332,6 +9417,7 @@ def start_free_play_game(game_id):
     global blackjack_selected_bet_percentage
     global blackjack_bet_dropdown_open
     global blackjack_session_net
+    global blackjack_session_rating_change
     global roulette_session_net
     global horse_races_session_net
     global horse_races_last_rewarded_races
@@ -9352,6 +9438,12 @@ def start_free_play_game(game_id):
     if game_id == "solitaire":
         game.clear_challenge()
         current_state = STATE_DIFFICULTY
+        return True
+
+    if game_id == "case_opening":
+        from case_opening import new_case_state
+        case_screen.enter(new_case_state(), FREE_PLAY_STARTING_CASH, buy_case_for_screen, temporary=True)
+        current_state = STATE_CASE_OPENING
         return True
 
     if game_id == "cryptid_creatures":
@@ -9377,6 +9469,7 @@ def start_free_play_game(game_id):
         blackjack_selected_bet_percentage = None
         blackjack_bet_dropdown_open = False
         blackjack_session_net = 0
+        blackjack_session_rating_change = 0
         current_state = STATE_BLACKJACK_BET
         return True
 
@@ -9686,6 +9779,7 @@ def get_profile_avatar():
     return avatar_surface
 
 def build_profile_save_data():
+    store_event_progress(globals().get("career_event_entry"), globals())
 
     profile_data = (
         make_default_profile()
@@ -9973,11 +10067,21 @@ def build_profile_save_data():
     ] = game.deal_mode
 
     profile_data["cryptid_creatures"] = copy.deepcopy(globals().get("cryptid_collection_state", profile_data["cryptid_creatures"]))
+    from poker_learning import normalize_learning
+    profile_data["poker_learning"] = normalize_learning(globals().get("career_poker_learning"))
+    from case_opening import normalize_case_state
+    profile_data["case_opening"] = normalize_case_state(globals().get("case_collection_state"))
     return profile_data
 
 def apply_profile_save_data(
         data
 ):
+    global career_poker_learning
+    from poker_learning import normalize_learning
+    career_poker_learning = normalize_learning(data.get("poker_learning"))
+    global case_collection_state
+    from case_opening import normalize_case_state
+    case_collection_state = normalize_case_state(data.get("case_opening"))
     global cryptid_collection_state
     from cryptid_collection import normalize_collection
     cryptid_collection_state = normalize_collection(data.get('cryptid_creatures'),data.get('progression',{}).get('level',1))
@@ -16072,7 +16176,9 @@ def draw_career_hub():
 
         else:
             words = activity_title.split()
-            title_lines = [activity_title]
+            if activity_title == "Head-to-Head":
+                words = ["Head-to-", "Head"]
+            title_lines = ["Head-to-", "Head"] if activity_title == "Head-to-Head" else [activity_title]
 
             if option_label_font.size(activity_title)[0] > cell_rect.width - 18 and len(words) > 1:
                 best_split = 1
@@ -16589,6 +16695,8 @@ def draw_career_hub():
         "Visit JimbosJobFinder.sk",
         font=difficulty_detail_font
     )
+
+    career_hub_controls.draw_time_warp(game_surface,date_header_rect,draw_button,career_hub_controls.font)
 
     career_hub_controls.draw_toolbar(
         game_surface, draw_button, career_hub_controls.font, pygame.time.get_ticks()
@@ -17814,7 +17922,7 @@ def draw_career_leaderboards():
 
     filter_surface = (
         option_value_font.render(
-            f"Sort by: {rating_label}" + (" (7-game average)" if career_leaderboard_rating_key == "overall" else ""),
+            "Sort by: 7-Game AVG" if career_leaderboard_rating_key == "overall" else f"Sort by: {rating_label}",
             True,
             (
                 20,
@@ -24044,6 +24152,17 @@ while running:
         # FREE PLAY SELECT
         # ==========================================
 
+        elif current_state == STATE_CASE_OPENING:
+            if case_screen.handle_event(event, game_mouse_pos) == "return":
+                if current_game_mode == "free":
+                    leave_free_play_game()
+                else:
+                    try:
+                        auto_save_career()
+                        current_state = STATE_CAREER_HUB
+                    except OSError as error:
+                        case_screen.notice = "Save failed. Check the saves folder and retry Return."
+
         elif current_state == STATE_CRYPTID_CREATURES:
             if cryptid_screen.handle_event(event, game_mouse_pos) == "return":
                 if cryptid_screen.career_mode:
@@ -24094,9 +24213,9 @@ while running:
                         career_hub_controls.clear_skip_confirmation()
                     continue
 
-                fast_skip_day = career_hub_controls.request_fast_skip_at(
+                fast_skip_day = (None if career_hub_controls.warp_open else career_hub_controls.request_fast_skip_at(
                     game_mouse_pos
-                )
+                ))
                 if fast_skip_day is not None:
                     audio.play_sound("button_click")
                     continue
@@ -24104,12 +24223,16 @@ while running:
                 hub_action = career_hub_controls.get_action(game_mouse_pos)
                 if hub_action is not None:
                     audio.play_sound("button_click")
-                    if hub_action == "skip_to_day":
+                    if hub_action.startswith("warp:"):
+                        time_warp_career(int(hub_action.split(":")[1]))
+                    elif hub_action == "skip_to_day":
                         skip_to_selected_career_day()
                     elif hub_action == "save":
                         save_career_from_hub()
                     elif hub_action == "switch":
                         begin_career_profile_switch()
+                    elif hub_action == "cases":
+                        start_career_cases()
                     elif hub_action == "cryptid":
                         start_career_cryptid()
                     elif hub_action == "profile":
@@ -24246,9 +24369,10 @@ while running:
                                 career_day_of_month - 1
                                 ]
 
-                            career_event_has_activity = False
-                            reset_career_event_result_log()
-                            reset_career_event_session_totals(activity_type)
+                            if not restore_event_progress(career_event_entry, globals()):
+                                career_event_has_activity = False
+                                reset_career_event_result_log()
+                                reset_career_event_session_totals(activity_type)
 
                             current_state = (
                                 STATE_CAREER_EVENT_SELECT
@@ -25158,6 +25282,21 @@ while running:
 
         elif current_state == STATE_TEXAS_HOLDEM:
 
+            if getattr(texas_holdem_game, "recap_open", False):
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    from poker_recap import get_recap_action
+                    handle_recap_action(texas_holdem_game, get_recap_action(game_mouse_pos, texas_holdem_game))
+                    if not texas_holdem_game.recap_open:
+                        texas_holdem_next_hand_at = 0
+                        if texas_holdem_game.player_busted or texas_holdem_game.all_npcs_busted():
+                            texas_holdem_session_end_at = pygame.time.get_ticks() + TEXAS_HOLDEM_SESSION_END_DELAY
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    texas_holdem_game.recap_open = False
+                    texas_holdem_next_hand_at = 0
+                    if texas_holdem_game.player_busted or texas_holdem_game.all_npcs_busted():
+                        texas_holdem_session_end_at = pygame.time.get_ticks() + TEXAS_HOLDEM_SESSION_END_DELAY
+                continue
+
             # ==================================================
             # Temporary keyboard hand progression
             #
@@ -25464,7 +25603,13 @@ while running:
                         # Next Hand
                         # ------------------------------------------
 
-                        if (
+                        if handle_recap_action(texas_holdem_game, holdem_action):
+                            if holdem_action != "recap_block":
+                                audio.play_sound("button_click")
+                            texas_holdem_next_hand_at = 0
+                            if not texas_holdem_game.recap_open and (texas_holdem_game.player_busted or texas_holdem_game.all_npcs_busted()):
+                                texas_holdem_session_end_at = pygame.time.get_ticks() + TEXAS_HOLDEM_SESSION_END_DELAY
+                        elif (
                                 holdem_action
                                 == HOLDEM_ACTION_NEXT_HAND
                         ):
@@ -25478,6 +25623,7 @@ while running:
                                 )
 
                                 process_texas_holdem_showdown()
+
                                 finish_texas_holdem_session()
 
                             elif (
@@ -27654,6 +27800,7 @@ while running:
                             blackjack_bet_dropdown_open = False
 
                             blackjack_session_net = 0
+                            blackjack_session_rating_change = 0
 
                             blackjack_dealer_npc = (
                                 get_random_blackjack_dealer()
@@ -27778,6 +27925,8 @@ while running:
                             "button_click"
                         )
 
+                        store_event_progress(career_event_entry, globals())
+                        auto_save_career()
                         current_state = (
                             STATE_CAREER_HUB
                         )
@@ -29409,6 +29558,10 @@ while running:
 
 
 
+    elif current_state == STATE_CASE_OPENING:
+        case_screen.update(pygame.time.get_ticks(), audio.play_sound)
+        case_screen.draw(game_surface, game_mouse_pos)
+
     elif current_state == STATE_CRYPTID_CREATURES:
         cryptid_screen.sfx_volume = audio.sfx_volume
         cryptid_screen.update(pygame.time.get_ticks())
@@ -29613,6 +29766,7 @@ while running:
 
     elif current_state == STATE_BLIND_MANS_BLUFF:
 
+        update_bluff_presentation(blind_mans_bluff_game, audio.play_sound)
         draw_blind_mans_bluff(
             game_surface,
             game_mouse_pos,
@@ -29840,6 +29994,9 @@ while running:
             texas_holdem_hand_win_sound_at = 0
 
         process_texas_holdem_showdown()
+        if getattr(texas_holdem_game, "recap_open", False):
+            texas_holdem_next_hand_at = 0
+            texas_holdem_session_end_at = 0
 
         # ==================================================
         # Start next-hand countdown after showdown
@@ -29854,6 +30011,7 @@ while running:
                 and not texas_holdem_game.player_busted
                 and not texas_holdem_game.all_npcs_busted()
                 and is_holdem_auto_deal_enabled()
+                and not getattr(texas_holdem_game, "recap_open", False)
         ):
             texas_holdem_next_hand_at = (
                     now

@@ -1,3 +1,5 @@
+from case_opening import new_case_state, normalize_case_state
+from poker_learning import new_learning, normalize_learning
 import json
 import os
 import tempfile
@@ -36,6 +38,8 @@ def make_default_profile():
     return {
         "profile_version": PROFILE_VERSION,
         "cryptid_creatures": new_collection(),
+        "poker_learning": new_learning(),
+        "case_opening": new_case_state(),
 
         "identity": {
             "name": "Player",
@@ -215,6 +219,8 @@ def save_profile(
     migrate_profile_ratings(profile_data)
     profile_data.setdefault("career", {}).setdefault("npc_world", {})
     profile_data["cryptid_creatures"]=normalize_collection(profile_data.get("cryptid_creatures"),profile_data.get("progression",{}).get("level",1))
+    profile_data["poker_learning"] = normalize_learning(profile_data.get("poker_learning"))
+    profile_data["case_opening"] = normalize_case_state(profile_data.get("case_opening"))
     profile_data["profile_version"] = PROFILE_VERSION
 
     os.makedirs(
@@ -266,6 +272,8 @@ def load_profile(
     migrate_profile_ratings(data)
     data.setdefault("career", {}).setdefault("npc_world", {})
     data["cryptid_creatures"]=normalize_collection(data.get("cryptid_creatures"),data.get("progression",{}).get("level",1))
+    data["poker_learning"] = normalize_learning(data.get("poker_learning"))
+    data["case_opening"] = normalize_case_state(data.get("case_opening"))
     data["profile_version"] = PROFILE_VERSION
     return data
 

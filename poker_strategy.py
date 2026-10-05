@@ -2,10 +2,11 @@
 
 Range bands describe likely relative strength, not calculated winning equity.
 No observer reads a deck, hole cards, NPC traits, or an unrevealed player hand.
-Reads are specific to an opponent and to this table session; restarting clears them.
+Reads are specific to an opponent; optional profile-owned rival memories survive sessions.
 """
 from collections import deque
 from hashlib import sha256
+from poker_learning import RivalLearning
 
 
 def clamp(value, low=0.0, high=1.0):
@@ -37,6 +38,10 @@ class PokerTableReads:
         self.street_bets = {}
         self.hand_actions = {}
         self.draw_counts = {}
+        self.learning = None
+
+    def bind_learning(self, store, game, identities):
+        self.learning = RivalLearning(store, game, identities)
 
     def observe(self, event, actor, *, hand_number, stage, amount=0,
                 round_total=0, pot=0, draw_count=None, hand_name=None,
@@ -62,6 +67,8 @@ class PokerTableReads:
             if late_aggression:
                 weak = str(hand_name).casefold() in ("high card", "one pair", "pair")
                 self.reveals.setdefault(actor, deque(maxlen=24)).append(weak)
+                if self.learning:
+                    self.learning.record(actor, "reveals", weak)
         if event not in ACTION_TYPES:
             if event in ("blind", "bring_in", "completion"):
                 self.street_bets[actor] = max(0, int(round_total))
@@ -75,14 +82,17 @@ class PokerTableReads:
         size = amount / pot_before
         item = (event, stage, facing > 0, size)
         self.histories.setdefault(actor, deque(maxlen=96)).append(item)
+        if self.learning:
+            self.learning.record(actor, "history", item)
         self.hand_actions.setdefault(actor, deque(maxlen=24)).append(item)
         self.street_bets[actor] = max(0, int(round_total))
 
-    def snapshot(self, actor):
-        history = list(self.histories.get(actor, ()))
+    def snapshot(self, actor, observer=None):
+        record = self.learning.samples(observer, actor) if self.learning and observer else None
+        history = list(record["history"] if record is not None else self.histories.get(actor, ()))
         pressure = [a for a in history if a[2]]
         aggressive = [a for a in history if a[0] in ("bet", "raise")]
-        samples = list(self.reveals.get(actor, ()))
+        samples = list(record["reveals"] if record is not None else self.reveals.get(actor, ()))
         return {
             "seat": actor,
             "decisions": len(history),

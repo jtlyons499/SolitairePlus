@@ -24,7 +24,7 @@ class CryptidCardRenderer:
         self._inventory = None
 
     def refresh(self):
-        paths = [self.art_root/"card_frame.png", self.art_root/"move_panel.png", self.art_root/"creature_pack.png",
+        paths = [self.art_root/"card_frame.png", self.art_root/"move_panel.png", self.art_root/"creature_pack.png", self.art_root/"background.png", self.art_root/"card_back.png",
                  *sorted((self.art_root/"creatures").glob("*.png"))]
         inventory = tuple((str(p),p.stat().st_mtime_ns,p.stat().st_size) for p in paths if p.is_file())
         if inventory != self._inventory:

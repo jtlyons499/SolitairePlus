@@ -19,21 +19,21 @@ GREEN = (61, 173, 97)
 RED = (194, 74, 74)
 DARK = (19, 25, 25)
 
-CARD_SIZE = (88, 123)
-DRAW_CARD_SIZE = (90, 126)
-STACK_OFFSET = 16
+CARD_SIZE = (132, 185)
+DRAW_CARD_SIZE = (132, 185)
+STACK_OFFSET = 26
 
 FIVE_O_RETURN_RECT = pygame.Rect(1130, 25, 195, 44)
-FIVE_O_NEXT_RECT = pygame.Rect(905, 690, 205, 44)
+FIVE_O_NEXT_RECT = pygame.Rect(905, 722, 205, 40)
 FIVE_O_ACTION_RECTS = {
-    ACTION_FOLD: pygame.Rect(800, 690, 135, 44),
-    ACTION_CHECK: pygame.Rect(945, 690, 150, 44),
-    ACTION_CALL: pygame.Rect(945, 690, 150, 44),
-    ACTION_BET: pygame.Rect(1105, 690, 150, 44),
+    ACTION_FOLD: pygame.Rect(800, 722, 135, 40),
+    ACTION_CHECK: pygame.Rect(945, 722, 150, 40),
+    ACTION_CALL: pygame.Rect(945, 722, 150, 40),
+    ACTION_BET: pygame.Rect(1105, 722, 150, 40),
 }
 
 FIVE_O_PLAYER_COLUMN_RECTS = [
-    pygame.Rect(360 + index * 125, 452, 110, 190)
+    pygame.Rect(360 + index * 190, 400, 156, 293)
     for index in range(5)
 ]
 
@@ -94,17 +94,42 @@ def _draw_card(surface, card, rect, detail_font, card_fronts, card_back_surface=
 
     if image is not None:
         surface.blit(image, rect)
-        return
+        if not face_up:
+            return
 
-    pygame.draw.rect(surface, WHITE if face_up else (45, 70, 145), rect, border_radius=4)
-    pygame.draw.rect(surface, DARK, rect, 2, border_radius=4)
+    if image is None:
+        pygame.draw.rect(surface, WHITE if face_up else (45, 70, 145), rect, border_radius=4)
+        pygame.draw.rect(surface, DARK, rect, 2, border_radius=4)
     if face_up and card:
-        fallback = detail_font.render(
-            f"{card.get('rank', '?')} {str(card.get('suit', '?'))[:1]}",
-            True,
-            DARK,
-        )
-        surface.blit(fallback, fallback.get_rect(center=rect.center))
+        font = pygame.font.Font(None, 27)
+        color = (172, 32, 42) if card.get("suit") in ("Diamonds", "Hearts") else DARK
+        label = font.render(str(card.get('rank', '?')), True, color)
+        badge = pygame.Rect(rect.x + 4, rect.y + 2, label.get_width() + 26, 24)
+        pygame.draw.rect(surface, WHITE, badge, border_radius=3)
+        surface.blit(label, (badge.x + 4, badge.y))
+        x, y = badge.right - 13, badge.y + 12
+        suit = card.get("suit")
+        # Draw suit symbols directly: pygame's bundled font lacks these glyphs
+        # on some machines. All four suits remain recognisable on stacked cards.
+        if suit == "Diamonds":
+            pygame.draw.polygon(surface, color, [(x,y-9),(x+7,y),(x,y+9),(x-7,y)])
+        elif suit == "Hearts":
+            pygame.draw.circle(surface, color, (x-4,y-3), 5)
+            pygame.draw.circle(surface, color, (x+4,y-3), 5)
+            pygame.draw.polygon(surface, color, [(x-9,y-2),(x+9,y-2),(x,y+9)])
+        elif suit == "Spades":
+            pygame.draw.polygon(surface, color, [(x,y-9),(x-8,y+2),(x+8,y+2)])
+            pygame.draw.circle(surface, color, (x-4,y+2), 4)
+            pygame.draw.circle(surface, color, (x+4,y+2), 4)
+            pygame.draw.rect(surface, color, (x-2,y+2,4,8))
+        else:
+            for center in ((x,y-5),(x-5,y+1),(x+5,y+1)):
+                pygame.draw.circle(surface, color, center, 5)
+            pygame.draw.rect(surface, color, (x-2,y+2,4,8))
+
+
+
+
 
 
 def _draw_column(
@@ -197,212 +222,84 @@ def draw_five_o_poker(
         card_back_surface=None,
 ):
     draw_submenu_background(overlay_alpha=105)
-
     title = title_font.render("FIVE-O POKER", True, WHITE)
-    surface.blit(title, title.get_rect(center=(683, 42)))
-
-    table = pygame.Rect(105, 76, 1156, 590)
-    table_panel = pygame.Surface(table.size, pygame.SRCALPHA)
-    table_panel.fill((15, 75, 49, 228))
-    surface.blit(table_panel, table.topleft)
-    pygame.draw.rect(surface, CREAM, table, 3, border_radius=28)
-
-    npc = game.npc if isinstance(game.npc, dict) else {}
-    portrait_rect = pygame.Rect(132, 112, 86, 86)
-    portrait = _load_portrait(npc, portrait_rect.size)
-    if portrait is not None:
-        surface.blit(portrait, portrait_rect)
-    else:
-        pygame.draw.rect(surface, (58, 70, 68), portrait_rect, border_radius=10)
-    pygame.draw.rect(surface, GOLD, portrait_rect, 2, border_radius=10)
-
-    npc_name = format_poker_display_name(npc.get("name", "Opponent"))
-    npc_label = label_font.render(npc_name, True, WHITE)
-    surface.blit(npc_label, (230, 119))
-    npc_stack = detail_font.render(f"Stack: ${game.npc_stack:,}", True, CREAM)
-    surface.blit(npc_stack, (230, 151))
-
-    if getattr(game, "last_npc_chat", "") and is_poker_chat_popups_enabled():
-        lines = [""]
-        for word in game.last_npc_chat.split():
-            candidate = (lines[-1] + " " + word).strip()
-            if detail_font.size(candidate)[0] > 210 and lines[-1]:
-                lines.append(word)
+    surface.blit(title, title.get_rect(center=(683, 36)))
+    panel = pygame.Surface((320, 620), pygame.SRCALPHA)
+    panel.fill((13, 29, 25, 225))
+    surface.blit(panel, (20, 75))
+    font = pygame.font.Font(None, 25)
+    def line(value, y, color=WHITE):
+        surface.blit(_fit_line(font, value, 296, color), (32, y))
+    def wrap(value, y, color=WHITE):
+        words = str(value).split()
+        rows = [""]
+        for word in words:
+            trial = (rows[-1] + " " + word).strip()
+            if font.size(trial)[0] > 296 and rows[-1]:
+                rows.append(word)
             else:
-                lines[-1] = candidate
-        for row, line in enumerate(lines[:3]):
-            surface.blit(_fit_line(detail_font, line, 210, GOLD), (132, 220 + row*20))
-
-    player_label = label_font.render(str(player_name or "Player"), True, WHITE)
-    surface.blit(player_label, (132, 522))
-    player_stack = detail_font.render(f"Stack: ${game.player_stack:,}", True, CREAM)
-    surface.blit(player_stack, (132, 554))
-
-    opener_name = "You" if getattr(game, "opening_index", 0) == 0 else npc_name
-    opener = detail_font.render(f"Opened this hand: {opener_name}", True, (204, 214, 208))
-    surface.blit(opener, (132, 586))
-
-    revealed_count = (
-        game.get_showdown_revealed_count()
-        if hasattr(game, "get_showdown_revealed_count")
-        else (5 if game.hand_complete else 0)
-    )
-    showdown = bool(game.hand_complete)
-    available = set(game.get_available_player_columns()) if game.phase == "placement" else set()
-    for index in range(5):
-        x = 360 + index * 125
-        npc_rect = pygame.Rect(x, 95, 110, 190)
-        player_rect = FIVE_O_PLAYER_COLUMN_RECTS[index]
-
-        pygame.draw.rect(surface, (25, 58, 46), npc_rect, border_radius=8)
-        pygame.draw.rect(surface, (25, 58, 46), player_rect, border_radius=8)
-
-        column_revealed = index < revealed_count
-        result = (
-            game.column_results[index]
-            if column_revealed and index < len(game.column_results)
-            else None
-        )
-        result_color = {
-            "player": GREEN,
-            "npc": RED,
-            "tie": GOLD,
-        }.get(result, (135, 145, 140))
-
-        pygame.draw.rect(surface, result_color if column_revealed else (135, 145, 140), npc_rect, 2, border_radius=8)
-        border = GOLD if index in available else (135, 145, 140)
-        width = 4 if index in available else 2
-        pygame.draw.rect(surface, border, player_rect, width, border_radius=8)
-
-        _draw_column(
-            surface,
-            game.npc_columns[index],
-            npc_rect,
-            detail_font,
-            card_fronts,
-            card_back_surface,
-            hidden_to_viewer=True,
-            showdown=column_revealed,
-        )
-        _draw_column(
-            surface,
-            game.player_columns[index],
-            player_rect,
-            detail_font,
-            card_fronts,
-            card_back_surface,
-            hidden_to_viewer=True,
-            showdown=column_revealed,
-        )
-
-        number = detail_font.render(str(index + 1), True, CREAM)
-        surface.blit(number, number.get_rect(center=(player_rect.centerx, 652)))
-
-        if column_revealed:
-            result_text = {"player": "WIN", "npc": "LOSS", "tie": "TIE"}.get(result, "")
-            tag = detail_font.render(result_text, True, result_color)
-            surface.blit(tag, tag.get_rect(center=(player_rect.centerx, 432)))
-
-    info = pygame.Rect(250, 294, 985, 144)
-    overlay = pygame.Surface(info.size, pygame.SRCALPHA)
-    overlay.fill((13, 29, 25, 210))
-    surface.blit(overlay, info.topleft)
-    pygame.draw.rect(surface, (123, 154, 138), info, 2, border_radius=12)
-
-    pot = detail_font.render(
-        f"Pot: ${game.pot:,}   Ante: ${game.ante:,}   Bet: ${game.bet_unit:,}",
-        True,
-        CREAM,
-    )
-    surface.blit(pot, pot.get_rect(center=(742, 313)))
-
-    if game.phase == "placement" and game.player_drawn_card is not None:
-        drawn_rect = pygame.Rect(267, 321, *DRAW_CARD_SIZE)
-        _draw_card(
-            surface,
-            game.player_drawn_card,
-            drawn_rect,
-            detail_font,
-            card_fronts,
-            card_back_surface,
-            True,
-        )
-        drawn_label = detail_font.render("DRAWN CARD", True, GOLD)
-        surface.blit(drawn_label, drawn_label.get_rect(center=(drawn_rect.centerx, 429)))
-        instruction = label_font.render(
-            f"Layer {game.placement_round} of 5: choose a highlighted column",
-            True,
-            WHITE,
-        )
-        surface.blit(instruction, instruction.get_rect(center=(800, 350)))
-        hidden_note = detail_font.render(
-            "Every earlier card stays visible. Card #4 is the one face-down card.",
-            True,
-            (210, 218, 214),
-        )
-        surface.blit(hidden_note, hidden_note.get_rect(center=(800, 386)))
-
+                rows[-1] = trial
+        for row in rows:
+            line(row, y, color)
+            y += 25
+        return y
+    line(game.get_npc_name(), 86, GOLD)
+    line(f"Opponent stack: ${game.npc_stack:,}", 116, CREAM)
+    line(f"{player_name or 'Player'}: ${game.player_stack:,}", 150)
+    line(f"Pot: ${game.pot:,}", 184, GOLD)
+    line(f"Ante ${game.ante:,}  /  Bet ${game.bet_unit:,}", 214, CREAM)
+    revealed = game.get_showdown_revealed_count()
+    available = set(game.get_available_player_columns())
+    for index, player_rect in enumerate(FIVE_O_PLAYER_COLUMN_RECTS):
+        npc_rect = pygame.Rect(player_rect.x, 78, player_rect.w, player_rect.h)
+        result = game.column_results[index] if index < revealed else None
+        color = {"player": GREEN, "npc": RED, "tie": GOLD}.get(result, (130, 150, 140))
+        for rect in (npc_rect, player_rect):
+            pygame.draw.rect(surface, (25, 58, 46), rect, border_radius=8)
+            pygame.draw.rect(surface, color, rect, 2, border_radius=8)
+        if index in available:
+            pygame.draw.rect(surface, GOLD, player_rect, 4, border_radius=8)
+        _draw_column(surface, game.npc_columns[index], npc_rect, font, card_fronts,
+                     card_back_surface, hidden_to_viewer=True, showdown=index < revealed)
+        _draw_column(surface, game.player_columns[index], player_rect, font, card_fronts,
+                     card_back_surface, hidden_to_viewer=True, showdown=index < revealed)
+        tag = {"player": "YOU WIN", "npc": "NPC WINS", "tie": "TIE"}.get(result, f"COLUMN {index + 1}")
+        label = font.render(tag, True, color if result else CREAM)
+        surface.blit(label, label.get_rect(center=(player_rect.centerx, 385)))
+    if game.phase == "placement" and game.player_drawn_card:
+        _draw_card(surface, game.player_drawn_card, pygame.Rect(112, 280, *DRAW_CARD_SIZE),
+                   font, card_fronts, card_back_surface)
+        line("DRAWN CARD", 250, GOLD)
+        y = wrap(f"Layer {game.placement_round} of 5: choose a highlighted column.", 490)
+        wrap("The fourth card stays face down until its column is revealed.", y + 14, CREAM)
     elif game.phase == "betting":
-        status = label_font.render("SINGLE BETTING ROUND", True, GOLD)
-        surface.blit(status, status.get_rect(center=(742, 346)))
-        note = _fit_line(detail_font, game.result_text, 850, WHITE)
-        surface.blit(note, note.get_rect(center=(742, 386)))
-
+        line("BETTING ROUND", 258, GOLD)
+        wrap(game.result_text, 295)
     else:
+        line(f"Columns: You {game.player_column_wins} / NPC {game.npc_column_wins}", 250, GOLD)
+        y = 284
+        for index in range(revealed):
+            result = game.column_results[index]
+            color = {"player": GREEN, "npc": RED, "tie": GOLD}.get(result, WHITE)
+            line(f"{index + 1}. " + {"player": "You win", "npc": "Opponent wins", "tie": "Tie"}.get(result, ""), y, color)
+            line("You: " + game.get_column_description("player", index), y + 23)
+            line("NPC: " + game.get_column_description("npc", index), y + 46)
+            y += 76
         if game.hand_complete:
-            header_text = (
-                f"Columns: You {game.player_column_wins}  •  "
-                f"{game.get_npc_name()} {game.npc_column_wins}"
-            )
-        else:
-            header_text = game.result_text
-
-        score = _fit_line(label_font, header_text, 900, GOLD)
-        surface.blit(score, score.get_rect(center=(742, 318)))
-
-        y = 336
-        for index in range(min(revealed_count, 5)):
-            result = game.column_results[index] if index < len(game.column_results) else None
-            player_desc = game.get_column_description("player", index)
-            npc_desc = game.get_column_description("npc", index)
-            if result == "player":
-                comparison = f"{index + 1}. You: {player_desc}  beats  {game.get_npc_name()}: {npc_desc}"
-                color = (188, 236, 194)
-            elif result == "npc":
-                comparison = f"{index + 1}. {game.get_npc_name()}: {npc_desc}  beats  You: {player_desc}"
-                color = (245, 184, 184)
-            else:
-                comparison = f"{index + 1}. Tie: {player_desc}"
-                color = (239, 218, 155)
-            line = _fit_line(detail_font, comparison, 900, color)
-            surface.blit(line, (280, y))
-            y += 18
-
-        if game.hand_complete:
-            final_line = _fit_line(detail_font, game.result_text, 900, WHITE)
-            surface.blit(final_line, final_line.get_rect(center=(742, 425)))
-
+            # Result gets its own full-width footer, away from the five comparisons.
+            label = _fit_line(font, game.result_text, 740, GOLD)
+            surface.blit(label, (32, 697))
     actions = set(game.get_player_actions())
-    if game.phase == "betting" and not game.hand_complete:
-        if ACTION_FOLD in actions:
-            _draw_button(surface, FIVE_O_ACTION_RECTS[ACTION_FOLD], "FOLD", mouse_pos, label_font)
-        if ACTION_CHECK in actions:
-            _draw_button(surface, FIVE_O_ACTION_RECTS[ACTION_CHECK], "CHECK", mouse_pos, label_font)
-        if ACTION_CALL in actions:
-            _draw_button(surface, FIVE_O_ACTION_RECTS[ACTION_CALL], f"CALL ${game.current_bet:,}", mouse_pos, label_font)
-        if ACTION_BET in actions:
-            _draw_button(surface, FIVE_O_ACTION_RECTS[ACTION_BET], f"BET ${game.get_effective_bet_unit():,}", mouse_pos, label_font, accent=True)
-
+    for action in (ACTION_FOLD, ACTION_CHECK, ACTION_CALL, ACTION_BET):
+        if action in actions:
+            label = action.upper()
+            if action == ACTION_CALL: label += f" ${game.current_bet:,}"
+            if action == ACTION_BET: label += f" ${game.get_effective_bet_unit():,}"
+            rect = FIVE_O_ACTION_RECTS[action]
+            _draw_button(surface, rect, label, mouse_pos, font, accent=action == ACTION_BET)
     if game.hand_complete:
-        _draw_button(surface, FIVE_O_NEXT_RECT, "NEXT HAND", mouse_pos, label_font, enabled=game.can_start_next_hand())
-        _draw_button(surface, FIVE_O_RETURN_RECT, "CASH OUT", mouse_pos, label_font, accent=True)
-    else:
-        _draw_button(surface, FIVE_O_RETURN_RECT, "CASH OUT", mouse_pos, label_font, enabled=False)
-
-    session = detail_font.render(
-        f"Session: {game.get_session_net():+d}   Hands: {game.hands_played}   Five-O sweeps: {game.five_o_wins}",
-        True,
-        (215, 222, 218),
-    )
-    surface.blit(session, session.get_rect(midleft=(126, 714)))
-
+        _draw_button(surface, FIVE_O_NEXT_RECT, "NEXT HAND", mouse_pos, font,
+                     enabled=game.can_start_next_hand())
+    _draw_button(surface, FIVE_O_RETURN_RECT, "CASH OUT", mouse_pos, font,
+                 enabled=game.hand_complete, accent=game.hand_complete)
+    line(f"Session {game.get_session_net():+d}  /  Hands {game.hands_played}", 737, CREAM)

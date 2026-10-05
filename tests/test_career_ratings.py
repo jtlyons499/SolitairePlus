@@ -258,7 +258,7 @@ class RatingTests(unittest.TestCase):
             game.hand_number, game.hand_complete, game.current_stage = 1, True, "showdown"
             game.player_stack, game.npc_stacks = 2000, [500, 500]
             record_poker_showdown(game)
-            values = dict(career_cash=500, award_game_xp=no_op, lose_fans_for_bad_result=no_op,
+            values = dict(career_cash=500, award_game_xp=no_op, lose_fans_for_bad_result=no_op, auto_save_career=no_op,
                           STATE_CAREER_EVENT_SELECT="select", STATE_FREE_PLAY_SELECT="free")
             values.update({key + "_game": game, key + "_buy_in_active": True,
                            key + "_starting_stack": 1000, key + "_session_net": 0})
