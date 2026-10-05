@@ -6,6 +6,7 @@ import secrets
 from career_npc_development import (advance_npc_development, ensure_npc_development,
                                    month_index, rating_tier, stable_seed)
 from career_ratings import GAME_RATING_KEYS, ensure_npc_career_state
+from npc_avatars import ensure_prospect_avatar
 
 WORLD_VERSION = 1
 ARRIVAL_INTERVAL = (3, 5)
@@ -54,6 +55,8 @@ def ensure_career_world(world, states, base_roster, year, month, seed=None):
         state = ensure_npc_career_state(states[npc_id], npc,
                                        random.Random(stable_seed(world["seed"], npc_id, "ratings")))
         states[npc_id] = state
+        if isinstance(state.get("prospect_record"), dict):
+            ensure_prospect_avatar(state["prospect_record"])
         ensure_npc_development(state, npc, year, month, world["seed"],
                                prospect=bool(state.get("prospect_record")))
     return world
@@ -68,6 +71,7 @@ def add_prospect(world, states, pool, year, month, force_prodigy=False):
     serial = month_index(year, month)
     rng = random.Random(stable_seed(world["seed"], world["arrival_count"], serial, "prospect"))
     record = copy.deepcopy(rng.choice(available))
+    ensure_prospect_avatar(record)
     age = rng.randint(5, 10)
     record["age"] = age
     record["birthday_month"] = rng.randint(1, 12)

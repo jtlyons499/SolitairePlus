@@ -62,7 +62,8 @@ class FiveCardDrawGame(TexasHoldemGame):
     # ==================================================
 
     def get_hand_deal_order(self):
-        live = set(self.get_live_player_indexes())
+        # A blind may consume the final chip. That seat still owns this hand.
+        live = set(self.hand_seat_indexes)
         if not live:
             return []
 
@@ -1002,4 +1003,3 @@ class FiveCardDrawGame(TexasHoldemGame):
             return ""
 
         return HAND_NAMES[result[0]]
-

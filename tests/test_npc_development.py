@@ -144,7 +144,7 @@ class ProspectTests(unittest.TestCase):
             self.assertTrue(npc["name"] and npc["bio"] and npc["hometown"] and npc["country"])
             self.assertEqual(set(npc["personality_traits"]), set(TRAIT_NAMES))
             self.assertTrue(all(1 <= value <= 10 for value in npc["personality_traits"].values()))
-            self.assertTrue(npc["portrait_style"])
+            self.assertTrue(npc["avatar"])
 
     def test_arrivals_are_gradual_and_stay_saved(self):
         data, states = world()
@@ -248,7 +248,7 @@ class ProspectTests(unittest.TestCase):
                                           fans=420, current_job="programmer", custom_value="keep")
                 profiles.save_profile(profile, slot)
                 loaded = profiles.load_profile(slot)
-                self.assertEqual(loaded["profile_version"], 7)
+                self.assertEqual(loaded["profile_version"], profiles.PROFILE_VERSION)
                 self.assertEqual(loaded["career"], profile["career"])
                 self.assertEqual(loaded["career"]["npc_world"]["seed"], slot)
                 self.assertEqual(loaded["career"]["leaderboard_state"][story["npc_id"]], states[story["npc_id"]])
@@ -284,7 +284,8 @@ class MainIntegrationTests(unittest.TestCase):
         self.assertEqual(env["career_npc_world"]["started_month"], month_index(2045, 9))
         self.assertEqual(env["career_leaderboard_state"][npc["id"]]["age"], 71)
         saved = env["build_profile_save_data"]()
-        self.assertEqual(saved["profile_version"], 7)
+        self.assertEqual(saved["cryptid_creatures"], env["cryptid_collection_state"])
+        self.assertEqual(saved["profile_version"], profiles.PROFILE_VERSION)
         self.assertEqual(saved["career"]["cash"], 23549)
         self.assertEqual(saved["identity"], profile["identity"])
         self.assertEqual(saved["career"]["npc_world"], env["career_npc_world"])

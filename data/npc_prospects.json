@@ -21,13 +21,18 @@
       "pessimism": 9,
       "bitterness": 4
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 4686447486176443327,
-      "skin": 1,
-      "hair": 1,
-      "cut": 1,
-      "shirt": 7,
-      "glasses": true
+      "background": null,
+      "base": "base_06",
+      "shirt": "shirt_08",
+      "nose": "nose_04",
+      "eyes": "eyes_04",
+      "smile": "smile_04",
+      "eyebrows": "eyebrows_09",
+      "hair": "hair_04",
+      "glasses": "glasses_07"
     }
   },
   {
@@ -52,13 +57,18 @@
       "pessimism": 6,
       "bitterness": 4
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 3941174193266852641,
-      "skin": 5,
-      "hair": 2,
-      "cut": 1,
-      "shirt": 5,
-      "glasses": false
+      "background": null,
+      "base": "base_06",
+      "shirt": "shirt_05",
+      "nose": "nose_06",
+      "eyes": "eyes_07",
+      "smile": "smile_01",
+      "eyebrows": "eyebrows_06",
+      "hair": "hair_04",
+      "glasses": null
     }
   },
   {
@@ -83,13 +93,18 @@
       "pessimism": 6,
       "bitterness": 10
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 9311520654709823133,
-      "skin": 5,
-      "hair": 0,
-      "cut": 2,
-      "shirt": 1,
-      "glasses": true
+      "background": null,
+      "base": "base_10",
+      "shirt": "shirt_04",
+      "nose": "nose_09",
+      "eyes": "eyes_10",
+      "smile": "smile_05",
+      "eyebrows": "eyebrows_06",
+      "hair": "hair_10",
+      "glasses": "glasses_08"
     }
   },
   {
@@ -114,13 +129,18 @@
       "pessimism": 5,
       "bitterness": 9
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 14128421204323853090,
-      "skin": 5,
-      "hair": 5,
-      "cut": 2,
-      "shirt": 1,
-      "glasses": true
+      "background": null,
+      "base": "base_05",
+      "shirt": "shirt_09",
+      "nose": "nose_02",
+      "eyes": "eyes_02",
+      "smile": "smile_09",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_09",
+      "glasses": "glasses_02"
     }
   },
   {
@@ -145,13 +165,18 @@
       "pessimism": 5,
       "bitterness": 10
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 2084411525151583495,
-      "skin": 4,
-      "hair": 2,
-      "cut": 2,
-      "shirt": 4,
-      "glasses": false
+      "background": null,
+      "base": "base_09",
+      "shirt": "shirt_05",
+      "nose": "nose_08",
+      "eyes": "eyes_04",
+      "smile": "smile_02",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_10",
+      "glasses": null
     }
   },
   {
@@ -176,13 +201,18 @@
       "pessimism": 9,
       "bitterness": 4
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 12411202200396877109,
-      "skin": 6,
-      "hair": 3,
-      "cut": 3,
-      "shirt": 6,
-      "glasses": false
+      "background": null,
+      "base": "base_10",
+      "shirt": "shirt_09",
+      "nose": "nose_08",
+      "eyes": "eyes_01",
+      "smile": "smile_09",
+      "eyebrows": "eyebrows_09",
+      "hair": "hair_04",
+      "glasses": null
     }
   },
   {
@@ -207,13 +237,18 @@
       "pessimism": 4,
       "bitterness": 2
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 7839221604237641264,
-      "skin": 0,
-      "hair": 1,
-      "cut": 2,
-      "shirt": 6,
-      "glasses": true
+      "background": null,
+      "base": "base_07",
+      "shirt": "shirt_06",
+      "nose": "nose_04",
+      "eyes": "eyes_10",
+      "smile": "smile_10",
+      "eyebrows": "eyebrows_04",
+      "hair": "hair_02",
+      "glasses": "glasses_06"
     }
   },
   {
@@ -238,13 +273,18 @@
       "pessimism": 3,
       "bitterness": 7
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 10788754800964792662,
-      "skin": 0,
-      "hair": 5,
-      "cut": 4,
-      "shirt": 6,
-      "glasses": false
+      "background": null,
+      "base": "base_03",
+      "shirt": "shirt_08",
+      "nose": "nose_10",
+      "eyes": "eyes_09",
+      "smile": "smile_06",
+      "eyebrows": "eyebrows_03",
+      "hair": "hair_07",
+      "glasses": null
     }
   },
   {
@@ -269,13 +309,18 @@
       "pessimism": 3,
       "bitterness": 2
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 4263948003269623205,
-      "skin": 6,
-      "hair": 1,
-      "cut": 1,
-      "shirt": 7,
-      "glasses": true
+      "background": null,
+      "base": "base_06",
+      "shirt": "shirt_10",
+      "nose": "nose_06",
+      "eyes": "eyes_08",
+      "smile": "smile_05",
+      "eyebrows": "eyebrows_03",
+      "hair": "hair_02",
+      "glasses": "glasses_05"
     }
   },
   {
@@ -300,13 +345,18 @@
       "pessimism": 10,
       "bitterness": 6
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 15834974049345273627,
-      "skin": 0,
-      "hair": 1,
-      "cut": 4,
-      "shirt": 2,
-      "glasses": false
+      "background": null,
+      "base": "base_03",
+      "shirt": "shirt_02",
+      "nose": "nose_08",
+      "eyes": "eyes_02",
+      "smile": "smile_01",
+      "eyebrows": "eyebrows_10",
+      "hair": "hair_06",
+      "glasses": null
     }
   },
   {
@@ -331,13 +381,18 @@
       "pessimism": 7,
       "bitterness": 10
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 17964427046157547089,
-      "skin": 0,
-      "hair": 0,
-      "cut": 2,
-      "shirt": 0,
-      "glasses": false
+      "background": null,
+      "base": "base_07",
+      "shirt": "shirt_09",
+      "nose": "nose_02",
+      "eyes": "eyes_04",
+      "smile": "smile_06",
+      "eyebrows": "eyebrows_07",
+      "hair": "hair_10",
+      "glasses": null
     }
   },
   {
@@ -362,13 +417,18 @@
       "pessimism": 1,
       "bitterness": 2
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 4451315161331105796,
-      "skin": 1,
-      "hair": 5,
-      "cut": 1,
-      "shirt": 7,
-      "glasses": false
+      "background": null,
+      "base": "base_05",
+      "shirt": "shirt_07",
+      "nose": "nose_05",
+      "eyes": "eyes_04",
+      "smile": "smile_06",
+      "eyebrows": "eyebrows_01",
+      "hair": "hair_02",
+      "glasses": null
     }
   },
   {
@@ -393,13 +453,18 @@
       "pessimism": 10,
       "bitterness": 10
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 7514842350779030357,
-      "skin": 4,
-      "hair": 5,
-      "cut": 0,
-      "shirt": 1,
-      "glasses": false
+      "background": null,
+      "base": "base_02",
+      "shirt": "shirt_02",
+      "nose": "nose_05",
+      "eyes": "eyes_07",
+      "smile": "smile_03",
+      "eyebrows": "eyebrows_10",
+      "hair": "hair_10",
+      "glasses": null
     }
   },
   {
@@ -424,13 +489,18 @@
       "pessimism": 1,
       "bitterness": 7
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 17380437779272639626,
-      "skin": 1,
-      "hair": 5,
-      "cut": 3,
-      "shirt": 2,
-      "glasses": false
+      "background": null,
+      "base": "base_07",
+      "shirt": "shirt_02",
+      "nose": "nose_04",
+      "eyes": "eyes_06",
+      "smile": "smile_08",
+      "eyebrows": "eyebrows_01",
+      "hair": "hair_07",
+      "glasses": null
     }
   },
   {
@@ -455,13 +525,18 @@
       "pessimism": 2,
       "bitterness": 10
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 3841345956140078317,
-      "skin": 4,
-      "hair": 5,
-      "cut": 4,
-      "shirt": 3,
-      "glasses": false
+      "background": null,
+      "base": "base_02",
+      "shirt": "shirt_03",
+      "nose": "nose_05",
+      "eyes": "eyes_07",
+      "smile": "smile_01",
+      "eyebrows": "eyebrows_02",
+      "hair": "hair_10",
+      "glasses": null
     }
   },
   {
@@ -486,13 +561,18 @@
       "pessimism": 8,
       "bitterness": 10
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 6699594866605891517,
-      "skin": 1,
-      "hair": 2,
-      "cut": 3,
-      "shirt": 1,
-      "glasses": false
+      "background": null,
+      "base": "base_09",
+      "shirt": "shirt_08",
+      "nose": "nose_04",
+      "eyes": "eyes_01",
+      "smile": "smile_08",
+      "eyebrows": "eyebrows_08",
+      "hair": "hair_10",
+      "glasses": null
     }
   },
   {
@@ -517,13 +597,18 @@
       "pessimism": 3,
       "bitterness": 9
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 12771243260109263030,
-      "skin": 1,
-      "hair": 2,
-      "cut": 4,
-      "shirt": 7,
-      "glasses": false
+      "background": null,
+      "base": "base_03",
+      "shirt": "shirt_09",
+      "nose": "nose_07",
+      "eyes": "eyes_04",
+      "smile": "smile_10",
+      "eyebrows": "eyebrows_03",
+      "hair": "hair_09",
+      "glasses": null
     }
   },
   {
@@ -548,13 +633,18 @@
       "pessimism": 3,
       "bitterness": 6
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 11624642180964951621,
-      "skin": 3,
-      "hair": 3,
-      "cut": 1,
-      "shirt": 3,
-      "glasses": false
+      "background": null,
+      "base": "base_05",
+      "shirt": "shirt_06",
+      "nose": "nose_08",
+      "eyes": "eyes_08",
+      "smile": "smile_07",
+      "eyebrows": "eyebrows_03",
+      "hair": "hair_06",
+      "glasses": null
     }
   },
   {
@@ -579,13 +669,18 @@
       "pessimism": 5,
       "bitterness": 1
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 16738843135021643894,
-      "skin": 1,
-      "hair": 3,
-      "cut": 3,
-      "shirt": 7,
-      "glasses": false
+      "background": null,
+      "base": "base_03",
+      "shirt": "shirt_08",
+      "nose": "nose_09",
+      "eyes": "eyes_07",
+      "smile": "smile_07",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_01",
+      "glasses": null
     }
   },
   {
@@ -610,13 +705,18 @@
       "pessimism": 2,
       "bitterness": 5
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 1901881231426759535,
-      "skin": 0,
-      "hair": 3,
-      "cut": 0,
-      "shirt": 7,
-      "glasses": false
+      "background": null,
+      "base": "base_10",
+      "shirt": "shirt_05",
+      "nose": "nose_07",
+      "eyes": "eyes_07",
+      "smile": "smile_04",
+      "eyebrows": "eyebrows_02",
+      "hair": "hair_05",
+      "glasses": null
     }
   },
   {
@@ -641,13 +741,18 @@
       "pessimism": 3,
       "bitterness": 6
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 9355485103494065884,
-      "skin": 2,
-      "hair": 5,
-      "cut": 0,
-      "shirt": 4,
-      "glasses": true
+      "background": null,
+      "base": "base_10",
+      "shirt": "shirt_04",
+      "nose": "nose_05",
+      "eyes": "eyes_10",
+      "smile": "smile_03",
+      "eyebrows": "eyebrows_03",
+      "hair": "hair_06",
+      "glasses": "glasses_02"
     }
   },
   {
@@ -672,13 +777,18 @@
       "pessimism": 3,
       "bitterness": 9
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 8021470505303643136,
-      "skin": 5,
-      "hair": 2,
-      "cut": 2,
-      "shirt": 7,
-      "glasses": false
+      "background": null,
+      "base": "base_07",
+      "shirt": "shirt_04",
+      "nose": "nose_04",
+      "eyes": "eyes_06",
+      "smile": "smile_09",
+      "eyebrows": "eyebrows_03",
+      "hair": "hair_09",
+      "glasses": null
     }
   },
   {
@@ -703,13 +813,18 @@
       "pessimism": 2,
       "bitterness": 9
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 4049869952465958431,
-      "skin": 3,
-      "hair": 3,
-      "cut": 2,
-      "shirt": 2,
-      "glasses": false
+      "background": null,
+      "base": "base_04",
+      "shirt": "shirt_08",
+      "nose": "nose_01",
+      "eyes": "eyes_02",
+      "smile": "smile_01",
+      "eyebrows": "eyebrows_02",
+      "hair": "hair_09",
+      "glasses": null
     }
   },
   {
@@ -734,13 +849,18 @@
       "pessimism": 2,
       "bitterness": 10
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 5362769103783934172,
-      "skin": 5,
-      "hair": 3,
-      "cut": 0,
-      "shirt": 6,
-      "glasses": false
+      "background": null,
+      "base": "base_03",
+      "shirt": "shirt_05",
+      "nose": "nose_08",
+      "eyes": "eyes_10",
+      "smile": "smile_04",
+      "eyebrows": "eyebrows_02",
+      "hair": "hair_10",
+      "glasses": null
     }
   },
   {
@@ -765,13 +885,18 @@
       "pessimism": 6,
       "bitterness": 5
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 5165101864585892911,
-      "skin": 2,
-      "hair": 5,
-      "cut": 1,
-      "shirt": 3,
-      "glasses": false
+      "background": null,
+      "base": "base_10",
+      "shirt": "shirt_04",
+      "nose": "nose_02",
+      "eyes": "eyes_10",
+      "smile": "smile_05",
+      "eyebrows": "eyebrows_06",
+      "hair": "hair_05",
+      "glasses": null
     }
   },
   {
@@ -796,13 +921,18 @@
       "pessimism": 5,
       "bitterness": 3
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 12936569940139989257,
-      "skin": 2,
-      "hair": 3,
-      "cut": 2,
-      "shirt": 5,
-      "glasses": false
+      "background": null,
+      "base": "base_02",
+      "shirt": "shirt_05",
+      "nose": "nose_03",
+      "eyes": "eyes_10",
+      "smile": "smile_01",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_03",
+      "glasses": null
     }
   },
   {
@@ -827,13 +957,18 @@
       "pessimism": 10,
       "bitterness": 9
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 6801015665513973726,
-      "skin": 0,
-      "hair": 4,
-      "cut": 2,
-      "shirt": 1,
-      "glasses": false
+      "background": null,
+      "base": "base_04",
+      "shirt": "shirt_06",
+      "nose": "nose_09",
+      "eyes": "eyes_08",
+      "smile": "smile_09",
+      "eyebrows": "eyebrows_10",
+      "hair": "hair_09",
+      "glasses": null
     }
   },
   {
@@ -858,13 +993,18 @@
       "pessimism": 7,
       "bitterness": 2
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 5222902257648625043,
-      "skin": 5,
-      "hair": 2,
-      "cut": 3,
-      "shirt": 3,
-      "glasses": false
+      "background": null,
+      "base": "base_04",
+      "shirt": "shirt_04",
+      "nose": "nose_03",
+      "eyes": "eyes_04",
+      "smile": "smile_02",
+      "eyebrows": "eyebrows_07",
+      "hair": "hair_02",
+      "glasses": null
     }
   },
   {
@@ -889,13 +1029,18 @@
       "pessimism": 5,
       "bitterness": 6
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 2254370688719535475,
-      "skin": 1,
-      "hair": 0,
-      "cut": 4,
-      "shirt": 5,
-      "glasses": true
+      "background": null,
+      "base": "base_07",
+      "shirt": "shirt_01",
+      "nose": "nose_08",
+      "eyes": "eyes_03",
+      "smile": "smile_09",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_06",
+      "glasses": "glasses_02"
     }
   },
   {
@@ -920,13 +1065,18 @@
       "pessimism": 5,
       "bitterness": 10
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 8148658584680425259,
-      "skin": 5,
-      "hair": 3,
-      "cut": 2,
-      "shirt": 2,
-      "glasses": false
+      "background": null,
+      "base": "base_01",
+      "shirt": "shirt_06",
+      "nose": "nose_05",
+      "eyes": "eyes_06",
+      "smile": "smile_03",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_10",
+      "glasses": null
     }
   },
   {
@@ -951,13 +1101,18 @@
       "pessimism": 1,
       "bitterness": 2
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 12593950223439406920,
-      "skin": 6,
-      "hair": 3,
-      "cut": 1,
-      "shirt": 2,
-      "glasses": true
+      "background": null,
+      "base": "base_09",
+      "shirt": "shirt_08",
+      "nose": "nose_01",
+      "eyes": "eyes_01",
+      "smile": "smile_08",
+      "eyebrows": "eyebrows_01",
+      "hair": "hair_02",
+      "glasses": "glasses_10"
     }
   },
   {
@@ -982,13 +1137,18 @@
       "pessimism": 6,
       "bitterness": 2
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 5472664941035353947,
-      "skin": 2,
-      "hair": 0,
-      "cut": 4,
-      "shirt": 3,
-      "glasses": false
+      "background": null,
+      "base": "base_01",
+      "shirt": "shirt_04",
+      "nose": "nose_06",
+      "eyes": "eyes_02",
+      "smile": "smile_10",
+      "eyebrows": "eyebrows_06",
+      "hair": "hair_02",
+      "glasses": null
     }
   },
   {
@@ -1013,13 +1173,18 @@
       "pessimism": 3,
       "bitterness": 8
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 4520630133098568981,
-      "skin": 2,
-      "hair": 2,
-      "cut": 4,
-      "shirt": 2,
-      "glasses": false
+      "background": null,
+      "base": "base_04",
+      "shirt": "shirt_10",
+      "nose": "nose_07",
+      "eyes": "eyes_02",
+      "smile": "smile_10",
+      "eyebrows": "eyebrows_03",
+      "hair": "hair_08",
+      "glasses": null
     }
   },
   {
@@ -1044,13 +1209,18 @@
       "pessimism": 1,
       "bitterness": 4
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 17857492394565309304,
-      "skin": 5,
-      "hair": 2,
-      "cut": 2,
-      "shirt": 7,
-      "glasses": false
+      "background": null,
+      "base": "base_06",
+      "shirt": "shirt_06",
+      "nose": "nose_10",
+      "eyes": "eyes_05",
+      "smile": "smile_05",
+      "eyebrows": "eyebrows_01",
+      "hair": "hair_04",
+      "glasses": null
     }
   },
   {
@@ -1075,13 +1245,18 @@
       "pessimism": 4,
       "bitterness": 6
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 2743362814915352113,
-      "skin": 0,
-      "hair": 4,
-      "cut": 1,
-      "shirt": 0,
-      "glasses": true
+      "background": null,
+      "base": "base_10",
+      "shirt": "shirt_04",
+      "nose": "nose_04",
+      "eyes": "eyes_05",
+      "smile": "smile_06",
+      "eyebrows": "eyebrows_04",
+      "hair": "hair_06",
+      "glasses": "glasses_06"
     }
   },
   {
@@ -1106,13 +1281,18 @@
       "pessimism": 4,
       "bitterness": 7
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 11978964087973174539,
-      "skin": 3,
-      "hair": 3,
-      "cut": 4,
-      "shirt": 7,
-      "glasses": false
+      "background": null,
+      "base": "base_04",
+      "shirt": "shirt_01",
+      "nose": "nose_09",
+      "eyes": "eyes_03",
+      "smile": "smile_02",
+      "eyebrows": "eyebrows_04",
+      "hair": "hair_07",
+      "glasses": null
     }
   },
   {
@@ -1137,13 +1317,18 @@
       "pessimism": 9,
       "bitterness": 9
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 537705846926465745,
-      "skin": 5,
-      "hair": 1,
-      "cut": 2,
-      "shirt": 7,
-      "glasses": false
+      "background": null,
+      "base": "base_03",
+      "shirt": "shirt_03",
+      "nose": "nose_01",
+      "eyes": "eyes_06",
+      "smile": "smile_03",
+      "eyebrows": "eyebrows_09",
+      "hair": "hair_09",
+      "glasses": null
     }
   },
   {
@@ -1168,13 +1353,18 @@
       "pessimism": 5,
       "bitterness": 10
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 17927008435442487859,
-      "skin": 5,
-      "hair": 2,
-      "cut": 4,
-      "shirt": 4,
-      "glasses": false
+      "background": null,
+      "base": "base_01",
+      "shirt": "shirt_09",
+      "nose": "nose_03",
+      "eyes": "eyes_05",
+      "smile": "smile_03",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_10",
+      "glasses": null
     }
   },
   {
@@ -1199,13 +1389,18 @@
       "pessimism": 2,
       "bitterness": 8
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 10429567698760855052,
-      "skin": 0,
-      "hair": 5,
-      "cut": 3,
-      "shirt": 4,
-      "glasses": false
+      "background": null,
+      "base": "base_09",
+      "shirt": "shirt_07",
+      "nose": "nose_03",
+      "eyes": "eyes_10",
+      "smile": "smile_05",
+      "eyebrows": "eyebrows_02",
+      "hair": "hair_08",
+      "glasses": null
     }
   },
   {
@@ -1230,13 +1425,18 @@
       "pessimism": 10,
       "bitterness": 8
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 1782347017834701240,
-      "skin": 3,
-      "hair": 1,
-      "cut": 0,
-      "shirt": 1,
-      "glasses": false
+      "background": null,
+      "base": "base_05",
+      "shirt": "shirt_02",
+      "nose": "nose_06",
+      "eyes": "eyes_09",
+      "smile": "smile_10",
+      "eyebrows": "eyebrows_10",
+      "hair": "hair_08",
+      "glasses": null
     }
   },
   {
@@ -1261,13 +1461,18 @@
       "pessimism": 4,
       "bitterness": 4
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 6265580530257343798,
-      "skin": 2,
-      "hair": 4,
-      "cut": 2,
-      "shirt": 2,
-      "glasses": false
+      "background": null,
+      "base": "base_04",
+      "shirt": "shirt_04",
+      "nose": "nose_07",
+      "eyes": "eyes_04",
+      "smile": "smile_02",
+      "eyebrows": "eyebrows_04",
+      "hair": "hair_04",
+      "glasses": null
     }
   },
   {
@@ -1292,13 +1497,18 @@
       "pessimism": 2,
       "bitterness": 2
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 10866587140336396162,
-      "skin": 3,
-      "hair": 2,
-      "cut": 1,
-      "shirt": 1,
-      "glasses": false
+      "background": null,
+      "base": "base_08",
+      "shirt": "shirt_09",
+      "nose": "nose_04",
+      "eyes": "eyes_02",
+      "smile": "smile_01",
+      "eyebrows": "eyebrows_02",
+      "hair": "hair_02",
+      "glasses": null
     }
   },
   {
@@ -1323,13 +1533,18 @@
       "pessimism": 4,
       "bitterness": 7
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 554807559468917087,
-      "skin": 4,
-      "hair": 1,
-      "cut": 1,
-      "shirt": 4,
-      "glasses": false
+      "background": null,
+      "base": "base_03",
+      "shirt": "shirt_03",
+      "nose": "nose_06",
+      "eyes": "eyes_07",
+      "smile": "smile_03",
+      "eyebrows": "eyebrows_04",
+      "hair": "hair_07",
+      "glasses": null
     }
   },
   {
@@ -1354,13 +1569,18 @@
       "pessimism": 3,
       "bitterness": 10
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 3105269176440849140,
-      "skin": 3,
-      "hair": 2,
-      "cut": 3,
-      "shirt": 2,
-      "glasses": false
+      "background": null,
+      "base": "base_05",
+      "shirt": "shirt_02",
+      "nose": "nose_05",
+      "eyes": "eyes_05",
+      "smile": "smile_07",
+      "eyebrows": "eyebrows_03",
+      "hair": "hair_10",
+      "glasses": null
     }
   },
   {
@@ -1385,13 +1605,18 @@
       "pessimism": 1,
       "bitterness": 9
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 6273493211334282451,
-      "skin": 2,
-      "hair": 1,
-      "cut": 1,
-      "shirt": 0,
-      "glasses": false
+      "background": null,
+      "base": "base_07",
+      "shirt": "shirt_10",
+      "nose": "nose_09",
+      "eyes": "eyes_04",
+      "smile": "smile_10",
+      "eyebrows": "eyebrows_01",
+      "hair": "hair_09",
+      "glasses": null
     }
   },
   {
@@ -1416,13 +1641,18 @@
       "pessimism": 2,
       "bitterness": 6
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 6169005021401063948,
-      "skin": 3,
-      "hair": 4,
-      "cut": 1,
-      "shirt": 7,
-      "glasses": true
+      "background": null,
+      "base": "base_08",
+      "shirt": "shirt_06",
+      "nose": "nose_08",
+      "eyes": "eyes_02",
+      "smile": "smile_07",
+      "eyebrows": "eyebrows_02",
+      "hair": "hair_06",
+      "glasses": "glasses_07"
     }
   },
   {
@@ -1447,13 +1677,18 @@
       "pessimism": 1,
       "bitterness": 3
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 11199916656447161014,
-      "skin": 5,
-      "hair": 0,
-      "cut": 2,
-      "shirt": 0,
-      "glasses": false
+      "background": null,
+      "base": "base_04",
+      "shirt": "shirt_09",
+      "nose": "nose_10",
+      "eyes": "eyes_05",
+      "smile": "smile_07",
+      "eyebrows": "eyebrows_01",
+      "hair": "hair_03",
+      "glasses": null
     }
   },
   {
@@ -1478,13 +1713,18 @@
       "pessimism": 1,
       "bitterness": 2
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 3827402603339930951,
-      "skin": 4,
-      "hair": 0,
-      "cut": 4,
-      "shirt": 3,
-      "glasses": false
+      "background": null,
+      "base": "base_02",
+      "shirt": "shirt_05",
+      "nose": "nose_01",
+      "eyes": "eyes_10",
+      "smile": "smile_08",
+      "eyebrows": "eyebrows_01",
+      "hair": "hair_02",
+      "glasses": null
     }
   },
   {
@@ -1509,13 +1749,18 @@
       "pessimism": 4,
       "bitterness": 10
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 16767163742743298712,
-      "skin": 5,
-      "hair": 0,
-      "cut": 3,
-      "shirt": 3,
-      "glasses": false
+      "background": null,
+      "base": "base_07",
+      "shirt": "shirt_05",
+      "nose": "nose_03",
+      "eyes": "eyes_10",
+      "smile": "smile_06",
+      "eyebrows": "eyebrows_04",
+      "hair": "hair_10",
+      "glasses": null
     }
   },
   {
@@ -1540,13 +1785,18 @@
       "pessimism": 7,
       "bitterness": 7
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 12713279951400345165,
-      "skin": 0,
-      "hair": 3,
-      "cut": 3,
-      "shirt": 6,
-      "glasses": false
+      "background": null,
+      "base": "base_09",
+      "shirt": "shirt_06",
+      "nose": "nose_08",
+      "eyes": "eyes_06",
+      "smile": "smile_06",
+      "eyebrows": "eyebrows_07",
+      "hair": "hair_07",
+      "glasses": null
     }
   },
   {
@@ -1571,13 +1821,18 @@
       "pessimism": 1,
       "bitterness": 1
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 8398709369177453325,
-      "skin": 2,
-      "hair": 0,
-      "cut": 2,
-      "shirt": 6,
-      "glasses": false
+      "background": null,
+      "base": "base_10",
+      "shirt": "shirt_10",
+      "nose": "nose_05",
+      "eyes": "eyes_07",
+      "smile": "smile_06",
+      "eyebrows": "eyebrows_01",
+      "hair": "hair_01",
+      "glasses": null
     }
   },
   {
@@ -1602,13 +1857,18 @@
       "pessimism": 5,
       "bitterness": 1
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 5673831485115272839,
-      "skin": 2,
-      "hair": 5,
-      "cut": 3,
-      "shirt": 4,
-      "glasses": false
+      "background": null,
+      "base": "base_08",
+      "shirt": "shirt_01",
+      "nose": "nose_07",
+      "eyes": "eyes_03",
+      "smile": "smile_01",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_01",
+      "glasses": null
     }
   },
   {
@@ -1633,13 +1893,18 @@
       "pessimism": 7,
       "bitterness": 4
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 4237303880031224418,
-      "skin": 4,
-      "hair": 3,
-      "cut": 1,
-      "shirt": 5,
-      "glasses": false
+      "background": null,
+      "base": "base_06",
+      "shirt": "shirt_10",
+      "nose": "nose_05",
+      "eyes": "eyes_10",
+      "smile": "smile_03",
+      "eyebrows": "eyebrows_07",
+      "hair": "hair_04",
+      "glasses": null
     }
   },
   {
@@ -1664,13 +1929,18 @@
       "pessimism": 4,
       "bitterness": 3
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 6013977648186721519,
-      "skin": 0,
-      "hair": 5,
-      "cut": 0,
-      "shirt": 7,
-      "glasses": false
+      "background": null,
+      "base": "base_06",
+      "shirt": "shirt_04",
+      "nose": "nose_03",
+      "eyes": "eyes_03",
+      "smile": "smile_03",
+      "eyebrows": "eyebrows_04",
+      "hair": "hair_03",
+      "glasses": null
     }
   },
   {
@@ -1695,13 +1965,18 @@
       "pessimism": 6,
       "bitterness": 3
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 17659143196949604165,
-      "skin": 2,
-      "hair": 0,
-      "cut": 0,
-      "shirt": 5,
-      "glasses": false
+      "background": null,
+      "base": "base_05",
+      "shirt": "shirt_10",
+      "nose": "nose_06",
+      "eyes": "eyes_05",
+      "smile": "smile_02",
+      "eyebrows": "eyebrows_06",
+      "hair": "hair_03",
+      "glasses": null
     }
   },
   {
@@ -1726,13 +2001,18 @@
       "pessimism": 3,
       "bitterness": 3
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 8258928347461378736,
-      "skin": 0,
-      "hair": 0,
-      "cut": 4,
-      "shirt": 2,
-      "glasses": true
+      "background": null,
+      "base": "base_04",
+      "shirt": "shirt_04",
+      "nose": "nose_03",
+      "eyes": "eyes_04",
+      "smile": "smile_03",
+      "eyebrows": "eyebrows_03",
+      "hair": "hair_03",
+      "glasses": "glasses_10"
     }
   },
   {
@@ -1757,13 +2037,18 @@
       "pessimism": 8,
       "bitterness": 6
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 8834492116774836508,
-      "skin": 5,
-      "hair": 2,
-      "cut": 0,
-      "shirt": 1,
-      "glasses": false
+      "background": null,
+      "base": "base_03",
+      "shirt": "shirt_05",
+      "nose": "nose_01",
+      "eyes": "eyes_02",
+      "smile": "smile_09",
+      "eyebrows": "eyebrows_08",
+      "hair": "hair_06",
+      "glasses": null
     }
   },
   {
@@ -1788,13 +2073,18 @@
       "pessimism": 1,
       "bitterness": 9
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 18149757195217267151,
-      "skin": 5,
-      "hair": 2,
-      "cut": 2,
-      "shirt": 6,
-      "glasses": false
+      "background": null,
+      "base": "base_05",
+      "shirt": "shirt_01",
+      "nose": "nose_10",
+      "eyes": "eyes_10",
+      "smile": "smile_03",
+      "eyebrows": "eyebrows_01",
+      "hair": "hair_09",
+      "glasses": null
     }
   },
   {
@@ -1819,13 +2109,18 @@
       "pessimism": 5,
       "bitterness": 9
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 7581717238022503425,
-      "skin": 4,
-      "hair": 4,
-      "cut": 3,
-      "shirt": 2,
-      "glasses": false
+      "background": null,
+      "base": "base_03",
+      "shirt": "shirt_10",
+      "nose": "nose_10",
+      "eyes": "eyes_04",
+      "smile": "smile_03",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_09",
+      "glasses": null
     }
   },
   {
@@ -1850,13 +2145,18 @@
       "pessimism": 9,
       "bitterness": 10
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 4633896744989428089,
-      "skin": 4,
-      "hair": 3,
-      "cut": 2,
-      "shirt": 3,
-      "glasses": false
+      "background": null,
+      "base": "base_10",
+      "shirt": "shirt_03",
+      "nose": "nose_09",
+      "eyes": "eyes_03",
+      "smile": "smile_07",
+      "eyebrows": "eyebrows_09",
+      "hair": "hair_10",
+      "glasses": null
     }
   },
   {
@@ -1881,13 +2181,18 @@
       "pessimism": 1,
       "bitterness": 5
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 15920764526684360233,
-      "skin": 6,
-      "hair": 3,
-      "cut": 1,
-      "shirt": 1,
-      "glasses": false
+      "background": null,
+      "base": "base_01",
+      "shirt": "shirt_01",
+      "nose": "nose_06",
+      "eyes": "eyes_07",
+      "smile": "smile_06",
+      "eyebrows": "eyebrows_01",
+      "hair": "hair_05",
+      "glasses": null
     }
   },
   {
@@ -1912,13 +2217,18 @@
       "pessimism": 6,
       "bitterness": 9
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 2460154494736969024,
-      "skin": 6,
-      "hair": 2,
-      "cut": 0,
-      "shirt": 0,
-      "glasses": false
+      "background": null,
+      "base": "base_08",
+      "shirt": "shirt_07",
+      "nose": "nose_01",
+      "eyes": "eyes_05",
+      "smile": "smile_06",
+      "eyebrows": "eyebrows_06",
+      "hair": "hair_09",
+      "glasses": null
     }
   },
   {
@@ -1943,13 +2253,18 @@
       "pessimism": 5,
       "bitterness": 10
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 6942738431669377664,
-      "skin": 5,
-      "hair": 0,
-      "cut": 1,
-      "shirt": 7,
-      "glasses": false
+      "background": null,
+      "base": "base_06",
+      "shirt": "shirt_10",
+      "nose": "nose_05",
+      "eyes": "eyes_07",
+      "smile": "smile_10",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_10",
+      "glasses": null
     }
   },
   {
@@ -1974,13 +2289,18 @@
       "pessimism": 4,
       "bitterness": 8
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 92367084306593757,
-      "skin": 3,
-      "hair": 2,
-      "cut": 3,
-      "shirt": 1,
-      "glasses": false
+      "background": null,
+      "base": "base_06",
+      "shirt": "shirt_08",
+      "nose": "nose_04",
+      "eyes": "eyes_09",
+      "smile": "smile_04",
+      "eyebrows": "eyebrows_04",
+      "hair": "hair_08",
+      "glasses": null
     }
   },
   {
@@ -2005,13 +2325,18 @@
       "pessimism": 4,
       "bitterness": 10
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 4200018184194686431,
-      "skin": 6,
-      "hair": 4,
-      "cut": 0,
-      "shirt": 2,
-      "glasses": true
+      "background": null,
+      "base": "base_07",
+      "shirt": "shirt_06",
+      "nose": "nose_06",
+      "eyes": "eyes_09",
+      "smile": "smile_09",
+      "eyebrows": "eyebrows_04",
+      "hair": "hair_10",
+      "glasses": "glasses_08"
     }
   },
   {
@@ -2036,13 +2361,18 @@
       "pessimism": 2,
       "bitterness": 7
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 15496531455791339407,
-      "skin": 0,
-      "hair": 0,
-      "cut": 1,
-      "shirt": 5,
-      "glasses": false
+      "background": null,
+      "base": "base_05",
+      "shirt": "shirt_06",
+      "nose": "nose_06",
+      "eyes": "eyes_06",
+      "smile": "smile_06",
+      "eyebrows": "eyebrows_02",
+      "hair": "hair_07",
+      "glasses": null
     }
   },
   {
@@ -2067,13 +2397,18 @@
       "pessimism": 5,
       "bitterness": 2
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 9523622625093569093,
-      "skin": 6,
-      "hair": 1,
-      "cut": 1,
-      "shirt": 4,
-      "glasses": false
+      "background": null,
+      "base": "base_02",
+      "shirt": "shirt_08",
+      "nose": "nose_04",
+      "eyes": "eyes_02",
+      "smile": "smile_04",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_02",
+      "glasses": null
     }
   },
   {
@@ -2098,13 +2433,18 @@
       "pessimism": 1,
       "bitterness": 6
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 1734749233600560985,
-      "skin": 2,
-      "hair": 3,
-      "cut": 4,
-      "shirt": 0,
-      "glasses": false
+      "background": null,
+      "base": "base_09",
+      "shirt": "shirt_04",
+      "nose": "nose_07",
+      "eyes": "eyes_10",
+      "smile": "smile_07",
+      "eyebrows": "eyebrows_01",
+      "hair": "hair_06",
+      "glasses": null
     }
   },
   {
@@ -2129,13 +2469,18 @@
       "pessimism": 10,
       "bitterness": 10
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 8962025908545584494,
-      "skin": 5,
-      "hair": 2,
-      "cut": 2,
-      "shirt": 6,
-      "glasses": false
+      "background": null,
+      "base": "base_07",
+      "shirt": "shirt_02",
+      "nose": "nose_08",
+      "eyes": "eyes_02",
+      "smile": "smile_04",
+      "eyebrows": "eyebrows_10",
+      "hair": "hair_10",
+      "glasses": null
     }
   },
   {
@@ -2160,13 +2505,18 @@
       "pessimism": 5,
       "bitterness": 6
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 4181028694580068291,
-      "skin": 2,
-      "hair": 0,
-      "cut": 2,
-      "shirt": 3,
-      "glasses": false
+      "background": null,
+      "base": "base_05",
+      "shirt": "shirt_03",
+      "nose": "nose_01",
+      "eyes": "eyes_03",
+      "smile": "smile_03",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_06",
+      "glasses": null
     }
   },
   {
@@ -2191,13 +2541,18 @@
       "pessimism": 6,
       "bitterness": 9
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 15631286342021027754,
-      "skin": 3,
-      "hair": 1,
-      "cut": 2,
-      "shirt": 7,
-      "glasses": true
+      "background": null,
+      "base": "base_03",
+      "shirt": "shirt_03",
+      "nose": "nose_01",
+      "eyes": "eyes_09",
+      "smile": "smile_07",
+      "eyebrows": "eyebrows_06",
+      "hair": "hair_09",
+      "glasses": "glasses_07"
     }
   },
   {
@@ -2222,13 +2577,18 @@
       "pessimism": 3,
       "bitterness": 10
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 8598630422915032160,
-      "skin": 3,
-      "hair": 0,
-      "cut": 1,
-      "shirt": 5,
-      "glasses": false
+      "background": null,
+      "base": "base_09",
+      "shirt": "shirt_04",
+      "nose": "nose_07",
+      "eyes": "eyes_06",
+      "smile": "smile_10",
+      "eyebrows": "eyebrows_03",
+      "hair": "hair_10",
+      "glasses": null
     }
   },
   {
@@ -2253,13 +2613,18 @@
       "pessimism": 9,
       "bitterness": 3
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 10138086086904392493,
-      "skin": 6,
-      "hair": 1,
-      "cut": 2,
-      "shirt": 4,
-      "glasses": false
+      "background": null,
+      "base": "base_04",
+      "shirt": "shirt_05",
+      "nose": "nose_03",
+      "eyes": "eyes_01",
+      "smile": "smile_02",
+      "eyebrows": "eyebrows_09",
+      "hair": "hair_03",
+      "glasses": null
     }
   },
   {
@@ -2284,13 +2649,18 @@
       "pessimism": 6,
       "bitterness": 9
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 3903160762454169330,
-      "skin": 2,
-      "hair": 4,
-      "cut": 0,
-      "shirt": 3,
-      "glasses": true
+      "background": null,
+      "base": "base_09",
+      "shirt": "shirt_01",
+      "nose": "nose_10",
+      "eyes": "eyes_01",
+      "smile": "smile_08",
+      "eyebrows": "eyebrows_06",
+      "hair": "hair_09",
+      "glasses": "glasses_09"
     }
   },
   {
@@ -2315,13 +2685,18 @@
       "pessimism": 1,
       "bitterness": 9
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 7142655586812283653,
-      "skin": 0,
-      "hair": 2,
-      "cut": 3,
-      "shirt": 0,
-      "glasses": false
+      "background": null,
+      "base": "base_03",
+      "shirt": "shirt_05",
+      "nose": "nose_04",
+      "eyes": "eyes_04",
+      "smile": "smile_01",
+      "eyebrows": "eyebrows_01",
+      "hair": "hair_09",
+      "glasses": null
     }
   },
   {
@@ -2346,13 +2721,18 @@
       "pessimism": 5,
       "bitterness": 2
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 11523434591003831155,
-      "skin": 0,
-      "hair": 4,
-      "cut": 1,
-      "shirt": 6,
-      "glasses": false
+      "background": null,
+      "base": "base_03",
+      "shirt": "shirt_04",
+      "nose": "nose_01",
+      "eyes": "eyes_09",
+      "smile": "smile_03",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_02",
+      "glasses": null
     }
   },
   {
@@ -2377,13 +2757,18 @@
       "pessimism": 1,
       "bitterness": 1
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 5971947121651883533,
-      "skin": 2,
-      "hair": 5,
-      "cut": 1,
-      "shirt": 5,
-      "glasses": true
+      "background": null,
+      "base": "base_08",
+      "shirt": "shirt_04",
+      "nose": "nose_10",
+      "eyes": "eyes_09",
+      "smile": "smile_04",
+      "eyebrows": "eyebrows_01",
+      "hair": "hair_01",
+      "glasses": "glasses_05"
     }
   },
   {
@@ -2408,13 +2793,18 @@
       "pessimism": 8,
       "bitterness": 2
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 3532719724940505596,
-      "skin": 5,
-      "hair": 1,
-      "cut": 2,
-      "shirt": 0,
-      "glasses": false
+      "background": null,
+      "base": "base_08",
+      "shirt": "shirt_01",
+      "nose": "nose_06",
+      "eyes": "eyes_03",
+      "smile": "smile_08",
+      "eyebrows": "eyebrows_08",
+      "hair": "hair_02",
+      "glasses": null
     }
   },
   {
@@ -2439,13 +2829,18 @@
       "pessimism": 8,
       "bitterness": 10
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 13834757147345844163,
-      "skin": 0,
-      "hair": 2,
-      "cut": 1,
-      "shirt": 4,
-      "glasses": true
+      "background": null,
+      "base": "base_10",
+      "shirt": "shirt_01",
+      "nose": "nose_04",
+      "eyes": "eyes_04",
+      "smile": "smile_08",
+      "eyebrows": "eyebrows_08",
+      "hair": "hair_10",
+      "glasses": "glasses_07"
     }
   },
   {
@@ -2470,13 +2865,18 @@
       "pessimism": 4,
       "bitterness": 8
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 172575195483532291,
-      "skin": 2,
-      "hair": 4,
-      "cut": 3,
-      "shirt": 0,
-      "glasses": true
+      "background": null,
+      "base": "base_03",
+      "shirt": "shirt_01",
+      "nose": "nose_03",
+      "eyes": "eyes_06",
+      "smile": "smile_06",
+      "eyebrows": "eyebrows_04",
+      "hair": "hair_08",
+      "glasses": "glasses_03"
     }
   },
   {
@@ -2501,13 +2901,18 @@
       "pessimism": 6,
       "bitterness": 4
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 1632806302321002098,
-      "skin": 1,
-      "hair": 3,
-      "cut": 3,
-      "shirt": 3,
-      "glasses": true
+      "background": null,
+      "base": "base_06",
+      "shirt": "shirt_10",
+      "nose": "nose_06",
+      "eyes": "eyes_06",
+      "smile": "smile_05",
+      "eyebrows": "eyebrows_06",
+      "hair": "hair_04",
+      "glasses": "glasses_05"
     }
   },
   {
@@ -2532,13 +2937,18 @@
       "pessimism": 9,
       "bitterness": 5
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 6992433877194784483,
-      "skin": 6,
-      "hair": 1,
-      "cut": 2,
-      "shirt": 5,
-      "glasses": false
+      "background": null,
+      "base": "base_03",
+      "shirt": "shirt_06",
+      "nose": "nose_05",
+      "eyes": "eyes_05",
+      "smile": "smile_04",
+      "eyebrows": "eyebrows_09",
+      "hair": "hair_05",
+      "glasses": null
     }
   },
   {
@@ -2563,13 +2973,18 @@
       "pessimism": 7,
       "bitterness": 4
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 1530500577874071658,
-      "skin": 2,
-      "hair": 0,
-      "cut": 4,
-      "shirt": 6,
-      "glasses": false
+      "background": null,
+      "base": "base_02",
+      "shirt": "shirt_08",
+      "nose": "nose_05",
+      "eyes": "eyes_01",
+      "smile": "smile_09",
+      "eyebrows": "eyebrows_07",
+      "hair": "hair_04",
+      "glasses": null
     }
   },
   {
@@ -2594,13 +3009,18 @@
       "pessimism": 8,
       "bitterness": 6
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 7593844248191567396,
-      "skin": 5,
-      "hair": 1,
-      "cut": 1,
-      "shirt": 2,
-      "glasses": false
+      "background": null,
+      "base": "base_04",
+      "shirt": "shirt_10",
+      "nose": "nose_09",
+      "eyes": "eyes_10",
+      "smile": "smile_10",
+      "eyebrows": "eyebrows_08",
+      "hair": "hair_06",
+      "glasses": null
     }
   },
   {
@@ -2625,13 +3045,18 @@
       "pessimism": 4,
       "bitterness": 6
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 1191674453218299797,
-      "skin": 6,
-      "hair": 5,
-      "cut": 0,
-      "shirt": 3,
-      "glasses": false
+      "background": null,
+      "base": "base_08",
+      "shirt": "shirt_10",
+      "nose": "nose_09",
+      "eyes": "eyes_05",
+      "smile": "smile_04",
+      "eyebrows": "eyebrows_04",
+      "hair": "hair_06",
+      "glasses": null
     }
   },
   {
@@ -2656,13 +3081,18 @@
       "pessimism": 1,
       "bitterness": 1
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 7170144403078520677,
-      "skin": 4,
-      "hair": 0,
-      "cut": 2,
-      "shirt": 1,
-      "glasses": false
+      "background": null,
+      "base": "base_04",
+      "shirt": "shirt_05",
+      "nose": "nose_09",
+      "eyes": "eyes_01",
+      "smile": "smile_08",
+      "eyebrows": "eyebrows_01",
+      "hair": "hair_01",
+      "glasses": null
     }
   },
   {
@@ -2687,13 +3117,18 @@
       "pessimism": 5,
       "bitterness": 2
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 14424935936581164126,
-      "skin": 1,
-      "hair": 1,
-      "cut": 2,
-      "shirt": 3,
-      "glasses": false
+      "background": null,
+      "base": "base_06",
+      "shirt": "shirt_06",
+      "nose": "nose_06",
+      "eyes": "eyes_09",
+      "smile": "smile_01",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_02",
+      "glasses": null
     }
   },
   {
@@ -2718,13 +3153,18 @@
       "pessimism": 1,
       "bitterness": 10
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 13336958307954351028,
-      "skin": 1,
-      "hair": 1,
-      "cut": 4,
-      "shirt": 0,
-      "glasses": false
+      "background": null,
+      "base": "base_07",
+      "shirt": "shirt_10",
+      "nose": "nose_03",
+      "eyes": "eyes_05",
+      "smile": "smile_04",
+      "eyebrows": "eyebrows_01",
+      "hair": "hair_10",
+      "glasses": null
     }
   },
   {
@@ -2749,13 +3189,18 @@
       "pessimism": 5,
       "bitterness": 6
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 14248112177454301759,
-      "skin": 2,
-      "hair": 2,
-      "cut": 4,
-      "shirt": 1,
-      "glasses": false
+      "background": null,
+      "base": "base_09",
+      "shirt": "shirt_05",
+      "nose": "nose_03",
+      "eyes": "eyes_03",
+      "smile": "smile_10",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_06",
+      "glasses": null
     }
   },
   {
@@ -2780,13 +3225,18 @@
       "pessimism": 8,
       "bitterness": 10
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 9235075855171170471,
-      "skin": 5,
-      "hair": 5,
-      "cut": 2,
-      "shirt": 2,
-      "glasses": false
+      "background": null,
+      "base": "base_05",
+      "shirt": "shirt_05",
+      "nose": "nose_02",
+      "eyes": "eyes_04",
+      "smile": "smile_04",
+      "eyebrows": "eyebrows_08",
+      "hair": "hair_10",
+      "glasses": null
     }
   },
   {
@@ -2811,13 +3261,18 @@
       "pessimism": 9,
       "bitterness": 5
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 16734392534171507882,
-      "skin": 0,
-      "hair": 5,
-      "cut": 4,
-      "shirt": 5,
-      "glasses": false
+      "background": null,
+      "base": "base_02",
+      "shirt": "shirt_03",
+      "nose": "nose_08",
+      "eyes": "eyes_06",
+      "smile": "smile_01",
+      "eyebrows": "eyebrows_09",
+      "hair": "hair_05",
+      "glasses": null
     }
   },
   {
@@ -2842,13 +3297,18 @@
       "pessimism": 4,
       "bitterness": 9
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 10346130293253983852,
-      "skin": 0,
-      "hair": 1,
-      "cut": 3,
-      "shirt": 6,
-      "glasses": false
+      "background": null,
+      "base": "base_09",
+      "shirt": "shirt_02",
+      "nose": "nose_07",
+      "eyes": "eyes_09",
+      "smile": "smile_02",
+      "eyebrows": "eyebrows_04",
+      "hair": "hair_09",
+      "glasses": null
     }
   },
   {
@@ -2873,13 +3333,18 @@
       "pessimism": 10,
       "bitterness": 4
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 8329062768542746215,
-      "skin": 4,
-      "hair": 5,
-      "cut": 2,
-      "shirt": 2,
-      "glasses": false
+      "background": null,
+      "base": "base_06",
+      "shirt": "shirt_09",
+      "nose": "nose_09",
+      "eyes": "eyes_08",
+      "smile": "smile_05",
+      "eyebrows": "eyebrows_10",
+      "hair": "hair_04",
+      "glasses": null
     }
   },
   {
@@ -2904,13 +3369,18 @@
       "pessimism": 9,
       "bitterness": 3
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 7273582806899839820,
-      "skin": 5,
-      "hair": 4,
-      "cut": 3,
-      "shirt": 4,
-      "glasses": false
+      "background": null,
+      "base": "base_09",
+      "shirt": "shirt_04",
+      "nose": "nose_07",
+      "eyes": "eyes_04",
+      "smile": "smile_05",
+      "eyebrows": "eyebrows_09",
+      "hair": "hair_03",
+      "glasses": null
     }
   },
   {
@@ -2935,13 +3405,18 @@
       "pessimism": 1,
       "bitterness": 5
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 13005018517606638524,
-      "skin": 1,
-      "hair": 5,
-      "cut": 1,
-      "shirt": 0,
-      "glasses": true
+      "background": null,
+      "base": "base_04",
+      "shirt": "shirt_09",
+      "nose": "nose_09",
+      "eyes": "eyes_08",
+      "smile": "smile_07",
+      "eyebrows": "eyebrows_01",
+      "hair": "hair_05",
+      "glasses": "glasses_06"
     }
   },
   {
@@ -2966,13 +3441,18 @@
       "pessimism": 8,
       "bitterness": 5
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 1940862673982105337,
-      "skin": 0,
-      "hair": 4,
-      "cut": 1,
-      "shirt": 5,
-      "glasses": false
+      "background": null,
+      "base": "base_06",
+      "shirt": "shirt_03",
+      "nose": "nose_02",
+      "eyes": "eyes_03",
+      "smile": "smile_02",
+      "eyebrows": "eyebrows_08",
+      "hair": "hair_05",
+      "glasses": null
     }
   },
   {
@@ -2997,13 +3477,18 @@
       "pessimism": 9,
       "bitterness": 7
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 2088226036562980147,
-      "skin": 3,
-      "hair": 3,
-      "cut": 2,
-      "shirt": 6,
-      "glasses": false
+      "background": null,
+      "base": "base_02",
+      "shirt": "shirt_03",
+      "nose": "nose_03",
+      "eyes": "eyes_08",
+      "smile": "smile_10",
+      "eyebrows": "eyebrows_09",
+      "hair": "hair_07",
+      "glasses": null
     }
   },
   {
@@ -3028,13 +3513,18 @@
       "pessimism": 9,
       "bitterness": 2
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 465378547503001207,
-      "skin": 1,
-      "hair": 0,
-      "cut": 0,
-      "shirt": 3,
-      "glasses": true
+      "background": null,
+      "base": "base_07",
+      "shirt": "shirt_01",
+      "nose": "nose_08",
+      "eyes": "eyes_06",
+      "smile": "smile_04",
+      "eyebrows": "eyebrows_09",
+      "hair": "hair_02",
+      "glasses": "glasses_04"
     }
   },
   {
@@ -3059,13 +3549,18 @@
       "pessimism": 4,
       "bitterness": 9
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 5859215637927075609,
-      "skin": 1,
-      "hair": 3,
-      "cut": 2,
-      "shirt": 1,
-      "glasses": true
+      "background": null,
+      "base": "base_01",
+      "shirt": "shirt_03",
+      "nose": "nose_02",
+      "eyes": "eyes_10",
+      "smile": "smile_09",
+      "eyebrows": "eyebrows_04",
+      "hair": "hair_09",
+      "glasses": "glasses_09"
     }
   },
   {
@@ -3090,13 +3585,18 @@
       "pessimism": 4,
       "bitterness": 8
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 12678140968233445495,
-      "skin": 0,
-      "hair": 5,
-      "cut": 4,
-      "shirt": 6,
-      "glasses": false
+      "background": null,
+      "base": "base_08",
+      "shirt": "shirt_02",
+      "nose": "nose_08",
+      "eyes": "eyes_07",
+      "smile": "smile_07",
+      "eyebrows": "eyebrows_04",
+      "hair": "hair_08",
+      "glasses": null
     }
   },
   {
@@ -3121,13 +3621,18 @@
       "pessimism": 4,
       "bitterness": 1
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 3535469038751961433,
-      "skin": 1,
-      "hair": 3,
-      "cut": 3,
-      "shirt": 4,
-      "glasses": true
+      "background": null,
+      "base": "base_01",
+      "shirt": "shirt_04",
+      "nose": "nose_04",
+      "eyes": "eyes_01",
+      "smile": "smile_01",
+      "eyebrows": "eyebrows_04",
+      "hair": "hair_01",
+      "glasses": "glasses_05"
     }
   },
   {
@@ -3152,13 +3657,18 @@
       "pessimism": 1,
       "bitterness": 1
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 1639067406578452765,
-      "skin": 5,
-      "hair": 0,
-      "cut": 1,
-      "shirt": 5,
-      "glasses": true
+      "background": null,
+      "base": "base_01",
+      "shirt": "shirt_04",
+      "nose": "nose_08",
+      "eyes": "eyes_08",
+      "smile": "smile_08",
+      "eyebrows": "eyebrows_01",
+      "hair": "hair_01",
+      "glasses": "glasses_03"
     }
   },
   {
@@ -3183,13 +3693,18 @@
       "pessimism": 8,
       "bitterness": 9
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 8087441649242047003,
-      "skin": 5,
-      "hair": 3,
-      "cut": 2,
-      "shirt": 5,
-      "glasses": false
+      "background": null,
+      "base": "base_04",
+      "shirt": "shirt_06",
+      "nose": "nose_01",
+      "eyes": "eyes_01",
+      "smile": "smile_10",
+      "eyebrows": "eyebrows_08",
+      "hair": "hair_09",
+      "glasses": null
     }
   },
   {
@@ -3214,13 +3729,18 @@
       "pessimism": 5,
       "bitterness": 4
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 17872697877705646031,
-      "skin": 4,
-      "hair": 0,
-      "cut": 3,
-      "shirt": 4,
-      "glasses": false
+      "background": null,
+      "base": "base_04",
+      "shirt": "shirt_01",
+      "nose": "nose_01",
+      "eyes": "eyes_03",
+      "smile": "smile_06",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_04",
+      "glasses": null
     }
   },
   {
@@ -3245,13 +3765,18 @@
       "pessimism": 9,
       "bitterness": 9
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 18235399674776280436,
-      "skin": 0,
-      "hair": 2,
-      "cut": 4,
-      "shirt": 6,
-      "glasses": false
+      "background": null,
+      "base": "base_06",
+      "shirt": "shirt_02",
+      "nose": "nose_08",
+      "eyes": "eyes_05",
+      "smile": "smile_04",
+      "eyebrows": "eyebrows_09",
+      "hair": "hair_09",
+      "glasses": null
     }
   },
   {
@@ -3276,13 +3801,18 @@
       "pessimism": 6,
       "bitterness": 1
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 6217375035793166800,
-      "skin": 3,
-      "hair": 2,
-      "cut": 2,
-      "shirt": 4,
-      "glasses": false
+      "background": null,
+      "base": "base_01",
+      "shirt": "shirt_08",
+      "nose": "nose_01",
+      "eyes": "eyes_03",
+      "smile": "smile_03",
+      "eyebrows": "eyebrows_06",
+      "hair": "hair_01",
+      "glasses": null
     }
   },
   {
@@ -3307,13 +3837,18 @@
       "pessimism": 1,
       "bitterness": 4
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 11053509935186640549,
-      "skin": 3,
-      "hair": 0,
-      "cut": 4,
-      "shirt": 7,
-      "glasses": false
+      "background": null,
+      "base": "base_02",
+      "shirt": "shirt_10",
+      "nose": "nose_10",
+      "eyes": "eyes_03",
+      "smile": "smile_02",
+      "eyebrows": "eyebrows_01",
+      "hair": "hair_04",
+      "glasses": null
     }
   },
   {
@@ -3338,13 +3873,18 @@
       "pessimism": 5,
       "bitterness": 3
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 10630643303926839493,
-      "skin": 3,
-      "hair": 3,
-      "cut": 1,
-      "shirt": 3,
-      "glasses": false
+      "background": null,
+      "base": "base_04",
+      "shirt": "shirt_03",
+      "nose": "nose_10",
+      "eyes": "eyes_05",
+      "smile": "smile_10",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_03",
+      "glasses": null
     }
   },
   {
@@ -3369,13 +3909,18 @@
       "pessimism": 2,
       "bitterness": 4
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 16307105365376708401,
-      "skin": 0,
-      "hair": 0,
-      "cut": 3,
-      "shirt": 6,
-      "glasses": false
+      "background": null,
+      "base": "base_03",
+      "shirt": "shirt_04",
+      "nose": "nose_07",
+      "eyes": "eyes_04",
+      "smile": "smile_09",
+      "eyebrows": "eyebrows_02",
+      "hair": "hair_04",
+      "glasses": null
     }
   },
   {
@@ -3400,13 +3945,18 @@
       "pessimism": 1,
       "bitterness": 2
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 9965321202728347377,
-      "skin": 0,
-      "hair": 0,
-      "cut": 0,
-      "shirt": 1,
-      "glasses": false
+      "background": null,
+      "base": "base_07",
+      "shirt": "shirt_07",
+      "nose": "nose_09",
+      "eyes": "eyes_04",
+      "smile": "smile_03",
+      "eyebrows": "eyebrows_01",
+      "hair": "hair_02",
+      "glasses": null
     }
   },
   {
@@ -3431,13 +3981,18 @@
       "pessimism": 8,
       "bitterness": 10
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 6206415670048522119,
-      "skin": 5,
-      "hair": 3,
-      "cut": 2,
-      "shirt": 7,
-      "glasses": false
+      "background": null,
+      "base": "base_10",
+      "shirt": "shirt_04",
+      "nose": "nose_03",
+      "eyes": "eyes_05",
+      "smile": "smile_03",
+      "eyebrows": "eyebrows_08",
+      "hair": "hair_10",
+      "glasses": null
     }
   },
   {
@@ -3462,13 +4017,18 @@
       "pessimism": 4,
       "bitterness": 10
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 13948278905718068737,
-      "skin": 2,
-      "hair": 5,
-      "cut": 3,
-      "shirt": 4,
-      "glasses": false
+      "background": null,
+      "base": "base_05",
+      "shirt": "shirt_06",
+      "nose": "nose_07",
+      "eyes": "eyes_03",
+      "smile": "smile_10",
+      "eyebrows": "eyebrows_04",
+      "hair": "hair_10",
+      "glasses": null
     }
   },
   {
@@ -3493,13 +4053,18 @@
       "pessimism": 4,
       "bitterness": 6
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 12404011522629697695,
-      "skin": 6,
-      "hair": 2,
-      "cut": 0,
-      "shirt": 4,
-      "glasses": false
+      "background": null,
+      "base": "base_05",
+      "shirt": "shirt_08",
+      "nose": "nose_10",
+      "eyes": "eyes_08",
+      "smile": "smile_06",
+      "eyebrows": "eyebrows_04",
+      "hair": "hair_06",
+      "glasses": null
     }
   },
   {
@@ -3524,13 +4089,18 @@
       "pessimism": 2,
       "bitterness": 10
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 13269423309234442962,
-      "skin": 6,
-      "hair": 1,
-      "cut": 0,
-      "shirt": 5,
-      "glasses": false
+      "background": null,
+      "base": "base_10",
+      "shirt": "shirt_10",
+      "nose": "nose_07",
+      "eyes": "eyes_03",
+      "smile": "smile_04",
+      "eyebrows": "eyebrows_02",
+      "hair": "hair_10",
+      "glasses": null
     }
   },
   {
@@ -3555,13 +4125,18 @@
       "pessimism": 2,
       "bitterness": 3
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 11980658490314503069,
-      "skin": 1,
-      "hair": 1,
-      "cut": 4,
-      "shirt": 3,
-      "glasses": false
+      "background": null,
+      "base": "base_10",
+      "shirt": "shirt_04",
+      "nose": "nose_04",
+      "eyes": "eyes_04",
+      "smile": "smile_02",
+      "eyebrows": "eyebrows_02",
+      "hair": "hair_03",
+      "glasses": null
     }
   },
   {
@@ -3586,13 +4161,18 @@
       "pessimism": 4,
       "bitterness": 5
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 6973667667885428461,
-      "skin": 1,
-      "hair": 5,
-      "cut": 4,
-      "shirt": 0,
-      "glasses": false
+      "background": null,
+      "base": "base_04",
+      "shirt": "shirt_05",
+      "nose": "nose_10",
+      "eyes": "eyes_10",
+      "smile": "smile_04",
+      "eyebrows": "eyebrows_04",
+      "hair": "hair_05",
+      "glasses": null
     }
   },
   {
@@ -3617,13 +4197,18 @@
       "pessimism": 3,
       "bitterness": 4
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 18073544198600123954,
-      "skin": 3,
-      "hair": 4,
-      "cut": 0,
-      "shirt": 0,
-      "glasses": false
+      "background": null,
+      "base": "base_07",
+      "shirt": "shirt_10",
+      "nose": "nose_04",
+      "eyes": "eyes_03",
+      "smile": "smile_05",
+      "eyebrows": "eyebrows_03",
+      "hair": "hair_04",
+      "glasses": null
     }
   },
   {
@@ -3648,13 +4233,18 @@
       "pessimism": 4,
       "bitterness": 9
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 6945572175796112822,
-      "skin": 5,
-      "hair": 3,
-      "cut": 3,
-      "shirt": 1,
-      "glasses": false
+      "background": null,
+      "base": "base_08",
+      "shirt": "shirt_09",
+      "nose": "nose_03",
+      "eyes": "eyes_07",
+      "smile": "smile_06",
+      "eyebrows": "eyebrows_04",
+      "hair": "hair_09",
+      "glasses": null
     }
   },
   {
@@ -3679,13 +4269,18 @@
       "pessimism": 6,
       "bitterness": 5
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 7370089236274683255,
-      "skin": 1,
-      "hair": 2,
-      "cut": 1,
-      "shirt": 0,
-      "glasses": false
+      "background": null,
+      "base": "base_07",
+      "shirt": "shirt_09",
+      "nose": "nose_05",
+      "eyes": "eyes_08",
+      "smile": "smile_09",
+      "eyebrows": "eyebrows_06",
+      "hair": "hair_05",
+      "glasses": null
     }
   },
   {
@@ -3710,13 +4305,18 @@
       "pessimism": 3,
       "bitterness": 4
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 9040985960578089544,
-      "skin": 6,
-      "hair": 0,
-      "cut": 4,
-      "shirt": 7,
-      "glasses": false
+      "background": null,
+      "base": "base_07",
+      "shirt": "shirt_09",
+      "nose": "nose_01",
+      "eyes": "eyes_07",
+      "smile": "smile_09",
+      "eyebrows": "eyebrows_03",
+      "hair": "hair_04",
+      "glasses": null
     }
   },
   {
@@ -3741,13 +4341,18 @@
       "pessimism": 2,
       "bitterness": 2
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 2116818793678941634,
-      "skin": 4,
-      "hair": 1,
-      "cut": 4,
-      "shirt": 2,
-      "glasses": false
+      "background": null,
+      "base": "base_08",
+      "shirt": "shirt_10",
+      "nose": "nose_07",
+      "eyes": "eyes_05",
+      "smile": "smile_05",
+      "eyebrows": "eyebrows_02",
+      "hair": "hair_02",
+      "glasses": null
     }
   },
   {
@@ -3772,13 +4377,18 @@
       "pessimism": 2,
       "bitterness": 1
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 6444932735863690458,
-      "skin": 5,
-      "hair": 3,
-      "cut": 3,
-      "shirt": 6,
-      "glasses": false
+      "background": null,
+      "base": "base_07",
+      "shirt": "shirt_10",
+      "nose": "nose_02",
+      "eyes": "eyes_02",
+      "smile": "smile_06",
+      "eyebrows": "eyebrows_02",
+      "hair": "hair_01",
+      "glasses": null
     }
   },
   {
@@ -3803,13 +4413,18 @@
       "pessimism": 5,
       "bitterness": 8
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 16622160258246563579,
-      "skin": 4,
-      "hair": 3,
-      "cut": 1,
-      "shirt": 0,
-      "glasses": true
+      "background": null,
+      "base": "base_08",
+      "shirt": "shirt_05",
+      "nose": "nose_04",
+      "eyes": "eyes_07",
+      "smile": "smile_01",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_08",
+      "glasses": "glasses_04"
     }
   },
   {
@@ -3834,13 +4449,18 @@
       "pessimism": 4,
       "bitterness": 7
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 3572648334568302574,
-      "skin": 6,
-      "hair": 1,
-      "cut": 2,
-      "shirt": 5,
-      "glasses": false
+      "background": null,
+      "base": "base_03",
+      "shirt": "shirt_06",
+      "nose": "nose_05",
+      "eyes": "eyes_10",
+      "smile": "smile_06",
+      "eyebrows": "eyebrows_04",
+      "hair": "hair_07",
+      "glasses": null
     }
   },
   {
@@ -3865,13 +4485,18 @@
       "pessimism": 5,
       "bitterness": 3
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 623174038176031061,
-      "skin": 0,
-      "hair": 3,
-      "cut": 3,
-      "shirt": 1,
-      "glasses": false
+      "background": null,
+      "base": "base_02",
+      "shirt": "shirt_08",
+      "nose": "nose_05",
+      "eyes": "eyes_04",
+      "smile": "smile_09",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_03",
+      "glasses": null
     }
   },
   {
@@ -3896,13 +4521,18 @@
       "pessimism": 6,
       "bitterness": 6
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 5793700748461332955,
-      "skin": 3,
-      "hair": 0,
-      "cut": 0,
-      "shirt": 7,
-      "glasses": true
+      "background": null,
+      "base": "base_10",
+      "shirt": "shirt_05",
+      "nose": "nose_01",
+      "eyes": "eyes_08",
+      "smile": "smile_02",
+      "eyebrows": "eyebrows_06",
+      "hair": "hair_06",
+      "glasses": "glasses_02"
     }
   },
   {
@@ -3927,13 +4557,18 @@
       "pessimism": 7,
       "bitterness": 10
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 6975189596743028002,
-      "skin": 1,
-      "hair": 3,
-      "cut": 3,
-      "shirt": 3,
-      "glasses": false
+      "background": null,
+      "base": "base_04",
+      "shirt": "shirt_06",
+      "nose": "nose_08",
+      "eyes": "eyes_02",
+      "smile": "smile_03",
+      "eyebrows": "eyebrows_07",
+      "hair": "hair_10",
+      "glasses": null
     }
   },
   {
@@ -3958,13 +4593,18 @@
       "pessimism": 9,
       "bitterness": 3
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 15635084161129723611,
-      "skin": 6,
-      "hair": 5,
-      "cut": 1,
-      "shirt": 7,
-      "glasses": true
+      "background": null,
+      "base": "base_05",
+      "shirt": "shirt_03",
+      "nose": "nose_07",
+      "eyes": "eyes_05",
+      "smile": "smile_02",
+      "eyebrows": "eyebrows_09",
+      "hair": "hair_03",
+      "glasses": "glasses_02"
     }
   },
   {
@@ -3989,13 +4629,18 @@
       "pessimism": 9,
       "bitterness": 9
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 15795430962774503502,
-      "skin": 0,
-      "hair": 1,
-      "cut": 1,
-      "shirt": 4,
-      "glasses": false
+      "background": null,
+      "base": "base_02",
+      "shirt": "shirt_08",
+      "nose": "nose_03",
+      "eyes": "eyes_03",
+      "smile": "smile_09",
+      "eyebrows": "eyebrows_09",
+      "hair": "hair_09",
+      "glasses": null
     }
   },
   {
@@ -4020,13 +4665,18 @@
       "pessimism": 5,
       "bitterness": 8
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 6823026773549672806,
-      "skin": 4,
-      "hair": 4,
-      "cut": 4,
-      "shirt": 0,
-      "glasses": false
+      "background": null,
+      "base": "base_03",
+      "shirt": "shirt_09",
+      "nose": "nose_03",
+      "eyes": "eyes_06",
+      "smile": "smile_07",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_08",
+      "glasses": null
     }
   },
   {
@@ -4051,13 +4701,18 @@
       "pessimism": 10,
       "bitterness": 5
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 294038401540435914,
-      "skin": 4,
-      "hair": 0,
-      "cut": 1,
-      "shirt": 7,
-      "glasses": false
+      "background": null,
+      "base": "base_06",
+      "shirt": "shirt_10",
+      "nose": "nose_06",
+      "eyes": "eyes_08",
+      "smile": "smile_02",
+      "eyebrows": "eyebrows_10",
+      "hair": "hair_05",
+      "glasses": null
     }
   },
   {
@@ -4082,13 +4737,18 @@
       "pessimism": 10,
       "bitterness": 5
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 10321717729324421473,
-      "skin": 4,
-      "hair": 3,
-      "cut": 0,
-      "shirt": 4,
-      "glasses": false
+      "background": null,
+      "base": "base_08",
+      "shirt": "shirt_09",
+      "nose": "nose_06",
+      "eyes": "eyes_04",
+      "smile": "smile_05",
+      "eyebrows": "eyebrows_10",
+      "hair": "hair_05",
+      "glasses": null
     }
   },
   {
@@ -4113,13 +4773,18 @@
       "pessimism": 1,
       "bitterness": 6
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 4177467578832889219,
-      "skin": 5,
-      "hair": 4,
-      "cut": 4,
-      "shirt": 1,
-      "glasses": true
+      "background": null,
+      "base": "base_09",
+      "shirt": "shirt_03",
+      "nose": "nose_01",
+      "eyes": "eyes_03",
+      "smile": "smile_07",
+      "eyebrows": "eyebrows_01",
+      "hair": "hair_06",
+      "glasses": "glasses_08"
     }
   },
   {
@@ -4144,13 +4809,18 @@
       "pessimism": 5,
       "bitterness": 6
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 151423845217781359,
-      "skin": 0,
-      "hair": 3,
-      "cut": 3,
-      "shirt": 0,
-      "glasses": true
+      "background": null,
+      "base": "base_10",
+      "shirt": "shirt_07",
+      "nose": "nose_05",
+      "eyes": "eyes_07",
+      "smile": "smile_04",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_06",
+      "glasses": "glasses_01"
     }
   },
   {
@@ -4175,13 +4845,18 @@
       "pessimism": 9,
       "bitterness": 6
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 6736606333914801923,
-      "skin": 6,
-      "hair": 3,
-      "cut": 4,
-      "shirt": 0,
-      "glasses": false
+      "background": null,
+      "base": "base_01",
+      "shirt": "shirt_10",
+      "nose": "nose_09",
+      "eyes": "eyes_06",
+      "smile": "smile_09",
+      "eyebrows": "eyebrows_09",
+      "hair": "hair_06",
+      "glasses": null
     }
   },
   {
@@ -4206,13 +4881,18 @@
       "pessimism": 10,
       "bitterness": 8
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 2245765425149823528,
-      "skin": 2,
-      "hair": 0,
-      "cut": 1,
-      "shirt": 4,
-      "glasses": false
+      "background": null,
+      "base": "base_01",
+      "shirt": "shirt_01",
+      "nose": "nose_01",
+      "eyes": "eyes_08",
+      "smile": "smile_01",
+      "eyebrows": "eyebrows_10",
+      "hair": "hair_08",
+      "glasses": null
     }
   },
   {
@@ -4237,13 +4917,18 @@
       "pessimism": 2,
       "bitterness": 7
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 12538600755856494940,
-      "skin": 6,
-      "hair": 1,
-      "cut": 0,
-      "shirt": 3,
-      "glasses": false
+      "background": null,
+      "base": "base_02",
+      "shirt": "shirt_05",
+      "nose": "nose_08",
+      "eyes": "eyes_05",
+      "smile": "smile_10",
+      "eyebrows": "eyebrows_02",
+      "hair": "hair_07",
+      "glasses": null
     }
   },
   {
@@ -4268,13 +4953,18 @@
       "pessimism": 5,
       "bitterness": 8
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 12126069366714185801,
-      "skin": 3,
-      "hair": 4,
-      "cut": 2,
-      "shirt": 3,
-      "glasses": false
+      "background": null,
+      "base": "base_03",
+      "shirt": "shirt_10",
+      "nose": "nose_07",
+      "eyes": "eyes_03",
+      "smile": "smile_08",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_08",
+      "glasses": null
     }
   },
   {
@@ -4299,13 +4989,18 @@
       "pessimism": 3,
       "bitterness": 9
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 8811905082242729371,
-      "skin": 5,
-      "hair": 2,
-      "cut": 4,
-      "shirt": 0,
-      "glasses": true
+      "background": null,
+      "base": "base_02",
+      "shirt": "shirt_08",
+      "nose": "nose_10",
+      "eyes": "eyes_03",
+      "smile": "smile_04",
+      "eyebrows": "eyebrows_03",
+      "hair": "hair_09",
+      "glasses": "glasses_01"
     }
   },
   {
@@ -4330,13 +5025,18 @@
       "pessimism": 6,
       "bitterness": 9
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 6824104250522209716,
-      "skin": 1,
-      "hair": 3,
-      "cut": 3,
-      "shirt": 0,
-      "glasses": true
+      "background": null,
+      "base": "base_05",
+      "shirt": "shirt_07",
+      "nose": "nose_07",
+      "eyes": "eyes_02",
+      "smile": "smile_06",
+      "eyebrows": "eyebrows_06",
+      "hair": "hair_09",
+      "glasses": "glasses_08"
     }
   },
   {
@@ -4361,13 +5061,18 @@
       "pessimism": 10,
       "bitterness": 9
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 12416263085746309575,
-      "skin": 1,
-      "hair": 1,
-      "cut": 0,
-      "shirt": 7,
-      "glasses": false
+      "background": null,
+      "base": "base_07",
+      "shirt": "shirt_05",
+      "nose": "nose_03",
+      "eyes": "eyes_07",
+      "smile": "smile_01",
+      "eyebrows": "eyebrows_10",
+      "hair": "hair_09",
+      "glasses": null
     }
   },
   {
@@ -4392,13 +5097,18 @@
       "pessimism": 6,
       "bitterness": 5
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 4107382533419271400,
-      "skin": 5,
-      "hair": 2,
-      "cut": 4,
-      "shirt": 4,
-      "glasses": true
+      "background": null,
+      "base": "base_04",
+      "shirt": "shirt_03",
+      "nose": "nose_01",
+      "eyes": "eyes_01",
+      "smile": "smile_01",
+      "eyebrows": "eyebrows_06",
+      "hair": "hair_05",
+      "glasses": "glasses_03"
     }
   },
   {
@@ -4423,13 +5133,18 @@
       "pessimism": 1,
       "bitterness": 1
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 12819973527665123614,
-      "skin": 1,
-      "hair": 4,
-      "cut": 3,
-      "shirt": 6,
-      "glasses": false
+      "background": null,
+      "base": "base_04",
+      "shirt": "shirt_06",
+      "nose": "nose_10",
+      "eyes": "eyes_03",
+      "smile": "smile_04",
+      "eyebrows": "eyebrows_01",
+      "hair": "hair_01",
+      "glasses": null
     }
   },
   {
@@ -4454,13 +5169,18 @@
       "pessimism": 4,
       "bitterness": 3
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 1700497126882511060,
-      "skin": 3,
-      "hair": 3,
-      "cut": 3,
-      "shirt": 1,
-      "glasses": false
+      "background": null,
+      "base": "base_08",
+      "shirt": "shirt_02",
+      "nose": "nose_02",
+      "eyes": "eyes_04",
+      "smile": "smile_01",
+      "eyebrows": "eyebrows_04",
+      "hair": "hair_03",
+      "glasses": null
     }
   },
   {
@@ -4485,13 +5205,18 @@
       "pessimism": 5,
       "bitterness": 9
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 962196880947784711,
-      "skin": 3,
-      "hair": 4,
-      "cut": 1,
-      "shirt": 5,
-      "glasses": false
+      "background": null,
+      "base": "base_03",
+      "shirt": "shirt_01",
+      "nose": "nose_06",
+      "eyes": "eyes_10",
+      "smile": "smile_10",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_09",
+      "glasses": null
     }
   },
   {
@@ -4516,13 +5241,18 @@
       "pessimism": 6,
       "bitterness": 2
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 397571043484340468,
-      "skin": 6,
-      "hair": 1,
-      "cut": 3,
-      "shirt": 6,
-      "glasses": false
+      "background": null,
+      "base": "base_05",
+      "shirt": "shirt_08",
+      "nose": "nose_07",
+      "eyes": "eyes_02",
+      "smile": "smile_06",
+      "eyebrows": "eyebrows_06",
+      "hair": "hair_02",
+      "glasses": null
     }
   },
   {
@@ -4547,13 +5277,18 @@
       "pessimism": 10,
       "bitterness": 2
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 959433402309271371,
-      "skin": 4,
-      "hair": 2,
-      "cut": 0,
-      "shirt": 3,
-      "glasses": false
+      "background": null,
+      "base": "base_06",
+      "shirt": "shirt_04",
+      "nose": "nose_10",
+      "eyes": "eyes_07",
+      "smile": "smile_09",
+      "eyebrows": "eyebrows_10",
+      "hair": "hair_02",
+      "glasses": null
     }
   },
   {
@@ -4578,13 +5313,18 @@
       "pessimism": 10,
       "bitterness": 7
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 6707464690236357591,
-      "skin": 3,
-      "hair": 4,
-      "cut": 0,
-      "shirt": 6,
-      "glasses": true
+      "background": null,
+      "base": "base_03",
+      "shirt": "shirt_05",
+      "nose": "nose_10",
+      "eyes": "eyes_06",
+      "smile": "smile_02",
+      "eyebrows": "eyebrows_10",
+      "hair": "hair_07",
+      "glasses": "glasses_01"
     }
   },
   {
@@ -4609,13 +5349,18 @@
       "pessimism": 10,
       "bitterness": 1
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 8215629422193987653,
-      "skin": 3,
-      "hair": 0,
-      "cut": 3,
-      "shirt": 4,
-      "glasses": true
+      "background": null,
+      "base": "base_08",
+      "shirt": "shirt_07",
+      "nose": "nose_01",
+      "eyes": "eyes_06",
+      "smile": "smile_02",
+      "eyebrows": "eyebrows_10",
+      "hair": "hair_01",
+      "glasses": "glasses_03"
     }
   },
   {
@@ -4640,13 +5385,18 @@
       "pessimism": 9,
       "bitterness": 2
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 15067202398395009874,
-      "skin": 2,
-      "hair": 5,
-      "cut": 1,
-      "shirt": 2,
-      "glasses": false
+      "background": null,
+      "base": "base_07",
+      "shirt": "shirt_06",
+      "nose": "nose_07",
+      "eyes": "eyes_01",
+      "smile": "smile_06",
+      "eyebrows": "eyebrows_09",
+      "hair": "hair_02",
+      "glasses": null
     }
   },
   {
@@ -4671,13 +5421,18 @@
       "pessimism": 3,
       "bitterness": 4
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 3362880929819181367,
-      "skin": 4,
-      "hair": 4,
-      "cut": 2,
-      "shirt": 4,
-      "glasses": false
+      "background": null,
+      "base": "base_02",
+      "shirt": "shirt_01",
+      "nose": "nose_01",
+      "eyes": "eyes_09",
+      "smile": "smile_08",
+      "eyebrows": "eyebrows_03",
+      "hair": "hair_04",
+      "glasses": null
     }
   },
   {
@@ -4702,13 +5457,18 @@
       "pessimism": 5,
       "bitterness": 6
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 5832233040467598310,
-      "skin": 0,
-      "hair": 0,
-      "cut": 4,
-      "shirt": 5,
-      "glasses": true
+      "background": null,
+      "base": "base_07",
+      "shirt": "shirt_08",
+      "nose": "nose_06",
+      "eyes": "eyes_05",
+      "smile": "smile_04",
+      "eyebrows": "eyebrows_05",
+      "hair": "hair_06",
+      "glasses": "glasses_10"
     }
   },
   {
@@ -4733,13 +5493,18 @@
       "pessimism": 8,
       "bitterness": 6
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 2508106195261619707,
-      "skin": 2,
-      "hair": 2,
-      "cut": 2,
-      "shirt": 2,
-      "glasses": false
+      "background": null,
+      "base": "base_06",
+      "shirt": "shirt_08",
+      "nose": "nose_08",
+      "eyes": "eyes_04",
+      "smile": "smile_02",
+      "eyebrows": "eyebrows_08",
+      "hair": "hair_06",
+      "glasses": null
     }
   },
   {
@@ -4764,13 +5529,18 @@
       "pessimism": 1,
       "bitterness": 4
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 17214013946729772890,
-      "skin": 2,
-      "hair": 0,
-      "cut": 2,
-      "shirt": 6,
-      "glasses": false
+      "background": null,
+      "base": "base_01",
+      "shirt": "shirt_10",
+      "nose": "nose_03",
+      "eyes": "eyes_07",
+      "smile": "smile_06",
+      "eyebrows": "eyebrows_01",
+      "hair": "hair_04",
+      "glasses": null
     }
   },
   {
@@ -4795,13 +5565,18 @@
       "pessimism": 10,
       "bitterness": 2
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 4914700787640590122,
-      "skin": 0,
-      "hair": 2,
-      "cut": 4,
-      "shirt": 1,
-      "glasses": false
+      "background": null,
+      "base": "base_07",
+      "shirt": "shirt_04",
+      "nose": "nose_01",
+      "eyes": "eyes_04",
+      "smile": "smile_01",
+      "eyebrows": "eyebrows_10",
+      "hair": "hair_02",
+      "glasses": null
     }
   },
   {
@@ -4826,13 +5601,18 @@
       "pessimism": 2,
       "bitterness": 3
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 16905880502561187040,
-      "skin": 2,
-      "hair": 4,
-      "cut": 2,
-      "shirt": 7,
-      "glasses": false
+      "background": null,
+      "base": "base_03",
+      "shirt": "shirt_08",
+      "nose": "nose_02",
+      "eyes": "eyes_02",
+      "smile": "smile_10",
+      "eyebrows": "eyebrows_02",
+      "hair": "hair_03",
+      "glasses": null
     }
   },
   {
@@ -4857,13 +5637,18 @@
       "pessimism": 9,
       "bitterness": 6
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 1441639544955299598,
-      "skin": 6,
-      "hair": 0,
-      "cut": 2,
-      "shirt": 2,
-      "glasses": false
+      "background": null,
+      "base": "base_01",
+      "shirt": "shirt_07",
+      "nose": "nose_08",
+      "eyes": "eyes_08",
+      "smile": "smile_09",
+      "eyebrows": "eyebrows_09",
+      "hair": "hair_06",
+      "glasses": null
     }
   },
   {
@@ -4888,13 +5673,18 @@
       "pessimism": 10,
       "bitterness": 5
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 10689064137398835657,
-      "skin": 6,
-      "hair": 5,
-      "cut": 4,
-      "shirt": 3,
-      "glasses": true
+      "background": null,
+      "base": "base_05",
+      "shirt": "shirt_02",
+      "nose": "nose_10",
+      "eyes": "eyes_03",
+      "smile": "smile_05",
+      "eyebrows": "eyebrows_10",
+      "hair": "hair_05",
+      "glasses": "glasses_09"
     }
   },
   {
@@ -4919,13 +5709,18 @@
       "pessimism": 6,
       "bitterness": 8
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 1216600114460571997,
-      "skin": 3,
-      "hair": 0,
-      "cut": 3,
-      "shirt": 3,
-      "glasses": true
+      "background": null,
+      "base": "base_03",
+      "shirt": "shirt_06",
+      "nose": "nose_07",
+      "eyes": "eyes_06",
+      "smile": "smile_09",
+      "eyebrows": "eyebrows_06",
+      "hair": "hair_08",
+      "glasses": "glasses_02"
     }
   },
   {
@@ -4950,13 +5745,18 @@
       "pessimism": 3,
       "bitterness": 1
     },
-    "portrait_style": {
+    "avatar": {
+      "version": 1,
       "seed": 8781788396075025200,
-      "skin": 6,
-      "hair": 5,
-      "cut": 3,
-      "shirt": 2,
-      "glasses": false
+      "background": null,
+      "base": "base_06",
+      "shirt": "shirt_05",
+      "nose": "nose_01",
+      "eyes": "eyes_03",
+      "smile": "smile_03",
+      "eyebrows": "eyebrows_03",
+      "hair": "hair_01",
+      "glasses": null
     }
   }
 ]

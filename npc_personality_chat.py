@@ -1,6 +1,7 @@
 """Table chatter sampled from the NPC's full trait mix, using public events."""
 import random
 from npc_personality import get_npc_traits, TRAIT_NAMES, npc_identity
+from poker_strategy import strategy_chat_line
 
 # Lines describe intent or visible events, never unseen opponent cards.
 TRAIT_CHAT = {
@@ -82,6 +83,7 @@ def trait_chat(npc, event, rng=None, grudge_target=None, grudge_intensity=0.0):
 
 
 def game_trait_chat(game, npc_index, event, rng=None, target_player=False):
+    rng = rng or random
     context = game.get_npc_grudge_context(npc_index)
     if target_player:
         npc = game.npcs[npc_index]
@@ -89,6 +91,14 @@ def game_trait_chat(game, npc_index, event, rng=None, target_player=False):
                                                   "player", game.hand_number,
                                                   get_npc_traits(npc)["bitterness"])
         context = {"grudge_target": "You", "grudge_intensity": score}
+    # Existing specific grudges retain priority. Replies to a player's action
+    # must not reuse a stale decision from the NPC's previous turn.
+    decisions = getattr(game, "npc_ai_last_decisions", ())
+    if (not target_player and context.get("grudge_intensity", 0) < .30
+            and 0 <= npc_index < len(decisions)):
+        line = strategy_chat_line(decisions[npc_index], event, rng)
+        if line:
+            return line
     return trait_chat(game.npcs[npc_index], event, rng,
                       grudge_target=context.get("grudge_target"),
                       grudge_intensity=context.get("grudge_intensity", 0.0))

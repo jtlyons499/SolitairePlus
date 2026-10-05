@@ -1,5 +1,6 @@
 import random
 from npc_personality import get_npc_traits, PokerGrudgeMemory, npc_identity
+from poker_strategy import PokerTableReads
 from collections import Counter
 from itertools import combinations
 
@@ -109,6 +110,7 @@ class TexasHoldemGame:
         # Shared session-level model of how the human player
         # has actually been behaving at this poker table.
         self.player_model = PokerOpponentModel()
+        self.table_reads = PokerTableReads()
         self.personality_memory = PokerGrudgeMemory()
 
         # Snapshot of seats that began the current hand. This
@@ -233,6 +235,22 @@ class TexasHoldemGame:
             **data
     ):
 
+        round_total = 0
+        if actor_index == 0:
+            round_total = self.player_round_bet
+        elif actor_index is not None and 0 < actor_index <= len(self.npc_round_bets):
+            round_total = self.npc_round_bets[actor_index - 1]
+        facing_amount = None
+        if event_type in ("call", "fold", "check"):
+            previous_total = round_total - int(amount or 0) if event_type == "call" else round_total
+            facing_amount = max(0, self.current_bet - previous_total)
+        self.table_reads.observe(
+            event_type, actor_index, hand_number=self.hand_number,
+            stage=self.current_stage, amount=amount, round_total=round_total,
+            pot=self.pot, draw_count=data.get("draw_count"),
+            hand_name=data.get("hand_name"),
+            facing_amount=facing_amount,
+        )
         self.hand_history.add(
             event_type,
             text,
@@ -351,6 +369,7 @@ class TexasHoldemGame:
 
         self.hand_history.clear()
         self.player_model.reset()
+        self.table_reads.clear()
         self.personality_memory.clear()
         self.hand_seat_indexes = []
 
@@ -2660,6 +2679,17 @@ class TexasHoldemGame:
         context["personality_traits"] = get_npc_traits(self.npcs[npc_index])
         context["starting_stack"] = self.starting_stack
         context["hand_number"] = self.hand_number
+        context["npc_identity"] = npc_identity(self.npcs[npc_index], npc_index + 1)
+        context["opponent_reads"] = [
+            self.table_reads.snapshot(seat)
+            for seat in active_indexes if seat != npc_index + 1
+        ]
+        context["public_opponents"] = [
+            {"seat": seat,
+             "stack": self.player_stack if seat == 0 else self.npc_stacks[seat - 1],
+             "round_bet": self.player_round_bet if seat == 0 else self.npc_round_bets[seat - 1]}
+            for seat in active_indexes if seat != npc_index + 1
+        ]
         context.update(self.get_npc_grudge_context(npc_index))
         return context
 

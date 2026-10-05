@@ -1,7 +1,9 @@
 import json
 import os
+import tempfile
 
 from career_ratings import migrate_profile_ratings
+from cryptid_collection import new_collection, normalize_collection
 
 
 # ==================================================
@@ -10,7 +12,7 @@ from career_ratings import migrate_profile_ratings
 
 SAVE_FOLDER = "saves"
 
-PROFILE_VERSION = 7
+PROFILE_VERSION = 8
 
 PROFILE_SLOT_COUNT = 3
 
@@ -33,6 +35,7 @@ def get_profile_path(slot):
 def make_default_profile():
     return {
         "profile_version": PROFILE_VERSION,
+        "cryptid_creatures": new_collection(),
 
         "identity": {
             "name": "Player",
@@ -211,6 +214,7 @@ def save_profile(
 ):
     migrate_profile_ratings(profile_data)
     profile_data.setdefault("career", {}).setdefault("npc_world", {})
+    profile_data["cryptid_creatures"]=normalize_collection(profile_data.get("cryptid_creatures"),profile_data.get("progression",{}).get("level",1))
     profile_data["profile_version"] = PROFILE_VERSION
 
     os.makedirs(
@@ -222,16 +226,16 @@ def save_profile(
         slot
     )
 
-    with open(
-        path,
-        "w",
-        encoding="utf-8"
-    ) as file:
-        json.dump(
-            profile_data,
-            file,
-            indent=4
-        )
+    temporary=None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w",encoding="utf-8",dir=SAVE_FOLDER,suffix=".tmp",delete=False) as file:
+            temporary=file.name
+            json.dump(profile_data,file,indent=4)
+            file.flush()
+            os.fsync(file.fileno())
+        os.replace(temporary,path)
+    finally:
+        if temporary and os.path.exists(temporary):os.remove(temporary)
 
 
 # ==================================================
@@ -261,6 +265,7 @@ def load_profile(
 
     migrate_profile_ratings(data)
     data.setdefault("career", {}).setdefault("npc_world", {})
+    data["cryptid_creatures"]=normalize_collection(data.get("cryptid_creatures"),data.get("progression",{}).get("level",1))
     data["profile_version"] = PROFILE_VERSION
     return data
 

@@ -29,6 +29,8 @@ from crazy_eights_ui import (
     ACTION_SUIT as CRAZY_EIGHTS_ACTION_SUIT,
 )
 from bango import BangoGame
+from cryptid_creatures_ui import CryptidScreen
+from cryptid_collection import new_collection, normalize_collection, award_level_packs, reward_battle
 from bango_ui import (
     draw_bango,
     get_bango_action,
@@ -335,7 +337,7 @@ from career_rating_events import (
 
 from career_npc_world import ensure_career_world, advance_career_world, add_prospect
 from career_npc_development import development_stage
-from npc_portraits import draw_builtin_portrait
+from npc_portraits import draw_layered_portrait, register_player_avatar_art
 
 from career_fans import (
     MAX_FANS,
@@ -606,6 +608,7 @@ STATE_LEVEL_UP = "level_up"
 STATE_PROFILE_SELECT = "profile_select"
 STATE_MODE_SELECT = "mode_select"
 STATE_FREE_PLAY_SELECT = "free_play_select"
+STATE_CRYPTID_CREATURES = "cryptid_creatures"
 STATE_HOW_TO_PLAY = "how_to_play"
 STATE_ACHIEVEMENTS = "achievements"
 
@@ -2378,6 +2381,47 @@ def get_career_day_entry(day_number):
     return None
 
 
+def start_career_cryptid():
+    global current_state, current_game_mode
+    current_game_mode='career'
+    cryptid_screen.enter_career(NPCS,cryptid_collection_state,auto_save_career,settle_career_cryptid,
+                                temporary=globals().get("guest_mode",False) or globals().get("current_profile_slot",1) is None)
+    current_state=STATE_CRYPTID_CREATURES
+
+
+def leave_career_cryptid():
+    global current_state
+    if not cryptid_screen.claim_result():return False
+    try:auto_save_career()
+    except OSError:
+        cryptid_screen.notice='Could not save. Check the saves folder and retry Return.'
+        cryptid_screen.collection_view.message=cryptid_screen.notice
+        return False
+    current_state=STATE_CAREER_HUB
+    return True
+
+
+def settle_career_cryptid(serial,winner):
+    global player_xp,player_level,player_xp_to_next
+    previous=copy.deepcopy(cryptid_collection_state)
+    previous_progress=(player_xp,player_level,player_xp_to_next,list(level_up_queue))
+    previous_cosmetics={name:set(globals()[name]) for name in ('unlocked_menu_backgrounds','unlocked_felts','unlocked_titles') if name in globals()}
+    try:
+        result=reward_battle(cryptid_collection_state,serial,winner)
+        if result:
+            progression=add_player_xp(result['xp'])
+            level_up_queue.extend(progression['level_up_screens'])
+            auto_save_career()
+        return result
+    except OSError:
+        cryptid_collection_state.clear();cryptid_collection_state.update(previous)
+        player_xp,player_level,player_xp_to_next,queued=previous_progress
+        level_up_queue[:]=queued
+        for name,values in previous_cosmetics.items():
+            globals()[name].clear();globals()[name].update(values)
+        raise
+
+
 def save_career_from_hub():
     if guest_mode or current_profile_slot is None:
         career_hub_controls.show_message(
@@ -3062,6 +3106,8 @@ SEVEN_CARD_STUD_TABLE_SWEEP_RATING_BONUS = 100
 
 roulette_game = RouletteGame()
 horse_races_game = HorseRaceGame()
+cryptid_screen = CryptidScreen()
+cryptid_collection_state = new_collection()
 faro_game = FaroGame()
 five_o_poker_game = FiveOPokerGame()
 blind_mans_bluff_game = BlindMansBluffGame()
@@ -3545,7 +3591,7 @@ def get_npc_portrait_surface(npc, size):
             return image
         except (pygame.error, FileNotFoundError):
             pass
-    return draw_builtin_portrait(npc, size)
+    return draw_layered_portrait(npc, size)
 
 
 _country_flag_cache = {}
@@ -3898,6 +3944,8 @@ for i in range(1, 7):
 # ==================================================
 # MINI MENU BUTTON ASSETS
 # ==================================================
+
+register_player_avatar_art(avatar_bases, avatar_eyes, avatar_hair, avatar_glasses, avatar_tops)
 
 menu_button_icon = pygame.image.load(
     "assets/ui/gameplay/menu_button_icon.png"
@@ -4775,6 +4823,7 @@ play_return_rect = pygame.Rect(
 # ==================================================
 
 FREE_PLAY_GAME_IDS = (
+    "cryptid_creatures",
     "solitaire",
     "score_four",
     "crazy_eights",
@@ -4804,6 +4853,7 @@ FREE_PLAY_GAME_NAMES = {
     "faro": "Faro",
     "five_o_poker": "Five-O Poker",
     "blind_mans_bluff": "Blind Man's Bluff",
+    "cryptid_creatures": "Cryptid Creatures",
 }
 
 free_play_game_rects = {}
@@ -9304,6 +9354,11 @@ def start_free_play_game(game_id):
         current_state = STATE_DIFFICULTY
         return True
 
+    if game_id == "cryptid_creatures":
+        cryptid_screen.enter(NPCS)
+        current_state = STATE_CRYPTID_CREATURES
+        return True
+
     if game_id == "score_four":
         score_four_opponent_npc = None
         current_state = STATE_SCORE_FOUR_MODE_SELECT
@@ -9917,11 +9972,15 @@ def build_profile_save_data():
         "solitaire_deal_mode"
     ] = game.deal_mode
 
+    profile_data["cryptid_creatures"] = copy.deepcopy(globals().get("cryptid_collection_state", profile_data["cryptid_creatures"]))
     return profile_data
 
 def apply_profile_save_data(
         data
 ):
+    global cryptid_collection_state
+    from cryptid_collection import normalize_collection
+    cryptid_collection_state = normalize_collection(data.get('cryptid_creatures'),data.get('progression',{}).get('level',1))
     global profile_country_text
     global profile_age_text
     global profile_hometown_text
@@ -12646,6 +12705,8 @@ def get_unlock_asset_data(
     unlock_type,
     asset_id
 ):
+    if unlock_type == 'cryptid_pack':
+        return ({'name':f'{asset_id} Creature Card Packs'},None,'Cryptid Creatures')
     if unlock_type == "background":
         return (
             MENU_BACKGROUNDS[asset_id],
@@ -13177,6 +13238,10 @@ def add_player_xp(amount):
                 )
             )
 
+            if globals().get('cryptid_collection_state') is not None:
+                from cryptid_collection import award_level_packs
+                packs=award_level_packs(cryptid_collection_state,level)
+                if packs:level_unlocks.append(('cryptid_pack',str(packs)))
             unlocked_items.extend(
                 level_unlocks
             )
@@ -23086,6 +23151,7 @@ def draw_level_up_screen():
         rows = (count + columns - 1) // columns
         gap_x = 28
         gap_y = 20
+        card_height = min(card_height, (430 - max(0, rows - 1) * gap_y) // rows)
         total_height = rows * card_height + max(0, rows - 1) * gap_y
         start_y = 165 + max(0, (430 - total_height) // 2)
 
@@ -23128,7 +23194,7 @@ def draw_level_up_screen():
                 asset_id,
             )
 
-            preview_height = 105 if card_height >= 210 else 82
+            preview_height = min(105 if card_height >= 210 else 82, max(30, card_height - 95))
             if asset_surface is not None:
                 preview = scale_surface_to_fit(
                     asset_surface,
@@ -23978,6 +24044,12 @@ while running:
         # FREE PLAY SELECT
         # ==========================================
 
+        elif current_state == STATE_CRYPTID_CREATURES:
+            if cryptid_screen.handle_event(event, game_mouse_pos) == "return":
+                if cryptid_screen.career_mode:
+                    leave_career_cryptid()
+                else:leave_free_play_game()
+
         elif current_state == STATE_FREE_PLAY_SELECT:
             if (
                     event.type == pygame.MOUSEBUTTONDOWN
@@ -24038,6 +24110,8 @@ while running:
                         save_career_from_hub()
                     elif hub_action == "switch":
                         begin_career_profile_switch()
+                    elif hub_action == "cryptid":
+                        start_career_cryptid()
                     elif hub_action == "profile":
                         profile_return_state = STATE_CAREER_HUB
                         profile_name_text = player_name
@@ -29334,6 +29408,11 @@ while running:
 
 
 
+
+    elif current_state == STATE_CRYPTID_CREATURES:
+        cryptid_screen.sfx_volume = audio.sfx_volume
+        cryptid_screen.update(pygame.time.get_ticks())
+        cryptid_screen.draw(game_surface, menu_mouse_pos)
 
     elif current_state == STATE_FREE_PLAY_SELECT:
 

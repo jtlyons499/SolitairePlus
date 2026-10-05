@@ -91,7 +91,7 @@ class RatingTests(unittest.TestCase):
                                   "leaderboard_state": {"rival": {"rating": 2000, "age": 71}}}}
                 Path(profile_module.get_profile_path(slot)).write_text(json.dumps(old), encoding="utf-8")
                 loaded = profile_module.load_profile(slot)
-                self.assertEqual(loaded["profile_version"], 7)
+                self.assertEqual(loaded["profile_version"], profile_module.PROFILE_VERSION)
                 self.assertEqual(loaded["career"]["rating"], 1000 + slot * 100)
                 profile_module.save_profile(loaded, slot)
                 self.assertEqual(profile_module.load_profile(slot), loaded)

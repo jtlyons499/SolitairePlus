@@ -115,7 +115,8 @@ class SevenCardStudGame(TexasHoldemGame):
     # ==================================================
 
     def get_hand_deal_order(self):
-        live = set(self.get_live_player_indexes())
+        # An all-in ante must not remove a participant from the initial deal.
+        live = set(self.hand_seat_indexes)
 
         if not live:
             return []
@@ -1210,6 +1211,8 @@ class SevenCardStudGame(TexasHoldemGame):
         context["stage"] = self.current_stage
         context["position"] = "unknown"
         context["fixed_limit"] = True
+        for read in context["opponent_reads"]:
+            read["exposed_cards"] = [dict(card) for card in self.get_exposed_cards(read["seat"])]
         context["street_bet"] = (
             self.get_street_bet_size()
         )
@@ -1889,4 +1892,3 @@ class SevenCardStudGame(TexasHoldemGame):
         return HAND_NAMES[
             result[0][0]
         ]
-

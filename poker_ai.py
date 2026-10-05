@@ -1,3 +1,4 @@
+from poker_strategy import strategic_context, strategic_fraction, effective_wager_cap
 import random
 from npc_personality import get_npc_traits, build_trait_profile
 
@@ -688,6 +689,8 @@ def choose_poker_open_bet_amount(
             * _clamp(strength)
         )
 
+    fraction = strategic_fraction(context, fraction)
+
     amount = int(
         pot * fraction
     )
@@ -696,6 +699,8 @@ def choose_poker_open_bet_amount(
         minimum,
         amount
     )
+
+    maximum = effective_wager_cap(context, minimum, maximum)
 
     return min(
         amount,
@@ -827,6 +832,9 @@ def choose_poker_raise_to_amount(
             * _clamp(strength)
         )
 
+    fraction = strategic_fraction(context, fraction)
+    soft_maximum = effective_wager_cap(context, minimum_raise_to, soft_maximum)
+
     additional_raise = int(
         max(
             pot,
@@ -858,7 +866,15 @@ def choose_poker_raise_to_amount(
 # DECISION ENGINE
 # ==================================================
 
-def decide_poker_action(
+def decide_poker_action(personality, context, rng=None):
+    # Enrich only after Draw/Stud have added their public variant-specific facts.
+    enriched = strategic_context(context)
+    decision = _decide_trait_action(personality, enriched, rng)
+    decision["strategy"] = dict(enriched["advanced_strategy"])
+    return decision
+
+
+def _decide_trait_action(
         personality,
         context,
         rng=None
@@ -879,6 +895,13 @@ def decide_poker_action(
         "personality_traits": context.get("personality_traits", {}),
     })
     profile = build_trait_profile(traits, rng=rng)
+    strategy = context.get("advanced_strategy", {})
+    if strategy.get("enabled"):
+        profile["bluff_chance"] = _clamp(profile["bluff_chance"] + strategy["bluff_delta"], 0, .42)
+        profile["open_base"] = _clamp(profile["open_base"] + strategy["raise_delta"], .005, .8)
+        profile["raise_chance"] = _clamp(profile["raise_chance"] + strategy["raise_delta"], .02, .95)
+        profile["raise_threshold"] = _clamp(profile["raise_threshold"] + strategy["raise_threshold_delta"], .20, .92)
+        profile["trap_chance"] = _clamp(profile["trap_chance"] + strategy["trap_delta"], 0, .35)
     t = profile["trait_units"]
     grudge = float(context.get("grudge_pressure", 0.0)) * t["bitterness"]
     survival_risk = max(0.0, min(1.0, context.get("amount_to_call", 0)
@@ -988,6 +1011,7 @@ def decide_poker_action(
         0.075 * (1.0 - skill_factor)
         + 0.14 * t["unpredictability"]
     )
+    noise_width *= 1.0 - .45*strategy.get("weight", 0)
 
     perceived_strength = _clamp(
         strength
@@ -1188,6 +1212,7 @@ def decide_poker_action(
     ]
 
     required_strength -= position_call_bonus
+    required_strength += strategy.get("call_requirement_delta", 0)
     required_strength += 0.19*pessimism + 0.28*survival
     required_strength -= 0.20*grudge
 
@@ -1380,4 +1405,3 @@ def decide_poker_action(
         "pot_odds": pot_odds,
         "required_strength": required_strength,
     }
-

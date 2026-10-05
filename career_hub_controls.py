@@ -22,8 +22,8 @@ class CareerHubControls:
         self.toolbar_rects = {}
         x = 335
         for action, width in (
-            ("save", 98), ("profile", 98), ("switch", 114),
-            ("options", 92), ("customize", 110), ("skip_to_day", 264),
+            ("save", 82), ("profile", 82), ("switch", 106),
+            ("options", 84), ("customize", 100), ("skip_to_day", 158), ("cryptid",140),
         ):
             self.toolbar_rects[action] = pygame.Rect(x, 733, width, 27)
             x += width + 8
@@ -117,10 +117,11 @@ class CareerHubControls:
         labels = {
             "save": "Save", "profile": "Profile", "switch": "Switch Profile",
             "options": "Options", "customize": "Customize",
+            "cryptid": "Cryptid Cards",
             "skip_to_day": (
-                f"Skip to this day: {self.selected_day}"
+                f"Skip to day: {self.selected_day}"
                 if self.selected_day in self.future_days
-                else "Select a future calendar day"
+                else "Select future day"
             ),
         }
         for action, rect in self.toolbar_rects.items():
