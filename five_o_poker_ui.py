@@ -1,4 +1,5 @@
 import pygame
+from poker_speech import is_poker_chat_popups_enabled
 
 from poker_core import format_poker_display_name
 
@@ -221,6 +222,17 @@ def draw_five_o_poker(
     npc_stack = detail_font.render(f"Stack: ${game.npc_stack:,}", True, CREAM)
     surface.blit(npc_stack, (230, 151))
 
+    if getattr(game, "last_npc_chat", "") and is_poker_chat_popups_enabled():
+        lines = [""]
+        for word in game.last_npc_chat.split():
+            candidate = (lines[-1] + " " + word).strip()
+            if detail_font.size(candidate)[0] > 210 and lines[-1]:
+                lines.append(word)
+            else:
+                lines[-1] = candidate
+        for row, line in enumerate(lines[:3]):
+            surface.blit(_fit_line(detail_font, line, 210, GOLD), (132, 220 + row*20))
+
     player_label = label_font.render(str(player_name or "Player"), True, WHITE)
     surface.blit(player_label, (132, 522))
     player_stack = detail_font.render(f"Stack: ${game.player_stack:,}", True, CREAM)
@@ -393,3 +405,4 @@ def draw_five_o_poker(
         (215, 222, 218),
     )
     surface.blit(session, session.get_rect(midleft=(126, 714)))
+

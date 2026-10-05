@@ -422,6 +422,7 @@ class Game:
     def get_deal_status_label(self):
         labels = {
             "verified": "VERIFIED SOLVABLE",
+            "race_verified": "RACE / PROVEN DRAW-1",
             "random": "RANDOM / UNVERIFIED",
             "modified": "SHUFFLED / UNVERIFIED",
             "challenge_unverified": "CHALLENGE / UNVERIFIED",
@@ -434,6 +435,15 @@ class Game:
     # --------------------------------------------------
     # New game
     # --------------------------------------------------
+
+    def new_race_game(self):
+        from solitaire_race_deals import build_race_deal
+        tableau, stock, metadata = build_race_deal()
+        self.new_game()
+        self.tableau = tableau
+        self.stock = stock
+        self.race_deal_metadata = metadata
+        self.deal_status = "race_verified"
 
     def new_game(self, play_shuffle=True):
         deck = create_deck()

@@ -1,6 +1,8 @@
 import json
 import os
 
+from career_ratings import migrate_profile_ratings
+
 
 # ==================================================
 # SAVE CONFIG
@@ -8,7 +10,7 @@ import os
 
 SAVE_FOLDER = "saves"
 
-PROFILE_VERSION = 5
+PROFILE_VERSION = 6
 
 PROFILE_SLOT_COUNT = 3
 
@@ -70,8 +72,10 @@ def make_default_profile():
 
             "rating": 1000,
 
-            # Per-game rating scaffolding. ``rating`` remains the legacy
-            # overall value for backward compatibility with existing UI.
+            # Overall is derived from the seven game ratings. The legacy
+            # field mirrors it for job unlocks and older UI callers.
+            "rating_schema_version": 2,
+            "rating_results": {},
             "ratings": {
                 "overall": 1000,
                 "solitaire": 1000,
@@ -204,6 +208,9 @@ def save_profile(
         profile_data,
         slot=1
 ):
+    migrate_profile_ratings(profile_data)
+    profile_data["profile_version"] = PROFILE_VERSION
+
     os.makedirs(
         SAVE_FOLDER,
         exist_ok=True
@@ -250,6 +257,8 @@ def load_profile(
             file
         )
 
+    migrate_profile_ratings(data)
+    data["profile_version"] = PROFILE_VERSION
     return data
 
 

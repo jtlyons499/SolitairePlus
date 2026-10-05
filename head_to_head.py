@@ -84,29 +84,8 @@ def select_head_to_head_opponents(leaderboard, player_rating, count=4):
 
 
 def calculate_head_to_head_rating_reward(player_rating, opponent_rating, won):
-    """Legacy-compatible positive rating reward for the current Career system."""
-    try:
-        player_rating = int(player_rating)
-    except (TypeError, ValueError):
-        player_rating = 1000
-    try:
-        opponent_rating = int(opponent_rating)
-    except (TypeError, ValueError):
-        opponent_rating = 1000
-
-    gap = opponent_rating - player_rating
-
-    if won:
-        # Beating somebody above you is worth more; farming much weaker players
-        # still moves Career forward, but less efficiently.
-        bonus = int(round(gap / 22.0))
-        return int(_clamp(70 + bonus, 45, 115))
-
-    # The current Career rating architecture awards small positive participation
-    # gains even on losses in several side games. Preserve that convention until
-    # the planned true rating rewrite lands.
-    consolation = 12 + max(0, int(round(gap / 80.0)))
-    return int(_clamp(consolation, 8, 25))
+    from career_ratings import elo_delta
+    return elo_delta(player_rating, opponent_rating, 1 if won else 0)
 
 
 class HeadToHeadRace:
@@ -126,6 +105,7 @@ class HeadToHeadRace:
         self.card_completion_ms = []
         self.npc_progress_cards = 0
         self.winner = None
+        self.reward_claimed = False
         self.finished_ms = None
 
     def prepare(self, opponent, player_rating=1000, now_ms=0):
@@ -239,3 +219,4 @@ class HeadToHeadRace:
         if remaining <= 0:
             return "GO!"
         return str(max(1, int(math.ceil(remaining / 1000.0))))
+

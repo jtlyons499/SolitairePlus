@@ -370,7 +370,7 @@ def draw_crazy_eights(
 
         if game.winner_index == 0:
             reward = fonts["small"].render(
-                "Career reward: +60 Overall Rating and fan gain",
+                "Career reward: XP and fans",
                 True,
                 (205, 230, 205),
             )
@@ -408,3 +408,4 @@ def get_crazy_eights_action(mouse_pos, game):
         return (ACTION_DRAW, None)
 
     return None
+

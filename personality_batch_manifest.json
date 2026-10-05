@@ -1,0 +1,77 @@
+{
+  "source_commit": "59db8e5321ccdcdba119ec93273bf42cf26d16d9",
+  "files": [
+    {
+      "path": "blind_mans_bluff.py",
+      "sha256": "34516eb3dfb4f5c21a9ad10e6b592189c801dcd5a6fcaba29185fd193bb9694a"
+    },
+    {
+      "path": "blind_mans_bluff_ui.py",
+      "sha256": "b4a0107020c529dd1f403bdaf7c22fd0e72e0ea468f8c0e59ec9e75033067add"
+    },
+    {
+      "path": "crazy_eights.py",
+      "sha256": "2a8158b43bcb25ba94b580d7a822d265274f72898d345b6a7d8a3459268a5b61"
+    },
+    {
+      "path": "data/npcs.json",
+      "sha256": "e2aa76e7880c093b29d3cd789a2130b69a7dd0bcd0506b1ea42810d55882741e"
+    },
+    {
+      "path": "debug_poker_select.py",
+      "sha256": "3bac269e9a1290d947f0f2b85c5e5c3291ae486d96979ca06c72ec2a61e38292"
+    },
+    {
+      "path": "five_card_draw.py",
+      "sha256": "4725553799d6f8cab0175484227a4acd4b5b4a8f292cdc75297dc74d4991384c"
+    },
+    {
+      "path": "five_o_poker.py",
+      "sha256": "dfae867428be8c26681df66c35dc6465d94714a474ed2f50c33e8a5be9a18b58"
+    },
+    {
+      "path": "five_o_poker_ui.py",
+      "sha256": "a14392f6f23a2550b55409dc6d95285104c15167bb181f001da244653593a0d2"
+    },
+    {
+      "path": "main.py",
+      "sha256": "6d06fd8ffb6dc92cd7cb174999cd0f800e083c5e4bc6c2996c2362973d399850"
+    },
+    {
+      "path": "npc_manager.py",
+      "sha256": "d389148c471636ef16cf28c5e6799c5ea9791da9f1e086d7e0aecf87b5481f5c"
+    },
+    {
+      "path": "npc_personality.py",
+      "sha256": "5462c40eff77099392b5ec8a78b1419fd1bdfdc22f2723ec68cf9805bdcb8799"
+    },
+    {
+      "path": "npc_personality_chat.py",
+      "sha256": "0eb740458dec606ee649e421ad6e7d7c6b137b9612c5981b6d29c33c9d046ef9"
+    },
+    {
+      "path": "npc_personality_ui.py",
+      "sha256": "5e143a7aaa63e208f79dd8181fd78d4eee755652b1da404278ff8d41b76ad5ce"
+    },
+    {
+      "path": "poker_ai.py",
+      "sha256": "b65f8b6775b91ec39c45dc92c2705c408da1448886716a3477af30c0b30f2f07"
+    },
+    {
+      "path": "seven_card_stud.py",
+      "sha256": "1b0d608e539b3e2558bdf0365041919498cdc70166aa9d02ffddcc429618a7ff"
+    },
+    {
+      "path": "tests/test_personality_overhaul.py",
+      "sha256": "c255beecbb599aab2a76b8f051f1b808b9ad4bbafbd6b86930457e9410b27a3d"
+    },
+    {
+      "path": "texas_holdem.py",
+      "sha256": "7432c162b78fb9f2371281895210303f7e21b8eb3fbdd2ced520b61d5898a1ca"
+    },
+    {
+      "path": "texas_holdem_chat.py",
+      "sha256": "ac27500b56030b996c8de05fe244ec03b2a4618418e9dd9704d77918364941ec"
+    }
+  ]
+}

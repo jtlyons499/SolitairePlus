@@ -1,4 +1,5 @@
 import random
+from npc_personality import personality_summary
 import pygame
 
 ACTION_BACK = "back"
@@ -162,7 +163,7 @@ def draw_debug_poker_npc_select(
             tier = str(npc.get("skill_tier", "unknown")).replace("_", " ").title()
             age = npc.get("age", "?")
             hometown = str(npc.get("hometown", "Unknown"))
-            personality = str(npc.get("game_personality", "balanced")).replace("_", " ").title()
+            personality = personality_summary(npc).split(" / ")[0]
             line1 = fonts["large"].render(f"Seat {slot_index + 1}: {name}", True, WHITE)
             line2 = fonts["small"].render(
                 f"{tier}  |  {personality}  |  Age {age}  |  {hometown}",
@@ -200,3 +201,4 @@ def get_debug_poker_select_action(mouse_pos, can_start=True):
         if RIGHT_RECTS[slot_index].collidepoint(mouse_pos):
             return (ACTION_CYCLE, (slot_index, 1))
     return None
+

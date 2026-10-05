@@ -2,12 +2,14 @@ import pygame
 
 from niche_poker_common import RANK_VALUES
 from poker_core import format_poker_display_name
+from poker_speech import is_poker_chat_popups_enabled
 
 
 ACTION_RETURN = "return"
 ACTION_NEXT_HAND = "next_hand"
 ACTION_CHECK = "check"
 ACTION_BET = "bet"
+ACTION_RAISE = "raise"
 ACTION_CALL = "call"
 ACTION_FOLD = "fold"
 
@@ -32,12 +34,13 @@ BLUFF_ACTION_RECTS = {
     ACTION_FOLD: pygame.Rect(800, 690, 135, 44),
     ACTION_CHECK: pygame.Rect(945, 690, 150, 44),
     ACTION_CALL: pygame.Rect(945, 690, 150, 44),
-    ACTION_BET: pygame.Rect(1105, 690, 150, 44),
+    ACTION_BET: pygame.Rect(1105, 690, 180, 44),
+    ACTION_RAISE: pygame.Rect(1105, 690, 180, 44),
 }
 
 NPC_CENTERS = (
     (310, 220),
-    (683, 160),
+    (683, 190),
     (1056, 220),
 )
 
@@ -115,6 +118,9 @@ def _draw_button(surface, rect, text, mouse_pos, font, enabled=True, accent=Fals
     pygame.draw.rect(surface, fill, rect, border_radius=8)
     pygame.draw.rect(surface, border, rect, 3 if hovered else 2, border_radius=8)
     label = font.render(text, True, color)
+    if label.get_width() > rect.width - 14:
+        factor = (rect.width - 14) / label.get_width()
+        label = pygame.transform.smoothscale(label, (rect.width - 14, max(1, round(label.get_height()*factor))))
     surface.blit(label, label.get_rect(center=rect.center))
 
 
@@ -146,14 +152,14 @@ def get_blind_mans_bluff_action(mouse_pos, game):
 
     actions = set(game.get_player_actions())
 
-    if ACTION_BET in actions:
+    if ACTION_BET in actions or ACTION_RAISE in actions:
         available_labels = {label for label, _ in game.get_player_bet_presets()}
         for label, rect in BET_PRESET_RECTS.items():
             if label in available_labels and rect.collidepoint(mouse_pos):
                 _selected_bet_label = label
                 return None
 
-    for action in (ACTION_FOLD, ACTION_CHECK, ACTION_CALL, ACTION_BET):
+    for action in (ACTION_FOLD, ACTION_CHECK, ACTION_CALL, ACTION_BET, ACTION_RAISE):
         if action in actions and BLUFF_ACTION_RECTS[action].collidepoint(mouse_pos):
             return action
     return None
@@ -185,7 +191,7 @@ def draw_blind_mans_bluff(
     pygame.draw.ellipse(surface, (225, 214, 178), inner, 2)
 
     opener_name = game.get_name(getattr(game, "opening_index", 0))
-    opener_badge = pygame.Rect(555, 86, 256, 34)
+    opener_badge = pygame.Rect(150, 28, 256, 34)
     badge = pygame.Surface(opener_badge.size, pygame.SRCALPHA)
     badge.fill((12, 27, 23, 205))
     surface.blit(badge, opener_badge.topleft)
@@ -227,6 +233,14 @@ def draw_blind_mans_bluff(
         if game.hand_complete and table_index in game.last_winner_indexes:
             pygame.draw.rect(surface, GOLD, card_rect.inflate(8, 8), 4, border_radius=7)
 
+        chat = game.last_chat[table_index] if table_index < len(game.last_chat) else ""
+        if chat and is_poker_chat_popups_enabled():
+            text = detail_font.render(chat, True, GOLD)
+            if text.get_width() > 250:
+                scale = 250 / text.get_width()
+                text = pygame.transform.smoothscale(text, (250, max(1, round(text.get_height()*scale))))
+            surface.blit(text, text.get_rect(center=(cx, cy + 154)))
+
         if table_index < len(game.last_actions) and game.last_actions[table_index]:
             action = detail_font.render(game.last_actions[table_index], True, (225, 230, 227))
             surface.blit(action, action.get_rect(center=(cx, cy + 132)))
@@ -252,20 +266,23 @@ def draw_blind_mans_bluff(
     player_label = label_font.render(str(player_name or "Player"), True, WHITE)
     surface.blit(player_label, player_label.get_rect(center=(683, 627)))
 
-    status_rect = pygame.Rect(438, 305, 490, 142)
+    status_rect = pygame.Rect(438, 355, 490, 105)
     status_panel = pygame.Surface(status_rect.size, pygame.SRCALPHA)
     status_panel.fill((13, 26, 23, 218))
     surface.blit(status_panel, status_rect.topleft)
     pygame.draw.rect(surface, (137, 158, 148), status_rect, 2, border_radius=12)
 
     pot = label_font.render(f"Pot: ${game.pot:,}", True, GOLD)
-    surface.blit(pot, pot.get_rect(center=(683, 330)))
+    surface.blit(pot, pot.get_rect(center=(683, 374)))
+    stake_text = (f"Bet ${game.current_bet:,}  •  Minimum raise to ${game.get_minimum_raise_to():,}"
+                  if game.current_bet and not game.hand_complete else
+                  f"Ante ${game.ante:,}  •  Open ${game.get_min_open_bet():,}-${game.get_max_open_bet():,}")
     stakes = detail_font.render(
-        f"Ante ${game.ante:,}  •  Open ${game.get_min_open_bet():,}-${game.get_max_open_bet():,}",
+        stake_text,
         True,
         CREAM,
     )
-    surface.blit(stakes, stakes.get_rect(center=(683, 361)))
+    surface.blit(stakes, stakes.get_rect(center=(683, 399)))
 
     visible_cards = [
         game.cards[index]
@@ -278,10 +295,10 @@ def draw_blind_mans_bluff(
     else:
         info_text = game.result_text
     info = detail_font.render(info_text, True, WHITE)
-    surface.blit(info, info.get_rect(center=(683, 395)))
+    surface.blit(info, info.get_rect(center=(683, 422)))
 
     if game.bet_state == "player_response" and not game.hand_complete:
-        response_text = f"Facing ${game.current_bet:,}: call blind or fold."
+        response_text = f"Call ${game.get_player_amount_to_call():,}, raise, or fold blind."
     elif game.bet_state == "player_last_open" and not game.hand_complete:
         response_text = "Everyone checked before you. Check behind or choose an opening size."
     elif not game.hand_complete:
@@ -291,7 +308,7 @@ def draw_blind_mans_bluff(
 
     if response_text:
         response = detail_font.render(response_text, True, (235, 215, 155))
-        surface.blit(response, response.get_rect(center=(683, 425)))
+        surface.blit(response, response.get_rect(center=(683, 446)))
 
     actions = set(game.get_player_actions())
     if not game.hand_complete:
@@ -300,8 +317,8 @@ def draw_blind_mans_bluff(
         if ACTION_CHECK in actions:
             _draw_button(surface, BLUFF_ACTION_RECTS[ACTION_CHECK], "CHECK", mouse_pos, label_font)
         if ACTION_CALL in actions:
-            _draw_button(surface, BLUFF_ACTION_RECTS[ACTION_CALL], f"CALL ${game.current_bet:,}", mouse_pos, label_font)
-        if ACTION_BET in actions:
+            _draw_button(surface, BLUFF_ACTION_RECTS[ACTION_CALL], f"CALL ${game.get_player_amount_to_call():,}", mouse_pos, label_font)
+        if ACTION_BET in actions or ACTION_RAISE in actions:
             presets = game.get_player_bet_presets()
             available = {label: amount for label, amount in presets}
             for label, rect in BET_PRESET_RECTS.items():
@@ -319,8 +336,8 @@ def draw_blind_mans_bluff(
             bet_amount = get_blind_mans_bluff_bet_amount(game)
             _draw_button(
                 surface,
-                BLUFF_ACTION_RECTS[ACTION_BET],
-                f"BET ${bet_amount:,}",
+                BLUFF_ACTION_RECTS[ACTION_RAISE if ACTION_RAISE in actions else ACTION_BET],
+                f"{'RAISE TO' if ACTION_RAISE in actions else 'BET'} ${bet_amount:,}",
                 mouse_pos,
                 label_font,
                 accent=True,
@@ -340,3 +357,4 @@ def draw_blind_mans_bluff(
         (216, 222, 219),
     )
     surface.blit(session, (156, 702))
+

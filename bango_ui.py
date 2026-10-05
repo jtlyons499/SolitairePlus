@@ -291,7 +291,7 @@ def draw_bango(
 
         if game.winner_index == 0:
             reward = fonts["small"].render(
-                "Career reward: +35 Overall Rating and fan gain",
+                "Career reward: XP and fans",
                 True,
                 (205, 230, 210),
             )
@@ -316,3 +316,4 @@ def get_bango_action(mouse_pos, game):
         return ACTION_CALL
 
     return None
+

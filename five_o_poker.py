@@ -1,4 +1,6 @@
 import random
+from npc_personality import get_npc_traits, trait_units, PokerGrudgeMemory, npc_identity
+from npc_personality_chat import trait_chat
 import time
 
 from niche_poker_common import (
@@ -35,6 +37,8 @@ class FiveOPokerGame:
     def __init__(self, rng=None):
         self.rng = rng or random.Random()
         self.npc = None
+        self.personality_memory = PokerGrudgeMemory()
+        self.last_npc_chat = ""
         self.starting_stack = 0
         self.player_stack = 0
         self.npc_stack = 0
@@ -85,6 +89,8 @@ class FiveOPokerGame:
     # --------------------------------------------------
 
     def start_session(self, npc, starting_stack):
+        self.personality_memory.clear()
+        self.last_npc_chat = ""
         self.npc = npc or {"name": "Opponent", "skill_tier": "mid"}
         self.starting_stack = max(0, int(starting_stack))
         self.player_stack = self.starting_stack
@@ -128,6 +134,7 @@ class FiveOPokerGame:
             return False
 
         self.hand_number += 1
+        self.last_npc_chat = ""
         self.deck = build_standard_deck(self.rng)
         self.player_columns = [[] for _ in range(5)]
         self.npc_columns = [[] for _ in range(5)]
@@ -242,7 +249,9 @@ class FiveOPokerGame:
             ]
             opponent_value = self._partial_hand_value(visible_player)
             catchup_bonus = max(-4.0, min(4.0, opponent_value - own_value)) * 0.20
-            noise = self.rng.uniform(-1.5, 1.5) * (1.0 - skill)
+            t = trait_units(get_npc_traits(self.npc))
+            noise = self.rng.uniform(-1.5, 1.5) * ((1.0 - skill) + 0.45*t["unpredictability"])
+            catchup_bonus *= 0.65 + 0.70*t["selectivity"]
             scored.append((own_value + catchup_bonus + noise, index))
 
         scored.sort(reverse=True)
@@ -394,6 +403,7 @@ class FiveOPokerGame:
         amount_to_call = self.current_bet if facing_bet else 0
         context = {
             "stage": "showdown_bet",
+            "personality_traits": get_npc_traits(self.npc),
             "position": "unknown",
             "hand_strength": strength,
             "skill_factor": get_poker_skill_factor(self.npc),
@@ -406,7 +416,14 @@ class FiveOPokerGame:
             "minimum_open_bet": self.get_effective_bet_unit(),
             "maximum_open_bet": self.get_effective_bet_unit(),
         }
-        return decide_poker_action(personality, context, rng=self.rng)
+        grudge = self.personality_memory.intensity(npc_identity(self.npc, 1), "player",
+                                                   self.hand_number, get_npc_traits(self.npc)["bitterness"])
+        context.update(grudge_pressure=grudge if facing_bet else 0.0,
+                       last_raiser=0 if facing_bet else None)
+        decision = decide_poker_action(personality, context, rng=self.rng)
+        if self.rng.random() < 0.25:
+            self.last_npc_chat = trait_chat(self.npc, decision["action"], self.rng, "You", grudge)
+        return decision
 
     def player_check(self):
         if "check" not in self.get_player_actions():
@@ -543,6 +560,9 @@ class FiveOPokerGame:
                 f"{self.npc_column_wins} with ties. Pot split."
             )
 
+        if self.last_winner == "player":
+            self.personality_memory.record_loss(npc_identity(self.npc, 1), "player",
+                                                self.hand_number, get_npc_traits(self.npc)["bitterness"])
         self.pot = 0
         self.pending_showdown_result_text = final_text
         self.result_text = "Showdown: revealing column 1 of 5..."
@@ -621,3 +641,4 @@ class FiveOPokerGame:
             and self.player_stack >= self.ante
             and self.npc_stack >= self.ante
         )
+

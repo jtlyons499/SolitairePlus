@@ -43,6 +43,8 @@ class SevenCardStudGame(TexasHoldemGame):
         "seventh",
     )
 
+    rating_game_key = "seven_card_stud"
+
     def __init__(self):
         super().__init__()
 
@@ -1685,6 +1687,7 @@ class SevenCardStudGame(TexasHoldemGame):
             self.last_pot_awards.append(
                 {
                     "amount": pot_amount,
+                    "eligible": eligible.copy(),
                     "winners": winners.copy(),
                     "share": share,
                     "remainder": remainder,
@@ -1830,6 +1833,8 @@ class SevenCardStudGame(TexasHoldemGame):
             },
         )
 
+        self.record_personality_showdown(results)
+
         self.pot = 0
         self.hand_complete = True
         self.current_actor = -1
@@ -1843,6 +1848,7 @@ class SevenCardStudGame(TexasHoldemGame):
             newly_busted
         )
 
+        self.finalize_showdown_display_state()
         return True
 
     def get_player_hand_name(self):
@@ -1883,3 +1889,4 @@ class SevenCardStudGame(TexasHoldemGame):
         return HAND_NAMES[
             result[0][0]
         ]
+

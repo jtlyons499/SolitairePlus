@@ -1495,6 +1495,10 @@ def draw_roulette(
             "Place a bet"
         )
 
+    show_rating = roulette_game.round_complete and getattr(roulette_game, "rating_change", None) is not None
+    if show_rating:
+        status_text += f"  |  Rating {roulette_game.rating_change:+}"
+
     status_surface = (
         detail_font.render(
             status_text,
@@ -1503,11 +1507,18 @@ def draw_roulette(
         )
     )
 
+    available_width = roulette_info_rect.width - 22
+    if status_surface.get_width() > available_width:
+        ratio = available_width / status_surface.get_width()
+        status_surface = pygame.transform.smoothscale(
+            status_surface, (available_width, max(1, int(status_surface.get_height() * ratio)))
+        )
+
     status_rect = (
         status_surface.get_rect(
             center=(
                 roulette_info_rect.centerx,
-                515
+                512 if show_rating else 515
             )
         )
     )
@@ -1516,6 +1527,7 @@ def draw_roulette(
         status_surface,
         status_rect
     )
+
 
     # ==================================================
     # Buttons

@@ -1,5 +1,6 @@
 import json
 import random
+from npc_personality import get_npc_traits
 from pathlib import Path
 
 
@@ -18,7 +19,10 @@ def load_npcs():
             encoding="utf-8"
     ) as file:
 
-        return json.load(file)
+        roster = json.load(file)
+        for npc in roster:
+            npc["personality_traits"] = get_npc_traits(npc)
+        return roster
 
 
 NPCS = load_npcs()
@@ -199,3 +203,4 @@ def get_score_four_opponent_choices():
             )
 
     return choices
+

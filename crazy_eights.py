@@ -1,4 +1,5 @@
 import random
+from npc_personality import get_npc_traits, trait_units
 import time
 from collections import Counter
 
@@ -339,9 +340,9 @@ class CrazyEightsGame:
         npc_index = player_index - 1
         npc = self.npcs[npc_index] if 0 <= npc_index < len(self.npcs) else {}
         tier = str(npc.get("skill_tier", "mid")).lower()
-        personality = str(npc.get("game_personality", "balanced")).lower()
+        t = trait_units(get_npc_traits(npc))
 
-        if tier == "low" or personality == "unpredictable":
+        if tier == "low" or random.random() < 0.45*t["unpredictability"]:
             return random.choice(playable_indexes)
 
         hand = self.hands[player_index]
@@ -370,10 +371,11 @@ class CrazyEightsGame:
             if card["rank"] in ("K", "Q", "J", "10"):
                 value += 2
 
-            if personality in ("aggressive", "escalator"):
-                value += random.uniform(0.0, 3.0)
-            else:
-                value += random.uniform(0.0, 1.5)
+            if card["rank"] in ("K", "Q", "J", "10"):
+                value += 3.0*t["aggressiveness"]
+            value += random.uniform(0.0, 0.75 + 3.0*t["unpredictability"])
+            if card["rank"] == "8":
+                value -= 4.0*t["caution"]
 
             return value
 
@@ -520,3 +522,4 @@ class CrazyEightsGame:
         self.last_action_text = str(text)
         self.action_log.append(self.last_action_text)
         self.action_log = self.action_log[-8:]
+

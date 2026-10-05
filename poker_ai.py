@@ -1,4 +1,5 @@
 import random
+from npc_personality import get_npc_traits, build_trait_profile
 
 
 # ==================================================
@@ -176,6 +177,9 @@ def get_effective_poker_personality(
 
 
 def get_poker_personality_profile(personality):
+    if isinstance(personality, dict):
+        return build_trait_profile(get_npc_traits(personality))
+
     personality = str(
         personality or "balanced"
     ).strip().lower()
@@ -190,9 +194,17 @@ def get_poker_personality_profile(personality):
     )
 
 
-def get_poker_skill_factor(npc):
+def get_poker_skill_factor(npc, game_key=None):
     if not isinstance(npc, dict):
         return POKER_SKILL_FACTORS["mid"]
+
+    ratings = npc.get("career_ratings", {})
+    if game_key and isinstance(ratings, dict) and game_key in ratings:
+        try:
+            rating = int(ratings[game_key])
+            return max(0.20, min(0.97, 0.35 + (rating - 800) * 0.00030))
+        except (TypeError, ValueError, OverflowError):
+            pass
 
     skill_tier = str(
         npc.get(
@@ -579,6 +591,23 @@ def _get_memory_adjustments(
 # BET / RAISE SIZING
 # ==================================================
 
+def _grudge_knockout_target(context, profile, strength, minimum, maximum):
+    if context.get("fixed_limit"):
+        return None
+    t = profile.get("trait_units", {})
+    resentment = context.get("grudge_intensity", 0.0) * t.get("bitterness", 0.0)
+    target = int(context.get("grudge_target_round_total", 0))
+    own_total = context.get("current_round_bet", 0) + context.get("stack", 0)
+    # Only deliberate, severe grudges bypass the soft street cap. Tenacity
+    # still blocks a reckless near-all-in attack with a poor hand.
+    if (resentment >= 0.55 and strength >= 0.44
+            and minimum <= target <= maximum
+            and (t.get("tenacity", 0.5) < 0.7 or strength >= 0.80
+                 or target < own_total * 0.45)):
+        return target
+    return None
+
+
 def choose_poker_open_bet_amount(
         context,
         profile,
@@ -610,6 +639,12 @@ def choose_poker_open_bet_amount(
 
     if maximum <= minimum:
         return maximum
+
+    target = _grudge_knockout_target(context, profile, strength, minimum,
+                                    min(context.get("stack", maximum),
+                                        context.get("hard_maximum_open_bet", context.get("stack", maximum))))
+    if target is not None:
+        return target
 
     pot = max(
         minimum,
@@ -722,6 +757,11 @@ def choose_poker_raise_to_amount(
 
         return None
 
+    target = _grudge_knockout_target(context, profile, strength,
+                                    minimum_raise_to, maximum_raise_to)
+    if target is not None:
+        return target
+
     soft_maximum = int(
         context.get(
             "soft_maximum_raise_to",
@@ -830,17 +870,19 @@ def decide_poker_action(
         personality or "balanced"
     ).strip().lower()
 
-    effective_personality = (
-        get_effective_poker_personality(
-            base_personality,
-            rng=rng
-        )
-    )
+    # Keep the old label as diagnostic metadata only. It must not reroll
+    # an archetype and change behavior when explicit traits are present.
+    effective_personality = base_personality
 
-    profile = get_poker_personality_profile(
-        effective_personality
-    )
-
+    traits = get_npc_traits({
+        "game_personality": base_personality,
+        "personality_traits": context.get("personality_traits", {}),
+    })
+    profile = build_trait_profile(traits, rng=rng)
+    t = profile["trait_units"]
+    grudge = float(context.get("grudge_pressure", 0.0)) * t["bitterness"]
+    survival_risk = max(0.0, min(1.0, context.get("amount_to_call", 0)
+                        / max(1, context.get("stack", 1))))
     stage = str(
         context.get(
             "stage",
@@ -943,8 +985,8 @@ def decide_poker_action(
 
     # Less-skilled players have more noisy hand appraisal.
     noise_width = (
-        0.075
-        * (1.0 - skill_factor)
+        0.075 * (1.0 - skill_factor)
+        + 0.14 * t["unpredictability"]
     )
 
     perceived_strength = _clamp(
@@ -954,6 +996,12 @@ def decide_poker_action(
             noise_width
         )
     )
+
+    early_street = stage in ("preflop", "flop", "pre_draw", "third", "fourth", "forehead_bet")
+    pessimism = t["pessimism"] * max(0.0, (0.48 - strength) / 0.48) if early_street else 0.0
+    survival = t["tenacity"] * survival_risk * max(0.0, 1.0 - strength)
+    profile["open_base"] = max(0.005, profile["open_base"] - 0.18*pessimism)
+    profile["bluff_chance"] *= max(0.05, 1.0 - 0.75*pessimism - 0.80*survival)
 
     # ==================================================
     # CHECKED TO NPC / FREE OPTION
@@ -1052,6 +1100,9 @@ def decide_poker_action(
                         "bluff": bluff,
                         "effective_personality": effective_personality,
                         "profile": profile,
+                        "traits": traits,
+                        "grudge_target": context.get("grudge_target"),
+                        "grudge_pressure": grudge,
                         "pot_odds": 0.0,
                     }
 
@@ -1061,6 +1112,9 @@ def decide_poker_action(
                     "bluff": bluff,
                     "effective_personality": effective_personality,
                     "profile": profile,
+                    "traits": traits,
+                    "grudge_target": context.get("grudge_target"),
+                    "grudge_pressure": grudge,
                     "pot_odds": 0.0,
                 }
 
@@ -1069,6 +1123,9 @@ def decide_poker_action(
             "bluff": False,
             "effective_personality": effective_personality,
             "profile": profile,
+            "traits": traits,
+            "grudge_target": context.get("grudge_target"),
+            "grudge_pressure": grudge,
             "pot_odds": 0.0,
         }
 
@@ -1131,13 +1188,12 @@ def decide_poker_action(
     ]
 
     required_strength -= position_call_bonus
+    required_strength += 0.19*pessimism + 0.28*survival
+    required_strength -= 0.20*grudge
 
     if (
-            effective_personality == "escalator"
-            and context.get(
-                "last_raiser_is_player",
-                False
-            )
+            context.get("last_raiser") is not None
+            and t["escalation"] > 0.0
     ):
         required_strength -= (
             profile.get(
@@ -1180,11 +1236,8 @@ def decide_poker_action(
     )
 
     if (
-            effective_personality == "escalator"
-            and context.get(
-                "last_raiser_is_player",
-                False
-            )
+            context.get("last_raiser") is not None
+            and t["escalation"] > 0.0
     ):
         raise_threshold -= (
             profile.get(
@@ -1198,6 +1251,9 @@ def decide_poker_action(
             "player_aggression_bonus",
             0.0
         )
+
+    raise_threshold += 0.18*pessimism + 0.22*survival - 0.15*grudge
+    raise_chance += 0.26*grudge - 0.25*survival
 
     raise_threshold = _clamp(
         raise_threshold,
@@ -1266,6 +1322,9 @@ def decide_poker_action(
             "bluff": bool(bluff_raise),
             "effective_personality": effective_personality,
             "profile": profile,
+            "traits": traits,
+            "grudge_target": context.get("grudge_target"),
+            "grudge_pressure": grudge,
             "pot_odds": pot_odds,
             "required_strength": required_strength,
         }
@@ -1288,13 +1347,8 @@ def decide_poker_action(
             0.96
         )
 
-        # Aggressive players remain sticky even when the math
-        # is not ideal; timid players behave in the opposite way.
-        if effective_personality == "aggressive":
-            fold_probability -= 0.12
-
-        elif effective_personality == "timid":
-            fold_probability += 0.08
+        fold_probability += 0.10*t["caution"] - 0.15*t["aggressiveness"]
+        fold_probability += 0.16*pessimism + 0.24*survival - 0.24*grudge
 
         fold_probability = _clamp(
             fold_probability,
@@ -1308,6 +1362,9 @@ def decide_poker_action(
                 "bluff": False,
                 "effective_personality": effective_personality,
                 "profile": profile,
+                "traits": traits,
+                "grudge_target": context.get("grudge_target"),
+                "grudge_pressure": grudge,
                 "pot_odds": pot_odds,
                 "required_strength": required_strength,
             }
@@ -1317,6 +1374,10 @@ def decide_poker_action(
         "bluff": False,
         "effective_personality": effective_personality,
         "profile": profile,
+        "traits": traits,
+        "grudge_target": context.get("grudge_target"),
+        "grudge_pressure": grudge,
         "pot_odds": pot_odds,
         "required_strength": required_strength,
     }
+

@@ -1,63 +1,38 @@
 import random
-
-from niche_poker_common import (
-    RANK_VALUES,
-    build_standard_deck,
-    card_key,
-    round_chip_amount,
-)
-from poker_ai import (
-    decide_poker_action,
-    get_poker_personality,
-    get_poker_skill_factor,
-)
+from niche_poker_common import RANK_VALUES, build_standard_deck, card_key, round_chip_amount
+from poker_ai import (decide_poker_action, get_poker_personality, get_poker_skill_factor,
+                      choose_poker_open_bet_amount, choose_poker_raise_to_amount)
 from poker_core import format_poker_display_name
+from npc_personality import get_npc_traits, PokerGrudgeMemory, npc_identity
+from npc_personality_chat import trait_chat
 
 
 class BlindMansBluffGame:
-    """Standard one-card Blind Man's Bluff / forehead poker.
+    """Forehead poker: one full betting round; only opponents' cards are visible.
 
-    Every player can see every opponent's card but not their own. Highest rank
-    wins after one betting round. Suits do not break ties.
-
-    The game uses one betting round with variable opening sizes and no raises.
-    Players can check, open for different amounts, call, or fold while still
-    never seeing their own card.
+    Check, bet, call, raise and fold use real round contributions. All-ins create
+    side pots and short all-in raises do not reopen an already-acted player's
+    raise rights. Highest rank wins each eligible pot; equal ranks split it.
     """
-
     def __init__(self, rng=None):
         self.rng = rng or random.Random()
         self.npcs = []
-        self.starting_stack = 0
-        self.player_stack = 0
+        self.starting_stack = self.player_stack = self.ante = self.bet_unit = 0
         self.npc_stacks = []
-        self.ante = 0
-        self.bet_unit = 0
-        self.pot = 0
-        self.hand_number = 0
-        self.deck = []
-        self.cards = []
-        self.folded = []
-        self.live_at_start = []
-        self.phase = "idle"
-        self.bet_state = ""
-        self.current_bet = 0
+        self.pot = self.hand_number = self.current_bet = self.pot_awarded = 0
+        self.deck, self.cards, self.folded, self.live_at_start = [], [], [], []
+        self.phase, self.bet_state, self.result_text = "idle", "", ""
         self.bettor_index = None
-        self.hand_complete = False
-        self.session_complete = False
-        self.result_text = ""
-        self.last_winner_indexes = []
-        self.last_actions = []
-        self.hands_played = 0
-        self.hands_won = 0
-        self.hands_lost = 0
-        self.hands_tied = 0
+        self.hand_complete = self.session_complete = False
+        self.last_winner_indexes, self.last_actions, self.last_chat = [], [], []
+        self.hands_played = self.hands_won = self.hands_lost = self.hands_tied = 0
         self.reward_claimed = False
-        self.opening_index = 0
-
-    # --------------------------------------------------
-    # Session / stacks
-    # --------------------------------------------------
+        self.opening_index = self.current_actor = 0
+        self.round_bets, self.hand_contributions = [], []
+        self.pending, self.raise_rights = set(), set()
+        self.last_raise_size = 1
+        self.personality_memory = PokerGrudgeMemory()
+        self.npc_ai_last_decisions = []
 
     def start_session(self, npcs, starting_stack):
         self.npcs = list(npcs or [])[:3]
@@ -66,110 +41,67 @@ class BlindMansBluffGame:
         self.npc_stacks = [self.starting_stack for _ in self.npcs]
         self.ante = round_chip_amount(self.starting_stack * 0.008, minimum=5)
         self.bet_unit = round_chip_amount(self.starting_stack * 0.02, minimum=10)
-        self.hand_number = 0
-        self.hands_played = 0
-        self.hands_won = 0
-        self.hands_lost = 0
-        self.hands_tied = 0
-        self.reward_claimed = False
-        self.session_complete = False
+        self.hand_number = self.hands_played = self.hands_won = self.hands_lost = self.hands_tied = 0
+        self.reward_claimed = self.session_complete = False
+        self.personality_memory.clear()
         return self.start_hand()
 
-    def _stack_for(self, table_index):
-        if table_index == 0:
-            return self.player_stack
-        npc_index = table_index - 1
-        if 0 <= npc_index < len(self.npc_stacks):
-            return self.npc_stacks[npc_index]
-        return 0
+    def _stack_for(self, seat):
+        return self.player_stack if seat == 0 else self.npc_stacks[seat - 1]
 
-    def _commit(self, table_index, amount):
-        amount = max(0, int(amount))
-        if table_index == 0:
-            paid = min(amount, self.player_stack)
+    def _commit(self, seat, amount, round_bet=True):
+        paid = min(max(0, int(amount)), self._stack_for(seat))
+        if seat == 0:
             self.player_stack -= paid
         else:
-            npc_index = table_index - 1
-            if not (0 <= npc_index < len(self.npc_stacks)):
-                return 0
-            paid = min(amount, self.npc_stacks[npc_index])
-            self.npc_stacks[npc_index] -= paid
+            self.npc_stacks[seat - 1] -= paid
         self.pot += paid
+        self.hand_contributions[seat] += paid
+        if round_bet:
+            self.round_bets[seat] += paid
         return paid
 
-    def get_name(self, table_index):
-        if table_index == 0:
-            return "You"
-        npc_index = table_index - 1
-        if 0 <= npc_index < len(self.npcs):
-            return format_poker_display_name(self.npcs[npc_index].get("name", "Opponent"))
-        return "Opponent"
+    def get_npc(self, seat):
+        return self.npcs[seat - 1] if 1 <= seat <= len(self.npcs) else {}
 
-    def get_npc(self, table_index):
-        npc_index = table_index - 1
-        if 0 <= npc_index < len(self.npcs):
-            return self.npcs[npc_index]
-        return {}
+    def get_name(self, seat):
+        return "You" if seat == 0 else format_poker_display_name(self.get_npc(seat).get("name", "Opponent"))
 
     def get_active_indexes(self, include_folded=False):
-        indexes = []
-        for table_index in self.live_at_start:
-            if include_folded or not self.folded[table_index]:
-                indexes.append(table_index)
-        return indexes
+        return [seat for seat in self.live_at_start if include_folded or not self.folded[seat]]
 
     def start_hand(self):
-        eligible = []
-        if self.player_stack >= self.ante:
-            eligible.append(0)
-        for npc_index, stack in enumerate(self.npc_stacks):
-            if stack >= self.ante:
-                eligible.append(npc_index + 1)
-
+        eligible = [seat for seat in range(len(self.npcs) + 1) if self._stack_for(seat) >= self.ante]
         if 0 not in eligible or len(eligible) < 2:
-            self.session_complete = True
+            self.session_complete = self.hand_complete = True
             self.phase = "session_over"
-            self.hand_complete = True
-            if 0 not in eligible:
-                self.result_text = "You do not have enough chips for another Blind Man's Bluff hand."
-            else:
-                self.result_text = "No opponents have enough chips for another hand."
+            self.result_text = "Not enough chips or opponents for another hand."
             return False
-
         self.hand_number += 1
         self.deck = build_standard_deck(self.rng)
-        seat_count = len(self.npcs) + 1
-        self.cards = [None] * seat_count
-        self.folded = [True] * seat_count
-        self.last_actions = [""] * seat_count
-        self.live_at_start = list(eligible)
-        self.pot = 0
-        self.phase = "betting"
-        self.current_bet = 0
+        count = len(self.npcs) + 1
+        self.cards, self.folded = [None]*count, [True]*count
+        self.last_actions, self.last_chat = [""]*count, [""]*count
+        self.round_bets, self.hand_contributions = [0]*count, [0]*count
+        self.npc_ai_last_decisions = [None]*len(self.npcs)
+        self.live_at_start = eligible
+        self.pot = self.current_bet = self.pot_awarded = 0
         self.bettor_index = None
+        self.phase = "betting"
         self.hand_complete = False
         self.result_text = "You can see everyone else's card, but not your own."
         self.last_winner_indexes = []
-
-        for table_index in eligible:
-            self.folded[table_index] = False
-            self._commit(table_index, self.ante)
-            self.cards[table_index] = self.deck.pop()
-
-        # Rotate the opening action through every live seat instead of making
-        # the human open every hand. When an NPC opens, their table decisions
-        # resolve first and the player acts last or responds to the wager.
+        for seat in eligible:
+            self.folded[seat] = False
+            self._commit(seat, self.ante, round_bet=False)
+            self.cards[seat] = self.deck.pop()
+        self.last_raise_size = self._base_minimum()
         self.opening_index = eligible[(self.hand_number - 1) % len(eligible)]
-        if self.opening_index == 0:
-            self.bet_state = "player_open"
-        else:
-            self._process_npc_opening_before_player()
-
+        self.current_actor = self.opening_index
+        self.pending = {seat for seat in eligible if self._stack_for(seat) > 0}
+        self.raise_rights = set(self.pending)
+        self._advance(self.current_actor, inclusive=True)
         return True
-
-    # --------------------------------------------------
-    # Information / AI strength
-    # --------------------------------------------------
 
     def get_visible_cards_for(self, viewer_index):
         return [
@@ -220,367 +152,271 @@ class BlindMansBluffGame:
                 total_value += 1.0 / (visible_max_count + 1.0)
         return total_value / len(unseen)
 
-    def _npc_decision(self, table_index, facing_bet=False):
-        npc = self.get_npc(table_index)
-        strength = self._npc_hidden_card_strength(table_index)
-        amount_to_call = self.current_bet if facing_bet else 0
-        max_open = self.get_max_open_bet()
-        min_open = self.get_min_open_bet()
-        context = {
-            "stage": "forehead_bet",
-            "position": "unknown",
-            "hand_strength": strength,
-            "skill_factor": get_poker_skill_factor(npc),
-            "amount_to_call": amount_to_call,
-            "stack": self._stack_for(table_index),
-            "pot": self.pot,
-            "current_bet": self.current_bet,
-            "can_raise": False,
-            "opponents_remaining": max(1, len(self.get_active_indexes()) - 1),
-            "minimum_open_bet": min_open,
-            "maximum_open_bet": max_open,
-        }
-        return decide_poker_action(
-            get_poker_personality(npc),
-            context,
-            rng=self.rng,
-        )
+    def _base_minimum(self):
+        return max(self.ante, round_chip_amount(self.starting_stack * 0.01, minimum=5))
+
+    def get_player_amount_to_call(self):
+        return min(self.player_stack, max(0, self.current_bet - self.round_bets[0])) if self.round_bets else 0
+
+    def _can_raise(self, seat):
+        active = self.get_active_indexes()
+        return (seat in self.raise_rights and self._stack_for(seat) + self.round_bets[seat] > self.current_bet
+                and any(other != seat and self._stack_for(other) > 0 for other in active))
 
     def get_max_open_bet(self):
-        active = self.get_active_indexes()
-        if len(active) < 2:
-            return 0
-        stacks = [self._stack_for(index) for index in active]
-        return max(0, min(stacks))
+        return self.player_stack if self._can_raise(0) else 0
 
     def get_min_open_bet(self):
-        maximum = self.get_max_open_bet()
-        if maximum <= 0:
-            return 0
-        minimum = max(self.ante, round_chip_amount(self.starting_stack * 0.01, minimum=5))
-        return min(maximum, minimum)
+        return min(self.get_max_open_bet(), self._base_minimum())
+
+    def get_minimum_raise_to(self):
+        return self.current_bet + self.last_raise_size
 
     def get_player_bet_presets(self):
-        minimum = self.get_min_open_bet()
-        maximum = self.get_max_open_bet()
-        if maximum <= 0:
+        raising = self.current_bet > 0
+        maximum = self.player_stack + (self.round_bets[0] if raising else 0)
+        if not self._can_raise(0):
             return []
-
-        pot = max(1, int(self.pot))
-        raw = [
-            ("MIN", minimum),
-            ("1/2 POT", max(minimum, round_chip_amount(pot * 0.5, minimum=minimum))),
-            ("POT", max(minimum, round_chip_amount(pot, minimum=minimum))),
-            ("MAX", maximum),
-        ]
-
-        presets = []
-        seen = set()
+        minimum = min(maximum, self.get_minimum_raise_to() if raising else self._base_minimum())
+        raw = [("MIN", minimum),
+               ("1/2 POT", max(minimum, self.current_bet + int(self.pot*0.5))),
+               ("POT", max(minimum, self.current_bet + self.pot)), ("MAX", maximum)]
+        seen, presets = set(), []
         for label, amount in raw:
-            amount = max(minimum, min(int(amount), maximum))
-            if amount in seen:
-                continue
-            seen.add(amount)
-            presets.append((label, amount))
+            amount = max(minimum, min(maximum, int(amount)))
+            if amount not in seen:
+                presets.append((label, amount))
+                seen.add(amount)
         return presets
 
-    def _choose_npc_open_bet(self, table_index, strength, decision):
-        minimum = self.get_min_open_bet()
-        maximum = self.get_max_open_bet()
-        if maximum <= 0:
-            return 0
-
-        pot = max(1, int(self.pot))
-        personality = str(
-            decision.get("effective_personality")
-            or get_poker_personality(self.get_npc(table_index))
-            or "balanced"
-        ).lower()
-
-        # Variable sizing keeps the one-round format quick while letting
-        # personality, confidence and bluffs change the pressure of a hand.
-        multiplier = 0.50
-        if strength >= 0.72:
-            multiplier = self.rng.choice((0.85, 1.0, 1.35))
-        elif strength >= 0.50:
-            multiplier = self.rng.choice((0.55, 0.75, 1.0))
-        elif decision.get("bluff"):
-            multiplier = self.rng.choice((0.65, 0.90, 1.15))
-        else:
-            multiplier = self.rng.choice((0.40, 0.50, 0.65))
-
-        if personality in ("aggressive", "escalator"):
-            multiplier *= 1.25
-        elif personality == "timid":
-            multiplier *= 0.75
-        elif personality == "unpredictable":
-            multiplier *= self.rng.uniform(0.65, 1.45)
-
-        amount = round_chip_amount(pot * multiplier, minimum=minimum)
-        return max(minimum, min(int(amount), maximum))
-
     def get_effective_bet_unit(self):
-        # Backward-compatible helper used by older UI paths.
         return self.get_min_open_bet()
 
     def get_player_actions(self):
-        if self.phase != "betting" or self.hand_complete or self.folded[0]:
+        if self.hand_complete or self.phase != "betting" or self.current_actor != 0 or 0 not in self.pending:
             return []
-        if self.bet_state in ("player_open", "player_last_open"):
-            actions = ["check"]
-            if self.get_effective_bet_unit() > 0:
-                actions.append("bet")
-            return actions
-        if self.bet_state == "player_response":
-            return ["fold", "call"]
-        return []
+        due = max(0, self.current_bet - self.round_bets[0])
+        actions = ["fold", "call"] if due else ["check"]
+        if self._can_raise(0):
+            actions.append("raise" if self.current_bet else "bet")
+        return actions
 
-    # --------------------------------------------------
-    # Betting round
-    # --------------------------------------------------
+    def _grudge_context(self, seat):
+        opponents = [{"seat": other, "id": npc_identity(self.get_npc(other), other),
+                      "name": self.get_name(other), "stack": self._stack_for(other),
+                      "round_bet": self.round_bets[other]}
+                     for other in self.get_active_indexes() if other != seat]
+        return self.personality_memory.context(self.get_npc(seat), seat, opponents,
+                                               self.bettor_index, self.hand_number)
 
-    def _npc_opening_order(self):
-        active_npcs = [index for index in self.get_active_indexes() if index != 0]
-        if not active_npcs:
-            return []
-        if self.opening_index not in active_npcs:
-            return active_npcs
-        start = active_npcs.index(self.opening_index)
-        return active_npcs[start:] + active_npcs[:start]
+    def _npc_context(self, seat):
+        stack = self._stack_for(seat)
+        context = {
+            "game": "blind_mans_bluff", "stage": "forehead_bet", "position": "unknown",
+            "personality_traits": get_npc_traits(self.get_npc(seat)),
+            "hand_strength": self._npc_hidden_card_strength(seat),
+            "skill_factor": get_poker_skill_factor(self.get_npc(seat)),
+            "amount_to_call": max(0, self.current_bet - self.round_bets[seat]),
+            "stack": stack, "pot": self.pot, "current_bet": self.current_bet,
+            "current_round_bet": self.round_bets[seat],
+            "can_raise": self._can_raise(seat), "last_raiser": self.bettor_index,
+            "opponents_remaining": len(self.get_active_indexes()) - 1,
+            "minimum_open_bet": self._base_minimum(), "maximum_open_bet": stack,
+            "minimum_raise_to": self.get_minimum_raise_to(),
+            "minimum_raise_size": self.last_raise_size,
+            "maximum_raise_to": stack + self.round_bets[seat],
+        }
+        context.update(self._grudge_context(seat))
+        return context
 
-    def _process_npc_opening_before_player(self):
-        bettor = None
-        for table_index in self._npc_opening_order():
-            if self.folded[table_index]:
-                continue
+    def _npc_take_turn(self, seat):
+        context = self._npc_context(seat)
+        decision = decide_poker_action(get_poker_personality(self.get_npc(seat)), context, self.rng)
+        self.npc_ai_last_decisions[seat - 1] = decision
+        action = decision["action"]
+        amount = None
+        if action == "bet":
+            amount = choose_poker_open_bet_amount(context, decision["profile"], context["hand_strength"], decision["bluff"])
+        elif action == "raise":
+            amount = choose_poker_raise_to_amount(context, decision["profile"], context["hand_strength"], decision["bluff"])
+        if amount is None and action in ("bet", "raise"):
+            action = "call" if context["amount_to_call"] else "check"
+        if not self._act(seat, action, amount):
+            self._act(seat, "call" if context["amount_to_call"] else "check")
+        if self.rng.random() < 0.22:
+            self.last_chat[seat] = trait_chat(self.get_npc(seat), action, self.rng,
+                                             context.get("grudge_target"), context.get("grudge_intensity", 0))
 
-            if bettor is None:
-                decision = self._npc_decision(table_index, facing_bet=False)
-                if decision.get("action") == "bet" and self.get_max_open_bet() > 0:
-                    amount = self._choose_npc_open_bet(
-                        table_index,
-                        self._npc_hidden_card_strength(table_index),
-                        decision,
-                    )
-                    self.current_bet = self._commit(table_index, amount)
-                    self.bettor_index = table_index
-                    self.last_actions[table_index] = f"Bet ${self.current_bet:,}"
-                    bettor = table_index
-                else:
-                    self.last_actions[table_index] = "Checked"
+    def _act(self, seat, action, amount=None):
+        if seat not in self.pending or self.hand_complete:
+            return False
+        due = max(0, self.current_bet - self.round_bets[seat])
+        if action == "fold":
+            self.folded[seat] = True
+            self.last_actions[seat] = "Folded"
+        elif action == "check":
+            if due:
+                return False
+            self.last_actions[seat] = "Checked"
+        elif action == "call":
+            if not due:
+                return False
+            paid = self._commit(seat, due)
+            self.last_actions[seat] = f"Called ${paid:,}"
+        elif action in ("bet", "raise"):
+            if not self._can_raise(seat) or (action == "bet") != (self.current_bet == 0):
+                return False
+            maximum = self.round_bets[seat] + self._stack_for(seat)
+            minimum = self.get_minimum_raise_to() if self.current_bet else self._base_minimum()
+            try:
+                target = int(amount if amount is not None else max(minimum, self.current_bet + self.pot))
+            except (TypeError, ValueError):
+                return False
+            target = min(maximum, max(minimum, target))
+            if target <= self.current_bet:
+                return False
+            increase = target - self.current_bet
+            full_raise = increase >= self.last_raise_size
+            self._commit(seat, target - self.round_bets[seat])
+            self.current_bet, self.bettor_index = target, seat
+            if full_raise:
+                self.last_raise_size = increase
+                self.raise_rights = {other for other in self.get_active_indexes() if self._stack_for(other) > 0}
+                self.pending = set(self.raise_rights)
             else:
-                decision = self._npc_decision(table_index, facing_bet=True)
-                if decision.get("action") == "fold":
-                    self.folded[table_index] = True
-                    self.last_actions[table_index] = "Folded"
-                else:
-                    paid = self._commit(table_index, self.current_bet)
-                    self.last_actions[table_index] = f"Called ${paid:,}"
-
-        if bettor is None:
-            self.bet_state = "player_last_open"
-            self.result_text = "The table checks around to you. Check behind or make the only bet."
+                self.pending.update(other for other in self.get_active_indexes()
+                                    if self._stack_for(other) > 0 and self.round_bets[other] < target)
+            self.last_actions[seat] = f"{'Bet' if action == 'bet' else 'Raised to'} ${target:,}"
         else:
-            self.bet_state = "player_response"
-            self.result_text = (
-                f"{self.get_name(bettor)} opens for ${self.current_bet:,}. "
-                "Call or fold without seeing your card."
-            )
+            return False
+        self.pending.discard(seat)
+        self.raise_rights.discard(seat)
+        return True
+
+    def _advance(self, after, inclusive=False):
+        count = len(self.npcs) + 1
+        search_from = after if inclusive else (after + 1) % count
+        while not self.hand_complete:
+            active = self.get_active_indexes()
+            if len(active) == 1:
+                self._award_single_survivor(active[0])
+                return
+            self.pending.intersection_update(seat for seat in active if self._stack_for(seat) > 0)
+            # With nobody left to respond, a free option cannot create a pot.
+            if len([seat for seat in active if self._stack_for(seat) > 0]) <= 1:
+                self.pending = {seat for seat in self.pending if self.round_bets[seat] < self.current_bet}
+            if not self.pending:
+                self._showdown()
+                return
+            seat = next((search_from + offset) % count for offset in range(count)
+                        if (search_from + offset) % count in self.pending)
+            self.current_actor = seat
+            if seat == 0:
+                self.bet_state = "player_response" if self.current_bet > self.round_bets[0] else "player_open"
+                due = self.get_player_amount_to_call()
+                self.result_text = f"Call ${due:,}, raise, or fold." if due else "Check or choose a wager."
+                return
+            self._npc_take_turn(seat)
+            search_from = (seat + 1) % count
+
+    def _player_action(self, action, amount=None):
+        if action not in self.get_player_actions() or not self._act(0, action, amount):
+            return False
+        self._advance(0)
+        return True
 
     def player_check(self):
-        if "check" not in self.get_player_actions():
-            return False
-        self.last_actions[0] = "Checked"
-        if self.bet_state == "player_last_open":
-            self._showdown()
-        else:
-            self._process_npcs_after_player_check()
-        return True
+        return self._player_action("check")
 
     def player_bet(self, amount=None):
-        if "bet" not in self.get_player_actions():
-            return False
-        minimum = self.get_min_open_bet()
-        maximum = self.get_max_open_bet()
-        if maximum <= 0:
-            return False
-        if amount is None:
-            amount = max(minimum, min(maximum, self.pot))
-        try:
-            amount = int(amount)
-        except (TypeError, ValueError):
-            amount = minimum
-        amount = max(minimum, min(amount, maximum))
-        self.current_bet = self._commit(0, amount)
-        self.bettor_index = 0
-        self.last_actions[0] = f"Bet ${self.current_bet:,}"
+        return self._player_action("bet", amount)
 
-        callers = 0
-        for table_index in list(self.get_active_indexes()):
-            if table_index == 0:
-                continue
-            decision = self._npc_decision(table_index, facing_bet=True)
-            if decision.get("action") == "fold":
-                self.folded[table_index] = True
-                self.last_actions[table_index] = "Folded"
-            else:
-                paid = self._commit(table_index, self.current_bet)
-                self.last_actions[table_index] = f"Called ${paid:,}"
-                callers += 1
-
-        if callers == 0:
-            self._award_single_survivor(0)
-        else:
-            self._showdown()
-        return True
-
-    def _process_npcs_after_player_check(self):
-        active_npcs = [index for index in self.get_active_indexes() if index != 0]
-        bettor = None
-
-        for table_index in active_npcs:
-            decision = self._npc_decision(table_index, facing_bet=False)
-            if decision.get("action") == "bet" and self.get_max_open_bet() > 0:
-                amount = self._choose_npc_open_bet(
-                    table_index,
-                    self._npc_hidden_card_strength(table_index),
-                    decision,
-                )
-                self.current_bet = self._commit(table_index, amount)
-                self.bettor_index = table_index
-                self.last_actions[table_index] = f"Bet ${self.current_bet:,}"
-                bettor = table_index
-                break
-            self.last_actions[table_index] = "Checked"
-
-        if bettor is None:
-            self._showdown()
-            return
-
-        # Everyone except the bettor and human gets one call/fold decision.
-        for table_index in active_npcs:
-            if table_index == bettor:
-                continue
-            decision = self._npc_decision(table_index, facing_bet=True)
-            if decision.get("action") == "fold":
-                self.folded[table_index] = True
-                self.last_actions[table_index] = "Folded"
-            else:
-                paid = self._commit(table_index, self.current_bet)
-                self.last_actions[table_index] = f"Called ${paid:,}"
-
-        self.bet_state = "player_response"
-        self.result_text = (
-            f"{self.get_name(bettor)} bets ${self.current_bet:,}. You still cannot see your card."
-        )
+    def player_raise(self, amount=None):
+        return self._player_action("raise", amount)
 
     def player_call(self):
-        if "call" not in self.get_player_actions():
-            return False
-        paid = self._commit(0, self.current_bet)
-        self.last_actions[0] = f"Called ${paid:,}"
-        self._showdown()
-        return True
+        return self._player_action("call")
 
     def player_fold(self):
-        if "fold" not in self.get_player_actions():
-            return False
-        self.folded[0] = True
-        self.last_actions[0] = "Folded"
-        remaining = self.get_active_indexes()
-        if len(remaining) == 1:
-            self._award_single_survivor(remaining[0])
+        return self._player_action("fold")
+
+    def _credit(self, seat, amount):
+        if seat == 0:
+            self.player_stack += amount
         else:
-            self._showdown()
-        return True
+            self.npc_stacks[seat - 1] += amount
 
-    # --------------------------------------------------
-    # Resolution
-    # --------------------------------------------------
-
-    def _award_single_survivor(self, table_index):
-        self._pay_pot([table_index])
-        self.last_winner_indexes = [table_index]
-        if table_index == 0:
+    def _award_single_survivor(self, seat):
+        self.pot_awarded = self.pot
+        self._credit(seat, self.pot)
+        self.pot = 0
+        self.last_winner_indexes = [seat]
+        if seat == 0:
             self.hands_won += 1
-            self.result_text = f"Everyone folds. You win the ${self.pot_awarded:,} pot without seeing your card."
         else:
             self.hands_lost += 1
-            self.result_text = f"{self.get_name(table_index)} wins the pot after the folds."
+        self.result_text = f"{self.get_name(seat)} wins ${self.pot_awarded:,} after the folds."
         self._finish_hand()
 
-    def _pay_pot(self, winner_indexes):
-        if not winner_indexes:
-            return
-        pot_before = self.pot
-        share = pot_before // len(winner_indexes)
-        remainder = pot_before - share * len(winner_indexes)
-        for offset, table_index in enumerate(winner_indexes):
-            amount = share + (1 if offset < remainder else 0)
-            if table_index == 0:
-                self.player_stack += amount
-            else:
-                self.npc_stacks[table_index - 1] += amount
-        self.pot_awarded = pot_before
-        self.pot = 0
-
     def _showdown(self):
-        self.phase = "showdown"
         active = self.get_active_indexes()
-        if not active:
-            self.last_winner_indexes = []
-            self.result_text = "No live cards remained."
-            self._finish_hand()
-            return
-
-        high_rank = max(
-            RANK_VALUES[self.cards[index]["rank"]]
-            for index in active
-        )
-        winners = [
-            index for index in active
-            if RANK_VALUES[self.cards[index]["rank"]] == high_rank
-        ]
-        self.last_winner_indexes = winners
-        self._pay_pot(winners)
-
-        if 0 in winners:
-            if len(winners) == 1:
+        payouts = [0]*len(self.cards)
+        won_pots = set()
+        previous = 0
+        self.pot_awarded = self.pot
+        for level in sorted(set(value for value in self.hand_contributions if value > 0)):
+            contributors = [seat for seat in self.live_at_start if self.hand_contributions[seat] >= level]
+            amount = (level - previous)*len(contributors)
+            previous = level
+            eligible = [seat for seat in contributors if seat in active]
+            # An unmatched top layer is a refund, not a won showdown pot.
+            if len(contributors) == 1:
+                payouts[contributors[0]] += amount
+                continue
+            if not eligible:
+                # Defensive refund for an unreachable no-eligible contribution layer.
+                for seat in contributors:
+                    payouts[seat] += amount // len(contributors)
+                continue
+            high = max(RANK_VALUES[self.cards[seat]["rank"]] for seat in eligible)
+            winners = [seat for seat in eligible if RANK_VALUES[self.cards[seat]["rank"]] == high]
+            won_pots.update(winners)
+            for offset, seat in enumerate(winners):
+                payouts[seat] += amount//len(winners) + (offset < amount % len(winners))
+            for loser in set(eligible) - set(winners):
+                if loser == 0:
+                    continue
+                npc = self.get_npc(loser)
+                for winner in winners:
+                    self.personality_memory.record_loss(
+                        npc_identity(npc, loser), npc_identity(self.get_npc(winner), winner),
+                        self.hand_number, get_npc_traits(npc)["bitterness"],
+                        self.hand_contributions[loser]/max(1, self.starting_stack))
+        for seat, amount in enumerate(payouts):
+            self._credit(seat, amount)
+        self.pot = 0
+        self.last_winner_indexes = sorted(won_pots)
+        if 0 in won_pots:
+            if len(won_pots) == 1:
                 self.hands_won += 1
-                self.result_text = (
-                    f"Your {self.cards[0]['rank']} is highest. You win ${self.pot_awarded:,}."
-                )
             else:
                 self.hands_tied += 1
-                self.result_text = (
-                    f"Your {self.cards[0]['rank']} ties for high card. The pot is split {len(winners)} ways."
-                )
         else:
             self.hands_lost += 1
-            if len(winners) == 1:
-                winner = winners[0]
-                self.result_text = (
-                    f"{self.get_name(winner)} wins with {self.cards[winner]['rank']} high."
-                )
-            else:
-                names = ", ".join(self.get_name(index) for index in winners)
-                self.result_text = f"{names} tie for the highest card and split the pot."
-
+        parts = [f"{self.get_name(seat)} ${payouts[seat]:,}" for seat in sorted(won_pots)]
+        self.result_text = "Payouts: " + "; ".join(parts) + "."
         self._finish_hand()
 
     def _finish_hand(self):
         self.hand_complete = True
-        self.phase = "showdown"
+        self.phase, self.bet_state = "showdown", ""
+        self.current_actor = -1
         self.hands_played += 1
-        if self.player_stack < self.ante:
-            self.session_complete = True
-        else:
-            live_opponents = sum(1 for stack in self.npc_stacks if stack >= self.ante)
-            if live_opponents < 1:
-                self.session_complete = True
+        self.session_complete = (self.player_stack < self.ante
+                                 or not any(stack >= self.ante for stack in self.npc_stacks))
 
     def can_start_next_hand(self):
         return self.hand_complete and not self.session_complete
 
     def get_session_net(self):
-        return int(self.player_stack - self.starting_stack)
+        return self.player_stack - self.starting_stack

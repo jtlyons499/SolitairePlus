@@ -1,0 +1,1268 @@
+{
+    "profile_version": 5,
+    "identity": {
+        "name": "Moxie",
+        "gender": "male",
+        "country": "YEM",
+        "age": 25,
+        "hometown": "",
+        "favorite_suit": "Diamonds",
+        "bio": "",
+        "avatar": {
+            "base": "base_01",
+            "eyes": "eyes_07",
+            "hair": "hair_08",
+            "glasses": null,
+            "top": "top_02"
+        }
+    },
+    "progression": {
+        "level": 1,
+        "xp": 0,
+        "solitaire_points": 0
+    },
+    "career": {
+        "unlocked": false,
+        "rating": 1000,
+        "ratings": {
+            "overall": 1000,
+            "solitaire": 1000,
+            "texas_holdem": 1000,
+            "five_card_draw": 1000,
+            "seven_card_stud": 1000,
+            "blackjack": 1000,
+            "roulette": 1000,
+            "score_four": 1000
+        },
+        "cash": 0,
+        "fans": 0,
+        "fan_rewarded_jobs": [],
+        "fan_news_milestones": [],
+        "leaderboard_state": {
+            "monkus_carlton": {
+                "rating": 2720,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2720,
+                    "solitaire": 2720,
+                    "texas_holdem": 2592,
+                    "five_card_draw": 2799,
+                    "seven_card_stud": 2496,
+                    "blackjack": 2628,
+                    "roulette": 2918,
+                    "score_four": 2653
+                },
+                "age": 46,
+                "birthday_month": 10,
+                "public_appeal": "magnetic",
+                "fans": 679381
+            },
+            "gary_undo": {
+                "rating": 2677,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2677,
+                    "solitaire": 2677,
+                    "texas_holdem": 2870,
+                    "five_card_draw": 2877,
+                    "seven_card_stud": 2482,
+                    "blackjack": 2513,
+                    "roulette": 2857,
+                    "score_four": 2568
+                },
+                "age": 38,
+                "birthday_month": 10,
+                "public_appeal": "steady",
+                "fans": 490726
+            },
+            "big_mike": {
+                "rating": 2264,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2264,
+                    "solitaire": 2264,
+                    "texas_holdem": 2357,
+                    "five_card_draw": 2452,
+                    "seven_card_stud": 2316,
+                    "blackjack": 2464,
+                    "roulette": 2162,
+                    "score_four": 2034
+                },
+                "age": 24,
+                "birthday_month": 10,
+                "public_appeal": "reserved",
+                "fans": 218160
+            },
+            "shelly_barn": {
+                "rating": 2613,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2613,
+                    "solitaire": 2613,
+                    "texas_holdem": 2846,
+                    "five_card_draw": 2486,
+                    "seven_card_stud": 2819,
+                    "blackjack": 2433,
+                    "roulette": 2654,
+                    "score_four": 2397
+                },
+                "age": 42,
+                "birthday_month": 1,
+                "public_appeal": "magnetic",
+                "fans": 579446
+            },
+            "molly_courts": {
+                "rating": 2096,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2096,
+                    "solitaire": 2096,
+                    "texas_holdem": 2163,
+                    "five_card_draw": 2186,
+                    "seven_card_stud": 1981,
+                    "blackjack": 1966,
+                    "roulette": 2128,
+                    "score_four": 2193
+                },
+                "age": 6,
+                "birthday_month": 5,
+                "public_appeal": "charming",
+                "fans": 206911
+            },
+            "rosalie_de_leon": {
+                "rating": 1976,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 1976,
+                    "solitaire": 1976,
+                    "texas_holdem": 1903,
+                    "five_card_draw": 1811,
+                    "seven_card_stud": 1819,
+                    "blackjack": 2011,
+                    "roulette": 2023,
+                    "score_four": 1972
+                },
+                "age": 10,
+                "birthday_month": 7,
+                "public_appeal": "charming",
+                "fans": 159648
+            },
+            "danny_de_leon": {
+                "rating": 2174,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2174,
+                    "solitaire": 2174,
+                    "texas_holdem": 2091,
+                    "five_card_draw": 2027,
+                    "seven_card_stud": 2044,
+                    "blackjack": 2103,
+                    "roulette": 2010,
+                    "score_four": 2079
+                },
+                "age": 8,
+                "birthday_month": 4,
+                "public_appeal": "steady",
+                "fans": 208762
+            },
+            "olga_mire": {
+                "rating": 2624,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2624,
+                    "solitaire": 2624,
+                    "texas_holdem": 2784,
+                    "five_card_draw": 2834,
+                    "seven_card_stud": 2700,
+                    "blackjack": 2616,
+                    "roulette": 2461,
+                    "score_four": 2486
+                },
+                "age": 30,
+                "birthday_month": 6,
+                "public_appeal": "camera_shy",
+                "fans": 326345
+            },
+            "chet_hanks": {
+                "rating": 1226,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 1226,
+                    "solitaire": 1226,
+                    "texas_holdem": 1123,
+                    "five_card_draw": 1174,
+                    "seven_card_stud": 1106,
+                    "blackjack": 1160,
+                    "roulette": 1367,
+                    "score_four": 1185
+                },
+                "age": 38,
+                "birthday_month": 2,
+                "public_appeal": "steady",
+                "fans": 11602
+            },
+            "nurse_ratched": {
+                "rating": 1441,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 1441,
+                    "solitaire": 1441,
+                    "texas_holdem": 1314,
+                    "five_card_draw": 1324,
+                    "seven_card_stud": 1429,
+                    "blackjack": 1596,
+                    "roulette": 1600,
+                    "score_four": 1417
+                },
+                "age": 45,
+                "birthday_month": 6,
+                "public_appeal": "charming",
+                "fans": 34209
+            },
+            "bob_gumble": {
+                "rating": 1673,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 1673,
+                    "solitaire": 1673,
+                    "texas_holdem": 1822,
+                    "five_card_draw": 1518,
+                    "seven_card_stud": 1793,
+                    "blackjack": 1576,
+                    "roulette": 1747,
+                    "score_four": 1587
+                },
+                "age": 75,
+                "birthday_month": 5,
+                "public_appeal": "steady",
+                "fans": 63387
+            },
+            "evelyn_smythe": {
+                "rating": 1424,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 1424,
+                    "solitaire": 1424,
+                    "texas_holdem": 1484,
+                    "five_card_draw": 1498,
+                    "seven_card_stud": 1438,
+                    "blackjack": 1337,
+                    "roulette": 1308,
+                    "score_four": 1401
+                },
+                "age": 33,
+                "birthday_month": 3,
+                "public_appeal": "steady",
+                "fans": 27652
+            },
+            "gringo_starr": {
+                "rating": 1070,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 1070,
+                    "solitaire": 1070,
+                    "texas_holdem": 1187,
+                    "five_card_draw": 1166,
+                    "seven_card_stud": 1102,
+                    "blackjack": 1084,
+                    "roulette": 934,
+                    "score_four": 956
+                },
+                "age": 67,
+                "birthday_month": 5,
+                "public_appeal": "charming",
+                "fans": 5466
+            },
+            "rupert_craft": {
+                "rating": 1247,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 1247,
+                    "solitaire": 1247,
+                    "texas_holdem": 1174,
+                    "five_card_draw": 1204,
+                    "seven_card_stud": 1284,
+                    "blackjack": 1165,
+                    "roulette": 1223,
+                    "score_four": 1340
+                },
+                "age": 63,
+                "birthday_month": 6,
+                "public_appeal": "reserved",
+                "fans": 11333
+            },
+            "chum_whopper": {
+                "rating": 2972,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2972,
+                    "solitaire": 2972,
+                    "texas_holdem": 2534,
+                    "five_card_draw": 2862,
+                    "seven_card_stud": 2792,
+                    "blackjack": 2656,
+                    "roulette": 2830,
+                    "score_four": 2831
+                },
+                "age": 29,
+                "birthday_month": 11,
+                "public_appeal": "camera_shy",
+                "fans": 530998
+            },
+            "melinda_cromwell": {
+                "rating": 2577,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2577,
+                    "solitaire": 2577,
+                    "texas_holdem": 2708,
+                    "five_card_draw": 2595,
+                    "seven_card_stud": 2728,
+                    "blackjack": 2572,
+                    "roulette": 2566,
+                    "score_four": 2680
+                },
+                "age": 51,
+                "birthday_month": 6,
+                "public_appeal": "reserved",
+                "fans": 371070
+            },
+            "luke_jingle": {
+                "rating": 1704,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 1704,
+                    "solitaire": 1704,
+                    "texas_holdem": 1623,
+                    "five_card_draw": 1615,
+                    "seven_card_stud": 1762,
+                    "blackjack": 1653,
+                    "roulette": 1907,
+                    "score_four": 1718
+                },
+                "age": 37,
+                "birthday_month": 12,
+                "public_appeal": "reserved",
+                "fans": 60978
+            },
+            "gunther_hindenburg": {
+                "rating": 1734,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 1734,
+                    "solitaire": 1734,
+                    "texas_holdem": 1879,
+                    "five_card_draw": 1665,
+                    "seven_card_stud": 1795,
+                    "blackjack": 1663,
+                    "roulette": 1801,
+                    "score_four": 1675
+                },
+                "age": 44,
+                "birthday_month": 7,
+                "public_appeal": "magnetic",
+                "fans": 97954
+            },
+            "crikey_dingo": {
+                "rating": 2142,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2142,
+                    "solitaire": 2142,
+                    "texas_holdem": 2235,
+                    "five_card_draw": 2032,
+                    "seven_card_stud": 2168,
+                    "blackjack": 2119,
+                    "roulette": 2299,
+                    "score_four": 2250
+                },
+                "age": 26,
+                "birthday_month": 9,
+                "public_appeal": "charming",
+                "fans": 227253
+            },
+            "jairo_ponytail": {
+                "rating": 2189,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2189,
+                    "solitaire": 2189,
+                    "texas_holdem": 2210,
+                    "five_card_draw": 2390,
+                    "seven_card_stud": 2035,
+                    "blackjack": 2146,
+                    "roulette": 2209,
+                    "score_four": 2313
+                },
+                "age": 32,
+                "birthday_month": 10,
+                "public_appeal": "charming",
+                "fans": 249373
+            },
+            "iona_mcdougal": {
+                "rating": 1721,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 1721,
+                    "solitaire": 1721,
+                    "texas_holdem": 1850,
+                    "five_card_draw": 1606,
+                    "seven_card_stud": 1818,
+                    "blackjack": 1843,
+                    "roulette": 1878,
+                    "score_four": 1724
+                },
+                "age": 58,
+                "birthday_month": 10,
+                "public_appeal": "steady",
+                "fans": 72683
+            },
+            "jiu_wang": {
+                "rating": 1933,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 1933,
+                    "solitaire": 1933,
+                    "texas_holdem": 2087,
+                    "five_card_draw": 2001,
+                    "seven_card_stud": 2057,
+                    "blackjack": 1784,
+                    "roulette": 1914,
+                    "score_four": 1999
+                },
+                "age": 21,
+                "birthday_month": 3,
+                "public_appeal": "reserved",
+                "fans": 109736
+            },
+            "jacques_rousseau": {
+                "rating": 2166,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2166,
+                    "solitaire": 2166,
+                    "texas_holdem": 2124,
+                    "five_card_draw": 1978,
+                    "seven_card_stud": 2039,
+                    "blackjack": 2255,
+                    "roulette": 2010,
+                    "score_four": 2290
+                },
+                "age": 46,
+                "birthday_month": 1,
+                "public_appeal": "steady",
+                "fans": 205497
+            },
+            "palina_pepper": {
+                "rating": 1862,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 1862,
+                    "solitaire": 1862,
+                    "texas_holdem": 2038,
+                    "five_card_draw": 2007,
+                    "seven_card_stud": 1998,
+                    "blackjack": 2038,
+                    "roulette": 2038,
+                    "score_four": 1724
+                },
+                "age": 35,
+                "birthday_month": 3,
+                "public_appeal": "magnetic",
+                "fans": 136731
+            },
+            "kurwa_kryzbywlewski": {
+                "rating": 2119,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2119,
+                    "solitaire": 2119,
+                    "texas_holdem": 2094,
+                    "five_card_draw": 2077,
+                    "seven_card_stud": 2195,
+                    "blackjack": 1934,
+                    "roulette": 2146,
+                    "score_four": 2205
+                },
+                "age": 47,
+                "birthday_month": 9,
+                "public_appeal": "steady",
+                "fans": 187002
+            },
+            "rusty_lewis": {
+                "rating": 2014,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2014,
+                    "solitaire": 2014,
+                    "texas_holdem": 2035,
+                    "five_card_draw": 2054,
+                    "seven_card_stud": 1862,
+                    "blackjack": 1813,
+                    "roulette": 1953,
+                    "score_four": 1918
+                },
+                "age": 31,
+                "birthday_month": 11,
+                "public_appeal": "charming",
+                "fans": 173734
+            },
+            "lionel_braggart": {
+                "rating": 814,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 814,
+                    "solitaire": 814,
+                    "texas_holdem": 775,
+                    "five_card_draw": 920,
+                    "seven_card_stud": 831,
+                    "blackjack": 768,
+                    "roulette": 728,
+                    "score_four": 760
+                },
+                "age": 62,
+                "birthday_month": 8,
+                "public_appeal": "steady",
+                "fans": 610
+            },
+            "inshallah_intifada": {
+                "rating": 963,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 963,
+                    "solitaire": 963,
+                    "texas_holdem": 1028,
+                    "five_card_draw": 1007,
+                    "seven_card_stud": 855,
+                    "blackjack": 944,
+                    "roulette": 970,
+                    "score_four": 890
+                },
+                "age": 27,
+                "birthday_month": 3,
+                "public_appeal": "reserved",
+                "fans": 1897
+            },
+            "manuel_nadal": {
+                "rating": 803,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 803,
+                    "solitaire": 803,
+                    "texas_holdem": 813,
+                    "five_card_draw": 754,
+                    "seven_card_stud": 712,
+                    "blackjack": 913,
+                    "roulette": 741,
+                    "score_four": 899
+                },
+                "age": 53,
+                "birthday_month": 8,
+                "public_appeal": "steady",
+                "fans": 561
+            },
+            "mary_lafleur": {
+                "rating": 765,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 765,
+                    "solitaire": 765,
+                    "texas_holdem": 665,
+                    "five_card_draw": 865,
+                    "seven_card_stud": 892,
+                    "blackjack": 820,
+                    "roulette": 677,
+                    "score_four": 901
+                },
+                "age": 22,
+                "birthday_month": 9,
+                "public_appeal": "charming",
+                "fans": 510
+            },
+            "chiara_sammartano": {
+                "rating": 1586,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 1586,
+                    "solitaire": 1586,
+                    "texas_holdem": 1418,
+                    "five_card_draw": 1737,
+                    "seven_card_stud": 1720,
+                    "blackjack": 1511,
+                    "roulette": 1517,
+                    "score_four": 1566
+                },
+                "age": 38,
+                "birthday_month": 10,
+                "public_appeal": "charming",
+                "fans": 56414
+            },
+            "memphis_van_dijk": {
+                "rating": 1149,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 1149,
+                    "solitaire": 1149,
+                    "texas_holdem": 1062,
+                    "five_card_draw": 1198,
+                    "seven_card_stud": 1038,
+                    "blackjack": 1222,
+                    "roulette": 1240,
+                    "score_four": 1249
+                },
+                "age": 42,
+                "birthday_month": 12,
+                "public_appeal": "steady",
+                "fans": 7666
+            },
+            "harpreet_rajah": {
+                "rating": 2255,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2255,
+                    "solitaire": 2255,
+                    "texas_holdem": 2371,
+                    "five_card_draw": 2293,
+                    "seven_card_stud": 2138,
+                    "blackjack": 2137,
+                    "roulette": 2098,
+                    "score_four": 2282
+                },
+                "age": 34,
+                "birthday_month": 7,
+                "public_appeal": "steady",
+                "fans": 243791
+            },
+            "betty_bleep": {
+                "rating": 896,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 896,
+                    "solitaire": 896,
+                    "texas_holdem": 882,
+                    "five_card_draw": 1040,
+                    "seven_card_stud": 853,
+                    "blackjack": 933,
+                    "roulette": 1029,
+                    "score_four": 973
+                },
+                "age": 73,
+                "birthday_month": 5,
+                "public_appeal": "charming",
+                "fans": 1423
+            },
+            "max_goblet": {
+                "rating": 1435,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 1435,
+                    "solitaire": 1435,
+                    "texas_holdem": 1399,
+                    "five_card_draw": 1264,
+                    "seven_card_stud": 1361,
+                    "blackjack": 1261,
+                    "roulette": 1488,
+                    "score_four": 1301
+                },
+                "age": 82,
+                "birthday_month": 12,
+                "public_appeal": "steady",
+                "fans": 28832
+            },
+            "hugh_minx": {
+                "rating": 1693,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 1693,
+                    "solitaire": 1693,
+                    "texas_holdem": 1504,
+                    "five_card_draw": 1507,
+                    "seven_card_stud": 1632,
+                    "blackjack": 1717,
+                    "roulette": 1850,
+                    "score_four": 1843
+                },
+                "age": 13,
+                "birthday_month": 4,
+                "public_appeal": "charming",
+                "fans": 77902
+            },
+            "addled_grandfather": {
+                "rating": 2161,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2161,
+                    "solitaire": 2161,
+                    "texas_holdem": 1967,
+                    "five_card_draw": 1961,
+                    "seven_card_stud": 2277,
+                    "blackjack": 2103,
+                    "roulette": 2129,
+                    "score_four": 2155
+                },
+                "age": 89,
+                "birthday_month": 7,
+                "public_appeal": "charming",
+                "fans": 236030
+            },
+            "hog_shots": {
+                "rating": 901,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 901,
+                    "solitaire": 901,
+                    "texas_holdem": 992,
+                    "five_card_draw": 782,
+                    "seven_card_stud": 811,
+                    "blackjack": 827,
+                    "roulette": 1013,
+                    "score_four": 839
+                },
+                "age": 33,
+                "birthday_month": 11,
+                "public_appeal": "steady",
+                "fans": 1281
+            },
+            "loopy_valez": {
+                "rating": 1228,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 1228,
+                    "solitaire": 1228,
+                    "texas_holdem": 1367,
+                    "five_card_draw": 1275,
+                    "seven_card_stud": 1303,
+                    "blackjack": 1180,
+                    "roulette": 1360,
+                    "score_four": 1372
+                },
+                "age": 666,
+                "birthday_month": 1,
+                "public_appeal": "reserved",
+                "fans": 10313
+            },
+            "mimi_roquanda": {
+                "rating": 1096,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 1096,
+                    "solitaire": 1096,
+                    "texas_holdem": 1160,
+                    "five_card_draw": 1100,
+                    "seven_card_stud": 1164,
+                    "blackjack": 1162,
+                    "roulette": 1065,
+                    "score_four": 1151
+                },
+                "age": 73,
+                "birthday_month": 1,
+                "public_appeal": "camera_shy",
+                "fans": 4013
+            },
+            "captain_steve": {
+                "rating": 803,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 803,
+                    "solitaire": 803,
+                    "texas_holdem": 865,
+                    "five_card_draw": 718,
+                    "seven_card_stud": 718,
+                    "blackjack": 799,
+                    "roulette": 886,
+                    "score_four": 710
+                },
+                "age": 23,
+                "birthday_month": 6,
+                "public_appeal": "charming",
+                "fans": 651
+            },
+            "elinur_butter": {
+                "rating": 2108,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2108,
+                    "solitaire": 2108,
+                    "texas_holdem": 2191,
+                    "five_card_draw": 2278,
+                    "seven_card_stud": 2034,
+                    "blackjack": 2218,
+                    "roulette": 2266,
+                    "score_four": 2144
+                },
+                "age": 23,
+                "birthday_month": 2,
+                "public_appeal": "charming",
+                "fans": 212095
+            },
+            "sultan_griffin": {
+                "rating": 2183,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2183,
+                    "solitaire": 2183,
+                    "texas_holdem": 2104,
+                    "five_card_draw": 2274,
+                    "seven_card_stud": 2300,
+                    "blackjack": 1978,
+                    "roulette": 2332,
+                    "score_four": 2062
+                },
+                "age": 22,
+                "birthday_month": 11,
+                "public_appeal": "magnetic",
+                "fans": 276219
+            },
+            "ami_amica": {
+                "rating": 2132,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2132,
+                    "solitaire": 2132,
+                    "texas_holdem": 2106,
+                    "five_card_draw": 2020,
+                    "seven_card_stud": 2055,
+                    "blackjack": 1970,
+                    "roulette": 2062,
+                    "score_four": 2120
+                },
+                "age": 22,
+                "birthday_month": 2,
+                "public_appeal": "steady",
+                "fans": 192002
+            },
+            "bubbles_romney": {
+                "rating": 2715,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2715,
+                    "solitaire": 2715,
+                    "texas_holdem": 2841,
+                    "five_card_draw": 2505,
+                    "seven_card_stud": 2586,
+                    "blackjack": 2593,
+                    "roulette": 2651,
+                    "score_four": 2586
+                },
+                "age": 14,
+                "birthday_month": 4,
+                "public_appeal": "charming",
+                "fans": 601837
+            },
+            "jack_zitbomb": {
+                "rating": 2756,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2756,
+                    "solitaire": 2756,
+                    "texas_holdem": 2852,
+                    "five_card_draw": 2741,
+                    "seven_card_stud": 2635,
+                    "blackjack": 2923,
+                    "roulette": 2774,
+                    "score_four": 2652
+                },
+                "age": 26,
+                "birthday_month": 7,
+                "public_appeal": "steady",
+                "fans": 550325
+            },
+            "doon_ficus": {
+                "rating": 2181,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2181,
+                    "solitaire": 2181,
+                    "texas_holdem": 2192,
+                    "five_card_draw": 2194,
+                    "seven_card_stud": 2270,
+                    "blackjack": 1974,
+                    "roulette": 2111,
+                    "score_four": 1956
+                },
+                "age": 28,
+                "birthday_month": 9,
+                "public_appeal": "reserved",
+                "fans": 186249
+            },
+            "chad_whiskey": {
+                "rating": 1790,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 1790,
+                    "solitaire": 1790,
+                    "texas_holdem": 1989,
+                    "five_card_draw": 1767,
+                    "seven_card_stud": 1599,
+                    "blackjack": 1606,
+                    "roulette": 1897,
+                    "score_four": 1791
+                },
+                "age": 22,
+                "birthday_month": 12,
+                "public_appeal": "reserved",
+                "fans": 77073
+            },
+            "mohammed_ramadan": {
+                "rating": 2466,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2466,
+                    "solitaire": 2466,
+                    "texas_holdem": 2405,
+                    "five_card_draw": 2589,
+                    "seven_card_stud": 2660,
+                    "blackjack": 2552,
+                    "roulette": 2457,
+                    "score_four": 2547
+                },
+                "age": 29,
+                "birthday_month": 4,
+                "public_appeal": "charming",
+                "fans": 409453
+            },
+            "em_marley": {
+                "rating": 2001,
+                "last_change": 0,
+                "ratings": {
+                    "overall": 2001,
+                    "solitaire": 2001,
+                    "texas_holdem": 1872,
+                    "five_card_draw": 2001,
+                    "seven_card_stud": 2132,
+                    "blackjack": 2010,
+                    "roulette": 2198,
+                    "score_four": 1913
+                },
+                "age": 24,
+                "birthday_month": 3,
+                "public_appeal": "steady",
+                "fans": 145539
+            }
+        },
+        "leaderboard_star_id": "chum_whopper",
+        "year": 2026,
+        "month": 1,
+        "day": 1,
+        "weekday_index": 0,
+        "career_day": 1,
+        "residence": "dingy_apartment",
+        "owned_residences": [
+            "dingy_apartment"
+        ],
+        "job": "custodian",
+        "rounds_won": 0,
+        "challenges_won": 0,
+        "total_moves": 0,
+        "completed_days": [],
+        "current_schedule": [
+            {
+                "day_number": 1,
+                "weekday_index": 0,
+                "activity_type": "round",
+                "completed": false,
+                "title": "Play Solitaire"
+            },
+            {
+                "day_number": 2,
+                "weekday_index": 1,
+                "activity_type": "poker_night",
+                "completed": false,
+                "title": "Poker Night",
+                "game_ids": [
+                    "texas_holdem",
+                    "seven_card_stud",
+                    "five_card_draw"
+                ],
+                "high_stakes_game_id": "texas_holdem"
+            },
+            {
+                "day_number": 3,
+                "weekday_index": 2,
+                "activity_type": "work",
+                "completed": false,
+                "title": "Dump Trash"
+            },
+            {
+                "day_number": 4,
+                "weekday_index": 3,
+                "activity_type": "casual_cards",
+                "completed": false,
+                "title": "Casual Cards",
+                "game_ids": [
+                    "score_four",
+                    "bango",
+                    "crazy_eights"
+                ]
+            },
+            {
+                "day_number": 5,
+                "weekday_index": 4,
+                "activity_type": "challenge",
+                "completed": false,
+                "title": "Challenge Round",
+                "challenge_id": "all_or_nothing",
+                "challenge_name": "All or Nothing"
+            },
+            {
+                "day_number": 6,
+                "weekday_index": 0,
+                "activity_type": "event",
+                "completed": false,
+                "title": "Head-to-Head",
+                "event_id": "head_to_head_01"
+            },
+            {
+                "day_number": 7,
+                "weekday_index": 1,
+                "activity_type": "casino_night",
+                "completed": false,
+                "title": "Casino Night",
+                "game_ids": [
+                    "blackjack",
+                    "roulette",
+                    "horse_races"
+                ]
+            },
+            {
+                "day_number": 8,
+                "weekday_index": 2,
+                "activity_type": "challenge",
+                "completed": false,
+                "title": "Challenge Round",
+                "challenge_id": "no_hints",
+                "challenge_name": "No Hints"
+            },
+            {
+                "day_number": 9,
+                "weekday_index": 3,
+                "activity_type": "work",
+                "completed": false,
+                "title": "Wax Floors"
+            },
+            {
+                "day_number": 10,
+                "weekday_index": 4,
+                "activity_type": "round",
+                "completed": false,
+                "title": "Play Solitaire"
+            },
+            {
+                "day_number": 11,
+                "weekday_index": 0,
+                "activity_type": "casual_cards",
+                "completed": false,
+                "title": "Casual Cards",
+                "game_ids": [
+                    "score_four",
+                    "bango",
+                    "crazy_eights"
+                ]
+            },
+            {
+                "day_number": 12,
+                "weekday_index": 1,
+                "activity_type": "work",
+                "completed": false,
+                "title": "Fix A/C"
+            },
+            {
+                "day_number": 13,
+                "weekday_index": 2,
+                "activity_type": "challenge",
+                "completed": false,
+                "title": "Challenge Round",
+                "challenge_id": "draw_3",
+                "challenge_name": "3 Draw"
+            },
+            {
+                "day_number": 14,
+                "weekday_index": 3,
+                "activity_type": "niche_night",
+                "completed": false,
+                "title": "Niche Game Night",
+                "game_ids": [
+                    "faro",
+                    "five_o_poker",
+                    "blind_mans_bluff"
+                ]
+            },
+            {
+                "day_number": 15,
+                "weekday_index": 4,
+                "activity_type": "event",
+                "completed": false,
+                "title": "Press Interview",
+                "event_id": "press_interview_01"
+            },
+            {
+                "day_number": 16,
+                "weekday_index": 0,
+                "activity_type": "round",
+                "completed": false,
+                "title": "Play Solitaire"
+            },
+            {
+                "day_number": 17,
+                "weekday_index": 1,
+                "activity_type": "poker_night",
+                "completed": false,
+                "title": "Poker Night",
+                "game_ids": [
+                    "texas_holdem",
+                    "seven_card_stud",
+                    "five_card_draw"
+                ],
+                "high_stakes_game_id": "five_card_draw"
+            },
+            {
+                "day_number": 18,
+                "weekday_index": 2,
+                "activity_type": "work",
+                "completed": false,
+                "title": "Dump Trash"
+            },
+            {
+                "day_number": 19,
+                "weekday_index": 3,
+                "activity_type": "niche_night",
+                "completed": false,
+                "title": "Niche Game Night",
+                "game_ids": [
+                    "faro",
+                    "five_o_poker",
+                    "blind_mans_bluff"
+                ]
+            },
+            {
+                "day_number": 20,
+                "weekday_index": 4,
+                "activity_type": "challenge",
+                "completed": false,
+                "title": "Challenge Round",
+                "challenge_id": "no_undo",
+                "challenge_name": "No Undo"
+            },
+            {
+                "day_number": 21,
+                "weekday_index": 0,
+                "activity_type": "event",
+                "completed": false,
+                "title": "Sign Autographs",
+                "event_id": "sign_autographs_01"
+            },
+            {
+                "day_number": 22,
+                "weekday_index": 1,
+                "activity_type": "casual_cards",
+                "completed": false,
+                "title": "Casual Cards",
+                "game_ids": [
+                    "score_four",
+                    "bango",
+                    "crazy_eights"
+                ]
+            },
+            {
+                "day_number": 23,
+                "weekday_index": 2,
+                "activity_type": "challenge",
+                "completed": false,
+                "title": "Challenge Round",
+                "challenge_id": "no_undo",
+                "challenge_name": "No Undo"
+            },
+            {
+                "day_number": 24,
+                "weekday_index": 3,
+                "activity_type": "work",
+                "completed": false,
+                "title": "Wax Floors"
+            },
+            {
+                "day_number": 25,
+                "weekday_index": 4,
+                "activity_type": "round",
+                "completed": false,
+                "title": "Play Solitaire"
+            },
+            {
+                "day_number": 26,
+                "weekday_index": 0,
+                "activity_type": "casino_night",
+                "completed": false,
+                "title": "Casino Night",
+                "game_ids": [
+                    "blackjack",
+                    "roulette",
+                    "horse_races"
+                ]
+            },
+            {
+                "day_number": 27,
+                "weekday_index": 1,
+                "activity_type": "work",
+                "completed": false,
+                "title": "Start Fire"
+            },
+            {
+                "day_number": 28,
+                "weekday_index": 2,
+                "activity_type": "challenge",
+                "completed": false,
+                "title": "Challenge Round",
+                "challenge_id": "draw_3",
+                "challenge_name": "3 Draw"
+            },
+            {
+                "day_number": 29,
+                "weekday_index": 3,
+                "activity_type": "poker_night",
+                "completed": false,
+                "title": "Poker Night",
+                "game_ids": [
+                    "texas_holdem",
+                    "seven_card_stud",
+                    "five_card_draw"
+                ],
+                "high_stakes_game_id": "seven_card_stud"
+            },
+            {
+                "day_number": 30,
+                "weekday_index": 4,
+                "activity_type": "event",
+                "completed": false,
+                "title": "Press Interview",
+                "event_id": "press_interview_01"
+            }
+        ],
+        "news_items": []
+    },
+    "cosmetics": {
+        "selected_menu_background": "bg_default",
+        "selected_felt": "f_default",
+        "selected_title": "title_default",
+        "selected_card_back": "back_default",
+        "selected_cursor": "cursor",
+        "unlocked_menu_backgrounds": [
+            "bg_default"
+        ],
+        "unlocked_felts": [
+            "f_default"
+        ],
+        "unlocked_titles": [
+            "title_default"
+        ],
+        "unlocked_card_backs": [
+            "back_default"
+        ]
+    },
+    "achievements": {
+        "unlocked": [],
+        "stats": {}
+    },
+    "settings": {
+        "preferred_difficulty": "normal",
+        "solitaire_deal_mode": "random"
+    }
+}

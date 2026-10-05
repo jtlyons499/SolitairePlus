@@ -458,7 +458,8 @@ class ScoreFourGame:
 
     def start_competitive_session(
             self,
-            skill_tier="mid"
+            skill_tier="mid",
+            rating=None
     ):
 
         self.mode = "competitive"
@@ -482,6 +483,7 @@ class ScoreFourGame:
         self.npc_skill_tier = (
             skill_tier
         )
+        self.npc_rating = rating
 
         self.new_puzzle()
 
@@ -521,6 +523,13 @@ class ScoreFourGame:
                 )
             )
         )
+
+        if getattr(self, "npc_rating", None) is not None:
+            try:
+                mean_time = max(12.0, min(65.0, 52.0 - (int(self.npc_rating) - 800) * 0.017))
+                minimum_time, maximum_time = mean_time * 0.82, mean_time * 1.18
+            except (TypeError, ValueError, OverflowError):
+                pass
 
         self.npc_solve_time_seconds = (
             random.uniform(

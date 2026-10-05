@@ -1,4 +1,5 @@
 import random
+from npc_personality import get_npc_traits, trait_units
 from collections import Counter
 from itertools import combinations
 
@@ -21,6 +22,8 @@ class FiveCardDrawGame(TexasHoldemGame):
     side-pot, hand-history and shared-AI plumbing. This subclass replaces only
     the game-specific deal/draw/street/showdown behavior.
     """
+
+    rating_game_key = "five_card_draw"
 
     def __init__(self):
         super().__init__()
@@ -331,14 +334,10 @@ class FiveCardDrawGame(TexasHoldemGame):
         )
 
         # Occasional stand-pat bluff with a weak hand.
-        stand_pat_bluff_chance = {
-            "timid": 0.004,
-            "balanced": 0.012,
-            "opportunist": 0.028,
-            "aggressive": 0.045,
-            "escalator": 0.022,
-            "unpredictable": 0.055,
-        }.get(personality, 0.012)
+        t = trait_units(get_npc_traits(self.npcs[npc_index]))
+        stand_pat_bluff_chance = max(0.002, 0.005 + 0.04*t["aggressiveness"]
+                                    + 0.04*t["unpredictability"] - 0.035*t["selectivity"])
+
 
         stand_pat_bluff_chance *= (
             0.55 + 0.65 * skill_factor
@@ -890,6 +889,7 @@ class FiveCardDrawGame(TexasHoldemGame):
 
             self.last_pot_awards.append({
                 "amount": pot_amount,
+                "eligible": eligible.copy(),
                 "winners": winners.copy(),
                 "share": share,
                 "remainder": remainder,
@@ -959,6 +959,8 @@ class FiveCardDrawGame(TexasHoldemGame):
             },
         )
 
+        self.record_personality_showdown(results)
+
         self.pot = 0
         self.hand_complete = True
         self.current_actor = -1
@@ -1000,3 +1002,4 @@ class FiveCardDrawGame(TexasHoldemGame):
             return ""
 
         return HAND_NAMES[result[0]]
+

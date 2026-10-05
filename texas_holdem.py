@@ -1,4 +1,5 @@
 import random
+from npc_personality import get_npc_traits, PokerGrudgeMemory, npc_identity
 from collections import Counter
 from itertools import combinations
 
@@ -108,6 +109,7 @@ class TexasHoldemGame:
         # Shared session-level model of how the human player
         # has actually been behaving at this poker table.
         self.player_model = PokerOpponentModel()
+        self.personality_memory = PokerGrudgeMemory()
 
         # Snapshot of seats that began the current hand. This
         # remains stable even if somebody moves all-in mid-hand.
@@ -341,11 +343,15 @@ class TexasHoldemGame:
     ):
 
         self.hand_number = 0
+        self.rating_seen_hands = set()
+        self.rating_final_stacks = None
+        self.session_rating_rewarded = False
 
         self.last_hand_busted_indexes = []
 
         self.hand_history.clear()
         self.player_model.reset()
+        self.personality_memory.clear()
         self.hand_seat_indexes = []
 
         # ==================================================
@@ -2469,6 +2475,9 @@ class TexasHoldemGame:
             npc_index
     ):
 
+        if not 0 <= npc_index < len(self.npcs):
+            return "balanced", get_poker_personality_profile("balanced")
+
         effective_personality = (
             self.get_npc_effective_personality(
                 npc_index
@@ -2477,10 +2486,10 @@ class TexasHoldemGame:
 
         return (
             effective_personality,
-            get_poker_personality_profile(
-                effective_personality
-            )
+            get_poker_personality_profile(self.npcs[npc_index])
         )
+
+    rating_game_key = "texas_holdem"
 
     def get_npc_skill_factor(
             self,
@@ -2495,7 +2504,7 @@ class TexasHoldemGame:
             return 0.55
 
         return get_poker_skill_factor(
-            self.npcs[npc_index]
+            self.npcs[npc_index], self.rating_game_key
         )
 
     def get_poker_position_label(
@@ -2602,7 +2611,7 @@ class TexasHoldemGame:
             self.get_active_player_indexes()
         )
 
-        return {
+        context = {
             "game": "texas_holdem",
             "stage": self.current_stage,
             "position": self.get_poker_position_label(
@@ -2648,6 +2657,12 @@ class TexasHoldemGame:
                 npc_index
             ),
         }
+        context["personality_traits"] = get_npc_traits(self.npcs[npc_index])
+        context["starting_stack"] = self.starting_stack
+        context["hand_number"] = self.hand_number
+        context.update(self.get_npc_grudge_context(npc_index))
+        return context
+
 
     # ==================================================
     # NPC HAND STRENGTH
@@ -2660,6 +2675,43 @@ class TexasHoldemGame:
     # 0.75 = strong
     # 1.00 = monster
     # ==================================================
+
+    def get_npc_grudge_context(self, npc_index):
+        opponents = []
+        for seat in self.get_active_player_indexes():
+            if seat == npc_index + 1:
+                continue
+            npc = self.npcs[seat - 1] if seat else {}
+            opponents.append({
+                "seat": seat, "id": npc_identity(npc, seat),
+                "name": self.get_table_player_name(seat),
+                "stack": self.player_stack if seat == 0 else self.npc_stacks[seat - 1],
+                "round_bet": self.player_round_bet if seat == 0 else self.npc_round_bets[seat - 1],
+            })
+        return self.personality_memory.context(self.npcs[npc_index], npc_index + 1,
+                                              opponents, self.last_raiser, self.hand_number)
+
+    def record_personality_showdown(self, results):
+        """Only resent an opponent who actually beat this NPC in a contested pot.
+
+        A side-pot winner may still lose another pot, and folded players do not
+        get invented showdown grudges. The memory deduplicates repeated hooks.
+        """
+        for pot in self.last_pot_awards:
+            eligible = set(pot.get("eligible", results)) & set(results)
+            winners = set(pot.get("winners", []))
+            for seat in eligible - winners:
+                if seat == 0:
+                    continue
+                npc = self.npcs[seat - 1]
+                observer = npc_identity(npc, seat)
+                severity = min(1.0, self.npc_hand_contributions[seat - 1]
+                               / max(1, self.starting_stack))
+                for winner in winners:
+                    opponent = self.npcs[winner - 1] if winner else {}
+                    self.personality_memory.record_loss(
+                        observer, npc_identity(opponent, winner), self.hand_number,
+                        get_npc_traits(npc)["bitterness"], severity)
 
     def get_npc_hand_strength(
             self,
@@ -4458,6 +4510,7 @@ class TexasHoldemGame:
                     "amount":
                         pot_amount,
 
+                    "eligible": eligible.copy(),
                     "winners":
                         winners.copy(),
 
@@ -4606,6 +4659,8 @@ class TexasHoldemGame:
         # ==================================================
         # Finish hand
         # ==================================================
+
+        self.record_personality_showdown(results)
 
         self.pot = 0
 

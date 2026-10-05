@@ -122,7 +122,7 @@ def draw_head_to_head_selection(
         surface.blit(avatar, (player_panel.x + 14, player_panel.y + 4))
 
     player_label = small_font.render(
-        f"{player_name}  •  Overall {int(player_rating):,}",
+        f"{player_name}  •  Solitaire {int(player_rating):,}",
         True,
         (246, 237, 203),
     )
@@ -167,7 +167,7 @@ def draw_head_to_head_selection(
         surface.blit(name_surface, name_surface.get_rect(center=(rect.centerx, rect.y + 168)))
 
         rating_surface = body_font.render(
-            f"Overall {rating:,}",
+            f"Solitaire {rating:,}",
             True,
             (232, 211, 144),
         )
@@ -294,3 +294,4 @@ def draw_head_to_head_hud(
         surface.blit(count_surface, count_surface.get_rect(center=(BASE_WIDTH // 2, BASE_HEIGHT // 2)))
         sub = body_font.render("First to clear all 52 foundation cards wins.", True, (250, 250, 245))
         surface.blit(sub, sub.get_rect(center=(BASE_WIDTH // 2, BASE_HEIGHT // 2 + 82)))
+

@@ -4,6 +4,8 @@ import time
 import copy
 
 from career_hub_controls import CareerHubControls
+from npc_personality import personality_summary
+from npc_personality_ui import draw_npc_traits
 
 import random
 
@@ -229,6 +231,7 @@ from blind_mans_bluff_ui import (
     ACTION_NEXT_HAND as BLUFF_ACTION_NEXT_HAND,
     ACTION_CHECK as BLUFF_ACTION_CHECK,
     ACTION_BET as BLUFF_ACTION_BET,
+    ACTION_RAISE as BLUFF_ACTION_RAISE,
     ACTION_CALL as BLUFF_ACTION_CALL,
     ACTION_FOLD as BLUFF_ACTION_FOLD,
 )
@@ -246,7 +249,6 @@ from debug_poker_select import (
 
 from head_to_head import (
     HeadToHeadRace,
-    calculate_head_to_head_rating_reward,
     select_head_to_head_opponents,
 )
 from head_to_head_ui import (
@@ -307,12 +309,25 @@ from profile import (
 
 from career_ratings import (
     RATING_KEYS,
+    GAME_RATING_KEYS,
+    apply_rating_change,
+    boost_npc_overall,
+    elo_delta,
+    simulate_npc_rating_month,
     RATING_DISPLAY_NAMES,
     advance_npc_age_for_month,
     ensure_npc_career_state,
     make_npc_rating_bundle,
     make_player_rating_bundle,
     normalize_rating_bundle,
+)
+
+from career_rating_events import (
+    record_result,
+    record_poker_showdown,
+    settle_competitive_result,
+    settle_house_result,
+    settle_poker_session,
 )
 
 from career_fans import (
@@ -766,7 +781,7 @@ HOW_TO_PLAY_CONTENT = {
             "",
             "Work side jobs to earn bonus cash. Higher-paying jobs are unlocked by improving your rating; employers respect results.",
             "",
-            "Your Overall Rating reflects results across competitive games. Individual game ratings track where you are strongest, while Overall determines your main international ranking.",
+            "Overall is the rounded average of your seven game ratings. Wins and losses change only the game you played. Overall determines your main international ranking and job eligibility.",
             "",
             "Random events, news stories, and changing rival ratings make each career save different. Reach #1 to conquer the Solitaire world.",
         ],
@@ -1320,11 +1335,11 @@ HELP_CONTENT = {
         "lines": [
             "Head-to-Head pits you directly against a nearby Career rival in a timed Klondike race.",
             "",
-            "Choose from four opponents near your Overall Rating. The matchup screen normally includes competitors just above and below you in the rankings.",
+            "Choose from four opponents near your Solitaire Rating. The matchup screen normally includes competitors just above and below you in the rankings.",
             "",
             "Both racers are trying to move all 52 cards to their foundations. Your opponent's progress appears in the race HUD while you play the real Solitaire board.",
             "",
-            "Head-to-Head currently uses a standard shuffled Draw-1 deal. The experimental Verified Solvable generator is disabled while its deal construction is rebuilt.",
+            "Race deals are independently shuffled Draw-1 layouts with checked winning paths. Wins, losses and forfeits change Solitaire ratings. Normal Verified Solvable remains disabled.",
         ],
     },
 }
@@ -2897,94 +2912,9 @@ def update_career_leaderboard_ratings():
             career_month
         )
 
-        skill_tier = npc.get(
-            "skill_tier",
-            "mid"
-        )
-
-        # ==========================================
-        # Monthly movement ranges
-        # ==========================================
-
-        if (
-            npc_id
-            == career_leaderboard_star_id
-        ):
-            # The dominant player tends to remain
-            # strong, but can still have a bad month.
-            change = random.randint(
-                -25,
-                55
-            )
-
-        elif skill_tier == "elite":
-            change = random.randint(
-                -45,
-                50
-            )
-
-        elif skill_tier == "strong":
-            change = random.randint(
-                -50,
-                45
-            )
-
-        elif skill_tier == "mid":
-            change = random.randint(
-                -55,
-                55
-            )
-
-        else:
-            change = random.randint(
-                -60,
-                60
-            )
-
-        current_rating = (
-            npc_state.get(
-                "rating",
-                1000
-            )
-        )
-
-        new_rating = max(
-            100,
-            current_rating + change
-        )
-
-        npc_state[
-            "rating"
-        ] = new_rating
-
-        npc_state[
-            "last_change"
-        ] = change
-
-        ratings = npc_state.setdefault(
-            "ratings",
-            make_npc_rating_bundle(
-                current_rating,
-                skill_tier
-            )
-        )
-
-        ratings[
-            "overall"
-        ] = new_rating
-
-        # Until the per-game NPC simulation lands, legacy monthly movement
-        # continues to represent their Solitaire circuit form as well.
-        ratings[
-            "solitaire"
-        ] = max(
-            100,
-            int(
-                ratings.get(
-                    "solitaire",
-                    current_rating
-                )
-            ) + change
+        simulate_npc_rating_month(
+            npc_state, npc,
+            star=(npc_id == career_leaderboard_star_id),
         )
 
     sync_career_npc_runtime_state()
@@ -3235,6 +3165,7 @@ career_news_page = 0
 
 career_rating = 1000
 career_ratings = make_player_rating_bundle(career_rating)
+career_rating_results = {}
 career_cash = 500
 career_fans = 0
 career_last_fan_change = 0
@@ -6257,6 +6188,12 @@ def draw_blackjack():
             radius=9
         )
         game_surface.blit(result_surface, result_rect)
+        if current_game_mode == "career" and getattr(blackjack_game, "rating_change", None) is not None:
+            rating_text = blackjack_small_font.render(
+                f"Blackjack rating {blackjack_game.rating_change:+}  |  {career_ratings['blackjack']:,}",
+                True, (245, 229, 165),
+            )
+            game_surface.blit(rating_text, rating_text.get_rect(center=(right_panel.centerx, 290)))
 
     elif blackjack_game.pending_natural_result is not None:
         reveal_surface = blackjack_body_font.render(
@@ -6385,53 +6322,67 @@ def draw_blackjack():
             game_surface.blit(tooltip, tooltip_rect)
 
 
-def award_career_rating(
-        rating_key,
-        amount
-):
-    """Award one game rating while preserving the legacy Overall field.
-
-    Existing UI and job unlocks still read ``career_rating``.  Keeping that
-    value synchronized with the new rating bundle lets us migrate toward
-    per-game leaderboards without breaking old saves or current screens.
-    """
+def award_career_rating(rating_key, amount):
+    """Apply a game reward and synchronize the derived Overall mirror."""
     global career_rating
-    global career_ratings
-
-    try:
-        amount = int(amount)
-    except (TypeError, ValueError):
+    if current_game_mode not in ("career", "head_to_head") or rating_key not in GAME_RATING_KEYS:
         return 0
-
-    if amount == 0:
-        return 0
-
-    career_ratings = normalize_rating_bundle(
-        career_ratings,
-        legacy_rating=career_rating
-    )
-
-    if rating_key not in RATING_KEYS:
-        rating_key = "overall"
-
-    if rating_key == "overall":
-        career_ratings["overall"] = max(
-            100,
-            career_ratings["overall"] + amount
-        )
-    else:
-        career_ratings[rating_key] = max(
-            100,
-            career_ratings[rating_key] + amount
-        )
-
-        career_ratings["overall"] = max(
-            100,
-            career_ratings["overall"] + amount
-        )
-
+    actual = apply_rating_change(career_ratings, rating_key, amount)
     career_rating = career_ratings["overall"]
-    return amount
+    return actual
+
+
+def adjust_debug_ratings(amount):
+    global career_rating
+    for key in GAME_RATING_KEYS:
+        apply_rating_change(career_ratings, key, amount)
+    career_rating = career_ratings["overall"]
+
+
+def rate_competitive_game(game_key, opponent, won):
+    global career_rating
+    if current_game_mode not in ("career", "head_to_head"):
+        return 0
+    change = settle_competitive_result(
+        career_ratings, career_rating_results, career_leaderboard_state,
+        game_key, opponent, 1.0 if won else 0.0,
+    )
+    career_rating = career_ratings["overall"]
+    sync_career_npc_runtime_state()
+    return change
+
+
+def preview_competitive_rating(game_key, opponent, won):
+    if current_game_mode not in ("career", "head_to_head") or not isinstance(opponent, dict):
+        return 0
+    state = career_leaderboard_state.get(opponent.get("id"), {})
+    bundle = state.get("ratings") or opponent.get("career_ratings") or opponent.get("ratings") or {}
+    opponent_rating = bundle.get(game_key, opponent.get("race_rating", opponent.get("rating", 1000)))
+    requested = elo_delta(career_ratings[game_key], opponent_rating, 1 if won else 0)
+    return max(100, career_ratings[game_key] + requested) - career_ratings[game_key]
+
+
+def rate_house_game(game_key, net):
+    global career_rating
+    if current_game_mode != "career":
+        return 0
+    change = settle_house_result(career_ratings, career_rating_results, game_key, net)
+    career_rating = career_ratings["overall"]
+    return change
+
+
+def rate_poker_cash_out(game_key, poker_game):
+    global career_rating
+    if current_game_mode != "career":
+        return 0
+    change = settle_poker_session(
+        career_ratings, career_rating_results, career_leaderboard_state,
+        game_key, poker_game,
+    )
+    career_rating = career_ratings["overall"]
+    sync_career_npc_runtime_state()
+    return change
+
 
 
 def award_career_fans(amount, reason=""):
@@ -6747,6 +6698,7 @@ def process_texas_holdem_showdown():
     texas_holdem_last_processed_showdown_hand = (
         texas_holdem_game.hand_number
     )
+    record_poker_showdown(texas_holdem_game)
 
     # ==================================================
     # SHOWDOWN AUDIO
@@ -6823,10 +6775,6 @@ def process_texas_holdem_showdown():
 
         if not texas_holdem_table_sweep_rewarded:
             if current_game_mode == "career":
-                award_career_rating(
-                    "texas_holdem",
-                    TEXAS_HOLDEM_TABLE_SWEEP_RATING_BONUS
-                )
                 fan_gain = award_fans_for_rating_win(
                     TEXAS_HOLDEM_TABLE_SWEEP_RATING_BONUS,
                     "Hold'em table clear"
@@ -6837,7 +6785,7 @@ def process_texas_holdem_showdown():
         texas_holdem_game.result_text += " TABLE CLEARED!"
         if current_game_mode == "career":
             texas_holdem_game.result_text += (
-                f" +{TEXAS_HOLDEM_TABLE_SWEEP_RATING_BONUS} Rating. "
+                " Rating settles on cash-out. "
                 f"+{fan_gain:,} Fans."
             )
 
@@ -7143,6 +7091,7 @@ def start_texas_holdem_session(
     global texas_holdem_next_npc_action_at
     global texas_holdem_round_advance_at
     global texas_holdem_next_hand_at
+    global texas_holdem_last_processed_showdown_hand
 
     # ==================================================
     # Determine / validate buy-in
@@ -7219,6 +7168,7 @@ def start_texas_holdem_session(
 
     texas_holdem_buy_in_active = True
     texas_holdem_game.session_xp_rewarded = False
+    texas_holdem_last_processed_showdown_hand = 0
 
     # ==================================================
     # Reset runtime timers
@@ -7274,6 +7224,7 @@ def finish_texas_holdem_session():
         )
 
         texas_holdem_buy_in_active = False
+        rate_poker_cash_out("texas_holdem", texas_holdem_game)
 
     if (
             texas_holdem_game.current_stage
@@ -7499,6 +7450,7 @@ def finish_five_card_draw_session():
         )
 
         five_card_draw_buy_in_active = False
+        rate_poker_cash_out("five_card_draw", five_card_draw_game)
 
     if (
             five_card_draw_game.current_stage
@@ -7599,6 +7551,7 @@ def process_five_card_draw_showdown():
     five_card_draw_last_processed_showdown_hand = (
         five_card_draw_game.hand_number
     )
+    record_poker_showdown(five_card_draw_game)
 
     audio.play_sound(
         "card_flip"
@@ -7652,10 +7605,6 @@ def process_five_card_draw_showdown():
 
         if not five_card_draw_table_sweep_rewarded:
             if current_game_mode == "career":
-                award_career_rating(
-                    "five_card_draw",
-                    FIVE_CARD_DRAW_TABLE_SWEEP_RATING_BONUS
-                )
                 fan_gain = award_fans_for_rating_win(
                     FIVE_CARD_DRAW_TABLE_SWEEP_RATING_BONUS,
                     "Five-Card Draw table clear"
@@ -7666,7 +7615,7 @@ def process_five_card_draw_showdown():
         five_card_draw_game.result_text += " TABLE CLEARED!"
         if current_game_mode == "career":
             five_card_draw_game.result_text += (
-                f" +{FIVE_CARD_DRAW_TABLE_SWEEP_RATING_BONUS} Rating. "
+                " Rating settles on cash-out. "
                 f"+{fan_gain:,} Fans."
             )
 
@@ -7866,6 +7815,7 @@ def finish_seven_card_stud_session():
         )
 
         seven_card_stud_buy_in_active = False
+        rate_poker_cash_out("seven_card_stud", seven_card_stud_game)
 
     if (
             seven_card_stud_game.current_stage
@@ -7965,6 +7915,7 @@ def process_seven_card_stud_showdown():
     seven_card_stud_last_processed_showdown_hand = (
         seven_card_stud_game.hand_number
     )
+    record_poker_showdown(seven_card_stud_game)
 
     audio.play_sound(
         "card_flip"
@@ -8016,10 +7967,6 @@ def process_seven_card_stud_showdown():
 
         if not seven_card_stud_table_sweep_rewarded:
             if current_game_mode == "career":
-                award_career_rating(
-                    "seven_card_stud",
-                    SEVEN_CARD_STUD_TABLE_SWEEP_RATING_BONUS
-                )
                 fan_gain = award_fans_for_rating_win(
                     SEVEN_CARD_STUD_TABLE_SWEEP_RATING_BONUS,
                     "Seven-Card Stud table clear"
@@ -8030,7 +7977,7 @@ def process_seven_card_stud_showdown():
         seven_card_stud_game.result_text += " TABLE CLEARED!"
         if current_game_mode == "career":
             seven_card_stud_game.result_text += (
-                f" +{SEVEN_CARD_STUD_TABLE_SWEEP_RATING_BONUS} Rating. "
+                " Rating settles on cash-out. "
                 f"+{fan_gain:,} Fans."
             )
 
@@ -8218,6 +8165,8 @@ def settle_roulette_round():
     roulette_session_net += (
         net_result
     )
+    roulette_game.rating_change = (rate_house_game("roulette", net_result)
+                                   if current_game_mode == "career" else None)
 
     if net_result > 0:
         award_fans_for_cash_win(
@@ -8270,6 +8219,8 @@ def settle_blackjack_round():
     blackjack_session_net += (
         net_result
     )
+    blackjack_game.rating_change = (rate_house_game("blackjack", net_result)
+                                   if current_game_mode == "career" else None)
 
     if net_result > 0:
         award_fans_for_cash_win(
@@ -8437,10 +8388,6 @@ def claim_crazy_eights_result():
 
     if player_won:
         rating_gain = 60
-        award_career_rating(
-            "overall",
-            rating_gain
-        )
         award_fans_for_rating_win(
             rating_gain,
             "Crazy Eights win"
@@ -8482,10 +8429,6 @@ def claim_bango_result():
 
     if player_won:
         rating_gain = 35
-        award_career_rating(
-            "overall",
-            rating_gain
-        )
         award_fans_for_rating_win(
             rating_gain,
             "Bango win"
@@ -8872,7 +8815,6 @@ def claim_faro_session_result():
         reward_key = "break_even"
 
     rating_gain = TRAINING_RATING_REWARDS["faro"][reward_key]
-    award_career_rating("overall", rating_gain)
 
     if faro_session_net > 0:
         award_fans_for_cash_win(
@@ -9012,8 +8954,7 @@ def finish_five_o_poker_session():
             reward_key = "loss"
 
         rating_gain = TRAINING_RATING_REWARDS["five_o_poker"][reward_key]
-        award_career_rating("overall", rating_gain)
-
+    
         won_session = won_five_o_session
         if won_session:
             award_fans_for_rating_win(
@@ -9136,8 +9077,7 @@ def finish_blind_mans_bluff_session():
             reward_key = "loss"
 
         rating_gain = TRAINING_RATING_REWARDS["blind_mans_bluff"][reward_key]
-        award_career_rating("overall", rating_gain)
-
+    
         won_session = won_bluff_session
         if won_session:
             award_fans_for_rating_win(
@@ -9853,6 +9793,8 @@ def build_profile_save_data():
     ] = dict(
         career_ratings
     )
+    career_data["rating_schema_version"] = 2
+    career_data["rating_results"] = copy.deepcopy(career_rating_results)
 
     career_data[
         "cash"
@@ -10040,6 +9982,7 @@ def apply_profile_save_data(
     global career_leaderboard_star_id
     global career_rating
     global career_ratings
+    global career_rating_results
     global career_cash
     global career_fans
     global career_fan_rewarded_jobs
@@ -10239,6 +10182,7 @@ def apply_profile_save_data(
     career_rating = career_ratings[
         "overall"
     ]
+    career_rating_results = copy.deepcopy(career_data.get("rating_results", {}))
 
     career_cash = career_data.get(
         "cash",
@@ -11840,7 +11784,7 @@ def draw_score_four():
 
         reward_surface = (
             option_label_font.render(
-                "+60 Rating",
+                "+60 Score-Four Rating" if current_game_mode == "career" else "Training complete",
                 True,
                 (
                     255,
@@ -12038,9 +11982,8 @@ def draw_score_four():
         reward_surface = (
             option_label_font.render(
                 (
-                    f"+"
-                    f"{score_four_game.competitive_reward}"
-                    f" Rating"
+                    f"{preview_competitive_rating('score_four', score_four_opponent_npc, score_four_game.match_winner == 'player'):+} Score-Four Rating"
+                    if current_game_mode == "career" else "Practice match complete"
                 ),
                 True,
                 (
@@ -13420,7 +13363,7 @@ def apply_round_rewards(
 
         base_rating_change = (
             get_solitaire_rating_reward(
-                career_rating
+                career_ratings["solitaire"]
             )
         )
 
@@ -13438,10 +13381,8 @@ def apply_round_rewards(
             cash_earned
         )
 
-        award_career_rating(
-            "solitaire",
-            rating_change
-        )
+        rating_change = award_career_rating("solitaire", rating_change)
+        record_result(career_rating_results, "solitaire", 1.0, rating_change)
 
         fans_earned = award_fans_for_rating_win(
             rating_change,
@@ -13654,25 +13595,7 @@ def initialize_career_leaderboard():
                 career_leaderboard_star_id
             ]
 
-            star_state[
-                "rating"
-            ] = star_rating
-
-            star_state.setdefault(
-                "ratings",
-                {}
-            )[
-                "overall"
-            ] = star_rating
-
-            # Preserve the old leaderboard's meaning as the NPC's
-            # Solitaire strength while the selectable rating UI is still
-            # being built.
-            star_state[
-                "ratings"
-            ][
-                "solitaire"
-            ] = star_rating
+            boost_npc_overall(star_state, star_rating)
 
     sync_career_npc_runtime_state()
 
@@ -13722,17 +13645,7 @@ def get_career_leaderboard(
             )
         )
 
-        monthly_change = (
-            npc_state.get(
-                "last_change",
-                0
-            )
-            if rating_key in (
-                "overall",
-                "solitaire"
-            )
-            else 0
-        )
+        monthly_change = npc_state.get("last_changes", {}).get(rating_key, 0)
 
         leaderboard.append(
             {
@@ -17634,7 +17547,7 @@ def draw_career_leaderboard_bio():
     name = entry.get("name", "Unknown Player")
     rating = entry.get("rating", 1000)
     rating_label = entry.get("rating_label", "Overall")
-    personality = str(entry.get("game_personality", "balanced")).replace("_", " ").title()
+    personality = personality_summary(entry.get("npc") or entry)
 
     bio = entry.get("bio", "Professional card player.") or "Professional card player."
     country = entry.get("country", "Unknown") or "Unknown"
@@ -17759,6 +17672,9 @@ def draw_career_leaderboard_bio():
             placeholder.get_rect(center=portrait_panel_rect.center)
         )
 
+    if not is_player:
+        draw_npc_traits(game_surface, entry.get("npc") or entry,
+                        pygame.Rect(218, 550, 930, 153), difficulty_detail_font)
     draw_button(career_subpage_back_rect, "Return to Rankings")
 
 def draw_career_leaderboards():
@@ -17871,7 +17787,7 @@ def draw_career_leaderboards():
 
     filter_surface = (
         option_value_font.render(
-            f"Sort by: {rating_label}",
+            f"Sort by: {rating_label}" + (" (7-game average)" if career_leaderboard_rating_key == "overall" else ""),
             True,
             (
                 20,
@@ -18076,15 +17992,7 @@ def draw_career_leaderboards():
             )
         )
 
-        personality = str(
-            entry.get(
-                "game_personality",
-                "balanced"
-            )
-        ).replace(
-            "_",
-            " "
-        ).title()
+        personality = personality_summary(entry.get("npc") or entry).split(" / ")[0]
 
         if entry.get(
             "is_player"
@@ -18145,7 +18053,7 @@ def draw_career_leaderboards():
         )
 
         # ----------------------------------------------
-        # Monthly Rating Change (legacy overall/solitaire)
+        # Last movement in the selected game category
         # ----------------------------------------------
 
         rating_change = entry.get(
@@ -18889,11 +18797,11 @@ def start_head_to_head_event():
     global career_event_has_activity
 
     leaderboard = get_career_leaderboard(
-        rating_key="overall"
+        rating_key="solitaire"
     )
     head_to_head_opponents = select_head_to_head_opponents(
         leaderboard,
-        career_rating,
+        career_ratings["solitaire"],
         count=4,
     )
     random.shuffle(head_to_head_opponents)
@@ -18959,17 +18867,13 @@ def begin_selected_head_to_head_race():
     game.clear_challenge()
     game.set_difficulty(DEFAULT_DIFFICULTY)
 
-    # The experimental constructive generator still produces conspicuously
-    # low-card-heavy openings. Head-to-Head temporarily uses an ordinary
-    # shuffled Draw-1 deal so races feel like real Solitaire instead of a
-    # tutorial layout. Verified Solvable remains disabled until its rebuild.
     game.stock_draw_count = 1
     game.set_deal_mode("random")
-    game.new_game()
+    game.new_race_game()
 
     head_to_head_race.prepare(
         opponent,
-        player_rating=career_rating,
+        player_rating=career_ratings["solitaire"],
         now_ms=pygame.time.get_ticks(),
     )
 
@@ -18990,8 +18894,9 @@ def finish_head_to_head_race(
     global current_state
     global current_game_mode
 
-    if head_to_head_race.opponent is None:
+    if head_to_head_race.opponent is None or head_to_head_race.reward_claimed:
         return False
+    head_to_head_race.reward_claimed = True
 
     now_ms = pygame.time.get_ticks()
 
@@ -19012,10 +18917,7 @@ def finish_head_to_head_race(
         "Opponent"
     )
     opponent_rating = int(
-        opponent.get(
-            "rating",
-            1000
-        )
+        opponent.get("race_rating", opponent.get("rating", 1000))
     )
 
     player_progress = (
@@ -19029,19 +18931,10 @@ def finish_head_to_head_race(
         now_ms
     )
 
-    rating_change = 0
+    rating_change = rate_competitive_game("solitaire", opponent, won and not forfeited)
     fans_earned = 0
 
     if not forfeited:
-        rating_change = calculate_head_to_head_rating_reward(
-            career_rating,
-            opponent_rating,
-            won,
-        )
-        award_career_rating(
-            "solitaire",
-            rating_change
-        )
 
         if won:
             fans_earned = award_fans_for_rating_win(
@@ -19088,7 +18981,7 @@ def finish_head_to_head_race(
         f"Race time: {elapsed_text}",
         f"Your progress: {player_progress}/52",
         f"Opponent rating: {opponent_rating:,}",
-        f"Rating change: +{rating_change:,}" if rating_change else "Rating change: 0",
+        f"Solitaire rating change: {rating_change:+,}" if rating_change else "Solitaire rating change: 0",
         (
             f"Fan change: {fans_earned:+,}"
             if fans_earned
@@ -19110,7 +19003,7 @@ def draw_head_to_head_event():
         head_to_head_opponents,
         head_to_head_selected_index,
         player_name,
-        career_rating,
+        career_ratings["solitaire"],
         get_npc_portrait_surface,
         options_title_font,
         option_label_font,
@@ -23652,18 +23545,12 @@ while running:
 
                 elif debug_action == ACTION_ADD_RATING:
                     audio.play_sound("button_click")
-                    award_career_rating(
-                        "overall",
-                        100
-                    )
+                    adjust_debug_ratings(100)
                     print("Rating:", career_rating)
 
                 elif debug_action == ACTION_SUB_RATING:
                     audio.play_sound("button_click")
-                    award_career_rating(
-                        "overall",
-                        -100
-                    )
+                    adjust_debug_ratings(-100)
                     print("Rating:", career_rating)
 
                 elif debug_action == ACTION_ADD_XP:
@@ -24563,7 +24450,8 @@ while running:
                                 score_four_opponent_npc[
                                     "skill_tier"
                                 ]
-                            )
+                            ),
+                            rating=score_four_opponent_npc.get("career_ratings", {}).get("score_four"),
                         )
 
                         current_state = (
@@ -26766,6 +26654,11 @@ while running:
                     if blind_mans_bluff_game.player_bet(bluff_bet_amount):
                         play_texas_holdem_chip_sound()
 
+                elif bluff_action == BLUFF_ACTION_RAISE:
+                    amount = get_blind_mans_bluff_bet_amount(blind_mans_bluff_game)
+                    if blind_mans_bluff_game.player_raise(amount):
+                        play_texas_holdem_chip_sound()
+
                 elif bluff_action == BLUFF_ACTION_CALL:
                     if blind_mans_bluff_game.player_call():
                         play_texas_holdem_chip_sound()
@@ -26896,10 +26789,9 @@ while running:
                     ):
 
                         if not score_four_game.reward_claimed:
-                            award_career_rating(
-                                "score_four",
-                                60
-                            )
+                            rating_change = award_career_rating("score_four", 60)
+                            if current_game_mode == "career":
+                                record_result(career_rating_results, "score_four", 1.0, rating_change)
                             award_fans_for_rating_win(
                                 60,
                                 "Score-Four completion"
@@ -26954,12 +26846,9 @@ while running:
                     ):
 
                         if not score_four_game.reward_claimed:
-                            award_career_rating(
-                                "score_four",
-                                score_four_game.competitive_reward
-                            )
-                            player_won_match = (
-                                score_four_game.match_winner == "player"
+                            player_won_match = score_four_game.match_winner == "player"
+                            rating_change = rate_competitive_game(
+                                "score_four", score_four_opponent_npc, player_won_match
                             )
 
                             if player_won_match:
@@ -26991,7 +26880,7 @@ while running:
                                     if isinstance(score_four_opponent_npc, dict)
                                     else "mid"
                                 ),
-                                rating_reward=score_four_game.competitive_reward,
+                                rating_reward=rating_change,
                             )
 
                             score_four_game.reward_claimed = True

@@ -9,7 +9,17 @@
     "favorite_suit": "Clubs",
     "skill_tier": "elite",
     "portrait": "assets/npcs/monkus_carlton.png",
-    "game_personality": "unpredictable"
+    "game_personality": "unpredictable",
+    "personality_traits": {
+      "caution": 4,
+      "aggressiveness": 6,
+      "unpredictability": 10,
+      "escalation": 6,
+      "selectivity": 3,
+      "tenacity": 4,
+      "pessimism": 2,
+      "bitterness": 1
+    }
   },
   {
     "id": "gary_undo",
@@ -21,7 +31,17 @@
     "favorite_suit": "Diamonds",
     "skill_tier": "elite",
     "portrait": "assets/npcs/gary_undo.png",
-    "game_personality": "unpredictable"
+    "game_personality": "unpredictable",
+    "personality_traits": {
+      "caution": 4,
+      "aggressiveness": 7,
+      "unpredictability": 9,
+      "escalation": 6,
+      "selectivity": 5,
+      "tenacity": 3,
+      "pessimism": 8,
+      "bitterness": 10
+    }
   },
   {
     "id": "big_mike",
@@ -33,7 +53,17 @@
     "favorite_suit": "Spades",
     "skill_tier": "elite",
     "portrait": "assets/npcs/big_mike.png",
-    "game_personality": "timid"
+    "game_personality": "timid",
+    "personality_traits": {
+      "caution": 9,
+      "aggressiveness": 2,
+      "unpredictability": 2,
+      "escalation": 1,
+      "selectivity": 5,
+      "tenacity": 4,
+      "pessimism": 6,
+      "bitterness": 7
+    }
   },
   {
     "id": "shelly_barn",
@@ -45,7 +75,17 @@
     "favorite_suit": "Diamonds",
     "skill_tier": "elite",
     "portrait": "assets/npcs/shelly_barn.png",
-    "game_personality": "opportunist"
+    "game_personality": "opportunist",
+    "personality_traits": {
+      "caution": 5,
+      "aggressiveness": 6,
+      "unpredictability": 2,
+      "escalation": 4,
+      "selectivity": 9,
+      "tenacity": 10,
+      "pessimism": 4,
+      "bitterness": 7
+    }
   },
   {
     "id": "molly_courts",
@@ -57,7 +97,17 @@
     "favorite_suit": "Diamonds",
     "skill_tier": "strong",
     "portrait": "assets/npcs/molly_courts.png",
-    "game_personality": "aggressive"
+    "game_personality": "aggressive",
+    "personality_traits": {
+      "caution": 1,
+      "aggressiveness": 10,
+      "unpredictability": 4,
+      "escalation": 7,
+      "selectivity": 2,
+      "tenacity": 6,
+      "pessimism": 9,
+      "bitterness": 7
+    }
   },
   {
     "id": "rosalie_de_leon",
@@ -69,7 +119,17 @@
     "favorite_suit": "Diamonds",
     "skill_tier": "strong",
     "portrait": "assets/npcs/rosalie_de_leon.png",
-    "game_personality": "escalator"
+    "game_personality": "escalator",
+    "personality_traits": {
+      "caution": 7,
+      "aggressiveness": 5,
+      "unpredictability": 4,
+      "escalation": 9,
+      "selectivity": 3,
+      "tenacity": 3,
+      "pessimism": 6,
+      "bitterness": 8
+    }
   },
   {
     "id": "danny_de_leon",
@@ -81,7 +141,17 @@
     "favorite_suit": "Diamonds",
     "skill_tier": "strong",
     "portrait": "assets/npcs/danny_de_leon.png",
-    "game_personality": "escalator"
+    "game_personality": "escalator",
+    "personality_traits": {
+      "caution": 4,
+      "aggressiveness": 7,
+      "unpredictability": 4,
+      "escalation": 10,
+      "selectivity": 5,
+      "tenacity": 7,
+      "pessimism": 4,
+      "bitterness": 8
+    }
   },
   {
     "id": "olga_mire",
@@ -93,7 +163,17 @@
     "favorite_suit": "Hearts",
     "skill_tier": "elite",
     "portrait": "assets/npcs/olga_mire.png",
-    "game_personality": "opportunist"
+    "game_personality": "opportunist",
+    "personality_traits": {
+      "caution": 6,
+      "aggressiveness": 5,
+      "unpredictability": 2,
+      "escalation": 5,
+      "selectivity": 10,
+      "tenacity": 6,
+      "pessimism": 2,
+      "bitterness": 4
+    }
   },
   {
     "id": "chet_hanks",
@@ -105,7 +185,17 @@
     "favorite_suit": "Diamonds",
     "skill_tier": "mid",
     "portrait": "assets/npcs/chet_hanks.png",
-    "game_personality": "timid"
+    "game_personality": "timid",
+    "personality_traits": {
+      "caution": 7,
+      "aggressiveness": 3,
+      "unpredictability": 3,
+      "escalation": 3,
+      "selectivity": 5,
+      "tenacity": 10,
+      "pessimism": 4,
+      "bitterness": 4
+    }
   },
   {
     "id": "nurse_ratched",
@@ -117,7 +207,17 @@
     "favorite_suit": "Clubs",
     "skill_tier": "mid",
     "portrait": "assets/npcs/nurse_ratched.png",
-    "game_personality": "opportunist"
+    "game_personality": "opportunist",
+    "personality_traits": {
+      "caution": 6,
+      "aggressiveness": 5,
+      "unpredictability": 2,
+      "escalation": 6,
+      "selectivity": 10,
+      "tenacity": 6,
+      "pessimism": 4,
+      "bitterness": 9
+    }
   },
   {
     "id": "bob_gumble",
@@ -129,7 +229,17 @@
     "favorite_suit": "Clubs",
     "skill_tier": "mid",
     "portrait": "assets/npcs/bob_gumble.png",
-    "game_personality": "aggressive"
+    "game_personality": "aggressive",
+    "personality_traits": {
+      "caution": 3,
+      "aggressiveness": 9,
+      "unpredictability": 4,
+      "escalation": 5,
+      "selectivity": 4,
+      "tenacity": 4,
+      "pessimism": 8,
+      "bitterness": 9
+    }
   },
   {
     "id": "evelyn_smythe",
@@ -141,7 +251,17 @@
     "favorite_suit": "Hearts",
     "skill_tier": "mid",
     "portrait": "assets/npcs/evelyn_smythe.png",
-    "game_personality": "escalator"
+    "game_personality": "escalator",
+    "personality_traits": {
+      "caution": 5,
+      "aggressiveness": 5,
+      "unpredictability": 3,
+      "escalation": 10,
+      "selectivity": 3,
+      "tenacity": 7,
+      "pessimism": 5,
+      "bitterness": 5
+    }
   },
   {
     "id": "gringo_starr",
@@ -153,7 +273,17 @@
     "favorite_suit": "Clubs",
     "skill_tier": "low",
     "portrait": "assets/npcs/gringo_starr.png",
-    "game_personality": "unpredictable"
+    "game_personality": "unpredictable",
+    "personality_traits": {
+      "caution": 4,
+      "aggressiveness": 7,
+      "unpredictability": 10,
+      "escalation": 7,
+      "selectivity": 3,
+      "tenacity": 4,
+      "pessimism": 9,
+      "bitterness": 6
+    }
   },
   {
     "id": "rupert_craft",
@@ -165,7 +295,17 @@
     "favorite_suit": "Spades",
     "skill_tier": "low",
     "portrait": "assets/npcs/rupert_craft.png",
-    "game_personality": "unpredictable"
+    "game_personality": "unpredictable",
+    "personality_traits": {
+      "caution": 4,
+      "aggressiveness": 6,
+      "unpredictability": 10,
+      "escalation": 5,
+      "selectivity": 3,
+      "tenacity": 5,
+      "pessimism": 1,
+      "bitterness": 3
+    }
   },
   {
     "id": "chum_whopper",
@@ -177,7 +317,17 @@
     "favorite_suit": "Hearts",
     "skill_tier": "elite",
     "portrait": "assets/npcs/chum_whopper.png",
-    "game_personality": "aggressive"
+    "game_personality": "aggressive",
+    "personality_traits": {
+      "caution": 2,
+      "aggressiveness": 8,
+      "unpredictability": 4,
+      "escalation": 6,
+      "selectivity": 4,
+      "tenacity": 3,
+      "pessimism": 2,
+      "bitterness": 9
+    }
   },
   {
     "id": "melinda_cromwell",
@@ -189,7 +339,17 @@
     "favorite_suit": "Spades",
     "skill_tier": "elite",
     "portrait": "assets/npcs/melinda_cromwell.png",
-    "game_personality": "timid"
+    "game_personality": "timid",
+    "personality_traits": {
+      "caution": 9,
+      "aggressiveness": 1,
+      "unpredictability": 1,
+      "escalation": 1,
+      "selectivity": 7,
+      "tenacity": 6,
+      "pessimism": 8,
+      "bitterness": 6
+    }
   },
   {
     "id": "luke_jingle",
@@ -201,7 +361,17 @@
     "favorite_suit": "Diamonds",
     "skill_tier": "strong",
     "portrait": "assets/npcs/luke_jingle.png",
-    "game_personality": "opportunist"
+    "game_personality": "opportunist",
+    "personality_traits": {
+      "caution": 7,
+      "aggressiveness": 4,
+      "unpredictability": 4,
+      "escalation": 6,
+      "selectivity": 10,
+      "tenacity": 5,
+      "pessimism": 4,
+      "bitterness": 7
+    }
   },
   {
     "id": "gunther_hindenburg",
@@ -213,7 +383,17 @@
     "favorite_suit": "Clubs",
     "skill_tier": "strong",
     "portrait": "assets/npcs/gunther_hindenburg.png",
-    "game_personality": "timid"
+    "game_personality": "timid",
+    "personality_traits": {
+      "caution": 10,
+      "aggressiveness": 1,
+      "unpredictability": 3,
+      "escalation": 3,
+      "selectivity": 5,
+      "tenacity": 6,
+      "pessimism": 2,
+      "bitterness": 2
+    }
   },
   {
     "id": "crikey_dingo",
@@ -225,7 +405,17 @@
     "favorite_suit": "Hearts",
     "skill_tier": "strong",
     "portrait": "assets/npcs/crikey_dingo.png",
-    "game_personality": "escalator"
+    "game_personality": "escalator",
+    "personality_traits": {
+      "caution": 5,
+      "aggressiveness": 5,
+      "unpredictability": 2,
+      "escalation": 10,
+      "selectivity": 3,
+      "tenacity": 10,
+      "pessimism": 7,
+      "bitterness": 2
+    }
   },
   {
     "id": "jairo_ponytail",
@@ -237,7 +427,17 @@
     "favorite_suit": "Spades",
     "skill_tier": "strong",
     "portrait": "assets/npcs/jairo_ponytail.png",
-    "game_personality": "opportunist"
+    "game_personality": "opportunist",
+    "personality_traits": {
+      "caution": 5,
+      "aggressiveness": 5,
+      "unpredictability": 3,
+      "escalation": 5,
+      "selectivity": 10,
+      "tenacity": 9,
+      "pessimism": 9,
+      "bitterness": 5
+    }
   },
   {
     "id": "iona_mcdougal",
@@ -249,7 +449,17 @@
     "favorite_suit": "Clubs",
     "skill_tier": "strong",
     "portrait": "assets/npcs/iona_mcdougal.png",
-    "game_personality": "timid"
+    "game_personality": "timid",
+    "personality_traits": {
+      "caution": 9,
+      "aggressiveness": 3,
+      "unpredictability": 3,
+      "escalation": 3,
+      "selectivity": 6,
+      "tenacity": 10,
+      "pessimism": 4,
+      "bitterness": 3
+    }
   },
   {
     "id": "jiu_wang",
@@ -261,7 +471,17 @@
     "favorite_suit": "Diamonds",
     "skill_tier": "strong",
     "portrait": "assets/npcs/jiu_wang.png",
-    "game_personality": "opportunist"
+    "game_personality": "opportunist",
+    "personality_traits": {
+      "caution": 5,
+      "aggressiveness": 6,
+      "unpredictability": 2,
+      "escalation": 5,
+      "selectivity": 10,
+      "tenacity": 3,
+      "pessimism": 1,
+      "bitterness": 4
+    }
   },
   {
     "id": "jacques_rousseau",
@@ -273,7 +493,17 @@
     "favorite_suit": "Hearts",
     "skill_tier": "strong",
     "portrait": "assets/npcs/jacques_rousseau.png",
-    "game_personality": "opportunist"
+    "game_personality": "opportunist",
+    "personality_traits": {
+      "caution": 7,
+      "aggressiveness": 4,
+      "unpredictability": 4,
+      "escalation": 5,
+      "selectivity": 10,
+      "tenacity": 10,
+      "pessimism": 8,
+      "bitterness": 1
+    }
   },
   {
     "id": "palina_pepper",
@@ -285,7 +515,17 @@
     "favorite_suit": "Spades",
     "skill_tier": "strong",
     "portrait": "assets/npcs/palina_pepper.png",
-    "game_personality": "unpredictable"
+    "game_personality": "unpredictable",
+    "personality_traits": {
+      "caution": 3,
+      "aggressiveness": 7,
+      "unpredictability": 10,
+      "escalation": 7,
+      "selectivity": 5,
+      "tenacity": 6,
+      "pessimism": 1,
+      "bitterness": 5
+    }
   },
   {
     "id": "kurwa_kryzbywlewski",
@@ -297,7 +537,17 @@
     "favorite_suit": "Clubs",
     "skill_tier": "strong",
     "portrait": "assets/npcs/kurwa_kryzbywlewski.png",
-    "game_personality": "timid"
+    "game_personality": "timid",
+    "personality_traits": {
+      "caution": 10,
+      "aggressiveness": 1,
+      "unpredictability": 3,
+      "escalation": 2,
+      "selectivity": 6,
+      "tenacity": 1,
+      "pessimism": 4,
+      "bitterness": 7
+    }
   },
   {
     "id": "rusty_lewis",
@@ -309,7 +559,17 @@
     "favorite_suit": "Diamonds",
     "skill_tier": "strong",
     "portrait": "assets/npcs/rusty_lewis.png",
-    "game_personality": "unpredictable"
+    "game_personality": "unpredictable",
+    "personality_traits": {
+      "caution": 5,
+      "aggressiveness": 5,
+      "unpredictability": 10,
+      "escalation": 6,
+      "selectivity": 5,
+      "tenacity": 1,
+      "pessimism": 7,
+      "bitterness": 2
+    }
   },
   {
     "id": "lionel_braggart",
@@ -321,7 +581,17 @@
     "favorite_suit": "Hearts",
     "skill_tier": "low",
     "portrait": "assets/npcs/lionel_braggart.png",
-    "game_personality": "escalator"
+    "game_personality": "escalator",
+    "personality_traits": {
+      "caution": 4,
+      "aggressiveness": 6,
+      "unpredictability": 2,
+      "escalation": 9,
+      "selectivity": 5,
+      "tenacity": 9,
+      "pessimism": 7,
+      "bitterness": 1
+    }
   },
   {
     "id": "inshallah_intifada",
@@ -333,7 +603,17 @@
     "favorite_suit": "Clubs",
     "skill_tier": "low",
     "portrait": "assets/npcs/inshallah_intifada.png",
-    "game_personality": "unpredictable"
+    "game_personality": "unpredictable",
+    "personality_traits": {
+      "caution": 3,
+      "aggressiveness": 7,
+      "unpredictability": 10,
+      "escalation": 7,
+      "selectivity": 5,
+      "tenacity": 7,
+      "pessimism": 1,
+      "bitterness": 2
+    }
   },
   {
     "id": "manuel_nadal",
@@ -345,7 +625,17 @@
     "favorite_suit": "Spades",
     "skill_tier": "low",
     "portrait": "assets/npcs/manuel_nadal.png",
-    "game_personality": "opportunist"
+    "game_personality": "opportunist",
+    "personality_traits": {
+      "caution": 5,
+      "aggressiveness": 5,
+      "unpredictability": 4,
+      "escalation": 4,
+      "selectivity": 9,
+      "tenacity": 7,
+      "pessimism": 5,
+      "bitterness": 2
+    }
   },
   {
     "id": "mary_lafleur",
@@ -357,7 +647,17 @@
     "favorite_suit": "Diamonds",
     "skill_tier": "low",
     "portrait": "assets/npcs/mary_lafleur.png",
-    "game_personality": "aggressive"
+    "game_personality": "aggressive",
+    "personality_traits": {
+      "caution": 2,
+      "aggressiveness": 8,
+      "unpredictability": 4,
+      "escalation": 7,
+      "selectivity": 2,
+      "tenacity": 4,
+      "pessimism": 6,
+      "bitterness": 3
+    }
   },
   {
     "id": "chiara_sammartano",
@@ -369,7 +669,17 @@
     "favorite_suit": "Hearts",
     "skill_tier": "mid",
     "portrait": "assets/npcs/chiara_sammartano.png",
-    "game_personality": "unpredictable"
+    "game_personality": "unpredictable",
+    "personality_traits": {
+      "caution": 6,
+      "aggressiveness": 6,
+      "unpredictability": 9,
+      "escalation": 7,
+      "selectivity": 4,
+      "tenacity": 6,
+      "pessimism": 9,
+      "bitterness": 7
+    }
   },
   {
     "id": "memphis_van_dijk",
@@ -381,7 +691,17 @@
     "favorite_suit": "Clubs",
     "skill_tier": "low",
     "portrait": "assets/npcs/memphis_van_dijk.png",
-    "game_personality": "timid"
+    "game_personality": "timid",
+    "personality_traits": {
+      "caution": 8,
+      "aggressiveness": 3,
+      "unpredictability": 1,
+      "escalation": 2,
+      "selectivity": 6,
+      "tenacity": 3,
+      "pessimism": 7,
+      "bitterness": 10
+    }
   },
   {
     "id": "harpreet_rajah",
@@ -393,7 +713,17 @@
     "favorite_suit": "Spades",
     "skill_tier": "elite",
     "portrait": "assets/npcs/harpreet_rajah.png",
-    "game_personality": "escalator"
+    "game_personality": "escalator",
+    "personality_traits": {
+      "caution": 4,
+      "aggressiveness": 6,
+      "unpredictability": 4,
+      "escalation": 10,
+      "selectivity": 5,
+      "tenacity": 2,
+      "pessimism": 7,
+      "bitterness": 10
+    }
   },
   {
     "id": "betty_bleep",
@@ -405,7 +735,17 @@
     "favorite_suit": "Diamonds",
     "skill_tier": "low",
     "portrait": "assets/npcs/betty_bleep.png",
-    "game_personality": "opportunist"
+    "game_personality": "opportunist",
+    "personality_traits": {
+      "caution": 5,
+      "aggressiveness": 5,
+      "unpredictability": 2,
+      "escalation": 4,
+      "selectivity": 9,
+      "tenacity": 2,
+      "pessimism": 5,
+      "bitterness": 3
+    }
   },
   {
     "id": "max_goblet",
@@ -417,7 +757,17 @@
     "favorite_suit": "Diamonds",
     "skill_tier": "mid",
     "portrait": "assets/npcs/max_goblet.png",
-    "game_personality": "aggressive"
+    "game_personality": "aggressive",
+    "personality_traits": {
+      "caution": 2,
+      "aggressiveness": 9,
+      "unpredictability": 5,
+      "escalation": 6,
+      "selectivity": 4,
+      "tenacity": 1,
+      "pessimism": 10,
+      "bitterness": 6
+    }
   },
   {
     "id": "hugh_minx",
@@ -429,7 +779,17 @@
     "favorite_suit": "Clubs",
     "skill_tier": "strong",
     "portrait": "assets/npcs/hugh_minx.png",
-    "game_personality": "unpredictable"
+    "game_personality": "unpredictable",
+    "personality_traits": {
+      "caution": 4,
+      "aggressiveness": 7,
+      "unpredictability": 10,
+      "escalation": 5,
+      "selectivity": 3,
+      "tenacity": 6,
+      "pessimism": 7,
+      "bitterness": 9
+    }
   },
   {
     "id": "addled_grandfather",
@@ -441,7 +801,17 @@
     "favorite_suit": "Hearts",
     "skill_tier": "strong",
     "portrait": "assets/npcs/addled_grandfather.png",
-    "game_personality": "timid"
+    "game_personality": "timid",
+    "personality_traits": {
+      "caution": 8,
+      "aggressiveness": 2,
+      "unpredictability": 3,
+      "escalation": 3,
+      "selectivity": 7,
+      "tenacity": 9,
+      "pessimism": 5,
+      "bitterness": 7
+    }
   },
   {
     "id": "hog_shots",
@@ -453,7 +823,17 @@
     "favorite_suit": "Spades",
     "skill_tier": "low",
     "portrait": "assets/npcs/hog_shots.png",
-    "game_personality": "escalator"
+    "game_personality": "escalator",
+    "personality_traits": {
+      "caution": 6,
+      "aggressiveness": 5,
+      "unpredictability": 4,
+      "escalation": 9,
+      "selectivity": 4,
+      "tenacity": 1,
+      "pessimism": 4,
+      "bitterness": 1
+    }
   },
   {
     "id": "loopy_valez",
@@ -465,7 +845,17 @@
     "favorite_suit": "Spades",
     "skill_tier": "low",
     "portrait": "assets/npcs/loopy_valez.png",
-    "game_personality": "opportunist"
+    "game_personality": "opportunist",
+    "personality_traits": {
+      "caution": 7,
+      "aggressiveness": 5,
+      "unpredictability": 2,
+      "escalation": 4,
+      "selectivity": 9,
+      "tenacity": 4,
+      "pessimism": 9,
+      "bitterness": 7
+    }
   },
   {
     "id": "mimi_roquanda",
@@ -477,7 +867,17 @@
     "favorite_suit": "Diamonds",
     "skill_tier": "low",
     "portrait": "assets/npcs/mimi_roquanda.png",
-    "game_personality": "aggressive"
+    "game_personality": "aggressive",
+    "personality_traits": {
+      "caution": 3,
+      "aggressiveness": 8,
+      "unpredictability": 5,
+      "escalation": 7,
+      "selectivity": 3,
+      "tenacity": 9,
+      "pessimism": 5,
+      "bitterness": 2
+    }
   },
   {
     "id": "captain_steve",
@@ -489,7 +889,17 @@
     "favorite_suit": "Diamonds",
     "skill_tier": "low",
     "portrait": "assets/npcs/captain_steve.png",
-    "game_personality": "opportunist"
+    "game_personality": "opportunist",
+    "personality_traits": {
+      "caution": 8,
+      "aggressiveness": 4,
+      "unpredictability": 2,
+      "escalation": 5,
+      "selectivity": 10,
+      "tenacity": 1,
+      "pessimism": 7,
+      "bitterness": 7
+    }
   },
   {
     "id": "elinur_butter",
@@ -501,7 +911,17 @@
     "favorite_suit": "Diamonds",
     "skill_tier": "strong",
     "portrait": "assets/npcs/elinur_butter.png",
-    "game_personality": "aggressive"
+    "game_personality": "aggressive",
+    "personality_traits": {
+      "caution": 1,
+      "aggressiveness": 9,
+      "unpredictability": 4,
+      "escalation": 5,
+      "selectivity": 3,
+      "tenacity": 8,
+      "pessimism": 8,
+      "bitterness": 2
+    }
   },
   {
     "id": "sultan_griffin",
@@ -513,7 +933,17 @@
     "favorite_suit": "Spades",
     "skill_tier": "strong",
     "portrait": "assets/npcs/sultan_griffin.png",
-    "game_personality": "unpredictable"
+    "game_personality": "unpredictable",
+    "personality_traits": {
+      "caution": 5,
+      "aggressiveness": 6,
+      "unpredictability": 9,
+      "escalation": 5,
+      "selectivity": 3,
+      "tenacity": 9,
+      "pessimism": 10,
+      "bitterness": 2
+    }
   },
   {
     "id": "ami_amica",
@@ -525,7 +955,17 @@
     "favorite_suit": "Hearts",
     "skill_tier": "strong",
     "portrait": "assets/npcs/ami_amica.png",
-    "game_personality": "timid"
+    "game_personality": "timid",
+    "personality_traits": {
+      "caution": 9,
+      "aggressiveness": 1,
+      "unpredictability": 2,
+      "escalation": 1,
+      "selectivity": 5,
+      "tenacity": 5,
+      "pessimism": 3,
+      "bitterness": 6
+    }
   },
   {
     "id": "bubbles_romney",
@@ -537,7 +977,17 @@
     "favorite_suit": "Clubs",
     "skill_tier": "elite",
     "portrait": "assets/npcs/bubbles_romney.png",
-    "game_personality": "timid"
+    "game_personality": "timid",
+    "personality_traits": {
+      "caution": 9,
+      "aggressiveness": 1,
+      "unpredictability": 2,
+      "escalation": 1,
+      "selectivity": 7,
+      "tenacity": 10,
+      "pessimism": 1,
+      "bitterness": 4
+    }
   },
   {
     "id": "jack_zitbomb",
@@ -549,7 +999,17 @@
     "favorite_suit": "Clubs",
     "skill_tier": "elite",
     "portrait": "assets/npcs/jack_zitbomb.png",
-    "game_personality": "timid"
+    "game_personality": "timid",
+    "personality_traits": {
+      "caution": 7,
+      "aggressiveness": 3,
+      "unpredictability": 2,
+      "escalation": 1,
+      "selectivity": 7,
+      "tenacity": 9,
+      "pessimism": 10,
+      "bitterness": 7
+    }
   },
   {
     "id": "doon_ficus",
@@ -561,7 +1021,17 @@
     "favorite_suit": "Spades",
     "skill_tier": "elite",
     "portrait": "assets/npcs/doon_ficus.png",
-    "game_personality": "opportunist"
+    "game_personality": "opportunist",
+    "personality_traits": {
+      "caution": 6,
+      "aggressiveness": 6,
+      "unpredictability": 4,
+      "escalation": 5,
+      "selectivity": 9,
+      "tenacity": 8,
+      "pessimism": 2,
+      "bitterness": 2
+    }
   },
   {
     "id": "chad_whiskey",
@@ -573,7 +1043,17 @@
     "favorite_suit": "Spades",
     "skill_tier": "strong",
     "portrait": "assets/npcs/chad_whiskey.png",
-    "game_personality": "opportunist"
+    "game_personality": "opportunist",
+    "personality_traits": {
+      "caution": 5,
+      "aggressiveness": 5,
+      "unpredictability": 3,
+      "escalation": 6,
+      "selectivity": 9,
+      "tenacity": 4,
+      "pessimism": 4,
+      "bitterness": 7
+    }
   },
   {
     "id": "mohammed_ramadan",
@@ -585,7 +1065,17 @@
     "favorite_suit": "Spades",
     "skill_tier": "elite",
     "portrait": "assets/npcs/mohammed_ramadan.png",
-    "game_personality": "aggressive"
+    "game_personality": "aggressive",
+    "personality_traits": {
+      "caution": 1,
+      "aggressiveness": 9,
+      "unpredictability": 5,
+      "escalation": 6,
+      "selectivity": 3,
+      "tenacity": 9,
+      "pessimism": 2,
+      "bitterness": 6
+    }
   },
   {
     "id": "em_marley",
@@ -597,6 +1087,16 @@
     "favorite_suit": "Diamonds",
     "skill_tier": "strong",
     "portrait": "assets/npcs/em_marley.png",
-    "game_personality": "timid"
+    "game_personality": "timid",
+    "personality_traits": {
+      "caution": 10,
+      "aggressiveness": 1,
+      "unpredictability": 2,
+      "escalation": 1,
+      "selectivity": 6,
+      "tenacity": 4,
+      "pessimism": 2,
+      "bitterness": 6
+    }
   }
 ]
