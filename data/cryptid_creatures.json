@@ -1,0 +1,2275 @@
+{
+  "version": 1,
+  "cards": {
+    "sea_scorpion_grene": {
+      "id": "sea_scorpion_grene",
+      "name": "Sea Scorpion",
+      "kind": "creature",
+      "era": "Grene",
+      "hp": 90,
+      "ap": 70,
+      "armor": "Scales",
+      "attack_style": "Slash",
+      "defense_style": "Shield",
+      "moves": [
+        "claw",
+        "precision_pierce",
+        "rot"
+      ],
+      "description": "An ancient coastal hunter whose pincers probe the seams of armor.",
+      "rarity": "Common",
+      "art": "sea_scorpion_grene.png"
+    },
+    "snow_goblin_thede": {
+      "id": "snow_goblin_thede",
+      "name": "Snow Goblin",
+      "kind": "creature",
+      "era": "Thede",
+      "hp": 60,
+      "ap": 110,
+      "armor": "Fur",
+      "attack_style": "Elemental",
+      "defense_style": "Evasion",
+      "moves": [
+        "hail",
+        "kick",
+        "tuck"
+      ],
+      "description": "A winter raider who survives by striking quickly and slipping away.",
+      "rarity": "Common",
+      "art": "snow_goblin_thede.png"
+    },
+    "cando_thede": {
+      "id": "cando_thede",
+      "name": "Cando",
+      "kind": "creature",
+      "era": "Thede",
+      "hp": 70,
+      "ap": 80,
+      "armor": "Bare",
+      "attack_style": "Elemental",
+      "defense_style": "Mystic",
+      "moves": [
+        "singe",
+        "torch",
+        "protect"
+      ],
+      "description": "A stubborn candle whose little flame refuses to go out.",
+      "rarity": "Common",
+      "art": "cando_thede.png"
+    },
+    "enflamer_thede": {
+      "id": "enflamer_thede",
+      "name": "Enflamer",
+      "kind": "creature",
+      "era": "Thede",
+      "hp": 70,
+      "ap": 85,
+      "armor": "Leather",
+      "attack_style": "Elemental",
+      "defense_style": "Mystic",
+      "moves": [
+        "torch",
+        "lightning",
+        "brace"
+      ],
+      "description": "A wandering fire magician who saves their fiercest flame for a clear opening.",
+      "rarity": "Common",
+      "art": "enflamer_thede.png"
+    },
+    "merlin_polis": {
+      "id": "merlin_polis",
+      "name": "Merlin",
+      "kind": "creature",
+      "era": "Polis",
+      "hp": 80,
+      "ap": 65,
+      "armor": "Leather",
+      "attack_style": "Ethereal",
+      "defense_style": "Mystic",
+      "moves": [
+        "bend",
+        "pain",
+        "forewarn"
+      ],
+      "description": "An old scholar whose preparations can be as dangerous as his spells.",
+      "rarity": "Common",
+      "art": "merlin_polis.png"
+    },
+    "atorn_polis": {
+      "id": "atorn_polis",
+      "name": "Atorn",
+      "kind": "creature",
+      "era": "Polis",
+      "hp": 75,
+      "ap": 110,
+      "armor": "Steel",
+      "attack_style": "Slam",
+      "defense_style": "Brute",
+      "moves": [
+        "pound",
+        "pummel",
+        "rearm"
+      ],
+      "description": "A forge-born creature hammering armor into both weapons and shelter.",
+      "rarity": "Common",
+      "art": "atorn_polis.png"
+    },
+    "clops_thede": {
+      "id": "clops_thede",
+      "name": "Clops",
+      "kind": "creature",
+      "era": "Thede",
+      "hp": 65,
+      "ap": 120,
+      "armor": "Bare",
+      "attack_style": "Slam",
+      "defense_style": "Brute",
+      "moves": [
+        "punch",
+        "pound",
+        "tuck"
+      ],
+      "description": "One watchful eye follows every challenger to this giant.",
+      "rarity": "Common",
+      "art": "clops_thede.png"
+    },
+    "dindon_grene": {
+      "id": "dindon_grene",
+      "name": "Dindon",
+      "kind": "creature",
+      "era": "Grene",
+      "hp": 100,
+      "ap": 30,
+      "armor": "Fur",
+      "attack_style": "Air",
+      "defense_style": "Evasion",
+      "moves": [
+        "flutter",
+        "skydive",
+        "claw"
+      ],
+      "description": "A furious wild turkey who mistakes every contest for a territorial dispute.",
+      "rarity": "Common",
+      "art": "dindon_grene.png"
+    },
+    "bortle_grene": {
+      "id": "bortle_grene",
+      "name": "Bortle",
+      "kind": "creature",
+      "era": "Grene",
+      "hp": 100,
+      "ap": 35,
+      "armor": "Bare",
+      "attack_style": "Slam",
+      "defense_style": "Brute",
+      "moves": [
+        "punch",
+        "kick",
+        "protect"
+      ],
+      "description": "Its plans are simple, but its determination is difficult to dismiss.",
+      "rarity": "Common",
+      "art": "bortle_grene.png"
+    },
+    "taft_tub_polis": {
+      "id": "taft_tub_polis",
+      "name": "Taft Tub",
+      "kind": "creature",
+      "era": "Polis",
+      "hp": 65,
+      "ap": 135,
+      "armor": "Steel",
+      "attack_style": "Slam",
+      "defense_style": "Shield",
+      "moves": [
+        "grapple",
+        "pound",
+        "fortify"
+      ],
+      "description": "A battered bathtub with a presidential grudge and remarkable staying power.",
+      "rarity": "Uncommon",
+      "art": "taft_tub_polis.png"
+    },
+    "footprint_beast_thede": {
+      "id": "footprint_beast_thede",
+      "name": "Footprint Beast",
+      "kind": "creature",
+      "era": "Thede",
+      "hp": 70,
+      "ap": 115,
+      "armor": "Leather",
+      "attack_style": "Slam",
+      "defense_style": "Brute",
+      "moves": [
+        "pound",
+        "grapple",
+        "quake"
+      ],
+      "description": "Only the footprints are certain; their owner is another matter.",
+      "rarity": "Common",
+      "art": "footprint_beast_thede.png"
+    },
+    "phantom_friar_polis": {
+      "id": "phantom_friar_polis",
+      "name": "Phantom Friar",
+      "kind": "creature",
+      "era": "Polis",
+      "hp": 90,
+      "ap": 25,
+      "armor": "Bare",
+      "attack_style": "Ethereal",
+      "defense_style": "Mystic",
+      "moves": [
+        "fear",
+        "sorrow",
+        "salve"
+      ],
+      "description": "A restless friar offers comfort to allies and dread to trespassers.",
+      "rarity": "Common",
+      "art": "phantom_friar_polis.png"
+    },
+    "entragon_grene": {
+      "id": "entragon_grene",
+      "name": "Entragon",
+      "kind": "creature",
+      "era": "Grene",
+      "hp": 95,
+      "ap": 50,
+      "armor": "Bone",
+      "attack_style": "Air",
+      "defense_style": "Shield",
+      "moves": [
+        "whirlwind",
+        "drill",
+        "fortify"
+      ],
+      "description": "A flying tree whose old roots shelter younger companions.",
+      "rarity": "Common",
+      "art": "entragon_grene.png"
+    },
+    "zug_grene": {
+      "id": "zug_grene",
+      "name": "Zug",
+      "kind": "creature",
+      "era": "Grene",
+      "hp": 100,
+      "ap": 50,
+      "armor": "Leather",
+      "attack_style": "Slam",
+      "defense_style": "Shield",
+      "moves": [
+        "grapple",
+        "punch",
+        "shield"
+      ],
+      "description": "Silent, lumpy, and unexpectedly difficult to move.",
+      "rarity": "Common",
+      "art": "zug_grene.png"
+    },
+    "boon_boon_polis": {
+      "id": "boon_boon_polis",
+      "name": "Boon Boon",
+      "kind": "creature",
+      "era": "Polis",
+      "hp": 75,
+      "ap": 60,
+      "armor": "Bare",
+      "attack_style": "Ethereal",
+      "defense_style": "Evasion",
+      "moves": [
+        "unravel",
+        "bend",
+        "gravity_assist"
+      ],
+      "description": "A small blue creature with an expansive understanding of gravity.",
+      "rarity": "Common",
+      "art": "boon_boon_polis.png"
+    },
+    "shadow_committee_polis": {
+      "id": "shadow_committee_polis",
+      "name": "Shadow Committee",
+      "kind": "creature",
+      "era": "Polis",
+      "hp": 70,
+      "ap": 100,
+      "armor": "Leather",
+      "attack_style": "Ethereal",
+      "defense_style": "Mystic",
+      "moves": [
+        "incept",
+        "derealize",
+        "forewarn"
+      ],
+      "description": "A council whose decisions arrive before anyone remembers holding a vote.",
+      "rarity": "Common",
+      "art": "shadow_committee_polis.png"
+    },
+    "polven_grene": {
+      "id": "polven_grene",
+      "name": "Polven",
+      "kind": "creature",
+      "era": "Grene",
+      "hp": 95,
+      "ap": 40,
+      "armor": "Bare",
+      "attack_style": "Corruption",
+      "defense_style": "Mystic",
+      "moves": [
+        "infect",
+        "rot",
+        "salve"
+      ],
+      "description": "A leafy organism that heals its roots while poisoning the surrounding soil.",
+      "rarity": "Common",
+      "art": "polven_grene.png"
+    },
+    "ponch_thede": {
+      "id": "ponch_thede",
+      "name": "Ponch",
+      "kind": "creature",
+      "era": "Thede",
+      "hp": 70,
+      "ap": 105,
+      "armor": "Fur",
+      "attack_style": "Slam",
+      "defense_style": "Brute",
+      "moves": [
+        "pummel",
+        "kick",
+        "brace"
+      ],
+      "description": "A compact brawler who uses patience to disguise an explosive temper.",
+      "rarity": "Common",
+      "art": "ponch_thede.png"
+    },
+    "lynxor_polis": {
+      "id": "lynxor_polis",
+      "name": "Lynxor",
+      "kind": "creature",
+      "era": "Polis",
+      "hp": 75,
+      "ap": 75,
+      "armor": "Fur",
+      "attack_style": "Slash",
+      "defense_style": "Evasion",
+      "moves": [
+        "slice",
+        "vital_cut",
+        "tuck"
+      ],
+      "description": "A trained stalker whose claws follow the smallest lapse in attention.",
+      "rarity": "Common",
+      "art": "lynxor_polis.png"
+    },
+    "chupa_corn_on_cob_grene": {
+      "id": "chupa_corn_on_cob_grene",
+      "name": "Chupa Corn on Cob",
+      "kind": "creature",
+      "era": "Grene",
+      "hp": 95,
+      "ap": 35,
+      "armor": "Bare",
+      "attack_style": "Corruption",
+      "defense_style": "Evasion",
+      "moves": [
+        "miasma",
+        "infect",
+        "dig"
+      ],
+      "description": "Something strange grows beneath the husks of abandoned cornfields.",
+      "rarity": "Common",
+      "art": "chupa_corn_on_cob_grene.png"
+    },
+    "old_yeti_thede": {
+      "id": "old_yeti_thede",
+      "name": "Old Yeti",
+      "kind": "creature",
+      "era": "Thede",
+      "hp": 75,
+      "ap": 105,
+      "armor": "Fur",
+      "attack_style": "Slam",
+      "defense_style": "Brute",
+      "moves": [
+        "pound",
+        "kick",
+        "hail"
+      ],
+      "description": "A veteran of mountain winters whose defenses are worn but formidable.",
+      "rarity": "Common",
+      "art": "old_yeti_thede.png"
+    },
+    "ganglor_thede": {
+      "id": "ganglor_thede",
+      "name": "Ganglor",
+      "kind": "creature",
+      "era": "Thede",
+      "hp": 65,
+      "ap": 120,
+      "armor": "Scales",
+      "attack_style": "Corruption",
+      "defense_style": "Shield",
+      "moves": [
+        "disease",
+        "demoralize",
+        "tuck"
+      ],
+      "description": "A scaled creature whose presence makes armor feel suddenly inadequate.",
+      "rarity": "Common",
+      "art": "ganglor_thede.png"
+    },
+    "fortress_polis": {
+      "id": "fortress_polis",
+      "name": "Fortress",
+      "kind": "creature",
+      "era": "Polis",
+      "hp": 65,
+      "ap": 150,
+      "armor": "Steel",
+      "attack_style": "Munition",
+      "defense_style": "Shield",
+      "moves": [
+        "cannon",
+        "target",
+        "rearm"
+      ],
+      "description": "A mobile stronghold that trades speed for layers of prepared resistance.",
+      "rarity": "Uncommon",
+      "art": "fortress_polis.png"
+    },
+    "wingwoven_grene": {
+      "id": "wingwoven_grene",
+      "name": "Wingwoven",
+      "kind": "creature",
+      "era": "Grene",
+      "hp": 95,
+      "ap": 45,
+      "armor": "Fur",
+      "attack_style": "Air",
+      "defense_style": "Evasion",
+      "moves": [
+        "flutter",
+        "whirlwind",
+        "protect"
+      ],
+      "description": "Its wings resemble woven branches moving with their own weather.",
+      "rarity": "Common",
+      "art": "wingwoven_grene.png"
+    },
+    "cloud_shadow_grene": {
+      "id": "cloud_shadow_grene",
+      "name": "Cloud Shadow",
+      "kind": "creature",
+      "era": "Grene",
+      "hp": 95,
+      "ap": 20,
+      "armor": "Bare",
+      "attack_style": "Air",
+      "defense_style": "Mystic",
+      "moves": [
+        "skydive",
+        "turbulence",
+        "fear"
+      ],
+      "description": "A shadow crosses clear skies long before anything appears overhead.",
+      "rarity": "Common",
+      "art": "cloud_shadow_grene.png"
+    },
+    "octagoner_polis": {
+      "id": "octagoner_polis",
+      "name": "Octagoner",
+      "kind": "creature",
+      "era": "Polis",
+      "hp": 80,
+      "ap": 80,
+      "armor": "Bare",
+      "attack_style": "Slam",
+      "defense_style": "Brute",
+      "moves": [
+        "punch",
+        "pummel",
+        "grapple"
+      ],
+      "description": "Eight angles, one arena, and very little room for hesitation.",
+      "rarity": "Common",
+      "art": "octagoner_polis.png"
+    },
+    "nails_thede": {
+      "id": "nails_thede",
+      "name": "Nails",
+      "kind": "creature",
+      "era": "Thede",
+      "hp": 65,
+      "ap": 100,
+      "armor": "Steel",
+      "attack_style": "Slash",
+      "defense_style": "Evasion",
+      "moves": [
+        "claw",
+        "stab",
+        "tuck"
+      ],
+      "description": "Every surface of this restless slasher seems to end in a point.",
+      "rarity": "Common",
+      "art": "nails_thede.png"
+    },
+    "blade_collector_polis": {
+      "id": "blade_collector_polis",
+      "name": "Blade Collector",
+      "kind": "creature",
+      "era": "Polis",
+      "hp": 75,
+      "ap": 85,
+      "armor": "Steel",
+      "attack_style": "Slash",
+      "defense_style": "Shield",
+      "moves": [
+        "slice",
+        "eviscerate",
+        "rearm"
+      ],
+      "description": "Each collected blade carries a different lesson in patience.",
+      "rarity": "Common",
+      "art": "blade_collector_polis.png"
+    },
+    "peeler_grene": {
+      "id": "peeler_grene",
+      "name": "Peeler",
+      "kind": "creature",
+      "era": "Grene",
+      "hp": 95,
+      "ap": 25,
+      "armor": "Leather",
+      "attack_style": "Slash",
+      "defense_style": "Evasion",
+      "moves": [
+        "dig",
+        "claw",
+        "precision_pierce"
+      ],
+      "description": "A narrow-clawed scavenger who removes protection one layer at a time.",
+      "rarity": "Common",
+      "art": "peeler_grene.png"
+    },
+    "volcano_spirit_grene": {
+      "id": "volcano_spirit_grene",
+      "name": "Volcano Spirit",
+      "kind": "creature",
+      "era": "Grene",
+      "hp": 95,
+      "ap": 45,
+      "armor": "Bare",
+      "attack_style": "Elemental",
+      "defense_style": "Mystic",
+      "moves": [
+        "erupt",
+        "singe",
+        "weather_machine"
+      ],
+      "description": "A mountain spirit whose calm moments conceal a pressure building below.",
+      "rarity": "Common",
+      "art": "volcano_spirit_grene.png"
+    },
+    "archer_polis": {
+      "id": "archer_polis",
+      "name": "Archer",
+      "kind": "creature",
+      "era": "Polis",
+      "hp": 80,
+      "ap": 65,
+      "armor": "Leather",
+      "attack_style": "Munition",
+      "defense_style": "Evasion",
+      "moves": [
+        "arrow_shot",
+        "sharpshoot",
+        "protect"
+      ],
+      "description": "A disciplined hunter measures distance before spending a precious shot.",
+      "rarity": "Common",
+      "art": "archer_polis.png"
+    },
+    "pained_scout_thede": {
+      "id": "pained_scout_thede",
+      "name": "Pained Scout",
+      "kind": "creature",
+      "era": "Thede",
+      "hp": 60,
+      "ap": 100,
+      "armor": "Leather",
+      "attack_style": "Munition",
+      "defense_style": "Evasion",
+      "moves": [
+        "rifle",
+        "slingshot",
+        "salve"
+      ],
+      "description": "An injured scout who knows when survival matters more than pursuit.",
+      "rarity": "Common",
+      "art": "pained_scout_thede.png"
+    },
+    "aerial_beast_grene": {
+      "id": "aerial_beast_grene",
+      "name": "Aerial Beast",
+      "kind": "creature",
+      "era": "Grene",
+      "hp": 100,
+      "ap": 35,
+      "armor": "Scales",
+      "attack_style": "Air",
+      "defense_style": "Brute",
+      "moves": [
+        "drag_drop",
+        "flutter",
+        "claw"
+      ],
+      "description": "Its awkward landings are dangerous enough to count as attacks.",
+      "rarity": "Common",
+      "art": "aerial_beast_grene.png"
+    },
+    "burdened_beast_thede": {
+      "id": "burdened_beast_thede",
+      "name": "Burdened Beast",
+      "kind": "creature",
+      "era": "Thede",
+      "hp": 70,
+      "ap": 140,
+      "armor": "Leather",
+      "attack_style": "Slam",
+      "defense_style": "Shield",
+      "moves": [
+        "pound",
+        "grapple",
+        "fortify"
+      ],
+      "description": "Layers of carried burdens have become a kind of armor.",
+      "rarity": "Uncommon",
+      "art": "burdened_beast_thede.png"
+    },
+    "snake_in_the_grass_grene": {
+      "id": "snake_in_the_grass_grene",
+      "name": "Snake in the Grass",
+      "kind": "creature",
+      "era": "Grene",
+      "hp": 90,
+      "ap": 30,
+      "armor": "Scales",
+      "attack_style": "Corruption",
+      "defense_style": "Evasion",
+      "moves": [
+        "infect",
+        "paralyze",
+        "claw"
+      ],
+      "description": "A patient ambusher whose bite makes escape feel farther away.",
+      "rarity": "Common",
+      "art": "snake_in_the_grass_grene.png"
+    },
+    "divinator_polis": {
+      "id": "divinator_polis",
+      "name": "Divinator",
+      "kind": "creature",
+      "era": "Polis",
+      "hp": 85,
+      "ap": 50,
+      "armor": "Bare",
+      "attack_style": "Ethereal",
+      "defense_style": "Mystic",
+      "moves": [
+        "incept",
+        "unravel",
+        "forewarn"
+      ],
+      "description": "Its forecasts are useful even when their meaning becomes clear too late.",
+      "rarity": "Common",
+      "art": "divinator_polis.png"
+    },
+    "catacruise_polis": {
+      "id": "catacruise_polis",
+      "name": "Catacruise",
+      "kind": "creature",
+      "era": "Polis",
+      "hp": 70,
+      "ap": 115,
+      "armor": "Steel",
+      "attack_style": "Munition",
+      "defense_style": "Shield",
+      "moves": [
+        "grenade",
+        "laser",
+        "gravity_assist"
+      ],
+      "description": "A drifting vessel with an improbable passenger and a practical arsenal.",
+      "rarity": "Common",
+      "art": "catacruise_polis.png"
+    },
+    "hal_polis": {
+      "id": "hal_polis",
+      "name": "HAL",
+      "kind": "creature",
+      "era": "Polis",
+      "hp": 70,
+      "ap": 100,
+      "armor": "Steel",
+      "attack_style": "Munition",
+      "defense_style": "Mystic",
+      "moves": [
+        "laser",
+        "target",
+        "rearm"
+      ],
+      "description": "A calculating machine whose polite conclusions rarely invite debate.",
+      "rarity": "Common",
+      "art": "hal_polis.png"
+    },
+    "bear_unchained_grene": {
+      "id": "bear_unchained_grene",
+      "name": "Bear Unchained",
+      "kind": "creature",
+      "era": "Grene",
+      "hp": 100,
+      "ap": 40,
+      "armor": "Fur",
+      "attack_style": "Slash",
+      "defense_style": "Brute",
+      "moves": [
+        "claw",
+        "frenzy",
+        "pound"
+      ],
+      "description": "A grizzly-shaped force that refuses every tether offered to it.",
+      "rarity": "Common",
+      "art": "bear_unchained_grene.png"
+    },
+    "jackalope_grene": {
+      "id": "jackalope_grene",
+      "name": "Jackalope",
+      "kind": "creature",
+      "era": "Grene",
+      "hp": 90,
+      "ap": 25,
+      "armor": "Fur",
+      "attack_style": "Air",
+      "defense_style": "Evasion",
+      "moves": [
+        "spike",
+        "flutter",
+        "kick"
+      ],
+      "description": "A horned trickster whose leaps are harder to predict than its tracks.",
+      "rarity": "Common",
+      "art": "jackalope_grene.png"
+    },
+    "weeping_woman_thede": {
+      "id": "weeping_woman_thede",
+      "name": "Weeping Woman",
+      "kind": "creature",
+      "era": "Thede",
+      "hp": 80,
+      "ap": 50,
+      "armor": "Bare",
+      "attack_style": "Ethereal",
+      "defense_style": "Mystic",
+      "moves": [
+        "sorrow",
+        "fear",
+        "protect"
+      ],
+      "description": "Her lament unsettles challengers before they understand its source.",
+      "rarity": "Common",
+      "art": "weeping_woman_thede.png"
+    },
+    "poltergeist_grene": {
+      "id": "poltergeist_grene",
+      "name": "Poltergeist",
+      "kind": "creature",
+      "era": "Grene",
+      "hp": 100,
+      "ap": 0,
+      "armor": "Bare",
+      "attack_style": "Ethereal",
+      "defense_style": "Evasion",
+      "moves": [
+        "bend",
+        "deforge",
+        "gravity_assist"
+      ],
+      "description": "An invisible nuisance with a particular dislike of forged protection.",
+      "rarity": "Common",
+      "art": "poltergeist_grene.png"
+    },
+    "goliath_thede": {
+      "id": "goliath_thede",
+      "name": "Goliath",
+      "kind": "creature",
+      "era": "Thede",
+      "hp": 75,
+      "ap": 135,
+      "armor": "Bone",
+      "attack_style": "Slam",
+      "defense_style": "Brute",
+      "moves": [
+        "pound",
+        "grapple",
+        "brace"
+      ],
+      "description": "A towering challenger whose confidence grows with every surviving shield.",
+      "rarity": "Uncommon",
+      "art": "goliath_thede.png"
+    },
+    "agitated_crowd_polis": {
+      "id": "agitated_crowd_polis",
+      "name": "Agitated Crowd",
+      "kind": "creature",
+      "era": "Polis",
+      "hp": 90,
+      "ap": 50,
+      "armor": "Bare",
+      "attack_style": "Slam",
+      "defense_style": "Brute",
+      "moves": [
+        "pummel",
+        "frenzy",
+        "forewarn"
+      ],
+      "description": "Many voices share a single temper and surprisingly coordinated blows.",
+      "rarity": "Common",
+      "art": "agitated_crowd_polis.png"
+    },
+    "socratino_polis": {
+      "id": "socratino_polis",
+      "name": "Socratino",
+      "kind": "creature",
+      "era": "Polis",
+      "hp": 85,
+      "ap": 70,
+      "armor": "Leather",
+      "attack_style": "Ethereal",
+      "defense_style": "Mystic",
+      "moves": [
+        "pain",
+        "demoralize",
+        "redirect"
+      ],
+      "description": "Questions, favors, and consequences arrive with equal conviction.",
+      "rarity": "Common",
+      "art": "socratino_polis.png"
+    },
+    "support_salve": {
+      "id": "support_salve",
+      "name": "Salve",
+      "kind": "support",
+      "focus": 2,
+      "target": "friendly",
+      "effects": {
+        "heal_hp": 35
+      },
+      "description": "Restore 35 HP to a friendly creature, up to printed maximum.",
+      "rarity": "Common",
+      "art": "support_salve.png"
+    },
+    "support_fortify": {
+      "id": "support_fortify",
+      "name": "Fortify",
+      "kind": "support",
+      "focus": 2,
+      "target": "friendly",
+      "effects": {
+        "heal_ap": 30,
+        "heal_hp": 5
+      },
+      "description": "Restore 30 AP and 5 HP to a friendly creature.",
+      "rarity": "Common",
+      "art": "support_fortify.png"
+    },
+    "support_rearm": {
+      "id": "support_rearm",
+      "name": "Rearm",
+      "kind": "support",
+      "focus": 3,
+      "target": "friendly",
+      "effects": {
+        "rearm": 1
+      },
+      "description": "Restore one charge to every limited move, up to its original uses.",
+      "rarity": "Common",
+      "art": "support_rearm.png"
+    },
+    "support_cleanse": {
+      "id": "support_cleanse",
+      "name": "Cleanse",
+      "kind": "support",
+      "focus": 1,
+      "target": "friendly",
+      "effects": {
+        "cleanse": true
+      },
+      "description": "Remove Sick, Spent and Stunned from a friendly creature.",
+      "rarity": "Common",
+      "art": "support_cleanse.png"
+    },
+    "support_steeled": {
+      "id": "support_steeled",
+      "name": "Steeled",
+      "kind": "support",
+      "focus": 2,
+      "target": "friendly",
+      "effects": {
+        "condition": "steeled",
+        "duration": 2
+      },
+      "description": "Grant resistance to every attack style for two own-turn endings.",
+      "rarity": "Common",
+      "art": "support_steeled.png"
+    },
+    "support_sharpened": {
+      "id": "support_sharpened",
+      "name": "Sharpened",
+      "kind": "support",
+      "focus": 2,
+      "target": "friendly",
+      "effects": {
+        "condition": "sharpened",
+        "duration": 2
+      },
+      "description": "Treat every defense as weak for two own-turn endings. Opposing Steeled cancels it.",
+      "rarity": "Common",
+      "art": "support_sharpened.png"
+    },
+    "support_forewarn": {
+      "id": "support_forewarn",
+      "name": "Forewarn",
+      "kind": "support",
+      "focus": 2,
+      "target": "bench",
+      "effects": {
+        "heal_ap": 25,
+        "heal_hp": 10
+      },
+      "description": "Restore 25 AP and 10 HP to one creature on your Docket.",
+      "rarity": "Common",
+      "art": "support_forewarn.png"
+    },
+    "support_protect": {
+      "id": "support_protect",
+      "name": "Protect",
+      "kind": "support",
+      "focus": 1,
+      "target": "friendly",
+      "effects": {
+        "guard": 0.5
+      },
+      "description": "Halve the next incoming attack. Guards refresh rather than stack.",
+      "rarity": "Common",
+      "art": "support_protect.png"
+    },
+    "support_redirect": {
+      "id": "support_redirect",
+      "name": "Redirect",
+      "kind": "support",
+      "focus": 3,
+      "target": "friendly",
+      "effects": {
+        "guard": 0.5,
+        "reflect": true
+      },
+      "description": "Halve the next incoming attack and reflect actual damage suffered once.",
+      "rarity": "Common",
+      "art": "support_redirect.png"
+    },
+    "arena_rust": {
+      "id": "arena_rust",
+      "name": "Rust",
+      "kind": "arena",
+      "focus": 2,
+      "target": "arena",
+      "effects": {
+        "arena": {
+          "styles": [
+            "*"
+          ],
+          "factor": 2,
+          "duration": 2,
+          "scope": "self_ap"
+        }
+      },
+      "description": "Double your armor damage for two global turns. Replaces the current arena.",
+      "rarity": "Uncommon",
+      "art": "arena_rust.png"
+    },
+    "arena_clear_skies": {
+      "id": "arena_clear_skies",
+      "name": "Clear Skies",
+      "kind": "arena",
+      "focus": 2,
+      "target": "arena",
+      "effects": {
+        "arena": {
+          "styles": [
+            "Air"
+          ],
+          "factor": 2,
+          "duration": 5,
+          "scope": "all"
+        }
+      },
+      "description": "Double Air damage for five global turns. Replaces the current arena.",
+      "rarity": "Uncommon",
+      "art": "arena_clear_skies.png"
+    },
+    "arena_weather_machine": {
+      "id": "arena_weather_machine",
+      "name": "Weather Machine",
+      "kind": "arena",
+      "focus": 2,
+      "target": "arena",
+      "effects": {
+        "arena": {
+          "styles": [
+            "Elemental"
+          ],
+          "factor": 2,
+          "duration": 5,
+          "scope": "all"
+        }
+      },
+      "description": "Double Elemental damage for five global turns. Replaces the current arena.",
+      "rarity": "Uncommon",
+      "art": "arena_weather_machine.png"
+    },
+    "arena_folie_deux": {
+      "id": "arena_folie_deux",
+      "name": "Folie à deux",
+      "kind": "arena",
+      "focus": 2,
+      "target": "arena",
+      "effects": {
+        "arena": {
+          "styles": [
+            "Ethereal"
+          ],
+          "factor": 2,
+          "duration": 5,
+          "scope": "all"
+        }
+      },
+      "description": "Double Ethereal damage for five global turns. Replaces the current arena.",
+      "rarity": "Uncommon",
+      "art": "arena_folie_deux.png"
+    },
+    "arena_plague": {
+      "id": "arena_plague",
+      "name": "Plague",
+      "kind": "arena",
+      "focus": 2,
+      "target": "arena",
+      "effects": {
+        "arena": {
+          "styles": [
+            "Corruption"
+          ],
+          "factor": 2,
+          "duration": 5,
+          "scope": "all"
+        }
+      },
+      "description": "Double Corruption damage for five global turns. Replaces the current arena.",
+      "rarity": "Uncommon",
+      "art": "arena_plague.png"
+    },
+    "arena_calm_winds": {
+      "id": "arena_calm_winds",
+      "name": "Calm Winds",
+      "kind": "arena",
+      "focus": 2,
+      "target": "arena",
+      "effects": {
+        "arena": {
+          "styles": [
+            "Munition"
+          ],
+          "factor": 2,
+          "duration": 5,
+          "scope": "all"
+        }
+      },
+      "description": "Double Munition damage for five global turns. Replaces the current arena.",
+      "rarity": "Uncommon",
+      "art": "arena_calm_winds.png"
+    }
+  },
+  "moves": {
+    "punch": {
+      "id": "punch",
+      "name": "Punch",
+      "kind": "attack",
+      "style": "Slam",
+      "ap_damage": 30,
+      "hp_damage": 45,
+      "focus": 2,
+      "uses": 5,
+      "description": "A slam strike that deals 30 armor damage or 45 health damage."
+    },
+    "kick": {
+      "id": "kick",
+      "name": "Kick",
+      "kind": "attack",
+      "style": "Slam",
+      "ap_damage": 25,
+      "hp_damage": 55,
+      "focus": 2,
+      "uses": 5,
+      "description": "A slam strike that deals 25 armor damage or 55 health damage."
+    },
+    "pound": {
+      "id": "pound",
+      "name": "Pound",
+      "kind": "attack",
+      "style": "Slam",
+      "ap_damage": 30,
+      "hp_damage": 50,
+      "focus": 2,
+      "uses": 3,
+      "description": "A slam strike that deals 30 armor damage or 50 health damage."
+    },
+    "grapple": {
+      "id": "grapple",
+      "name": "Grapple",
+      "kind": "attack",
+      "style": "Slam",
+      "ap_damage": 20,
+      "hp_damage": 30,
+      "focus": 1,
+      "uses": 5,
+      "description": "A slam strike that deals 20 armor damage or 30 health damage.",
+      "condition": "spent",
+      "condition_chance": 0.25,
+      "condition_duration": 2
+    },
+    "pummel": {
+      "id": "pummel",
+      "name": "Pummel",
+      "kind": "attack",
+      "style": "Slam",
+      "ap_damage": 25,
+      "hp_damage": 45,
+      "focus": 2,
+      "uses": 5,
+      "description": "A slam strike that deals 25 armor damage or 45 health damage."
+    },
+    "claw": {
+      "id": "claw",
+      "name": "Claw",
+      "kind": "attack",
+      "style": "Slash",
+      "ap_damage": 10,
+      "hp_damage": 30,
+      "focus": 1,
+      "uses": null,
+      "description": "A slash strike that deals 10 armor damage or 30 health damage."
+    },
+    "stab": {
+      "id": "stab",
+      "name": "Stab",
+      "kind": "attack",
+      "style": "Slash",
+      "ap_damage": 5,
+      "hp_damage": 60,
+      "focus": 3,
+      "uses": 5,
+      "description": "A slash strike that deals 5 armor damage or 60 health damage."
+    },
+    "slice": {
+      "id": "slice",
+      "name": "Slice",
+      "kind": "attack",
+      "style": "Slash",
+      "ap_damage": 15,
+      "hp_damage": 45,
+      "focus": 2,
+      "uses": 5,
+      "description": "A slash strike that deals 15 armor damage or 45 health damage."
+    },
+    "eviscerate": {
+      "id": "eviscerate",
+      "name": "Eviscerate",
+      "kind": "attack",
+      "style": "Slash",
+      "ap_damage": 10,
+      "hp_damage": 90,
+      "focus": 4,
+      "uses": 2,
+      "description": "A slash strike that deals 10 armor damage or 90 health damage."
+    },
+    "vital_cut": {
+      "id": "vital_cut",
+      "name": "Vital Cut",
+      "kind": "attack",
+      "style": "Slash",
+      "ap_damage": 10,
+      "hp_damage": 80,
+      "focus": 3,
+      "uses": 2,
+      "description": "A slash strike that deals 10 armor damage or 80 health damage."
+    },
+    "dig": {
+      "id": "dig",
+      "name": "Dig",
+      "kind": "attack",
+      "style": "Slash",
+      "ap_damage": 15,
+      "hp_damage": 40,
+      "focus": 2,
+      "uses": 5,
+      "description": "A slash strike that deals 15 armor damage or 40 health damage."
+    },
+    "frenzy": {
+      "id": "frenzy",
+      "name": "Frenzy",
+      "kind": "attack",
+      "style": "Slash",
+      "ap_damage": 20,
+      "hp_damage": 50,
+      "focus": 2,
+      "uses": 5,
+      "description": "A slash strike that deals 20 armor damage or 50 health damage."
+    },
+    "skydive": {
+      "id": "skydive",
+      "name": "Skydive",
+      "kind": "attack",
+      "style": "Air",
+      "ap_damage": 40,
+      "hp_damage": 50,
+      "focus": 2,
+      "uses": 3,
+      "description": "A air strike that deals 40 armor damage or 50 health damage."
+    },
+    "whirlwind": {
+      "id": "whirlwind",
+      "name": "Whirlwind",
+      "kind": "attack",
+      "style": "Air",
+      "ap_damage": 30,
+      "hp_damage": 40,
+      "focus": 2,
+      "uses": 3,
+      "description": "A air strike that deals 30 armor damage or 40 health damage."
+    },
+    "drag_drop": {
+      "id": "drag_drop",
+      "name": "Drag Drop",
+      "kind": "attack",
+      "style": "Air",
+      "ap_damage": 60,
+      "hp_damage": 60,
+      "focus": 3,
+      "uses": 2,
+      "description": "A air strike that deals 60 armor damage or 60 health damage."
+    },
+    "spike": {
+      "id": "spike",
+      "name": "Spike",
+      "kind": "attack",
+      "style": "Air",
+      "ap_damage": 20,
+      "hp_damage": 40,
+      "focus": 2,
+      "uses": 3,
+      "description": "A air strike that deals 20 armor damage or 40 health damage."
+    },
+    "flutter": {
+      "id": "flutter",
+      "name": "Flutter",
+      "kind": "attack",
+      "style": "Air",
+      "ap_damage": 30,
+      "hp_damage": 30,
+      "focus": 1,
+      "uses": 3,
+      "description": "A air strike that deals 30 armor damage or 30 health damage."
+    },
+    "precision_pierce": {
+      "id": "precision_pierce",
+      "name": "Precision Pierce",
+      "kind": "attack",
+      "style": "Air",
+      "ap_damage": 55,
+      "hp_damage": 10,
+      "focus": 2,
+      "uses": 2,
+      "description": "A air strike that deals 55 armor damage or 10 health damage."
+    },
+    "drill": {
+      "id": "drill",
+      "name": "Drill",
+      "kind": "attack",
+      "style": "Air",
+      "ap_damage": 25,
+      "hp_damage": 45,
+      "focus": 2,
+      "uses": 3,
+      "description": "A air strike that deals 25 armor damage or 45 health damage."
+    },
+    "bend": {
+      "id": "bend",
+      "name": "Bend",
+      "kind": "attack",
+      "style": "Ethereal",
+      "ap_damage": 45,
+      "hp_damage": 10,
+      "focus": 2,
+      "uses": 2,
+      "description": "A ethereal strike that deals 45 armor damage or 10 health damage."
+    },
+    "deforge": {
+      "id": "deforge",
+      "name": "Deforge",
+      "kind": "attack",
+      "style": "Ethereal",
+      "ap_damage": 50,
+      "hp_damage": 15,
+      "focus": 2,
+      "uses": 3,
+      "description": "A ethereal strike that deals 50 armor damage or 15 health damage."
+    },
+    "fear": {
+      "id": "fear",
+      "name": "Fear",
+      "kind": "attack",
+      "style": "Ethereal",
+      "ap_damage": 10,
+      "hp_damage": 70,
+      "focus": 3,
+      "uses": 2,
+      "description": "A ethereal strike that deals 10 armor damage or 70 health damage.",
+      "condition": "stunned",
+      "condition_chance": 0.5,
+      "condition_duration": 2
+    },
+    "pain": {
+      "id": "pain",
+      "name": "Pain",
+      "kind": "attack",
+      "style": "Ethereal",
+      "ap_damage": 15,
+      "hp_damage": 65,
+      "focus": 3,
+      "uses": 2,
+      "description": "A ethereal strike that deals 15 armor damage or 65 health damage.",
+      "condition": "spent",
+      "condition_chance": 0.25,
+      "condition_duration": 2
+    },
+    "fury": {
+      "id": "fury",
+      "name": "Fury",
+      "kind": "attack",
+      "style": "Ethereal",
+      "ap_damage": 30,
+      "hp_damage": 40,
+      "focus": 2,
+      "uses": 2,
+      "description": "A ethereal strike that deals 30 armor damage or 40 health damage."
+    },
+    "end": {
+      "id": "end",
+      "name": "End",
+      "kind": "attack",
+      "style": "Ethereal",
+      "ap_damage": 0,
+      "hp_damage": 100,
+      "focus": 4,
+      "uses": 2,
+      "description": "A ethereal strike that deals 0 armor damage or 100 health damage."
+    },
+    "sorrow": {
+      "id": "sorrow",
+      "name": "Sorrow",
+      "kind": "attack",
+      "style": "Ethereal",
+      "ap_damage": 10,
+      "hp_damage": 50,
+      "focus": 2,
+      "uses": 3,
+      "description": "A ethereal strike that deals 10 armor damage or 50 health damage."
+    },
+    "unravel": {
+      "id": "unravel",
+      "name": "Unravel",
+      "kind": "attack",
+      "style": "Ethereal",
+      "ap_damage": 20,
+      "hp_damage": 30,
+      "focus": 1,
+      "uses": 3,
+      "description": "A ethereal strike that deals 20 armor damage or 30 health damage."
+    },
+    "derealize": {
+      "id": "derealize",
+      "name": "Derealize",
+      "kind": "attack",
+      "style": "Ethereal",
+      "ap_damage": 30,
+      "hp_damage": 50,
+      "focus": 2,
+      "uses": 3,
+      "description": "A ethereal strike that deals 30 armor damage or 50 health damage."
+    },
+    "incept": {
+      "id": "incept",
+      "name": "Incept",
+      "kind": "attack",
+      "style": "Ethereal",
+      "ap_damage": 60,
+      "hp_damage": 10,
+      "focus": 3,
+      "uses": 3,
+      "description": "A ethereal strike that deals 60 armor damage or 10 health damage."
+    },
+    "storm": {
+      "id": "storm",
+      "name": "Storm",
+      "kind": "attack",
+      "style": "Elemental",
+      "ap_damage": 20,
+      "hp_damage": 40,
+      "focus": 2,
+      "uses": 5,
+      "description": "A elemental strike that deals 20 armor damage or 40 health damage."
+    },
+    "tornado": {
+      "id": "tornado",
+      "name": "Tornado",
+      "kind": "attack",
+      "style": "Elemental",
+      "ap_damage": 15,
+      "hp_damage": 40,
+      "focus": 2,
+      "uses": 5,
+      "description": "A elemental strike that deals 15 armor damage or 40 health damage."
+    },
+    "turbulence": {
+      "id": "turbulence",
+      "name": "Turbulence",
+      "kind": "attack",
+      "style": "Elemental",
+      "ap_damage": 20,
+      "hp_damage": 20,
+      "focus": 1,
+      "uses": 5,
+      "description": "A elemental strike that deals 20 armor damage or 20 health damage."
+    },
+    "flood": {
+      "id": "flood",
+      "name": "Flood",
+      "kind": "attack",
+      "style": "Elemental",
+      "ap_damage": 30,
+      "hp_damage": 15,
+      "focus": 1,
+      "uses": 5,
+      "description": "A elemental strike that deals 30 armor damage or 15 health damage."
+    },
+    "lightning": {
+      "id": "lightning",
+      "name": "Lightning",
+      "kind": "attack",
+      "style": "Elemental",
+      "ap_damage": 15,
+      "hp_damage": 45,
+      "focus": 2,
+      "uses": 5,
+      "description": "A elemental strike that deals 15 armor damage or 45 health damage.",
+      "condition": "stunned",
+      "condition_chance": 0.3,
+      "condition_duration": 2
+    },
+    "quake": {
+      "id": "quake",
+      "name": "Quake",
+      "kind": "attack",
+      "style": "Elemental",
+      "ap_damage": 25,
+      "hp_damage": 25,
+      "focus": 1,
+      "uses": 5,
+      "description": "A elemental strike that deals 25 armor damage or 25 health damage."
+    },
+    "hail": {
+      "id": "hail",
+      "name": "Hail",
+      "kind": "attack",
+      "style": "Elemental",
+      "ap_damage": 10,
+      "hp_damage": 50,
+      "focus": 2,
+      "uses": 5,
+      "description": "A elemental strike that deals 10 armor damage or 50 health damage."
+    },
+    "tsunami": {
+      "id": "tsunami",
+      "name": "Tsunami",
+      "kind": "attack",
+      "style": "Elemental",
+      "ap_damage": 75,
+      "hp_damage": 75,
+      "focus": 3,
+      "uses": 2,
+      "description": "A elemental strike that deals 75 armor damage or 75 health damage."
+    },
+    "erupt": {
+      "id": "erupt",
+      "name": "Erupt",
+      "kind": "attack",
+      "style": "Elemental",
+      "ap_damage": 40,
+      "hp_damage": 40,
+      "focus": 2,
+      "uses": 3,
+      "description": "A elemental strike that deals 40 armor damage or 40 health damage."
+    },
+    "rip_current": {
+      "id": "rip_current",
+      "name": "Rip Current",
+      "kind": "attack",
+      "style": "Elemental",
+      "ap_damage": 20,
+      "hp_damage": 55,
+      "focus": 2,
+      "uses": 4,
+      "description": "A elemental strike that deals 20 armor damage or 55 health damage."
+    },
+    "singe": {
+      "id": "singe",
+      "name": "Singe",
+      "kind": "attack",
+      "style": "Elemental",
+      "ap_damage": 20,
+      "hp_damage": 20,
+      "focus": 1,
+      "uses": 5,
+      "description": "A elemental strike that deals 20 armor damage or 20 health damage."
+    },
+    "torch": {
+      "id": "torch",
+      "name": "Torch",
+      "kind": "attack",
+      "style": "Elemental",
+      "ap_damage": 20,
+      "hp_damage": 60,
+      "focus": 3,
+      "uses": 3,
+      "description": "A elemental strike that deals 20 armor damage or 60 health damage."
+    },
+    "disease": {
+      "id": "disease",
+      "name": "Disease",
+      "kind": "attack",
+      "style": "Corruption",
+      "ap_damage": 20,
+      "hp_damage": 60,
+      "focus": 3,
+      "uses": 3,
+      "description": "A corruption strike that deals 20 armor damage or 60 health damage.",
+      "condition": "sick",
+      "condition_chance": 0.65,
+      "condition_duration": 3
+    },
+    "rot": {
+      "id": "rot",
+      "name": "Rot",
+      "kind": "attack",
+      "style": "Corruption",
+      "ap_damage": 15,
+      "hp_damage": 60,
+      "focus": 3,
+      "uses": 3,
+      "description": "A corruption strike that deals 15 armor damage or 60 health damage.",
+      "condition": "sick",
+      "condition_chance": 1,
+      "condition_duration": 3
+    },
+    "infect": {
+      "id": "infect",
+      "name": "Infect",
+      "kind": "attack",
+      "style": "Corruption",
+      "ap_damage": 10,
+      "hp_damage": 40,
+      "focus": 2,
+      "uses": 5,
+      "description": "A corruption strike that deals 10 armor damage or 40 health damage.",
+      "condition": "sick",
+      "condition_chance": 0.55,
+      "condition_duration": 3
+    },
+    "paralyze": {
+      "id": "paralyze",
+      "name": "Paralyze",
+      "kind": "attack",
+      "style": "Corruption",
+      "ap_damage": 10,
+      "hp_damage": 20,
+      "focus": 1,
+      "uses": 3,
+      "description": "A corruption strike that deals 10 armor damage or 20 health damage.",
+      "condition": "stunned",
+      "condition_chance": 0.7,
+      "condition_duration": 2
+    },
+    "biohazard": {
+      "id": "biohazard",
+      "name": "Biohazard",
+      "kind": "attack",
+      "style": "Corruption",
+      "ap_damage": 0,
+      "hp_damage": 65,
+      "focus": 3,
+      "uses": 3,
+      "description": "A corruption strike that deals 0 armor damage or 65 health damage.",
+      "condition": "sick",
+      "condition_chance": 0.5,
+      "condition_duration": 3
+    },
+    "bioweapon": {
+      "id": "bioweapon",
+      "name": "Bioweapon",
+      "kind": "attack",
+      "style": "Corruption",
+      "ap_damage": 20,
+      "hp_damage": 70,
+      "focus": 3,
+      "uses": 2,
+      "description": "A corruption strike that deals 20 armor damage or 70 health damage.",
+      "self_damage": {
+        "ap": 30,
+        "hp": 50
+      }
+    },
+    "miasma": {
+      "id": "miasma",
+      "name": "Miasma",
+      "kind": "attack",
+      "style": "Corruption",
+      "ap_damage": 15,
+      "hp_damage": 30,
+      "focus": 1,
+      "uses": 4,
+      "description": "A corruption strike that deals 15 armor damage or 30 health damage.",
+      "condition": "sick",
+      "condition_chance": 0.6,
+      "condition_duration": 3
+    },
+    "aerosolize": {
+      "id": "aerosolize",
+      "name": "Aerosolize",
+      "kind": "attack",
+      "style": "Corruption",
+      "ap_damage": 20,
+      "hp_damage": 35,
+      "focus": 2,
+      "uses": 4,
+      "description": "A corruption strike that deals 20 armor damage or 35 health damage.",
+      "condition": "sick",
+      "condition_chance": 0.45,
+      "condition_duration": 3
+    },
+    "soul_drag": {
+      "id": "soul_drag",
+      "name": "Soul Drag",
+      "kind": "attack",
+      "style": "Corruption",
+      "ap_damage": 25,
+      "hp_damage": 40,
+      "focus": 2,
+      "uses": 3,
+      "description": "A corruption strike that deals 25 armor damage or 40 health damage."
+    },
+    "demoralize": {
+      "id": "demoralize",
+      "name": "Demoralize",
+      "kind": "attack",
+      "style": "Corruption",
+      "ap_damage": 10,
+      "hp_damage": 30,
+      "focus": 1,
+      "uses": 4,
+      "description": "A corruption strike that deals 10 armor damage or 30 health damage.",
+      "condition": "spent",
+      "condition_chance": 0.7,
+      "condition_duration": 2
+    },
+    "drive_insane": {
+      "id": "drive_insane",
+      "name": "Drive Insane",
+      "kind": "attack",
+      "style": "Corruption",
+      "ap_damage": 15,
+      "hp_damage": 50,
+      "focus": 2,
+      "uses": 3,
+      "description": "A corruption strike that deals 15 armor damage or 50 health damage.",
+      "condition": "spent",
+      "condition_chance": 0.5,
+      "condition_duration": 2
+    },
+    "arrow_shot": {
+      "id": "arrow_shot",
+      "name": "Arrow Shot",
+      "kind": "attack",
+      "style": "Munition",
+      "ap_damage": 35,
+      "hp_damage": 35,
+      "focus": 2,
+      "uses": 5,
+      "description": "A munition strike that deals 35 armor damage or 35 health damage."
+    },
+    "cannon": {
+      "id": "cannon",
+      "name": "Cannon",
+      "kind": "attack",
+      "style": "Munition",
+      "ap_damage": 65,
+      "hp_damage": 35,
+      "focus": 3,
+      "uses": 2,
+      "description": "A munition strike that deals 65 armor damage or 35 health damage."
+    },
+    "grenade": {
+      "id": "grenade",
+      "name": "Grenade",
+      "kind": "attack",
+      "style": "Munition",
+      "ap_damage": 50,
+      "hp_damage": 50,
+      "focus": 2,
+      "uses": 2,
+      "description": "A munition strike that deals 50 armor damage or 50 health damage."
+    },
+    "rifle": {
+      "id": "rifle",
+      "name": "Rifle",
+      "kind": "attack",
+      "style": "Munition",
+      "ap_damage": 30,
+      "hp_damage": 55,
+      "focus": 2,
+      "uses": 4,
+      "description": "A munition strike that deals 30 armor damage or 55 health damage."
+    },
+    "laser": {
+      "id": "laser",
+      "name": "Laser",
+      "kind": "attack",
+      "style": "Munition",
+      "ap_damage": 60,
+      "hp_damage": 20,
+      "focus": 3,
+      "uses": 3,
+      "description": "A munition strike that deals 60 armor damage or 20 health damage."
+    },
+    "cast": {
+      "id": "cast",
+      "name": "Cast",
+      "kind": "attack",
+      "style": "Munition",
+      "ap_damage": 20,
+      "hp_damage": 30,
+      "focus": 1,
+      "uses": 5,
+      "description": "A munition strike that deals 20 armor damage or 30 health damage."
+    },
+    "sharpshoot": {
+      "id": "sharpshoot",
+      "name": "Sharpshoot",
+      "kind": "attack",
+      "style": "Munition",
+      "ap_damage": 20,
+      "hp_damage": 70,
+      "focus": 3,
+      "uses": 2,
+      "description": "A munition strike that deals 20 armor damage or 70 health damage."
+    },
+    "target": {
+      "id": "target",
+      "name": "Target",
+      "kind": "attack",
+      "style": "Munition",
+      "ap_damage": 40,
+      "hp_damage": 20,
+      "focus": 2,
+      "uses": 5,
+      "description": "A munition strike that deals 40 armor damage or 20 health damage."
+    },
+    "javelin": {
+      "id": "javelin",
+      "name": "Javelin",
+      "kind": "attack",
+      "style": "Munition",
+      "ap_damage": 45,
+      "hp_damage": 40,
+      "focus": 2,
+      "uses": 3,
+      "description": "A munition strike that deals 45 armor damage or 40 health damage."
+    },
+    "slingshot": {
+      "id": "slingshot",
+      "name": "Slingshot",
+      "kind": "attack",
+      "style": "Munition",
+      "ap_damage": 15,
+      "hp_damage": 25,
+      "focus": 1,
+      "uses": null,
+      "description": "A munition strike that deals 15 armor damage or 25 health damage."
+    },
+    "struggle": {
+      "id": "struggle",
+      "name": "Struggle",
+      "kind": "attack",
+      "style": "Slam",
+      "ap_damage": 8,
+      "hp_damage": 10,
+      "focus": 0,
+      "uses": null,
+      "description": "An exhausted creature lashes out, then loses 3 HP. Always available when its attacking moves are spent.",
+      "self_damage": {
+        "ap": 0,
+        "hp": 3
+      }
+    },
+    "forewarn": {
+      "id": "forewarn",
+      "name": "Forewarn",
+      "kind": "guard",
+      "focus": 2,
+      "uses": 2,
+      "target": "bench",
+      "effects": {
+        "heal_ap": 25,
+        "heal_hp": 10
+      },
+      "description": "Restore 25 AP and 10 HP to one creature on your Docket."
+    },
+    "protect": {
+      "id": "protect",
+      "name": "Protect",
+      "kind": "guard",
+      "focus": 1,
+      "uses": 3,
+      "target": "self",
+      "effects": {
+        "guard": 0.5
+      },
+      "description": "Halve the next incoming attack; a second guard refreshes rather than stacks."
+    },
+    "tuck": {
+      "id": "tuck",
+      "name": "Tuck",
+      "kind": "guard",
+      "focus": 1,
+      "uses": 4,
+      "target": "self",
+      "effects": {
+        "guard_ap": 10,
+        "guard_hp": 20
+      },
+      "description": "Reduce the next attack by 10 armor damage or 20 health damage."
+    },
+    "shield": {
+      "id": "shield",
+      "name": "Shield",
+      "kind": "guard",
+      "focus": 2,
+      "uses": 2,
+      "target": "self",
+      "effects": {
+        "barrier_ap": 30
+      },
+      "description": "Add 30 AP, allowing up to 30 temporary AP above printed armor."
+    },
+    "brace": {
+      "id": "brace",
+      "name": "Brace",
+      "kind": "guard",
+      "focus": 3,
+      "uses": 2,
+      "target": "self",
+      "effects": {
+        "guard": 0.5,
+        "condition": "sharpened",
+        "duration": 2
+      },
+      "description": "Halve the next incoming attack and sharpen your attacks for two own-turn endings."
+    },
+    "redirect": {
+      "id": "redirect",
+      "name": "Redirect",
+      "kind": "guard",
+      "focus": 3,
+      "uses": 1,
+      "target": "self",
+      "effects": {
+        "guard": 0.5,
+        "reflect": true
+      },
+      "description": "Halve the next incoming attack and reflect the actual damage suffered. Reflected damage cannot reflect again."
+    },
+    "gravity_assist": {
+      "id": "gravity_assist",
+      "name": "Gravity Assist",
+      "kind": "guard",
+      "focus": 2,
+      "uses": 2,
+      "target": "self",
+      "effects": {
+        "barrier_ap": 25,
+        "heal_hp": 5
+      },
+      "description": "Add up to 25 temporary AP and restore 5 HP."
+    },
+    "salve": {
+      "id": "salve",
+      "name": "Salve",
+      "kind": "repair",
+      "focus": 2,
+      "uses": 2,
+      "target": "self",
+      "effects": {
+        "heal_hp": 50
+      },
+      "description": "Restore 50 HP, up to printed maximum health."
+    },
+    "fortify": {
+      "id": "fortify",
+      "name": "Fortify",
+      "kind": "repair",
+      "focus": 2,
+      "uses": 3,
+      "target": "self",
+      "effects": {
+        "heal_ap": 30,
+        "heal_hp": 10
+      },
+      "description": "Restore 30 AP and 10 HP, up to printed maxima."
+    },
+    "rearm": {
+      "id": "rearm",
+      "name": "Rearm",
+      "kind": "repair",
+      "focus": 3,
+      "uses": 1,
+      "target": "self",
+      "effects": {
+        "rearm": 2
+      },
+      "description": "Restore up to two charges to every limited move, without exceeding its original uses."
+    },
+    "energy_drain": {
+      "id": "energy_drain",
+      "name": "Energy Drain",
+      "kind": "arena",
+      "focus": 2,
+      "uses": 2,
+      "target": "self",
+      "effects": {
+        "arena": {
+          "styles": [
+            "Slam",
+            "Slash"
+          ],
+          "factor": 0.5,
+          "duration": 2,
+          "scope": "enemy"
+        }
+      },
+      "description": "Halve enemy Slam and Slash damage for two global turns. Replaces the current arena."
+    },
+    "rust": {
+      "id": "rust",
+      "name": "Rust",
+      "kind": "arena",
+      "focus": 2,
+      "uses": 2,
+      "target": "self",
+      "effects": {
+        "arena": {
+          "styles": [
+            "*"
+          ],
+          "factor": 2,
+          "duration": 2,
+          "scope": "self_ap"
+        }
+      },
+      "description": "Double your armor damage for two global turns. Replaces the current arena."
+    },
+    "clear_skies": {
+      "id": "clear_skies",
+      "name": "Clear Skies",
+      "kind": "arena",
+      "focus": 2,
+      "uses": 2,
+      "target": "self",
+      "effects": {
+        "arena": {
+          "styles": [
+            "Air"
+          ],
+          "factor": 2,
+          "duration": 5,
+          "scope": "all"
+        }
+      },
+      "description": "Double Air damage for five global turns. Replaces the current arena."
+    },
+    "weather_machine": {
+      "id": "weather_machine",
+      "name": "Weather Machine",
+      "kind": "arena",
+      "focus": 2,
+      "uses": 2,
+      "target": "self",
+      "effects": {
+        "arena": {
+          "styles": [
+            "Elemental"
+          ],
+          "factor": 2,
+          "duration": 5,
+          "scope": "all"
+        }
+      },
+      "description": "Double Elemental damage for five global turns. Replaces the current arena."
+    },
+    "aimed_magnitude": {
+      "id": "aimed_magnitude",
+      "name": "Aimed Magnitude",
+      "kind": "arena",
+      "focus": 2,
+      "uses": 2,
+      "target": "self",
+      "effects": {
+        "arena": {
+          "styles": [
+            "Elemental"
+          ],
+          "factor": 2,
+          "duration": 2,
+          "scope": "self"
+        }
+      },
+      "description": "Double your Elemental damage for two global turns. Replaces the current arena."
+    },
+    "folie_deux": {
+      "id": "folie_deux",
+      "name": "Folie à deux",
+      "kind": "arena",
+      "focus": 2,
+      "uses": 2,
+      "target": "self",
+      "effects": {
+        "arena": {
+          "styles": [
+            "Ethereal"
+          ],
+          "factor": 2,
+          "duration": 5,
+          "scope": "all"
+        }
+      },
+      "description": "Double Ethereal damage for five global turns. Replaces the current arena."
+    },
+    "scattered_storm": {
+      "id": "scattered_storm",
+      "name": "Scattered Storm",
+      "kind": "arena",
+      "focus": 2,
+      "uses": 2,
+      "target": "self",
+      "effects": {
+        "arena": {
+          "styles": [
+            "Air"
+          ],
+          "factor": 2,
+          "duration": 3,
+          "scope": "self"
+        }
+      },
+      "description": "Double your Air damage for three global turns. Replaces the current arena."
+    },
+    "plague": {
+      "id": "plague",
+      "name": "Plague",
+      "kind": "arena",
+      "focus": 2,
+      "uses": 2,
+      "target": "self",
+      "effects": {
+        "arena": {
+          "styles": [
+            "Corruption"
+          ],
+          "factor": 2,
+          "duration": 5,
+          "scope": "all"
+        }
+      },
+      "description": "Double Corruption damage for five global turns. Replaces the current arena."
+    },
+    "poison_pellet": {
+      "id": "poison_pellet",
+      "name": "Poison Pellet",
+      "kind": "arena",
+      "focus": 2,
+      "uses": 2,
+      "target": "self",
+      "effects": {
+        "arena": {
+          "styles": [
+            "Corruption"
+          ],
+          "factor": 2,
+          "duration": 3,
+          "scope": "self"
+        }
+      },
+      "description": "Double your Corruption damage for three global turns. Replaces the current arena."
+    },
+    "calm_winds": {
+      "id": "calm_winds",
+      "name": "Calm Winds",
+      "kind": "arena",
+      "focus": 2,
+      "uses": 2,
+      "target": "self",
+      "effects": {
+        "arena": {
+          "styles": [
+            "Munition"
+          ],
+          "factor": 2,
+          "duration": 5,
+          "scope": "all"
+        }
+      },
+      "description": "Double Munition damage for five global turns. Replaces the current arena."
+    }
+  },
+  "decks": {
+    "frontier": {
+      "id": "frontier",
+      "name": "Frontier",
+      "description": "Strong armor, direct strikes and a relentless finish.",
+      "cards": [
+        "bortle_grene",
+        "bortle_grene",
+        "nails_thede",
+        "nails_thede",
+        "goliath_thede",
+        "goliath_thede",
+        "lynxor_polis",
+        "lynxor_polis",
+        "support_salve",
+        "support_salve",
+        "support_fortify",
+        "support_fortify",
+        "support_rearm",
+        "support_rearm",
+        "support_cleanse",
+        "support_cleanse",
+        "support_steeled",
+        "support_steeled",
+        "support_sharpened",
+        "support_sharpened",
+        "support_forewarn",
+        "support_forewarn",
+        "support_protect",
+        "support_protect",
+        "support_redirect",
+        "support_redirect",
+        "arena_rust",
+        "arena_rust",
+        "arena_clear_skies",
+        "arena_clear_skies"
+      ]
+    },
+    "sky_steel": {
+      "id": "sky_steel",
+      "name": "Sky & Steel",
+      "description": "Break armor at range, then move your best threat into position.",
+      "cards": [
+        "wingwoven_grene",
+        "wingwoven_grene",
+        "fortress_polis",
+        "fortress_polis",
+        "archer_polis",
+        "archer_polis",
+        "sea_scorpion_grene",
+        "sea_scorpion_grene",
+        "support_salve",
+        "support_salve",
+        "support_fortify",
+        "support_fortify",
+        "support_rearm",
+        "support_rearm",
+        "support_cleanse",
+        "support_cleanse",
+        "support_steeled",
+        "support_steeled",
+        "support_sharpened",
+        "support_sharpened",
+        "support_forewarn",
+        "support_forewarn",
+        "support_protect",
+        "support_protect",
+        "support_redirect",
+        "support_redirect",
+        "arena_calm_winds",
+        "arena_calm_winds",
+        "arena_clear_skies",
+        "arena_clear_skies"
+      ]
+    },
+    "mystic_garden": {
+      "id": "mystic_garden",
+      "name": "Mystic Garden",
+      "description": "Use conditions, repair and arena timing to control a longer contest.",
+      "cards": [
+        "polven_grene",
+        "polven_grene",
+        "merlin_polis",
+        "merlin_polis",
+        "cando_thede",
+        "cando_thede",
+        "divinator_polis",
+        "divinator_polis",
+        "support_salve",
+        "support_salve",
+        "support_fortify",
+        "support_fortify",
+        "support_rearm",
+        "support_rearm",
+        "support_cleanse",
+        "support_cleanse",
+        "support_steeled",
+        "support_steeled",
+        "support_sharpened",
+        "support_sharpened",
+        "support_forewarn",
+        "support_forewarn",
+        "support_protect",
+        "support_protect",
+        "support_redirect",
+        "support_redirect",
+        "arena_weather_machine",
+        "arena_weather_machine",
+        "arena_plague",
+        "arena_plague"
+      ]
+    }
+  }
+}
