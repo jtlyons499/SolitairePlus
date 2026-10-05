@@ -799,6 +799,25 @@
       "rarity": "Common",
       "art": "poltergeist_grene.png"
     },
+    "night_mohammed_thede": {
+      "id": "night_mohammed_thede",
+      "name": "Night-Shift Mohammed",
+      "kind": "creature",
+      "era": "thede",
+      "hp": 100,
+      "ap": 120,
+      "armor": "Bare",
+      "attack_style": "Ethereal",
+      "defense_style": "Evasion",
+      "moves": [
+        "bend",
+        "deforge",
+        "gravity_assist"
+      ],
+      "description": "A half-dead, half-alive creature who yearns for rest.",
+      "rarity": "Uncommon",
+      "art": "night_mohammed_thede.png"
+    },
     "goliath_thede": {
       "id": "goliath_thede",
       "name": "Goliath",
