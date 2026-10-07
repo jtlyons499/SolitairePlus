@@ -9143,6 +9143,1393 @@
                         ],
                         "reveals": []
                     }
+                },
+                "prospect_nadia_sari": {
+                    "gary_undo": {
+                        "history": [
+                            [
+                                "fold",
+                                "preflop",
+                                true,
+                                0
+                            ],
+                            [
+                                "raise",
+                                "preflop",
+                                false,
+                                0.6833333333333333
+                            ],
+                            [
+                                "check",
+                                "flop",
+                                false,
+                                0
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.35335689045936397
+                            ],
+                            [
+                                "fold",
+                                "preflop",
+                                true,
+                                0
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.4
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.16770186335403728
+                            ],
+                            [
+                                "raise",
+                                "turn",
+                                true,
+                                1.0168918918918919
+                            ],
+                            [
+                                "raise",
+                                "river",
+                                true,
+                                0.30531845042678923
+                            ]
+                        ],
+                        "reveals": [
+                            false
+                        ]
+                    },
+                    "prospect_luca_moretti": {
+                        "history": [
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.6666666666666666
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.34959349593495936
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.32439678284182305
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.3128491620111732
+                            ],
+                            [
+                                "bet",
+                                "river",
+                                false,
+                                0.35738831615120276
+                            ],
+                            [
+                                "fold",
+                                "preflop",
+                                true,
+                                0
+                            ],
+                            [
+                                "check",
+                                "preflop",
+                                false,
+                                0
+                            ],
+                            [
+                                "bet",
+                                "flop",
+                                false,
+                                0.44285714285714284
+                            ],
+                            [
+                                "bet",
+                                "turn",
+                                false,
+                                0.5153374233128835
+                            ],
+                            [
+                                "bet",
+                                "river",
+                                false,
+                                0.56797583081571
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.14285714285714285
+                            ],
+                            [
+                                "bet",
+                                "flop",
+                                false,
+                                0.3375
+                            ],
+                            [
+                                "check",
+                                "turn",
+                                false,
+                                0
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.5041876046901173
+                            ],
+                            [
+                                "check",
+                                "river",
+                                false,
+                                0
+                            ],
+                            [
+                                "call",
+                                "river",
+                                true,
+                                0.23390342052313884
+                            ]
+                        ],
+                        "reveals": [
+                            false,
+                            false
+                        ]
+                    },
+                    "player": {
+                        "history": [
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.4
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.25903614457831325
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.24493927125506074
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.23829787234042554
+                            ],
+                            [
+                                "fold",
+                                "river",
+                                true,
+                                0
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.6666666666666666
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.40594059405940597
+                            ],
+                            [
+                                "check",
+                                "flop",
+                                false,
+                                0
+                            ],
+                            [
+                                "fold",
+                                "turn",
+                                true,
+                                0
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.6666666666666666
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.3069306930693069
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.340080971659919
+                            ],
+                            [
+                                "call",
+                                "river",
+                                true,
+                                0.3622350674373796
+                            ],
+                            [
+                                "check",
+                                "preflop",
+                                false,
+                                0
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.2523364485981308
+                            ],
+                            [
+                                "check",
+                                "turn",
+                                false,
+                                0
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.09910913140311804
+                            ]
+                        ],
+                        "reveals": []
+                    },
+                    "chiara_sammartano": {
+                        "history": [
+                            [
+                                "raise",
+                                "preflop",
+                                false,
+                                0.5375
+                            ],
+                            [
+                                "bet",
+                                "flop",
+                                false,
+                                0.4801587301587302
+                            ],
+                            [
+                                "bet",
+                                "turn",
+                                false,
+                                0.45528455284552843
+                            ],
+                            [
+                                "check",
+                                "river",
+                                false,
+                                0
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.2
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.2887323943661972
+                            ],
+                            [
+                                "check",
+                                "flop",
+                                false,
+                                0
+                            ],
+                            [
+                                "bet",
+                                "turn",
+                                false,
+                                0.546448087431694
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.4
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.23484848484848486
+                            ],
+                            [
+                                "fold",
+                                "turn",
+                                true,
+                                0
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.6666666666666666
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.20149253731343283
+                            ],
+                            [
+                                "bet",
+                                "turn",
+                                false,
+                                0.574468085106383
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.1955420466058764
+                            ],
+                            [
+                                "bet",
+                                "river",
+                                false,
+                                0.29067796610169494
+                            ]
+                        ],
+                        "reveals": [
+                            true,
+                            false,
+                            false
+                        ]
+                    }
+                },
+                "chiara_sammartano": {
+                    "gary_undo": {
+                        "history": [
+                            [
+                                "fold",
+                                "preflop",
+                                true,
+                                0
+                            ],
+                            [
+                                "raise",
+                                "preflop",
+                                false,
+                                0.6833333333333333
+                            ],
+                            [
+                                "check",
+                                "flop",
+                                false,
+                                0
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.35335689045936397
+                            ],
+                            [
+                                "fold",
+                                "preflop",
+                                true,
+                                0
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.4
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.16770186335403728
+                            ],
+                            [
+                                "raise",
+                                "turn",
+                                true,
+                                1.0168918918918919
+                            ],
+                            [
+                                "raise",
+                                "river",
+                                true,
+                                0.30531845042678923
+                            ]
+                        ],
+                        "reveals": [
+                            false
+                        ]
+                    },
+                    "prospect_luca_moretti": {
+                        "history": [
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.6666666666666666
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.34959349593495936
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.32439678284182305
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.3128491620111732
+                            ],
+                            [
+                                "bet",
+                                "river",
+                                false,
+                                0.35738831615120276
+                            ],
+                            [
+                                "fold",
+                                "preflop",
+                                true,
+                                0
+                            ],
+                            [
+                                "check",
+                                "preflop",
+                                false,
+                                0
+                            ],
+                            [
+                                "bet",
+                                "flop",
+                                false,
+                                0.44285714285714284
+                            ],
+                            [
+                                "bet",
+                                "turn",
+                                false,
+                                0.5153374233128835
+                            ],
+                            [
+                                "bet",
+                                "river",
+                                false,
+                                0.56797583081571
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.14285714285714285
+                            ],
+                            [
+                                "bet",
+                                "flop",
+                                false,
+                                0.3375
+                            ],
+                            [
+                                "check",
+                                "turn",
+                                false,
+                                0
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.5041876046901173
+                            ],
+                            [
+                                "check",
+                                "river",
+                                false,
+                                0
+                            ],
+                            [
+                                "call",
+                                "river",
+                                true,
+                                0.23390342052313884
+                            ]
+                        ],
+                        "reveals": [
+                            false,
+                            false
+                        ]
+                    },
+                    "player": {
+                        "history": [
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.4
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.25903614457831325
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.24493927125506074
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.23829787234042554
+                            ],
+                            [
+                                "fold",
+                                "river",
+                                true,
+                                0
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.6666666666666666
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.40594059405940597
+                            ],
+                            [
+                                "check",
+                                "flop",
+                                false,
+                                0
+                            ],
+                            [
+                                "fold",
+                                "turn",
+                                true,
+                                0
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.6666666666666666
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.3069306930693069
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.340080971659919
+                            ],
+                            [
+                                "call",
+                                "river",
+                                true,
+                                0.3622350674373796
+                            ],
+                            [
+                                "check",
+                                "preflop",
+                                false,
+                                0
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.2523364485981308
+                            ],
+                            [
+                                "check",
+                                "turn",
+                                false,
+                                0
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.09910913140311804
+                            ]
+                        ],
+                        "reveals": []
+                    },
+                    "prospect_nadia_sari": {
+                        "history": [
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.14285714285714285
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.20574162679425836
+                            ],
+                            [
+                                "check",
+                                "flop",
+                                false,
+                                0
+                            ],
+                            [
+                                "fold",
+                                "flop",
+                                true,
+                                0
+                            ],
+                            [
+                                "fold",
+                                "preflop",
+                                true,
+                                0
+                            ],
+                            [
+                                "fold",
+                                "preflop",
+                                true,
+                                0
+                            ],
+                            [
+                                "fold",
+                                "preflop",
+                                true,
+                                0
+                            ]
+                        ],
+                        "reveals": []
+                    }
+                },
+                "gary_undo": {
+                    "prospect_luca_moretti": {
+                        "history": [
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.6666666666666666
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.34959349593495936
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.32439678284182305
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.3128491620111732
+                            ],
+                            [
+                                "bet",
+                                "river",
+                                false,
+                                0.35738831615120276
+                            ],
+                            [
+                                "fold",
+                                "preflop",
+                                true,
+                                0
+                            ],
+                            [
+                                "check",
+                                "preflop",
+                                false,
+                                0
+                            ],
+                            [
+                                "bet",
+                                "flop",
+                                false,
+                                0.44285714285714284
+                            ],
+                            [
+                                "bet",
+                                "turn",
+                                false,
+                                0.5153374233128835
+                            ],
+                            [
+                                "bet",
+                                "river",
+                                false,
+                                0.56797583081571
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.14285714285714285
+                            ],
+                            [
+                                "bet",
+                                "flop",
+                                false,
+                                0.3375
+                            ],
+                            [
+                                "check",
+                                "turn",
+                                false,
+                                0
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.5041876046901173
+                            ],
+                            [
+                                "check",
+                                "river",
+                                false,
+                                0
+                            ],
+                            [
+                                "call",
+                                "river",
+                                true,
+                                0.23390342052313884
+                            ]
+                        ],
+                        "reveals": [
+                            false,
+                            false
+                        ]
+                    },
+                    "player": {
+                        "history": [
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.4
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.25903614457831325
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.24493927125506074
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.23829787234042554
+                            ],
+                            [
+                                "fold",
+                                "river",
+                                true,
+                                0
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.6666666666666666
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.40594059405940597
+                            ],
+                            [
+                                "check",
+                                "flop",
+                                false,
+                                0
+                            ],
+                            [
+                                "fold",
+                                "turn",
+                                true,
+                                0
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.6666666666666666
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.3069306930693069
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.340080971659919
+                            ],
+                            [
+                                "call",
+                                "river",
+                                true,
+                                0.3622350674373796
+                            ],
+                            [
+                                "check",
+                                "preflop",
+                                false,
+                                0
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.2523364485981308
+                            ],
+                            [
+                                "check",
+                                "turn",
+                                false,
+                                0
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.09910913140311804
+                            ]
+                        ],
+                        "reveals": []
+                    },
+                    "prospect_nadia_sari": {
+                        "history": [
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.14285714285714285
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.20574162679425836
+                            ],
+                            [
+                                "check",
+                                "flop",
+                                false,
+                                0
+                            ],
+                            [
+                                "fold",
+                                "flop",
+                                true,
+                                0
+                            ],
+                            [
+                                "fold",
+                                "preflop",
+                                true,
+                                0
+                            ],
+                            [
+                                "fold",
+                                "preflop",
+                                true,
+                                0
+                            ],
+                            [
+                                "fold",
+                                "preflop",
+                                true,
+                                0
+                            ]
+                        ],
+                        "reveals": []
+                    },
+                    "chiara_sammartano": {
+                        "history": [
+                            [
+                                "raise",
+                                "preflop",
+                                false,
+                                0.5375
+                            ],
+                            [
+                                "bet",
+                                "flop",
+                                false,
+                                0.4801587301587302
+                            ],
+                            [
+                                "bet",
+                                "turn",
+                                false,
+                                0.45528455284552843
+                            ],
+                            [
+                                "check",
+                                "river",
+                                false,
+                                0
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.2
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.2887323943661972
+                            ],
+                            [
+                                "check",
+                                "flop",
+                                false,
+                                0
+                            ],
+                            [
+                                "bet",
+                                "turn",
+                                false,
+                                0.546448087431694
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.4
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.23484848484848486
+                            ],
+                            [
+                                "fold",
+                                "turn",
+                                true,
+                                0
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.6666666666666666
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.20149253731343283
+                            ],
+                            [
+                                "bet",
+                                "turn",
+                                false,
+                                0.574468085106383
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.1955420466058764
+                            ],
+                            [
+                                "bet",
+                                "river",
+                                false,
+                                0.29067796610169494
+                            ]
+                        ],
+                        "reveals": [
+                            true,
+                            false,
+                            false
+                        ]
+                    }
+                },
+                "prospect_luca_moretti": {
+                    "gary_undo": {
+                        "history": [
+                            [
+                                "fold",
+                                "preflop",
+                                true,
+                                0
+                            ],
+                            [
+                                "raise",
+                                "preflop",
+                                false,
+                                0.6833333333333333
+                            ],
+                            [
+                                "check",
+                                "flop",
+                                false,
+                                0
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.35335689045936397
+                            ],
+                            [
+                                "fold",
+                                "preflop",
+                                true,
+                                0
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.4
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.16770186335403728
+                            ],
+                            [
+                                "raise",
+                                "turn",
+                                true,
+                                1.0168918918918919
+                            ],
+                            [
+                                "raise",
+                                "river",
+                                true,
+                                0.30531845042678923
+                            ]
+                        ],
+                        "reveals": [
+                            false
+                        ]
+                    },
+                    "player": {
+                        "history": [
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.4
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.25903614457831325
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.24493927125506074
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.23829787234042554
+                            ],
+                            [
+                                "fold",
+                                "river",
+                                true,
+                                0
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.6666666666666666
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.40594059405940597
+                            ],
+                            [
+                                "check",
+                                "flop",
+                                false,
+                                0
+                            ],
+                            [
+                                "fold",
+                                "turn",
+                                true,
+                                0
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.6666666666666666
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.3069306930693069
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.340080971659919
+                            ],
+                            [
+                                "call",
+                                "river",
+                                true,
+                                0.3622350674373796
+                            ],
+                            [
+                                "check",
+                                "preflop",
+                                false,
+                                0
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.2523364485981308
+                            ],
+                            [
+                                "check",
+                                "turn",
+                                false,
+                                0
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.09910913140311804
+                            ]
+                        ],
+                        "reveals": []
+                    },
+                    "prospect_nadia_sari": {
+                        "history": [
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.14285714285714285
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.20574162679425836
+                            ],
+                            [
+                                "check",
+                                "flop",
+                                false,
+                                0
+                            ],
+                            [
+                                "fold",
+                                "flop",
+                                true,
+                                0
+                            ],
+                            [
+                                "fold",
+                                "preflop",
+                                true,
+                                0
+                            ],
+                            [
+                                "fold",
+                                "preflop",
+                                true,
+                                0
+                            ],
+                            [
+                                "fold",
+                                "preflop",
+                                true,
+                                0
+                            ]
+                        ],
+                        "reveals": []
+                    },
+                    "chiara_sammartano": {
+                        "history": [
+                            [
+                                "raise",
+                                "preflop",
+                                false,
+                                0.5375
+                            ],
+                            [
+                                "bet",
+                                "flop",
+                                false,
+                                0.4801587301587302
+                            ],
+                            [
+                                "bet",
+                                "turn",
+                                false,
+                                0.45528455284552843
+                            ],
+                            [
+                                "check",
+                                "river",
+                                false,
+                                0
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.2
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.2887323943661972
+                            ],
+                            [
+                                "check",
+                                "flop",
+                                false,
+                                0
+                            ],
+                            [
+                                "bet",
+                                "turn",
+                                false,
+                                0.546448087431694
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.4
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.23484848484848486
+                            ],
+                            [
+                                "fold",
+                                "turn",
+                                true,
+                                0
+                            ],
+                            [
+                                "call",
+                                "preflop",
+                                true,
+                                0.6666666666666666
+                            ],
+                            [
+                                "call",
+                                "flop",
+                                true,
+                                0.20149253731343283
+                            ],
+                            [
+                                "bet",
+                                "turn",
+                                false,
+                                0.574468085106383
+                            ],
+                            [
+                                "call",
+                                "turn",
+                                true,
+                                0.1955420466058764
+                            ],
+                            [
+                                "bet",
+                                "river",
+                                false,
+                                0.29067796610169494
+                            ]
+                        ],
+                        "reveals": [
+                            true,
+                            false,
+                            false
+                        ]
+                    }
                 }
             },
             "seven_card_stud": {
@@ -9683,15 +11070,16 @@
     },
     "case_opening": {
         "version": 1,
-        "opened": 14,
-        "spent": 10586,
+        "opened": 15,
+        "spent": 10638,
         "inventory": {
             "rating_roulette": 1,
             "origami_dragon": 1,
             "velvet_penguin": 2,
             "neon_ace": 2,
             "fan_club": 2,
-            "bent_key": 1
+            "bent_key": 1,
+            "cash_pouch": 1
         },
         "history": [
             {
@@ -9766,6 +11154,14 @@
                 "item_id": "bent_key",
                 "kind": "junk",
                 "amount": 0
+            },
+            {
+                "number": 15,
+                "case": "street",
+                "cost": 52,
+                "item_id": "cash_pouch",
+                "kind": "cash",
+                "amount": 42
             }
         ]
     },
@@ -9787,34 +11183,34 @@
     },
     "progression": {
         "level": 17,
-        "xp": 9143,
-        "solitaire_points": 651
+        "xp": 9654,
+        "solitaire_points": 686
     },
     "career": {
         "unlocked": false,
-        "rating": 1165,
+        "rating": 1182,
         "rating_schema_version": 2,
         "rating_results": {
             "solitaire": {
-                "played": 8,
-                "wins": 7,
+                "played": 9,
+                "wins": 8,
                 "draws": 0,
                 "losses": 1,
-                "last_change": 67
+                "last_change": 60
             },
             "score_four": {
-                "played": 4,
-                "wins": 4,
+                "played": 6,
+                "wins": 6,
                 "draws": 0,
                 "losses": 0,
-                "last_change": 16
+                "last_change": 60
             },
             "texas_holdem": {
-                "played": 7,
+                "played": 8,
                 "wins": 1,
                 "draws": 0,
-                "losses": 6,
-                "last_change": 0
+                "losses": 7,
+                "last_change": -6
             },
             "blackjack": {
                 "played": 42,
@@ -9832,17 +11228,17 @@
             }
         },
         "ratings": {
-            "solitaire": 1960,
-            "texas_holdem": 981,
+            "solitaire": 2020,
+            "texas_holdem": 975,
             "five_card_draw": 1000,
             "seven_card_stud": 999,
             "blackjack": 896,
             "roulette": 1035,
-            "score_four": 1282,
-            "overall": 1165
+            "score_four": 1346,
+            "overall": 1182
         },
-        "cash": 3325,
-        "fans": 129033,
+        "cash": 3785,
+        "fans": 129753,
         "fan_rewarded_jobs": [
             "airline_pilot",
             "satellite_repair",
@@ -9937,34 +11333,42 @@
                 }
             },
             "gary_undo": {
-                "rating": 2156,
-                "last_change": 1,
+                "rating": 2153,
+                "last_change": -3,
                 "age": 69,
                 "birthday_month": 10,
                 "ratings": {
                     "solitaire": 2633,
-                    "texas_holdem": 2266,
+                    "texas_holdem": 2245,
                     "five_card_draw": 2101,
                     "seven_card_stud": 1952,
                     "blackjack": 2088,
                     "roulette": 2023,
                     "score_four": 2030,
-                    "overall": 2156
+                    "overall": 2153
                 },
                 "public_appeal": "steady",
-                "fans": 201464,
+                "fans": 200265,
                 "rating_schema_version": 2,
                 "last_changes": {
-                    "overall": 1,
+                    "overall": -3,
                     "solitaire": 0,
-                    "texas_holdem": 0,
+                    "texas_holdem": -21,
                     "five_card_draw": 0,
                     "seven_card_stud": 0,
                     "blackjack": -2,
                     "roulette": 10,
                     "score_four": -3
                 },
-                "rating_results": {},
+                "rating_results": {
+                    "texas_holdem": {
+                        "played": 1,
+                        "wins": 0,
+                        "draws": 0,
+                        "losses": 1,
+                        "last_change": -21
+                    }
+                },
                 "development": {
                     "version": 1,
                     "seed": 9199176086748030885,
@@ -12447,27 +13851,27 @@
                 }
             },
             "chiara_sammartano": {
-                "rating": 1501,
-                "last_change": 1,
+                "rating": 1503,
+                "last_change": 2,
                 "age": 69,
                 "birthday_month": 10,
                 "ratings": {
                     "solitaire": 1760,
-                    "texas_holdem": 1370,
+                    "texas_holdem": 1379,
                     "five_card_draw": 1622,
                     "seven_card_stud": 1575,
                     "blackjack": 1562,
                     "roulette": 1322,
                     "score_four": 1298,
-                    "overall": 1501
+                    "overall": 1503
                 },
                 "public_appeal": "charming",
-                "fans": 42499,
+                "fans": 42797,
                 "rating_schema_version": 2,
                 "last_changes": {
-                    "overall": 1,
+                    "overall": 2,
                     "solitaire": 12,
-                    "texas_holdem": 0,
+                    "texas_holdem": 9,
                     "five_card_draw": 0,
                     "seven_card_stud": -4,
                     "blackjack": 1,
@@ -12481,6 +13885,13 @@
                         "draws": 0,
                         "losses": 1,
                         "last_change": -23
+                    },
+                    "texas_holdem": {
+                        "played": 1,
+                        "wins": 1,
+                        "draws": 0,
+                        "losses": 0,
+                        "last_change": 9
                     }
                 },
                 "development": {
@@ -22521,16 +23932,16 @@
             },
             "prospect_nadia_sari": {
                 "age": 14,
-                "rating": 1095,
+                "rating": 1096,
                 "ratings": {
                     "solitaire": 1148,
-                    "texas_holdem": 1010,
+                    "texas_holdem": 1013,
                     "five_card_draw": 1045,
                     "seven_card_stud": 1081,
                     "blackjack": 1112,
                     "roulette": 1214,
                     "score_four": 1057,
-                    "overall": 1095
+                    "overall": 1096
                 },
                 "prospect_record": {
                     "id": "prospect_nadia_sari",
@@ -22572,20 +23983,28 @@
                 "joined_month": 24595,
                 "birthday_month": 7,
                 "rating_schema_version": 2,
-                "last_change": 4,
+                "last_change": 1,
                 "last_changes": {
-                    "overall": 4,
+                    "overall": 1,
                     "solitaire": 6,
-                    "texas_holdem": 5,
+                    "texas_holdem": 3,
                     "five_card_draw": 5,
                     "seven_card_stud": 6,
                     "blackjack": -1,
                     "roulette": 7,
                     "score_four": 3
                 },
-                "rating_results": {},
+                "rating_results": {
+                    "texas_holdem": {
+                        "played": 1,
+                        "wins": 0,
+                        "draws": 1,
+                        "losses": 0,
+                        "last_change": 3
+                    }
+                },
                 "public_appeal": "reserved",
-                "fans": 4874,
+                "fans": 4905,
                 "development": {
                     "version": 1,
                     "seed": 9554299661100008237,
@@ -24219,7 +25638,7 @@
                     "seven_card_stud": 808,
                     "blackjack": 874,
                     "roulette": 828,
-                    "score_four": 874,
+                    "score_four": 870,
                     "overall": 854
                 },
                 "prospect_record": {
@@ -24262,18 +25681,26 @@
                 "joined_month": 24651,
                 "birthday_month": 12,
                 "rating_schema_version": 2,
-                "last_change": 4,
+                "last_change": 0,
                 "last_changes": {
-                    "overall": 4,
+                    "overall": 0,
                     "solitaire": -2,
                     "texas_holdem": 9,
                     "five_card_draw": 7,
                     "seven_card_stud": 8,
                     "blackjack": -3,
                     "roulette": 4,
-                    "score_four": 10
+                    "score_four": -4
                 },
-                "rating_results": {},
+                "rating_results": {
+                    "score_four": {
+                        "played": 1,
+                        "wins": 0,
+                        "draws": 0,
+                        "losses": 1,
+                        "last_change": -4
+                    }
+                },
                 "public_appeal": "camera_shy",
                 "fans": 612,
                 "development": {
@@ -24821,16 +26248,16 @@
             },
             "prospect_luca_moretti": {
                 "age": 13,
-                "rating": 723,
+                "rating": 725,
                 "ratings": {
                     "solitaire": 703,
-                    "texas_holdem": 703,
+                    "texas_holdem": 718,
                     "five_card_draw": 715,
                     "seven_card_stud": 658,
                     "blackjack": 766,
                     "roulette": 750,
                     "score_four": 765,
-                    "overall": 723
+                    "overall": 725
                 },
                 "prospect_record": {
                     "id": "prospect_luca_moretti",
@@ -24872,20 +26299,28 @@
                 "joined_month": 24671,
                 "birthday_month": 4,
                 "rating_schema_version": 2,
-                "last_change": 3,
+                "last_change": 2,
                 "last_changes": {
-                    "overall": 3,
+                    "overall": 2,
                     "solitaire": -2,
-                    "texas_holdem": -1,
+                    "texas_holdem": 15,
                     "five_card_draw": 7,
                     "seven_card_stud": -3,
                     "blackjack": 3,
                     "roulette": 6,
                     "score_four": 8
                 },
-                "rating_results": {},
+                "rating_results": {
+                    "texas_holdem": {
+                        "played": 1,
+                        "wins": 1,
+                        "draws": 0,
+                        "losses": 0,
+                        "last_change": 15
+                    }
+                },
                 "public_appeal": "reserved",
-                "fans": 328,
+                "fans": 330,
                 "development": {
                     "version": 1,
                     "seed": 3815498868720463836,
@@ -25888,9 +27323,9 @@
         "leaderboard_star_id": "jack_zitbomb",
         "year": 2058,
         "month": 4,
-        "day": 16,
-        "weekday_index": 0,
-        "career_day": 11071,
+        "day": 28,
+        "weekday_index": 2,
+        "career_day": 11083,
         "residence": "card_castle",
         "owned_residences": [
             "dingy_apartment",
@@ -25901,9 +27336,9 @@
             "heliyacht"
         ],
         "job": "spiritual_guru",
-        "rounds_won": 12,
+        "rounds_won": 13,
         "challenges_won": 0,
-        "total_moves": 1507,
+        "total_moves": 1655,
         "completed_days": [
             {
                 "year": 2026,
@@ -60673,6 +62108,90 @@
                 "day": 15,
                 "completed": false,
                 "activity_type": "event"
+            },
+            {
+                "year": 2058,
+                "month": 4,
+                "day": 16,
+                "completed": true,
+                "activity_type": "round"
+            },
+            {
+                "year": 2058,
+                "month": 4,
+                "day": 17,
+                "completed": false,
+                "activity_type": "casino_night"
+            },
+            {
+                "year": 2058,
+                "month": 4,
+                "day": 18,
+                "completed": true,
+                "activity_type": "work"
+            },
+            {
+                "year": 2058,
+                "month": 4,
+                "day": 19,
+                "completed": true,
+                "activity_type": "poker_night"
+            },
+            {
+                "year": 2058,
+                "month": 4,
+                "day": 20,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2058,
+                "month": 4,
+                "day": 21,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2058,
+                "month": 4,
+                "day": 22,
+                "completed": true,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2058,
+                "month": 4,
+                "day": 23,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2058,
+                "month": 4,
+                "day": 24,
+                "completed": true,
+                "activity_type": "work"
+            },
+            {
+                "year": 2058,
+                "month": 4,
+                "day": 25,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2058,
+                "month": 4,
+                "day": 26,
+                "completed": true,
+                "activity_type": "niche_night"
+            },
+            {
+                "year": 2058,
+                "month": 4,
+                "day": 27,
+                "completed": true,
+                "activity_type": "work"
             }
         ],
         "current_schedule": [
@@ -60900,7 +62419,7 @@
                 "day_number": 16,
                 "weekday_index": 0,
                 "activity_type": "round",
-                "completed": false,
+                "completed": true,
                 "title": "Play Solitaire"
             },
             {
@@ -60913,27 +62432,59 @@
                     "blackjack",
                     "roulette",
                     "horse_races"
-                ]
+                ],
+                "night_progress": {
+                    "career_event_has_activity": false,
+                    "career_event_result_log": [],
+                    "career_event_news_posted": false,
+                    "texas_holdem_session_net": 0,
+                    "five_card_draw_session_net": 0,
+                    "seven_card_stud_session_net": 0,
+                    "blackjack_session_net": 0,
+                    "blackjack_session_rating_change": 0,
+                    "roulette_session_net": 0,
+                    "horse_races_session_net": 0,
+                    "horse_races_last_rewarded_races": 0,
+                    "faro_session_net": 0,
+                    "five_o_poker_session_net": 0,
+                    "blind_mans_bluff_session_net": 0
+                }
             },
             {
                 "day_number": 18,
                 "weekday_index": 2,
                 "activity_type": "work",
-                "completed": false,
+                "completed": true,
                 "title": "Guide Vision Quest"
             },
             {
                 "day_number": 19,
                 "weekday_index": 3,
                 "activity_type": "poker_night",
-                "completed": false,
+                "completed": true,
                 "title": "Poker Night",
                 "game_ids": [
                     "texas_holdem",
                     "seven_card_stud",
                     "five_card_draw"
                 ],
-                "high_stakes_game_id": "seven_card_stud"
+                "high_stakes_game_id": "seven_card_stud",
+                "night_progress": {
+                    "career_event_has_activity": true,
+                    "career_event_result_log": [],
+                    "career_event_news_posted": true,
+                    "texas_holdem_session_net": -984,
+                    "five_card_draw_session_net": 0,
+                    "seven_card_stud_session_net": 0,
+                    "blackjack_session_net": 0,
+                    "blackjack_session_rating_change": 0,
+                    "roulette_session_net": 0,
+                    "horse_races_session_net": 0,
+                    "horse_races_last_rewarded_races": 0,
+                    "faro_session_net": 0,
+                    "five_o_poker_session_net": 0,
+                    "blind_mans_bluff_session_net": 0
+                }
             },
             {
                 "day_number": 20,
@@ -60956,13 +62507,43 @@
                 "day_number": 22,
                 "weekday_index": 1,
                 "activity_type": "casual_cards",
-                "completed": false,
+                "completed": true,
                 "title": "Casual Cards",
                 "game_ids": [
                     "score_four",
                     "bango",
                     "crazy_eights"
-                ]
+                ],
+                "night_progress": {
+                    "career_event_has_activity": true,
+                    "career_event_result_log": [
+                        {
+                            "game_id": "score_four",
+                            "won": true,
+                            "mode": "competitive",
+                            "opponent": "Mat\u011bj Dvo\u0159\u00e1k",
+                            "opponent_tier": "low",
+                            "rating_reward": 4
+                        },
+                        {
+                            "game_id": "score_four",
+                            "won": true,
+                            "mode": "solo"
+                        }
+                    ],
+                    "career_event_news_posted": true,
+                    "texas_holdem_session_net": -984,
+                    "five_card_draw_session_net": 0,
+                    "seven_card_stud_session_net": 0,
+                    "blackjack_session_net": 0,
+                    "blackjack_session_rating_change": 0,
+                    "roulette_session_net": 0,
+                    "horse_races_session_net": 0,
+                    "horse_races_last_rewarded_races": 0,
+                    "faro_session_net": 0,
+                    "five_o_poker_session_net": 0,
+                    "blind_mans_bluff_session_net": 0
+                }
             },
             {
                 "day_number": 23,
@@ -60977,7 +62558,7 @@
                 "day_number": 24,
                 "weekday_index": 3,
                 "activity_type": "work",
-                "completed": false,
+                "completed": true,
                 "title": "Manage Cult"
             },
             {
@@ -60991,19 +62572,60 @@
                 "day_number": 26,
                 "weekday_index": 0,
                 "activity_type": "niche_night",
-                "completed": false,
+                "completed": true,
                 "title": "Niche Game Night",
                 "game_ids": [
                     "faro",
                     "five_o_poker",
                     "blind_mans_bluff"
-                ]
+                ],
+                "night_progress": {
+                    "career_event_has_activity": true,
+                    "career_event_result_log": [
+                        {
+                            "game_id": "five_o_poker",
+                            "won": false,
+                            "net": -25,
+                            "hands": 1,
+                            "hands_won": 0,
+                            "five_o_wins": 0
+                        },
+                        {
+                            "game_id": "five_o_poker",
+                            "won": false,
+                            "net": -25,
+                            "hands": 1,
+                            "hands_won": 0,
+                            "five_o_wins": 0
+                        },
+                        {
+                            "game_id": "five_o_poker",
+                            "won": false,
+                            "net": -17,
+                            "hands": 2,
+                            "hands_won": 1,
+                            "five_o_wins": 0
+                        }
+                    ],
+                    "career_event_news_posted": true,
+                    "texas_holdem_session_net": -984,
+                    "five_card_draw_session_net": 0,
+                    "seven_card_stud_session_net": 0,
+                    "blackjack_session_net": 0,
+                    "blackjack_session_rating_change": 0,
+                    "roulette_session_net": 0,
+                    "horse_races_session_net": 0,
+                    "horse_races_last_rewarded_races": 0,
+                    "faro_session_net": 0,
+                    "five_o_poker_session_net": -17,
+                    "blind_mans_bluff_session_net": 0
+                }
             },
             {
                 "day_number": 27,
                 "weekday_index": 1,
                 "activity_type": "work",
-                "completed": false,
+                "completed": true,
                 "title": "Manage Cult"
             },
             {
@@ -61037,6 +62659,30 @@
             }
         ],
         "news_items": [
+            {
+                "headline": "FIVE-O POKER COSTS DESSIN $17",
+                "body": "The five-column poker board turned against Dessin, who finished the Five-O session $17 down.",
+                "category": "cards",
+                "month": 4,
+                "year": 2058,
+                "career_day": 11081
+            },
+            {
+                "headline": "DESSIN TAKES ON SCORE-FOUR",
+                "body": "Dessin logged another appearance in Score-Four during Casual Cards week.",
+                "category": "cards",
+                "month": 4,
+                "year": 2058,
+                "career_day": 11077
+            },
+            {
+                "headline": "TEXAS HOLD'EM COSTS DESSIN $984",
+                "body": "Dessin absorbed a $984 loss in Texas Hold'em during the latest Poker Night appearance.",
+                "category": "poker",
+                "month": 4,
+                "year": 2058,
+                "career_day": 11074
+            },
             {
                 "headline": "DESSIN FINISHES CASINO NIGHT UP $269",
                 "body": "A profitable Blackjack session helped Dessin leave Casino Night $269 ahead overall.",
@@ -61412,91 +63058,67 @@
                 "month": 7,
                 "year": 2057,
                 "career_day": 10786
-            },
-            {
-                "headline": "MATILDA LANE SURGES UP RANKINGS",
-                "body": "Matilda Lane climbed 2 places this month and now sits at world #88.",
-                "category": "leaderboard",
-                "month": 7,
-                "year": 2057,
-                "career_day": 10786
-            },
-            {
-                "headline": "JACK ZITBOMB RETAINS WORLD #1",
-                "body": "Jack Zitbomb remains atop the international rankings with a rating of 3,359.",
-                "category": "leaderboard",
-                "month": 7,
-                "year": 2057,
-                "career_day": 10786
-            },
-            {
-                "headline": "NEW PROSPECT: DANYLO BONDAR JOINS THE CIRCUIT",
-                "body": "Danylo Bondar, 7, from Lviv, Ukraine, has entered the rankings at 436 Overall. The junior will develop alongside the established competitors.",
-                "category": "career",
-                "month": 7,
-                "year": 2057,
-                "career_day": 10786
             }
         ]
     },
     "cosmetics": {
         "selected_menu_background": "bg_lighthouse",
         "selected_felt": "f_blue",
-        "selected_title": "title_shatter_3",
+        "selected_title": "title_soli_tare_blue",
         "selected_card_back": "back_default",
         "selected_cursor": "gold_black",
         "unlocked_menu_backgrounds": [
-            "bg_mausoleum",
-            "bg_noodle",
-            "bg_wall",
-            "bg_petra",
-            "bg_lighthouse",
             "bg_gardens",
-            "bg_brazil",
+            "bg_default",
+            "bg_noodle",
+            "bg_chichen",
             "bg_et",
-            "bg_sliced",
+            "bg_mausoleum",
+            "bg_petra",
             "bg_blue_doodle",
             "bg_microscope",
-            "bg_default",
-            "bg_chichen",
-            "bg_giza"
+            "bg_brazil",
+            "bg_wall",
+            "bg_lighthouse",
+            "bg_giza",
+            "bg_sliced"
         ],
         "unlocked_felts": [
-            "f_game_night",
-            "f_crystalized_grain",
-            "f_crystalized",
-            "f_gordon",
-            "f_rock_candy",
-            "f_light_touch",
-            "f_fun_felt",
-            "f_high_society",
-            "f_blanky",
             "f_default",
             "f_blue",
+            "f_fun_felt",
+            "f_light_touch",
+            "f_crystalized",
+            "f_high_society",
+            "f_gordon",
             "f_grain",
-            "f_sponge"
+            "f_sponge",
+            "f_game_night",
+            "f_crystalized_grain",
+            "f_rock_candy",
+            "f_blanky"
         ],
         "unlocked_titles": [
-            "title_solitary",
-            "title_cards",
-            "title_high_roller",
-            "title_soli_tare_red",
-            "title_soli_tare_blue",
-            "title_top_dog",
-            "title_default",
-            "title_table_captain",
-            "title_tacit",
+            "title_shatter_3",
             "title_patience_creep",
+            "title_table_captain",
+            "title_patience_dare",
             "title_penciled",
             "title_penciled_inv",
+            "title_isolation",
+            "title_cards",
+            "title_shatter_1",
+            "title_tacit",
+            "title_high_roller",
+            "title_top_dog",
+            "title_soli_tare_blue",
+            "title_soli_tare_red",
             "title_solitaire_pixel",
             "title_shatter_2",
-            "title_patience_dare",
-            "title_shatter_1",
-            "title_neon",
-            "title_shatter_3",
-            "title_isolation",
-            "title_cardshark"
+            "title_cardshark",
+            "title_solitary",
+            "title_default",
+            "title_neon"
         ],
         "unlocked_card_backs": [
             "back_default"
@@ -61525,10 +63147,10 @@
             "holdem_total_winnings": 864877,
             "holdem_1000_win": true,
             "holdem_25000_win": true,
-            "score_four_wins": 5,
-            "score_four_comp_wins": 3,
+            "score_four_wins": 7,
+            "score_four_comp_wins": 4,
             "blackjack_naturals": 3,
-            "solitaire_wins": 2,
+            "solitaire_wins": 3,
             "solitaire_under_5_minutes": true,
             "blackjack_1000_win": true
         }

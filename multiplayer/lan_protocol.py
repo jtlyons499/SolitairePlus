@@ -19,7 +19,19 @@ def snapshot(game,viewer,revision,names):
     reveal=game.current_stage=='showdown' or game.should_reveal_runout_hands()
     data['player_hand']=copy.deepcopy(hands[viewer])
     data['npc_hands']=[copy.deepcopy(hands[i]) if reveal and not folded[i] else [] for i in order[1:]]
-    data['npcs']=[{'id':f'seat_{i}','name':names[i],'portrait':game.npcs[i-1].get('portrait','') if i>1 else ''} for i in order[1:]]
+    data['npcs']=[]
+    for i in order[1:]:
+        npc=game.npcs[i-1] if i>0 else {}
+        public={key:copy.deepcopy(npc[key]) for key in ('id','portrait','avatar','portrait_style','age') if key in npc}
+        public.update(id=npc.get('id',f'seat_{i}'),name=names[i])
+        data['npcs'].append(public)
+    data['showdown_hands']={}
+    if game.current_stage=='showdown':
+        from poker_core import describe_poker_score
+        for seat in order:
+            if not folded[seat] and len(hands[seat])==2:
+                evaluated=game.evaluate_best_hand(hands[seat]+game.community_cards)
+                if evaluated:data['showdown_hands'][str(index[seat])]=describe_poker_score(evaluated[0],compact=True)
     data['last_pot_awards']=copy.deepcopy(game.last_pot_awards)
     for pot in data['last_pot_awards']:
         for key in ('winners','eligible'): 

@@ -13,6 +13,7 @@ class RoomAuthority:
         self.names=[host_name]+[n['name'] for n in self.npcs]
         self.humans={0:0};self.connections={0:host_name};self.waiting=[];self.departed=set()
         self.game=None;self.revision=0;self.ready=set();self.due=0;self.starting_stack=5000;self.new_seats=set()
+        self.chips_added=0;self.table_notices=[]
     def join(self, identity, name):
         if identity in self.connections:return
         self.connections[identity]=name
@@ -87,6 +88,16 @@ class RoomAuthority:
     def act(self, identity, action, amount=0, revision=None):
         if identity not in self.connections or revision!=self.revision:return False
         if action=='start':return identity==0 and self.start()
+        if action=='buyback':
+            if not self.game or not self.game.hand_complete or identity not in self.humans:return False
+            seat=self.humans[identity]
+            stack=self.game.player_stack if seat==0 else self.game.npc_stacks[seat-1]
+            if stack>0:return False
+            if seat==0:self.game.player_stack=self.starting_stack;self.game.player_busted=False
+            else:self.game.npc_stacks[seat-1]=self.starting_stack;self.game.npc_busted[seat-1]=False
+            self.chips_added+=self.starting_stack;self.ready.discard(identity);self.revision+=1
+            self.table_notices.append(f'{self.names[seat]} bought back in for ${self.starting_stack:,}.')
+            return True
         if action=='next_hand':
             if not self.game or not self.game.hand_complete:return False
             self.boundary()
@@ -116,8 +127,23 @@ class RoomAuthority:
         return ok
     def next_if_ready(self):
         if self.game and self.game.hand_complete and self.required()<=self.ready:
+            self.replace_busted_npcs()
+            self.boundary()
             if sum(s>0 for s in [self.game.player_stack,*self.game.npc_stacks])>1:
                 self.ready.clear();self.new_seats.clear();self.game.start_hand();self.revision+=1;self.due=0
+    def replace_busted_npcs(self):
+        occupied=set(self.humans.values())
+        for seat in range(1,6):
+            if seat in occupied or self.game.npc_stacks[seat-1]>0:continue
+            used={n['id'] for n in self.npcs}
+            choices=[n for n in self.roster if n['id'] not in used]
+            if not choices:choices=[n for n in self.roster if n['id']!=self.npcs[seat-1]['id']]
+            replacement=copy.deepcopy(random.choice(choices))
+            old=self.names[seat];self.npcs[seat-1]=replacement;self.names[seat]=replacement['name']
+            self.game.npcs[seat-1]=copy.deepcopy(replacement)
+            self.game.npc_stacks[seat-1]=self.starting_stack;self.game.npc_busted[seat-1]=False
+            self.chips_added+=self.starting_stack
+            self.table_notices.append(f'{replacement["name"]} replaces {old} with ${self.starting_stack:,}.')
     def update(self, now):
         g=self.game
         if not g:return

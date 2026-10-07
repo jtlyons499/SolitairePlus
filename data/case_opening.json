@@ -208,21 +208,21 @@
       "name": "Cash Pouch",
       "kind": "cash",
       "image": "items/cash_pouch.png",
-      "cash_multiplier": 0.8
+      "cash_multiplier": 2.8
     },
     "cash_bundle": {
       "id": "cash_bundle",
       "name": "Cash Bundle",
       "kind": "cash",
       "image": "items/cash_bundle.png",
-      "cash_multiplier": 1.8
+      "cash_multiplier": 5.8
     },
     "cash_vault": {
       "id": "cash_vault",
       "name": "Cash Vault",
       "kind": "cash",
       "image": "items/cash_vault.png",
-      "cash_multiplier": 6
+      "cash_multiplier": 10
     },
     "fan_club": {
       "id": "fan_club",
