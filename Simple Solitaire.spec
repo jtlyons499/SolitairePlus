@@ -5,8 +5,8 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('assets', 'assets'), ('data', 'data')],
-    hiddenimports=[],
+    datas=[('assets', 'assets'), ('data', 'data'), ('multiplayer', 'multiplayer')],
+    hiddenimports=['asyncio', 'socket', 'ssl', 'queue', 'threading', 'secrets', 'argparse'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -43,3 +43,4 @@ coll = COLLECT(
     upx_exclude=[],
     name='Simple Solitaire',
 )
+

@@ -1,3 +1,13 @@
+# Dispatch before importing single-player modules or initializing its window.
+import sys as _launch_sys
+if "--multiplayer" in _launch_sys.argv:
+    from multiplayer_launcher import run_multiplayer
+    run_multiplayer()
+    raise SystemExit(0)
+
+from multiplayer_launcher import MultiplayerLauncher
+multiplayer_launcher = MultiplayerLauncher()
+
 from career_event_progress import store_event_progress, restore_event_progress
 from career_time_warp import advance_months
 from case_opening import new_case_state, normalize_case_state, purchase as purchase_loot_case, award_earned_trophies
@@ -4588,6 +4598,7 @@ achievements_rect = pygame.Rect(533, 406, 300, 54)
 how_to_play_rect = pygame.Rect(533, 470, 300, 54)
 options_rect = pygame.Rect(533, 534, 300, 54)
 quit_rect = pygame.Rect(533, 598, 300, 54)
+multiplayer_rect = pygame.Rect(533, 662, 300, 54)
 
 # ==================================================
 # PROFILE UI
@@ -21607,6 +21618,11 @@ def draw_main_menu():
         menu_mouse_pos
     )
 
+    draw_menu_button(multiplayer_rect, "Launch Multiplayer", menu_mouse_pos)
+    if multiplayer_launcher.error:
+        message = ui_small_font.render(multiplayer_launcher.error, True, (255, 180, 140))
+        game_surface.blit(message, message.get_rect(center=(BASE_WIDTH // 2, 735)))
+
     build_surface = ui_small_font.render(
         BUILD_VERSION,
         True,
@@ -23970,6 +23986,10 @@ while running:
                     current_state = (
                         STATE_MODE_SELECT
                     )
+
+                elif multiplayer_rect.collidepoint(game_mouse_pos):
+                    audio.play_sound("button_click")
+                    multiplayer_launcher.launch()
 
                 elif customize_rect.collidepoint(
                         game_mouse_pos
@@ -30765,3 +30785,4 @@ while running:
 
 
 pygame.quit()
+
