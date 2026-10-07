@@ -38,6 +38,13 @@ class MultiplayerLauncher:
             return False
         # A frozen child must outlive the parent without inheriting its bootloader state.
         env = os.environ.copy()
+        try:
+            import pygame
+            surface=pygame.display.get_surface()
+            if surface:
+                width,height=surface.get_size();env['SOLITAIRE_MP_WINDOW']=f'{width}x{height}'
+                env['SOLITAIRE_MP_FULLSCREEN']='1' if surface.get_flags() & pygame.FULLSCREEN else '0'
+        except (ImportError,RuntimeError):pass
         if getattr(sys, 'frozen', False):
             env['PYINSTALLER_RESET_ENVIRONMENT'] = '1'
         try:

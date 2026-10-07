@@ -6,6 +6,31 @@ from lan_table import TwoHumanGame
 from lan_protocol import snapshot
 from standalone_table import load_roster
 
+class RoomGame(TwoHumanGame):
+    """Exclude resting seats without moving, spending or removing their chips."""
+    def __init__(self):
+        super().__init__();self.sitting_out=set();self.starting_network_hand=False
+    def get_live_player_indexes(self):
+        return [seat for seat in super().get_live_player_indexes() if seat not in self.sitting_out]
+    def refresh_busted_state(self):
+        newly_busted=super().refresh_busted_state()
+        if self.starting_network_hand:
+            if 0 in self.sitting_out:self.player_busted=True
+            for seat in self.sitting_out:
+                if seat:self.npc_busted[seat-1]=True
+        return newly_busted
+    def start_hand(self):
+        self.starting_network_hand=True
+        try:result=super().start_hand()
+        finally:self.starting_network_hand=False
+        self.player_busted=self.player_stack<=0
+        self.npc_busted=[stack<=0 for stack in self.npc_stacks]
+        if result:
+            if 0 in self.sitting_out:self.player_folded=True;self.player_action_text='Sitting out'
+            for seat in self.sitting_out:
+                if seat:self.npc_folded[seat-1]=True;self.npc_action_texts[seat-1]='Sitting out'
+        return result
+
 class RoomAuthority:
     def __init__(self, host_name, roster=None):
         self.roster=copy.deepcopy(load_roster() if roster is None else roster)
@@ -13,7 +38,7 @@ class RoomAuthority:
         self.names=[host_name]+[n['name'] for n in self.npcs]
         self.humans={0:0};self.connections={0:host_name};self.waiting=[];self.departed=set()
         self.game=None;self.revision=0;self.ready=set();self.due=0;self.starting_stack=5000;self.new_seats=set()
-        self.chips_added=0;self.table_notices=[]
+        self.chips_added=0;self.table_notices=[];self.sit_out=set();self.resume_at=None;self.completed_hand=0;self.table_speed=ui.holdem_table_speed
     def join(self, identity, name):
         if identity in self.connections:return
         self.connections[identity]=name
@@ -32,7 +57,7 @@ class RoomAuthority:
             self.new_seats.add(seat)
         return True
     def leave(self, identity):
-        self.connections.pop(identity,None)
+        self.connections.pop(identity,None);self.sit_out.discard(identity)
         self.waiting=[pair for pair in self.waiting if pair[0]!=identity]
         if identity in self.humans:self.departed.add(identity)
         self.ready.discard(identity);self.revision+=1
@@ -64,7 +89,7 @@ class RoomAuthority:
         self.revision+=1;return True
     def start(self):
         if self.game:return False
-        self.game=TwoHumanGame()
+        self.game=RoomGame()
         participants=copy.deepcopy(self.npcs)
         for identity,seat in self.humans.items():
             if seat:participants[seat-1]={'id':f'human_{identity}','name':self.names[seat],'skill_tier':'mid'}
@@ -84,13 +109,23 @@ class RoomAuthority:
             if seat in self.new_seats:message['data']['npc_hands'][j]=[]
         message.update(base);message['ready_count']=len(self.ready&self.required());message['ready_total']=len(self.required());message['you_ready']=identity in self.ready
         message['physical_seat']=self.humans[identity]
+        message['sit_out']=identity in self.sit_out
+        message['resting_seats']=sorted(self.game.sitting_out)
+        message['table_speed']=self.table_speed
         return message
     def act(self, identity, action, amount=0, revision=None):
         if identity not in self.connections or revision!=self.revision:return False
         if action=='start':return identity==0 and self.start()
+        if action=='sit_out':
+            if identity not in self.humans:return False
+            if identity in self.sit_out:self.sit_out.remove(identity);text='will rejoin next hand'
+            else:self.sit_out.add(identity);text='will sit out next hand'
+            self.table_notices.append(f'{self.names[self.humans[identity]]} {text}.');self.revision+=1
+            return True
         if action=='buyback':
-            if not self.game or not self.game.hand_complete or identity not in self.humans:return False
+            if not self.game or identity not in self.humans:return False
             seat=self.humans[identity]
+            if not self.game.hand_complete and seat in self.game.hand_seat_indexes:return False
             stack=self.game.player_stack if seat==0 else self.game.npc_stacks[seat-1]
             if stack>0:return False
             if seat==0:self.game.player_stack=self.starting_stack;self.game.player_busted=False
@@ -130,7 +165,9 @@ class RoomAuthority:
             self.replace_busted_npcs()
             self.boundary()
             if sum(s>0 for s in [self.game.player_stack,*self.game.npc_stacks])>1:
-                self.ready.clear();self.new_seats.clear();self.game.start_hand();self.revision+=1;self.due=0
+                self.game.sitting_out={self.humans[i] for i in self.sit_out if i in self.humans}
+                if len(self.game.get_live_player_indexes())<2:return
+                self.ready.clear();self.new_seats.clear();self.game.start_hand();self.revision+=1;self.due=0;self.resume_at=None
     def replace_busted_npcs(self):
         occupied=set(self.humans.values())
         for seat in range(1,6):
@@ -144,11 +181,19 @@ class RoomAuthority:
             self.game.npc_stacks[seat-1]=self.starting_stack;self.game.npc_busted[seat-1]=False
             self.chips_added+=self.starting_stack
             self.table_notices.append(f'{replacement["name"]} replaces {old} with ${self.starting_stack:,}.')
+    def set_speed(self,speed):
+        if speed not in ('slow','normal','fast') or speed==self.table_speed:return
+        old=self.table_speed;self.table_speed=speed;ui.holdem_table_speed=speed
+        self.table_notices.append(f'Host has set table speed from {old.title()} to {speed.title()}.');self.revision+=1
     def update(self, now):
         g=self.game
         if not g:return
         if g.hand_complete:
             if self.waiting or self.departed:self.boundary();self.revision+=1
+            if self.completed_hand!=g.hand_number:
+                self.completed_hand=g.hand_number
+                self.resume_at=now+{'slow':10000,'normal':7000,'fast':4500}.get(self.table_speed,7000)
+            if self.resume_at is not None and now>=self.resume_at:self.ready.update(self.required())
             self.next_if_ready();return
         complete=g.is_betting_round_complete()
         seat=g.current_actor

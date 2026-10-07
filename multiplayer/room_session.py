@@ -10,7 +10,7 @@ from room_table import RoomAuthority
 class RoomTable:
     def __init__(self,name,hosting,address,code='',profile=None):
         if profile:profile.data['name']=clean_name(name)
-        self.profile=profile;self.public_profiles={};self.session_id=str(uuid.uuid4());self.reward_hand=0;self.participants={};self.awards={};self.profile_sent=False;self.public_log=[];self.log_hand=0;self.log_actions=[];self.log_stage=None;self.notices_seen=0
+        self.profile=profile;self.public_profiles={};self.session_id=str(uuid.uuid4());self.reward_hand=0;self.participants={};self.awards={};self.profile_sent=False;self.public_log=[];self.log_hand=0;self.log_actions=[];self.log_stage=None;self.notices_seen=0;self.last_payout=None
         if profile:self.public_profiles[0]=profile.public() if hosting else {}
         self.name=clean_name(name);self.hosting=hosting;self.identity=0 if hosting else None
         self.peer=RelayPeer(hosting,address,self.name,code,version=2)
@@ -66,7 +66,13 @@ class RoomTable:
             previous=self.profile.data['xp']
             for award in m.get('xp_awards',[]):self.profile.award(award)
             if previous!=self.profile.data['xp']:self.refresh_profile()
-        if m['type']=='state':self.game.apply(m);self.status='Your turn' if self.game.current_actor==0 else 'Waiting for other seats'
+        if m['type']=='state':
+            self.game.apply(m)
+            if self.game.hand_complete:
+                import copy
+                from types import SimpleNamespace
+                self.last_payout=SimpleNamespace(**copy.deepcopy(dict(names=self.game.names,last_pot_awards=self.game.last_pot_awards,result_text=self.game.result_text,showdown_hands=self.game.showdown_hands,hand_number=self.game.hand_number)))
+            self.status='Your turn' if self.game.current_actor==0 else 'Waiting for other seats'
         elif m['type']=='lobby':self.status='Host selects NPCs and starts the table'
         else:self.status=m.get('text','Waiting for next hand')
     def act(self,action,amount=0):

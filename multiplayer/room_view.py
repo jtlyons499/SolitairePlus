@@ -1,5 +1,6 @@
 """Readable six-seat table and host lobby; uses existing card/portrait art."""
 import pygame
+from mp_widgets import wooden_button,hand_type,TextInput
 from mp_appearance import Appearance
 from mp_profile import MultiplayerProfile
 from mp_presentation import Presentation
@@ -9,13 +10,12 @@ from texas_holdem_ui import get_card_key as card_key
 class RoomView:
     def __init__(self,surface,assets,appearance=None,options=None,sound=None):
         self.appearance=appearance or Appearance(MultiplayerProfile());self.presentation=Presentation(self.appearance,options,sound);self.details=False;self.details_scroll=0;self.badge_rects=[];self.dragging=False;self.slider=None;self.minimum=0;self.maximum=0;self.log_scroll=0
-        self.surface=surface;self.assets=assets;self.buttons=[];self.raise_amount=100;self.hand=-1;self.editing=False;self.amount_text=''
+        self.surface=surface;self.assets=assets;self.buttons=[];self.raise_amount=100;self.hand=-1;self.editing=False;self.amount_text='';self.bet_input=TextInput()
         self.font=pygame.font.SysFont("georgia",23);self.small=pygame.font.SysFont("georgia",18);self.large=pygame.font.SysFont("georgia",29)
     def text(self,text,x,y,font=None,color=(246,237,207)):
         self.surface.blit((font or self.font).render(str(text),True,color),(x,y))
     def button(self,label,rect,action,enabled=True):
-        rect=pygame.Rect(rect);pygame.draw.rect(self.surface,(52,111,77) if enabled else (48,61,56),rect,border_radius=7)
-        image=self.small.render(label,True,(250,242,213) if enabled else (138,149,141));self.surface.blit(image,image.get_rect(center=rect.center))
+        rect=pygame.Rect(rect);wooden_button(self.surface,self.appearance,rect,label,self.small,enabled)
         if enabled:self.buttons.append((rect,action))
     def event(self,event,mouse,table):
         if self.details:
@@ -30,8 +30,10 @@ class RoomView:
         if self.dragging and event.type in (pygame.MOUSEMOTION,pygame.MOUSEBUTTONDOWN):
             fraction=max(0,min(1,(mouse[0]-self.slider.x)/self.slider.w))
             self.raise_amount=round(self.minimum+fraction*(self.maximum-self.minimum));return True
+        if self.editing and event.type==pygame.KEYDOWN and getattr(event,'mod',0) & pygame.KMOD_CTRL:
+            self.amount_text=self.bet_input.event(event,self.amount_text,7,digits=True);self.raise_amount=int(self.amount_text or 0);return True
         if event.type==pygame.TEXTINPUT and self.editing:
-            self.amount_text=(self.amount_text+''.join(c for c in event.text if c.isdigit()))[:7]
+            self.amount_text=self.bet_input.event(event,self.amount_text,7,digits=True)
             self.raise_amount=int(self.amount_text or 0);return True
         if event.type==pygame.KEYDOWN and self.editing:
             if event.key==pygame.K_BACKSPACE:self.amount_text=self.amount_text[:-1];self.raise_amount=int(self.amount_text or 0)
@@ -51,7 +53,7 @@ class RoomView:
                         elif action[0]=='allin':
                             if action[1]<=table.game.current_bet:table.act('check_call')
                             else:table.act('bet_raise',action[1])
-                    elif action=='edit':self.editing=True;self.amount_text='';pygame.key.start_text_input()
+                    elif action=='edit':self.editing=True;self.amount_text='';self.bet_input=TextInput();pygame.key.start_text_input()
                     elif action=='details':self.details=True;self.details_scroll=0
                     elif action=='raise':table.act('bet_raise',self.raise_amount)
                     else:table.act(action)
@@ -92,17 +94,17 @@ class RoomView:
             if m.get('waiting_names'):self.text('Waiting: '+', '.join(m['waiting_names']),250,710,self.small)
             return
         g=table.game;now=pygame.time.get_ticks()
-        if self.presentation.hand!=g.hand_number:self.details=False
+        if self.presentation.hand!=g.hand_number:self.log_scroll=0
         self.presentation.update(g,now);self.badge_rects=[]
         self.appearance.felt(s,pygame.Rect(174,176,1030,405))
         self.panel((550,283,320,65))
         self.text(f'Blinds: ${g.small_blind} / ${g.big_blind}',565,288,self.small)
         pot_label=('Last pot' if g.hand_complete else 'Pot')+f': ${g.pot if not g.hand_complete else g.last_resolved_pot:,}'
         image=self.font.render(pot_label,True,(246,237,207))
-        if image.get_width()>290:image=pygame.transform.smoothscale(image,(290,image.get_height()))
+        if image.get_width()>205:image=pygame.transform.smoothscale(image,(205,image.get_height()))
         s.blit(image,(565,314))
         self.text(f'Hand {g.hand_number} • {g.current_stage.title()}',580,354,self.small)
-        for i,card in enumerate(g.community_cards):self.card(card,463+i*90,377,80,112,key=('board',i))
+        for i,card in enumerate(g.community_cards):self.card(card,431+i*103,374,96,134,key=('board',i))
         # Cards, avatar and compact name/stack badges echo the single-player table.
         positions=[(525,668),(85,400),(335,200),(658,140),(992,200),(1055,425)]
         stacks=[g.player_stack,*g.npc_stacks];hands=[g.player_hand,*g.npc_hands]
@@ -128,7 +130,7 @@ class RoomView:
             self.panel(badge,active);s.blit(label,(x+35,y+5))
             money_rect=pygame.Rect(x+25,y+40,width,29);self.panel(money_rect);s.blit(money,money.get_rect(center=money_rect.center))
             if g.hand_complete and i in g.winner_indexes:pygame.draw.rect(s,(138,228,128),badge,3,border_radius=10)
-            action=('Disconnected' if not seat['connected'] else 'Busted' if stacks[i]==0 else 'Folded' if folded[i] else actions[i])
+            action=('Disconnected' if not seat['connected'] else 'Busted' if stacks[i]==0 and g.hand_complete else 'All in' if stacks[i]==0 and i in g.hand_seat_indexes else 'Sitting out' if physical[i] in m.get('resting_seats',[]) and i not in g.hand_seat_indexes else 'Folded' if folded[i] else actions[i])
             if action:
                 action=action[:26];action_width=min(210,max(78,self.small.size(action)[0]+18))
                 self.panel((x+25,y+72,action_width,27));self.text(action,x+34,y+75,self.small)
@@ -139,6 +141,13 @@ class RoomView:
             if roles:
                 self.panel((x-40,y-32,58,26));self.text('/'.join(roles),x-33,y-30,self.small)
         self.panel((20,610,365,140));self.text('Game Log',35,620)
+        self.button('Payout details',(195,618,175,30),'details',bool(getattr(table,'last_payout',None)) or g.hand_complete)
+        self.button('Rejoin next hand' if m.get('sit_out') else 'Sit out next hand',(20,566,205,32),'sit_out',not table.pending)
+        hand_label=self.small.render('Your hand: '+hand_type(g),True,(246,237,207))
+        if hand_label.get_width()>410:hand_label=pygame.transform.smoothscale(hand_label,(410,hand_label.get_height()))
+        s.blit(hand_label,(925,575))
+        if g.player_stack<=0 and (g.hand_complete or 0 not in g.hand_seat_indexes):
+            self.button('Buy back $'+str(m.get('starting_stack',g.starting_stack)),(235,566,200,32),'buyback',not table.pending)
         lines=m.get('public_log',g.get_hand_history_lines())
         end=max(0,len(lines)-self.log_scroll);shown=lines[max(0,end-4):end]
         clip=s.get_clip();s.set_clip(pygame.Rect(32,655,340,87))
@@ -152,9 +161,8 @@ class RoomView:
                 label=self.small.render(line,True,(246,237,207))
                 if label.get_width()>385:label=pygame.transform.smoothscale(label,(385,label.get_height()))
                 s.blit(label,(937,619+j*23))
-            self.button('Payout details',(935,670,175,32),'details')
-            if g.player_stack<=0:self.button('Buy back $'+str(m.get('starting_stack',g.starting_stack)),(1120,670,205,32),'buyback',not table.pending)
-            self.button(f'Ready {ready}/{total}' if m.get('you_ready') else 'Ready / Watch next hand',(935,709,390,32),'next_hand',not m.get('you_ready') and not table.pending)
+            self.text('Next deal starts automatically.',937,678,self.small)
+            self.button('Watching' if m.get('you_ready') and g.player_stack<=0 else 'Ready' if m.get('you_ready') else 'Watch next hand' if g.player_stack<=0 or m.get('sit_out') else 'Next hand',(935,709,390,32),'next_hand',not m.get('you_ready') and not table.pending)
         else:
             active=g.current_actor==0 and g.actor_needs_action(0) and not table.pending
             call=g.get_player_amount_to_call();minimum=g.get_minimum_raise_to() if g.current_bet else g.big_blind
@@ -175,7 +183,7 @@ class RoomView:
                 action=('allin',maximum) if label=='ALL IN' else ('amount',value)
                 self.button(label,(935+j*99,710,92,29),action,active if label=='ALL IN' else canraise)
         self.presentation.draw(s,g,now,self.small)
-        if self.details:self.draw_details(g)
+        if self.details:self.draw_details(getattr(table,'last_payout',None) or g)
         if m.get('waiting_names'):self.text('Joining next hand: '+', '.join(m['waiting_names']),390,748,self.small)
 
     def panel(self,rect,active=False):
@@ -185,7 +193,7 @@ class RoomView:
 
     def draw_details(self,g):
         s=self.surface;shade=pygame.Surface(s.get_size(),pygame.SRCALPHA);shade.fill((0,0,0,185));s.blit(shade,(0,0))
-        self.panel((215,145,930,475));self.text('SHOWDOWN / PAYOUTS',240,163,self.large)
+        self.panel((215,145,930,475));self.text('HAND '+str(g.hand_number)+' / PAYOUTS',240,163,self.large)
         self.button('Close',(1020,165,105,38),'close_details')
         lines=payout_lines(g)
         lines+=['Revealed hands:']+[g.names[int(i)]+': '+hand for i,hand in getattr(g,'showdown_hands',{}).items()]

@@ -1,17 +1,17 @@
 """Profile slots, PNG import and multiplayer-only cosmetic selection."""
 import pygame
+from mp_widgets import TextInput,wooden_button
 
 
 class ProfileScreen:
     def __init__(self,profile,appearance):
-        self.profile=profile;self.appearance=appearance;self.open=False;self.buttons=[];self.field=None;self.avatar_path='';self.message='';self.page={'background':0,'felt':0,'back':0}
+        self.profile=profile;self.appearance=appearance;self.open=False;self.buttons=[];self.field=None;self.text_input=TextInput();self.avatar_path='';self.message='';self.page={'background':0,'felt':0,'back':0}
         self.font=pygame.font.Font(None,30);self.small=pygame.font.Font(None,24);self.large=pygame.font.Font(None,44)
 
     def text(self,s,text,pos,font=None):s.blit((font or self.font).render(str(text),True,(244,236,211)),pos)
 
     def button(self,s,label,rect,action,enabled=True):
-        rect=pygame.Rect(rect);pygame.draw.rect(s,(54,97,77) if enabled else (47,52,49),rect,border_radius=8)
-        image=self.small.render(label,True,(244,236,211) if enabled else (135,143,137));s.blit(image,image.get_rect(center=rect.center))
+        rect=pygame.Rect(rect);wooden_button(s,self.appearance,rect,label,self.small,enabled)
         if enabled:self.buttons.append((rect,action))
 
     def draw(self,s,table=None):
@@ -44,14 +44,14 @@ class ProfileScreen:
 
     def event(self,event,mouse,table=None):
         changed=False
-        if event.type==pygame.KEYDOWN and event.key==pygame.K_ESCAPE:self.open=False;self.field=None;pygame.key.stop_text_input();return True
+        if event.type==pygame.KEYDOWN and event.key==pygame.K_ESCAPE:self.open=False;self.field=None;self.text_input=TextInput();pygame.key.stop_text_input();return True
         if event.type==pygame.MOUSEBUTTONDOWN and event.button==1:
             for rect,action in self.buttons:
                 if not rect.collidepoint(mouse):continue
                 self.message=''
-                if action=='close':self.open=False;self.field=None;self.profile.save();pygame.key.stop_text_input()
+                if action=='close':self.open=False;self.field=None;self.text_input=TextInput();self.profile.save();pygame.key.stop_text_input()
                 elif action in ('name','avatar'):
-                    self.field=action;pygame.key.start_text_input()
+                    self.field=action;self.text_input.selected=False;pygame.key.start_text_input()
                 elif action=='import':
                     try:self.profile.import_avatar(self.avatar_path);changed=True
                     except (OSError,ValueError,pygame.error) as error:self.message=str(error)[:110]
@@ -63,13 +63,8 @@ class ProfileScreen:
                 break
         if self.field and event.type in (pygame.TEXTINPUT,pygame.KEYDOWN):
             value=self.profile.data['name'] if self.field=='name' else self.avatar_path
-            if event.type==pygame.TEXTINPUT:value+=event.text
-            elif event.key==pygame.K_BACKSPACE:value=value[:-1]
-            elif event.key==pygame.K_a and event.mod&pygame.KMOD_CTRL:value=''
-            elif event.key==pygame.K_v and event.mod&pygame.KMOD_CTRL:
-                try:value+=pygame.scrap.get_text()
-                except pygame.error:pass
-            elif event.key==pygame.K_RETURN:self.field=None;self.profile.save();pygame.key.stop_text_input()
+            value=self.text_input.event(event,value,32 if self.field=='name' else 500)
+            if event.type==pygame.KEYDOWN and event.key in (pygame.K_RETURN,pygame.K_KP_ENTER):self.profile.save();pygame.key.stop_text_input()
             if self.field=='name':self.profile.data['name']=''.join(c for c in value if c.isprintable())[:32]
             elif self.field=='avatar':self.avatar_path=value[:500]
         if changed and table:table.refresh_profile()

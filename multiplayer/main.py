@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 import pygame
+from mp_widgets import wooden_button,TextInput
 from standalone_table import StandaloneTable
 from lan_session import OnlineTable
 from room_session import RoomTable
@@ -23,7 +24,7 @@ def main():
     pygame.display.set_caption('Solitaire+ Poker Table — Multiplayer')
     canvas=pygame.Surface((1366,768));clock=pygame.time.Clock();font=pygame.font.Font(None,36)
     profile=MultiplayerProfile();appearance=Appearance(profile);profile_screen=ProfileScreen(profile,appearance)
-    view=TableView(canvas);room_view=RoomView(canvas,view,appearance,options);saved=connection_settings.load();name=profile.data['name'] if profile.path.exists() else saved.get('name','');address='127.0.0.1';room_code='';relay_address=saved.get('relay_address') or 'tcp://yamanote.proxy.rlwy.net:40274';focus='name';table=None;running=True;pygame.key.start_text_input()
+    view=TableView(canvas);room_view=RoomView(canvas,view,appearance,options);saved=connection_settings.load();name=profile.data['name'] if profile.path.exists() else saved.get('name','');address='127.0.0.1';room_code='';relay_address=saved.get('relay_address') or 'tcp://yamanote.proxy.rlwy.net:40274';focus='name';text_input=TextInput();table=None;running=True;pygame.key.start_text_input()
     sounds={}
     if pygame.mixer.get_init():
         for folder in ('assets/sounds','assets/sfx'):
@@ -42,11 +43,12 @@ def main():
     address_rect=pygame.Rect(423,380,520,52);leave_rect=pygame.Rect(1130,15,210,40);ready_rect=pygame.Rect(800,20,280,40)
     relay_rect=pygame.Rect(183,590,520,48);code_rect=pygame.Rect(723,590,460,48)
     options_rect=pygame.Rect(915,15,150,40)
-    profile_rect=pygame.Rect(1110,65,230,40)
+    profile_rect=pygame.Rect(1110,15,230,40)
     create_rect=pygame.Rect(363,660,300,55);room_join_rect=pygame.Rect(703,660,300,55)
     while running:
         sx,sy=screen.get_size();scale=min(sx/1366,sy/768);offset=((sx-1366*scale)/2,(sy-768*scale)/2)
         raw=pygame.mouse.get_pos();mouse=((raw[0]-offset[0])/scale,(raw[1]-offset[1])/scale)
+        profile_rect.y=65 if table is not None else 15
         for event in pygame.event.get():
             if event.type==pygame.QUIT:running=False;continue
             if event.type==pygame.KEYDOWN and event.key==pygame.K_F11:
@@ -66,17 +68,15 @@ def main():
                 if table is None and name.strip():profile.data['name']=name.strip();profile.save()
                 profile_screen.open=True;continue
             if table is None:
-                if event.type==pygame.TEXTINPUT:
-                    if focus=='name':name=(name+event.text)[:32]
-                    elif focus=='address':address=(address+event.text)[:128]
-                    elif focus=='relay':relay_address=(relay_address+event.text)[:128]
-                    else:room_code=(room_code+event.text.upper())[:8]
-                if event.type==pygame.KEYDOWN and event.key==pygame.K_BACKSPACE:
-                    if focus=='name':name=name[:-1]
-                    elif focus=='address':address=address[:-1]
-                    elif focus=='relay':relay_address=relay_address[:-1]
-                    else:room_code=room_code[:-1]
+                if event.type in (pygame.TEXTINPUT,pygame.KEYDOWN):
+                    values={'name':name,'address':address,'relay':relay_address,'code':room_code}
+                    value=text_input.event(event,values[focus],32 if focus=='name' else 5 if focus=='code' else 128,uppercase=focus=='code')
+                    if focus=='name':name=value
+                    elif focus=='address':address=value
+                    elif focus=='relay':relay_address=value
+                    else:room_code=value
                 if event.type==pygame.MOUSEBUTTONDOWN and event.button==1:
+                    text_input.selected=False
                     if name_rect.collidepoint(mouse):focus='name'
                     elif address_rect.collidepoint(mouse):focus='address'
                     elif relay_rect.collidepoint(mouse):focus='relay'
@@ -129,15 +129,17 @@ def main():
                 elif table.act(action):sound('card_move')
         if table is None:
             appearance.background(canvas)
-            for text,y in [('SOLITAIRE+ POKER TABLE',150),('Your name',265),('Join address: localhost or the host’s LAN IP',355),('Relay address',560)]:
+            logo=appearance.image('assets/multiplayer/logo.png',(900,198)) or appearance.image('assets/ui/menu_ui/floating_logo.png',(620,175))
+            if logo:canvas.blit(logo,logo.get_rect(center=(683,163)))
+            for text,y in [('Your name',265),('Join address: localhost or the host’s LAN IP',355),('Relay address',560)]:
                 label=font.render(text,True,(245,233,201));canvas.blit(label,label.get_rect(center=(443 if y==560 else 683,y)))
             label=font.render('Room code (joining only)',True,(245,233,201));canvas.blit(label,label.get_rect(center=(953,560)))
             for rect,value,field in ((name_rect,name,'name'),(address_rect,address,'address'),(relay_rect,relay_address,'relay'),(code_rect,room_code,'code')):
-                pygame.draw.rect(canvas,(32,76,57),rect);pygame.draw.rect(canvas,(229,194,110) if focus==field else (130,166,145),rect,2)
+                pygame.draw.rect(canvas,(73,98,113) if focus==field and text_input.selected else (32,76,57),rect);pygame.draw.rect(canvas,(229,194,110) if focus==field else (130,166,145),rect,2)
                 clip=canvas.get_clip();canvas.set_clip(rect.inflate(-12,-6))
                 canvas.blit(font.render(value+('|' if focus==field else ''),True,(250,243,216)),(rect.x+15,rect.y+15));canvas.set_clip(clip)
             for rect,label in ((start_rect,'Local Practice'),(host_rect,'Host Table'),(join_rect,'Join LAN'),(create_rect,'Create Room'),(room_join_rect,'Join Room')):
-                pygame.draw.rect(canvas,(54,107,76),rect,border_radius=10);image=font.render(label,True,(250,243,216));canvas.blit(image,image.get_rect(center=rect.center))
+                wooden_button(canvas,appearance,rect,label,font,hover=rect.collidepoint(mouse))
         else:
             online=isinstance(table,(OnlineTable,RoomTable))
             if online or not ui.holdem_options_open:
@@ -149,17 +151,15 @@ def main():
             else:
                 appearance.background(canvas);label=font.render(table.status,True,(245,233,201));canvas.blit(label,label.get_rect(center=(683,320)))
                 label=font.render('Share the room code and relay address with your friend.',True,(245,233,201));canvas.blit(label,label.get_rect(center=(683,385)))
-            pygame.draw.rect(canvas,(65,96,77),leave_rect,border_radius=8);label=font.render('Leave table',True,(245,233,201));canvas.blit(label,label.get_rect(center=leave_rect.center))
+            wooden_button(canvas,appearance,leave_rect,'Leave table',font,hover=leave_rect.collidepoint(mouse))
             if isinstance(table,OnlineTable) and table.playable and table.game.hand_complete:
                 alive=sum(stack>0 for stack in [table.game.player_stack,*table.game.npc_stacks])
                 text='Table finished' if alive<2 else f'Ready ({table.game.ready_count}/2)' if table.game.you_ready else 'Ready for next hand'
                 pygame.draw.rect(canvas,(65,96,77),ready_rect,border_radius=8);image=pygame.font.Font(None,26).render(text,True,(245,233,201));canvas.blit(image,image.get_rect(center=ready_rect.center))
             if isinstance(table,OnlineTable):
                 label=pygame.font.Font(None,22).render(table.status,True,(245,233,201));canvas.blit(label,(450,72))
-        pygame.draw.rect(canvas,(38,61,55),profile_rect,border_radius=8)
-        label=pygame.font.Font(None,22).render(f'Profile • Lv {profile.level} • {profile.data["xp"]} XP',True,(245,233,201));canvas.blit(label,label.get_rect(center=profile_rect.center))
-        pygame.draw.rect(canvas,(38,61,55),options_rect,border_radius=8)
-        label=pygame.font.Font(None,26).render('Options',True,(245,233,201));canvas.blit(label,label.get_rect(center=options_rect.center))
+        wooden_button(canvas,appearance,profile_rect,f'Edit Profile • Lv {profile.level}',pygame.font.Font(None,24),hover=profile_rect.collidepoint(mouse))
+        wooden_button(canvas,appearance,options_rect,'Options',pygame.font.Font(None,26),hover=options_rect.collidepoint(mouse))
         if profile_screen.open:profile_screen.draw(canvas,table)
         if options.open:options.draw(canvas,table)
         screen.fill((0,0,0));screen.blit(pygame.transform.smoothscale(canvas,(round(1366*scale),round(768*scale))),offset);pygame.display.flip();clock.tick(60)

@@ -15,7 +15,7 @@ async def handle_room(server, reader, writer, request):
         if request.get('type') == 'create':
             if len(server.rooms) >= 500:raise ValueError('Relay is full')
             while True:
-                code = ''.join(secrets.choice('ABCDEFGHJKLMNPQRSTUVWXYZ23456789') for _ in range(8))
+                code = f'{secrets.randbelow(100000):05d}'
                 if code not in server.rooms:break
             identity = 0
             room = {'version': 2, 'clients': {0: writer}, 'next_id': 1}

@@ -26,14 +26,14 @@ class Presentation:
             self.sound('card_move')
         for i,(old,new) in enumerate(zip(self.previous_bets,bets)):
             if new>old:self.flights.append((now,POSITIONS[i],BET_POINTS[i]));self.sound('chip_move')
-            elif old and new<old:self.flights.append((now,BET_POINTS[i],(890,326)))
+            elif old and new<old:self.flights.append((now,BET_POINTS[i],(805,310)))
         for i in range(self.community,len(game.community_cards)):
             self.starts[('board',i)]=now+(i-self.community)*120
         if len(game.community_cards)>self.community:self.sound('card_move')
         if game.hand_complete and not self.complete:
             for i,amount in enumerate(bets):
-                if amount:self.flights.append((now,BET_POINTS[i],(890,326)))
-            for i in game.winner_indexes:self.flights.append((now+350,(890,326),POSITIONS[i]))
+                if amount:self.flights.append((now,BET_POINTS[i],(805,310)))
+            for i in game.winner_indexes:self.flights.append((now+350,(805,310),POSITIONS[i]))
             self.sound('win')
         self.previous_bets=list(bets);self.community=len(game.community_cards);self.complete=game.hand_complete
         self.flights=[f for f in self.flights if now-f[0]<650*self.scale]
@@ -59,7 +59,7 @@ class Presentation:
             if amount and not game.hand_complete:
                 self.chip(surface,BET_POINTS[i],1+int(math.log10(max(1,amount))))
                 label=font.render(f'${amount:,}',True,(251,241,206));surface.blit(label,(BET_POINTS[i][0],BET_POINTS[i][1]+27))
-        self.chip(surface,(890,320),3 if game.pot or game.last_resolved_pot else 1)
+        self.chip(surface,(805,306),3 if game.pot or game.last_resolved_pot else 1)
         if self.enabled:
             for start,origin,target in self.flights:
                 t=max(0,min(1,(now-start)/(650*self.scale)));t=t*t*(3-2*t)
