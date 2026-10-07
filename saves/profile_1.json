@@ -25888,9 +25888,9 @@
         "leaderboard_star_id": "jack_zitbomb",
         "year": 2058,
         "month": 4,
-        "day": 15,
-        "weekday_index": 4,
-        "career_day": 11070,
+        "day": 16,
+        "weekday_index": 0,
+        "career_day": 11071,
         "residence": "card_castle",
         "owned_residences": [
             "dingy_apartment",
@@ -60666,6 +60666,13 @@
                 "day": 14,
                 "completed": true,
                 "activity_type": "casino_night"
+            },
+            {
+                "year": 2058,
+                "month": 4,
+                "day": 15,
+                "completed": false,
+                "activity_type": "event"
             }
         ],
         "current_schedule": [
