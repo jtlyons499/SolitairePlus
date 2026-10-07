@@ -1,3 +1,4 @@
+from career_session_summary import poker_session_status
 import math
 
 import pygame
@@ -2544,6 +2545,9 @@ def draw_five_card_draw(
         game
     )
 
+    status = poker_session_status(game, getattr(game, 'career_session_rated', True))
+    status_image = pygame.font.Font(None, 23).render(status, True, (231, 239, 234))
+    surface.blit(status_image, (22, 553))
     draw_log_panel(surface, game)
 
     # Like Hold'em, show the player's current made hand just above controls.
@@ -2565,3 +2569,4 @@ def draw_five_card_draw(
                 name_rect,
                 fonts["tiny"]
             )
+

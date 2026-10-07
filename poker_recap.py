@@ -34,6 +34,23 @@ def recap_lines(game):
     return lines
 
 
+def recap_display_lines(game):
+    """Wrap every detail at a fixed readable size; paginate wrapped rows."""
+    font = pygame.font.Font(None, 32)
+    rows = []
+    for value in recap_lines(game):
+        row = ''
+        for word in value.split():
+            trial = (row + ' ' + word).strip()
+            if row and font.size(trial)[0] > 800:
+                rows.append(row)
+                row = word
+            else:
+                row = trial
+        rows.append(row)
+    return rows
+
+
 def get_recap_action(mouse, game):
     if not game.hand_complete or mouse is None:
         return None
@@ -55,7 +72,7 @@ def handle_recap_action(game, action):
     elif action == 'recap_close':
         game.recap_open = False
     elif action in ('recap_prev', 'recap_next'):
-        pages = max(1, (len(recap_lines(game)) + ROWS - 1) // ROWS)
+        pages = max(1, (len(recap_display_lines(game)) + ROWS - 1) // ROWS)
         game.recap_page = max(0, min(pages - 1, getattr(game, 'recap_page', 0) + (1 if action == 'recap_next' else -1)))
     return True
 
@@ -81,17 +98,12 @@ def draw_recap(surface, mouse, game):
     title = pygame.font.Font(None, 42).render('HAND / POT RECAP', True, (240,202,119))
     surface.blit(title, (272,82))
     surface.blit(font.render('Auto-deal and cash-out pause while you review.', True, (188,207,195)), (272,133))
-    lines = recap_lines(game)
+    lines = recap_display_lines(game)
     pages = max(1, (len(lines)+ROWS-1)//ROWS)
     page = max(0,min(pages-1,getattr(game,'recap_page',0)))
     for i, value in enumerate(lines[page*ROWS:(page+1)*ROWS]):
-        fitted = font
-        size = 29
-        while fitted.size(value)[0] > 820 and size > 23:
-            size -= 1; fitted = pygame.font.Font(None,size)
-        image = fitted.render(value, True, (243,236,216))
-        clip = surface.get_clip();surface.set_clip((272,180+i*46,820,44))
-        surface.blit(image,(272,184+i*46));surface.set_clip(clip)
+        image = pygame.font.Font(None, 32).render(value, True, (243,236,216))
+        surface.blit(image, (272,184+i*46))
     surface.blit(font.render(f'Page {page+1} / {pages}',True,(207,219,210)),(652,665))
     button(PREV,'Previous',page>0);button(NEXT,'Next',page+1<pages);button(CLOSE,'Back to table')
 

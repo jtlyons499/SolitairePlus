@@ -1,3 +1,4 @@
+from career_session_summary import poker_session_status
 import math
 
 import pygame
@@ -2052,12 +2053,12 @@ def draw_npc_seat(
 
     hand = game.npc_hands[index] if index < len(game.npc_hands) else []
     if not busted:
-        card_w, card_h, step_x = 76, 106, 27
+        card_w, card_h, step_x = 88, 123, 35
         card_count = min(7, len(hand))
         total_width = card_w + max(0, card_count - 1) * step_x
         cards_center_x = anchor_x + 46
         cards_x = cards_center_x - total_width // 2
-        cards_y = anchor_y - 57
+        cards_y = anchor_y - 132
         reveal_all = game.current_stage == "showdown" and not folded
 
         for card_index in range(card_count):
@@ -2383,14 +2384,14 @@ def draw_seven_card_stud(
     pot_surface = fonts["small"].render(f"Pot: ${display_pot:,}", True, WHITE)
     surface.blit(pot_surface, pot_surface.get_rect(center=(683, 266)))
 
-    npc_anchors = [(180, 325), (450, 120), (900, 120), (1090, 325)]
+    npc_anchors = [(180, 430), (320, 190), (1020, 190), (1090, 430)]
     for index, npc in enumerate(game.npcs[:4]):
         draw_npc_seat(
             surface, game, index, npc, npc_anchors[index], card_fronts, card_back,
             draw_npc_portrait, card_fx_kind=card_fx_kind, card_fx_elapsed=card_fx_elapsed
         )
 
-    wager_positions = [(365, 360), (525, 285), (842, 285), (1000, 360)]
+    wager_positions = [(390, 445), (525, 285), (842, 285), (970, 445)]
     if game.current_stage != "showdown":
         for index in range(min(4, len(game.npcs))):
             chunks = game.npc_bet_chunks[index] if index < len(game.npc_bet_chunks) else []
@@ -2409,7 +2410,7 @@ def draw_seven_card_stud(
         )
 
     # Larger, more intentional seven-card player spread.
-    card_w, card_h, step_x = 98, 137, 70
+    card_w, card_h, step_x = 110, 154, 62
     hand = game.player_hand[:7]
     total_width = card_w + max(0, len(hand) - 1) * step_x
     start_x = 683 - total_width // 2
@@ -2454,12 +2455,6 @@ def draw_seven_card_stud(
                 3
             )
 
-    if game.current_stage == "showdown" and not game.player_folded:
-        hand_name = game.get_player_hand_name()
-        if hand_name:
-            hand_surface = fonts["small"].render(f"Your hand: {hand_name}", True, GOLD)
-            surface.blit(hand_surface, hand_surface.get_rect(center=(683, 505)))
-
     if game.result_text and game.current_stage != "showdown":
         result_surface = render_text_fit(game.result_text, fonts["small"], WHITE, 650, minimum_size=12)
         surface.blit(result_surface, result_surface.get_rect(center=(683, 470)))
@@ -2481,6 +2476,9 @@ def draw_seven_card_stud(
         game
     )
 
+    status = poker_session_status(game, getattr(game, 'career_session_rated', True))
+    status_image = pygame.font.Font(None, 23).render(status, True, (231, 239, 234))
+    surface.blit(status_image, (22, 553))
     draw_log_panel(surface, game)
 
     current_hand = game.get_player_hand_name() if len(game.player_hand) >= 5 else None

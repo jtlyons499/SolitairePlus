@@ -1,3 +1,4 @@
+from career_session_summary import poker_session_status
 from poker_recap import draw_recap, get_recap_action
 import math
 
@@ -1112,19 +1113,28 @@ def draw_holdem_showdown_banner(
         explanations = list(dict.fromkeys(pot.get('hand') or 'Everyone else folded' for pot in awards))
         if explanations:
             result += ' — ' + '; '.join(explanations)
-    font = pygame.font.Font(None, 29)
+    font = pygame.font.Font(None, 32)
     rows = ['']
     for word in result.split():
         trial = (rows[-1] + ' ' + word).strip()
         if font.size(trial)[0] > 630 and rows[-1]: rows.append(word)
         else: rows[-1] = trial
+    # Keep the table visible; full pot-by-pot explanations remain in Payout details.
+    if len(rows) > 3:
+        if awards:
+            received = sum(int(pot.get('share', 0)) + (pot.get('winners', []).index(0) < int(pot.get('remainder', 0)))
+                           for pot in awards if 0 in pot.get('winners', []))
+            rows = [f"You received ${received:,} • {len(awards)} pot(s) resolved",
+                    "See Payout details for winning hands and side pots."]
+        else:
+            rows = rows[:2] + ["See Payout details for the full result."]
     width = min(666, max(220, max(font.size(row)[0] for row in rows) + 36))
-    height = 20 + len(rows)*29
+    height = 20 + len(rows)*32
     rect = pygame.Rect(683-width//2, 495-height, width, height)
     draw_translucent_panel(surface, rect, (10, 12, 14, 240), border_color=border, border_width=2, radius=12)
     for index, row in enumerate(rows):
         label = font.render(row, True, WHITE)
-        surface.blit(label, label.get_rect(center=(rect.centerx, rect.y+10+29*index+14)))
+        surface.blit(label, label.get_rect(center=(rect.centerx, rect.y+10+32*index+16)))
 
 
 
@@ -6803,7 +6813,7 @@ def draw_texas_holdem(
     # ==================================================
 
     completed = len(getattr(holdem_game, 'rating_seen_hands', ()))
-    rating_status = f'Rated after 1 completed hand • Completed: {completed}'
+    rating_status = poker_session_status(holdem_game, getattr(holdem_game, 'career_session_rated', True))
     rating_label = pygame.font.Font(None, 24).render(rating_status, True, (231, 239, 234))
     game_surface.blit(rating_label, (22, 553))
 

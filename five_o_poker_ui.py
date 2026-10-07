@@ -1,4 +1,5 @@
 import pygame
+from pathlib import Path
 from poker_speech import is_poker_chat_popups_enabled
 
 from poker_core import format_poker_display_name
@@ -24,18 +25,23 @@ DRAW_CARD_SIZE = (148, 207)
 STACK_OFFSET = 18
 
 FIVE_O_RETURN_RECT = pygame.Rect(915, 20, 135, 44)
-FIVE_O_NEXT_RECT = pygame.Rect(1110, 710, 180, 44)
-FIVE_O_ACTION_RECTS = {
-    ACTION_FOLD: pygame.Rect(715, 710, 145, 44),
-    ACTION_CHECK: pygame.Rect(875, 710, 155, 44),
-    ACTION_CALL: pygame.Rect(875, 710, 155, 44),
-    ACTION_BET: pygame.Rect(1045, 710, 235, 44),
-}
-
 FIVE_O_PLAYER_COLUMN_RECTS = [
     pygame.Rect(360 + index * 190, 400, 156, 293)
     for index in range(5)
 ]
+# Leave room for the hand-value captions beneath the last card.
+CARD_BOTTOM = max(rect.y + 8 + 4*STACK_OFFSET + CARD_SIZE[1]
+                  for rect in FIVE_O_PLAYER_COLUMN_RECTS)
+VALUE_LABEL_Y = CARD_BOTTOM + 8
+ACTION_Y = max(728, VALUE_LABEL_Y + 28)
+RIGHT_EDGE = FIVE_O_PLAYER_COLUMN_RECTS[-1].right
+FIVE_O_NEXT_RECT = pygame.Rect(RIGHT_EDGE-180, ACTION_Y, 180, 34)
+FIVE_O_ACTION_RECTS = {
+    ACTION_FOLD: pygame.Rect(715, ACTION_Y, 145, 34),
+    ACTION_CHECK: pygame.Rect(875, ACTION_Y, 155, 34),
+    ACTION_CALL: pygame.Rect(875, ACTION_Y, 155, 34),
+    ACTION_BET: pygame.Rect(1045, ACTION_Y, RIGHT_EDGE-1045, 34),
+}
 
 _scaled_card_cache = {}
 _portrait_cache = {}
@@ -84,7 +90,7 @@ def _load_portrait(npc, size=(86, 86)):
     return image
 
 
-def _draw_card(surface, card, rect, detail_font, card_fronts, card_back_surface=None, face_up=True):
+def _draw_card(surface, card, rect, detail_font, card_fronts, card_back_surface=None, face_up=True, stacked=False):
     if face_up:
         image = _load_card(card, card_fronts, rect.size)
     else:
@@ -94,41 +100,38 @@ def _draw_card(surface, card, rect, detail_font, card_fronts, card_back_surface=
 
     if image is not None:
         surface.blit(image, rect)
-        if not face_up:
+        if not face_up or not stacked:
             return
 
     if image is None:
         pygame.draw.rect(surface, WHITE if face_up else (45, 70, 145), rect, border_radius=4)
         pygame.draw.rect(surface, DARK, rect, 2, border_radius=4)
     if face_up and card:
-        font = pygame.font.Font(None, 27)
+        font = pygame.font.Font(None, 22)
         color = (172, 32, 42) if card.get("suit") in ("Diamonds", "Hearts") else DARK
         label = font.render(str(card.get('rank', '?')), True, color)
-        badge = pygame.Rect(rect.x + 2, rect.y + 2, rect.width - 4, 26)
+        badge = pygame.Rect(rect.x + 2, rect.y + 2, rect.width - 4, STACK_OFFSET - 2)
         pygame.draw.rect(surface, WHITE, badge, border_radius=3)
         surface.blit(label, (badge.x + 4, badge.y))
-        x, y = badge.x + label.get_width() + 17, badge.y + 12
+        x, y = badge.x + label.get_width() + 17, badge.y + 8
         suit = card.get("suit")
         # Draw suit symbols directly: pygame's bundled font lacks these glyphs
         # on some machines. All four suits remain recognisable on stacked cards.
         if suit == "Diamonds":
-            pygame.draw.polygon(surface, color, [(x,y-9),(x+7,y),(x,y+9),(x-7,y)])
+            pygame.draw.polygon(surface, color, [(x,y-6),(x+5,y),(x,y+6),(x-5,y)])
         elif suit == "Hearts":
-            pygame.draw.circle(surface, color, (x-4,y-3), 5)
-            pygame.draw.circle(surface, color, (x+4,y-3), 5)
-            pygame.draw.polygon(surface, color, [(x-9,y-2),(x+9,y-2),(x,y+9)])
+            pygame.draw.circle(surface, color, (x-3,y-2), 3)
+            pygame.draw.circle(surface, color, (x+3,y-2), 3)
+            pygame.draw.polygon(surface, color, [(x-6,y-1),(x+6,y-1),(x,y+6)])
         elif suit == "Spades":
-            pygame.draw.polygon(surface, color, [(x,y-9),(x-8,y+2),(x+8,y+2)])
-            pygame.draw.circle(surface, color, (x-4,y+2), 4)
-            pygame.draw.circle(surface, color, (x+4,y+2), 4)
-            pygame.draw.rect(surface, color, (x-2,y+2,4,8))
+            pygame.draw.polygon(surface, color, [(x,y-6),(x-6,y+2),(x+6,y+2)])
+            pygame.draw.circle(surface, color, (x-3,y+1), 3)
+            pygame.draw.circle(surface, color, (x+3,y+1), 3)
+            pygame.draw.rect(surface, color, (x-1,y+1,3,6))
         else:
-            for center in ((x,y-5),(x-5,y+1),(x+5,y+1)):
-                pygame.draw.circle(surface, color, center, 5)
-            pygame.draw.rect(surface, color, (x-2,y+2,4,8))
-
-
-
+            for center in ((x,y-3),(x-3,y+1),(x+3,y+1)):
+                pygame.draw.circle(surface, color, center, 3)
+            pygame.draw.rect(surface, color, (x-1,y+1,3,6))
 
 
 
@@ -158,6 +161,7 @@ def _draw_column(
             card_fronts,
             card_back_surface=card_back_surface,
             face_up=face_up,
+            stacked=index < len(cards) - 1,
         )
 
 
@@ -234,8 +238,9 @@ QUIT_RECT = pygame.Rect(1060, 20, 135, 44)
 FAST_RECT = pygame.Rect(453, 285, 460, 58)
 SOUND_RECT = pygame.Rect(453, 365, 460, 58)
 CLOSE_RECT = pygame.Rect(583, 475, 200, 48)
-BET_PRESET_RECTS = [pygame.Rect(718+i*143, 662, 130, 35) for i in range(4)]
+BET_PRESET_RECTS = [pygame.Rect(32+(i%2)*154, 488+(i//2)*46, 142, 36) for i in range(4)]
 _logo = None
+_logo_signature = None
 _sound_cache = {}
 
 def _play_column_sound(game, index):
@@ -251,11 +256,22 @@ def _play_column_sound(game, index):
 def draw_five_o_poker(surface, mouse_pos, game, player_name, draw_submenu_background,
                       title_font, label_font, detail_font, card_fronts=None, card_back_surface=None):
     from score_four_ui import panel, text
-    global _logo
+    global _logo, _logo_signature
     draw_submenu_background(overlay_alpha=115)
-    if _logo is None:
-        try: _logo = pygame.transform.smoothscale(pygame.image.load("assets/poker/logos/five_o_poker.png").convert_alpha(), (390, 65))
-        except (pygame.error, FileNotFoundError): _logo = False
+    logo_path = Path("assets/poker/logos/five_o_poker.png")
+    try:
+        stat = logo_path.stat()
+        signature = (stat.st_mtime_ns, stat.st_size)
+    except OSError:
+        signature = None
+    if _logo is None or signature != _logo_signature:
+        _logo_signature = signature
+        try:
+            source = pygame.image.load(str(logo_path)).convert_alpha()
+            scale = min(430 / source.get_width(), 64 / source.get_height())
+            _logo = pygame.transform.smoothscale(source, (max(1, round(source.get_width()*scale)), max(1, round(source.get_height()*scale))))
+        except (OSError, pygame.error):
+            _logo = False
     if _logo: surface.blit(_logo, _logo.get_rect(center=(640, 38)))
     else: text(surface, "FIVE-O  •  FIVE FRONTS", (640, 36), 42, CREAM, True)
     panel(surface, (20, 75, 320, 585), (10, 23, 34, 225), (167, 191, 211))
@@ -314,7 +330,7 @@ def draw_five_o_poker(surface, mouse_pos, game, player_name, draw_submenu_backgr
             description = description.split(",")[0]
             small = pygame.font.Font(None, 22)
             label = _fit_line(small, description, player_rect.width, WHITE)
-            surface.blit(label, label.get_rect(midtop=(player_rect.centerx, 695)))
+            surface.blit(label, label.get_rect(midtop=(player_rect.centerx, VALUE_LABEL_Y)))
     if game.phase == "placement" and game.player_drawn_card:
         line("NEXT CARD", 225, GOLD)
         _draw_card(surface, game.player_drawn_card, pygame.Rect(104, 258, *DRAW_CARD_SIZE), font, card_fronts, card_back_surface)

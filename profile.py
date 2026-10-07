@@ -3,6 +3,8 @@ from poker_learning import new_learning, normalize_learning
 import json
 import os
 import tempfile
+import time
+from pathlib import Path
 
 from career_ratings import migrate_profile_ratings, make_player_rating_bundle, RATING_SCHEMA_VERSION
 from cryptid_collection import new_collection, normalize_collection
@@ -222,16 +224,59 @@ def save_profile(
         slot
     )
 
-    temporary=None
+    path = os.path.abspath(path)
+    temporary = None
     try:
-        with tempfile.NamedTemporaryFile(mode="w",encoding="utf-8",dir=SAVE_FOLDER,suffix=".tmp",delete=False) as file:
-            temporary=file.name
-            json.dump(profile_data,file,indent=4)
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=os.path.dirname(path), suffix=".tmp", delete=False) as file:
+            temporary = file.name
+            json.dump(profile_data, file, indent=4)
             file.flush()
             os.fsync(file.fileno())
-        os.replace(temporary,path)
+        try:
+            replace_with_retry(temporary, path)
+        except PermissionError:
+            # Keep the old save intact. A new filename avoids a lock on that file.
+            recovery = f"{path}.recovery.{time.time_ns()}.json"
+            os.replace(temporary, recovery)
+            temporary = None
+            print(f"Save file is locked. Latest progress preserved in: {recovery}")
+            return False
+        temporary = None
+        # Only retire recovery copies after the normal save has committed.
+        for recovery in recovery_paths(slot):
+            try:
+                recovery.unlink()
+            except OSError:
+                pass
+        return True
     finally:
-        if temporary and os.path.exists(temporary):os.remove(temporary)
+        if temporary and os.path.exists(temporary):
+            try:
+                os.remove(temporary)
+            except OSError:
+                pass
+
+
+def replace_with_retry(source, destination):
+    for attempt, delay in enumerate((0.05, 0.1, 0.2, 0.4, 0.8, 0)):
+        try:
+            os.replace(source, destination)
+            return
+        except PermissionError:
+            if attempt == 5:
+                raise
+            time.sleep(delay)
+
+
+def recovery_paths(slot):
+    path = Path(get_profile_path(slot))
+    return list(path.parent.glob(path.name + ".recovery.*.json"))
+
+
+def latest_profile_path(slot):
+    candidates = [Path(get_profile_path(slot)), *recovery_paths(slot)]
+    candidates = [path for path in candidates if path.is_file()]
+    return max(candidates, key=lambda path: path.stat().st_mtime_ns) if candidates else None
 
 
 # ==================================================
@@ -241,13 +286,8 @@ def save_profile(
 def load_profile(
         slot=1
 ):
-    path = get_profile_path(
-        slot
-    )
-
-    if not os.path.exists(
-        path
-    ):
+    path = latest_profile_path(slot)
+    if path is None:
         return None
 
     with open(
@@ -273,11 +313,7 @@ def load_profile(
 # ==================================================
 
 def profile_exists(slot):
-    return os.path.exists(
-        get_profile_path(
-            slot
-        )
-    )
+    return latest_profile_path(slot) is not None
 
 
 # ==================================================
@@ -295,4 +331,6 @@ def delete_profile(slot):
         os.remove(
             path
         )
+    for recovery in recovery_paths(slot):
+        recovery.unlink()
 

@@ -5186,9 +5186,9 @@
         "leaderboard_star_id": "monkus_carlton",
         "year": 2026,
         "month": 11,
-        "day": 14,
+        "day": 19,
         "weekday_index": 3,
-        "career_day": 314,
+        "career_day": 319,
         "residence": "hippie_commune",
         "owned_residences": [
             "dingy_apartment",
@@ -7389,6 +7389,41 @@
                 "day": 13,
                 "completed": false,
                 "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 14,
+                "completed": false,
+                "activity_type": "niche_night"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 15,
+                "completed": false,
+                "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 16,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 17,
+                "completed": false,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 18,
+                "completed": false,
+                "activity_type": "work"
             }
         ],
         "current_schedule": [
@@ -8072,63 +8107,64 @@
                 "year": 2026,
                 "career_day": 91
             }
-        ]
+        ],
+        "interview_recent_ids": []
     },
     "cosmetics": {
-        "selected_menu_background": "bg_petra",
-        "selected_felt": "f_fun_felt",
+        "selected_menu_background": "bg_default",
+        "selected_felt": "f_high_society",
         "selected_title": "title_isolation",
         "selected_card_back": "back_default",
         "selected_cursor": "cursor",
         "unlocked_menu_backgrounds": [
-            "bg_blue_doodle",
-            "bg_petra",
-            "bg_brazil",
-            "bg_microscope",
-            "bg_wall",
-            "bg_chichen",
+            "bg_giza",
             "bg_default",
             "bg_et",
-            "bg_rating_strategy_1400",
-            "bg_gardens",
+            "bg_petra",
+            "bg_chichen",
             "bg_noodle",
-            "bg_giza"
+            "bg_rating_strategy_1400",
+            "bg_microscope",
+            "bg_wall",
+            "bg_brazil",
+            "bg_gardens",
+            "bg_blue_doodle"
         ],
         "unlocked_felts": [
-            "f_wheel_winner",
-            "f_rock_candy",
-            "f_rating_strategy_1150",
-            "f_default",
-            "f_rating_global_1300",
-            "f_blanky",
-            "f_rating_strategy_1600",
             "f_crystalized_grain",
+            "f_rating_global_1300",
+            "f_grain",
+            "f_wheel_winner",
             "f_gordon",
             "f_light_touch",
-            "f_fun_felt",
-            "f_grain",
-            "f_high_society",
             "f_game_night",
-            "f_crystalized"
+            "f_rock_candy",
+            "f_rating_strategy_1150",
+            "f_rating_strategy_1600",
+            "f_blanky",
+            "f_crystalized",
+            "f_default",
+            "f_fun_felt",
+            "f_high_society"
         ],
         "unlocked_titles": [
-            "title_default",
-            "title_shatter_1",
-            "title_patience_dare",
-            "title_tacit",
-            "title_cards",
-            "title_solitary",
-            "title_soli_tare_red",
-            "title_solitaire_pixel",
-            "title_high_roller",
-            "title_penciled",
             "title_cardshark",
             "title_patience_creep",
-            "title_isolation",
-            "t_rating_strategy_1500",
-            "title_top_dog",
+            "title_patience_dare",
             "title_soli_tare_blue",
-            "title_neon"
+            "title_neon",
+            "title_isolation",
+            "title_solitaire_pixel",
+            "title_high_roller",
+            "title_top_dog",
+            "title_cards",
+            "t_rating_strategy_1500",
+            "title_penciled",
+            "title_shatter_1",
+            "title_solitary",
+            "title_default",
+            "title_tacit",
+            "title_soli_tare_red"
         ],
         "unlocked_card_backs": [
             "back_default"

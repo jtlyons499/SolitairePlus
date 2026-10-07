@@ -229,7 +229,7 @@
       "name": "Fan Club",
       "kind": "fans",
       "image": "items/fan_club.png",
-      "fan_multiplier": 1,
+      "fan_multiplier": 50,
       "fan_minimum": 5
     },
     "standing_ovation": {
@@ -237,7 +237,7 @@
       "name": "Standing Ovation",
       "kind": "fans",
       "image": "items/standing_ovation.png",
-      "fan_multiplier": 3,
+      "fan_multiplier": 100,
       "fan_minimum": 5
     },
     "midnight_felt": {

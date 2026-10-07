@@ -1,4 +1,9 @@
-from rating_unlocks import unlock_ratings, lock_reason
+from career_activities import new_story, normalize_story, start_night, choose_option
+from career_activities_ui import CareerActivityScreen
+from cosmetic_assets import CosmeticCatalog, SingleDriftCache
+from press_interview import PRESS_INTERVIEW_QUESTION_POOL, select_interview, answer_outcome
+from career_session_summary import poker_session_status, night_game_net, track_night_cash, night_cash_total
+from rating_unlocks import unlock_ratings, lock_reason, rating_lock_progress
 # Dispatch before importing single-player modules or initializing its window.
 import sys as _launch_sys
 if "--multiplayer" in _launch_sys.argv:
@@ -692,6 +697,8 @@ STATE_CAREER_EVENT_SUMMARY = (
 
 STATE_CAREER_HUB = "career_hub"
 STATE_CAREER_JOBS = "career_jobs"
+STATE_CAREER_ACTIVITY = "career_activity"
+career_activity_screen = CareerActivityScreen()
 STATE_CAREER_REAL_ESTATE = "career_real_estate"
 STATE_CAREER_LEADERBOARDS = "career_leaderboards"
 STATE_CAREER_NEWS = "career_news"
@@ -1809,6 +1816,9 @@ def _build_career_event_summary():
     )
 
     if activity_type == CAREER_ACTIVITY_CASINO_NIGHT:
+        blackjack_night_net = night_cash_total(globals(), "blackjack", blackjack_session_net)
+        roulette_night_net = night_cash_total(globals(), "roulette", roulette_session_net)
+        horse_races_night_net = night_cash_total(globals(), "horse_races", horse_races_session_net)
 
         career_event_summary_title = (
             "CASINO NIGHT COMPLETE"
@@ -1818,16 +1828,16 @@ def _build_career_event_summary():
         # Blackjack
         # ==========================================
 
-        if blackjack_session_net > 0:
+        if blackjack_night_net > 0:
 
             blackjack_text = (
-                f"Blackjack: +${blackjack_session_net:,}"
+                f"Blackjack: +${blackjack_night_net:,}"
             )
 
-        elif blackjack_session_net < 0:
+        elif blackjack_night_net < 0:
 
             blackjack_text = (
-                f"Blackjack: -${abs(blackjack_session_net):,}"
+                f"Blackjack: -${abs(blackjack_night_net):,}"
             )
 
         else:
@@ -1840,16 +1850,16 @@ def _build_career_event_summary():
         # Roulette
         # ==========================================
 
-        if roulette_session_net > 0:
+        if roulette_night_net > 0:
 
             roulette_text = (
-                f"Roulette: +${roulette_session_net:,}"
+                f"Roulette: +${roulette_night_net:,}"
             )
 
-        elif roulette_session_net < 0:
+        elif roulette_night_net < 0:
 
             roulette_text = (
-                f"Roulette: -${abs(roulette_session_net):,}"
+                f"Roulette: -${abs(roulette_night_net):,}"
             )
 
         else:
@@ -1862,10 +1872,10 @@ def _build_career_event_summary():
         # Horse Races
         # ==========================================
 
-        if horse_races_session_net > 0:
-            horse_races_text = f"Horse Races: +${horse_races_session_net:,}"
-        elif horse_races_session_net < 0:
-            horse_races_text = f"Horse Races: -${abs(horse_races_session_net):,}"
+        if horse_races_night_net > 0:
+            horse_races_text = f"Horse Races: +${horse_races_night_net:,}"
+        elif horse_races_night_net < 0:
+            horse_races_text = f"Horse Races: -${abs(horse_races_night_net):,}"
         else:
             horse_races_text = "Horse Races: $0"
 
@@ -1877,11 +1887,12 @@ def _build_career_event_summary():
             blackjack_text,
             roulette_text,
             horse_races_text,
-            f"Total: ${blackjack_session_net + roulette_session_net + horse_races_session_net:+,}",
+            f"Total: ${blackjack_night_net + roulette_night_net + horse_races_night_net:+,}",
             f"Blackjack rating: {blackjack_session_rating_change:+d}",
             f"Current Cash: ${career_cash:,}",
             f"Current Fans: {career_fans:,}",
         ]
+        return
 
     # ==================================================
     # Casual Cards
@@ -1934,9 +1945,9 @@ def _build_career_event_summary():
                 return f"{label}: -${abs(net):,}"
             return f"{label}: $0"
 
-        faro_text = _session_money_line("Faro", faro_session_net)
-        five_o_text = _session_money_line("Five-O Poker", five_o_poker_session_net)
-        bluff_text = _session_money_line("Blind Man's Bluff", blind_mans_bluff_session_net)
+        faro_text = _session_money_line("Faro", night_cash_total(globals(), "faro", night_game_net(career_event_result_log, "faro", faro_session_net)))
+        five_o_text = _session_money_line("Five-O Poker", night_cash_total(globals(), "five_o_poker", night_game_net(career_event_result_log, "five_o_poker", five_o_poker_session_net)))
+        bluff_text = _session_money_line("Blind Man's Bluff", night_cash_total(globals(), "blind_mans_bluff", night_game_net(career_event_result_log, "blind_mans_bluff", blind_mans_bluff_session_net)))
         career_event_summary_lines = [
             "Niche Game Night completed.",
             faro_text,
@@ -1962,7 +1973,7 @@ def build_career_event_summary():
     _build_career_event_summary()
     lines = [line for line in career_event_summary_lines if not line.startswith(("Current Rating:", "Current Fans:", "Blackjack rating:"))]
     delta = int(round(float(career_rating) - globals().get("career_event_start_global", float(career_rating))))
-    lines.append(f"Global Rating: {career_rating:,} ({delta:+d})")
+    lines.append(f"Global Rating: {round(career_rating):,} ({delta:+d})")
     changes = []
     for key in ("strategy", "poker", "casino"):
         diff = int(round(float(career_ratings[key]) - globals().get("career_event_start_"+key, float(career_ratings[key]))))
@@ -1970,6 +1981,13 @@ def build_career_event_summary():
     if changes: lines.append("  |  ".join(changes))
     fans = career_fans - globals().get("career_event_start_fans", career_fans)
     lines.append(f"Fans: {career_fans:,} ({fans:+d})")
+    if globals().get("career_event_entry") and career_event_entry.get("activity_type") in (
+            CAREER_ACTIVITY_CASUAL_CARDS, CAREER_ACTIVITY_POKER_NIGHT,
+            CAREER_ACTIVITY_CASINO_NIGHT, CAREER_ACTIVITY_NICHE_NIGHT):
+        cash_change = int(career_cash - globals().get("career_event_start_cash", career_cash))
+        xp_change = max(0, int(player_xp - globals().get("career_event_start_xp", player_xp)))
+        sign = "+" if cash_change >= 0 else "-"
+        lines.append(f"Night cash: {sign}${abs(cash_change):,}  |  XP earned: +{xp_change:,}")
     career_event_summary_lines = lines
 
 
@@ -2238,10 +2256,16 @@ def auto_save_career():
     if current_profile_slot is None:
         return
 
-    save_profile(
+    saved = save_profile(
         build_profile_save_data(),
         current_profile_slot
     )
+    if saved is False:
+        career_hub_controls.show_message(
+            "Save file locked: progress kept in a recovery save. Close any other game instance.",
+            pygame.time.get_ticks(), duration=8000
+        )
+
 
 def advance_career_day(
         completed=True,
@@ -2332,6 +2356,31 @@ def advance_career_day(
     if save_after:
         auto_save_career()
 
+def start_career_activity(work=False):
+    global current_state
+    entry = career_current_schedule[career_day_of_month - 1]
+    if entry.get("career_activity", {}).get("kind") != "bigfoot":
+        entry["career_activity"] = start_night(career_bigfoot_story)
+    current_state = STATE_CAREER_ACTIVITY
+    auto_save_career()
+
+
+def handle_career_activity(action):
+    global current_state, career_cash
+    state = career_current_schedule[career_day_of_month - 1]["career_activity"]
+    if state["claimed"]:
+        if action == "continue":
+            advance_career_day(completed=True)
+            current_state = STATE_CAREER_HUB
+        return
+    if isinstance(action, tuple) and action[0] == "choice":
+        receipt = choose_option(career_bigfoot_story, state, action[1], career_cash)
+        if receipt is not None:
+            career_cash += receipt["cash"]
+            state["fan_change"] = award_career_fans(receipt["fans"], "Bigfoot Night") if receipt["fans"] else 0
+            auto_save_career()
+
+
 def complete_career_work_day():
     global career_cash
 
@@ -2346,6 +2395,11 @@ def complete_career_work_day():
         "pay",
         0
     )
+
+    # A pre-removal shift may already have paid out on this calendar entry.
+    legacy_shift = career_current_schedule[career_day_of_month - 1].get("career_activity", {})
+    if legacy_shift.get("kind") == "work" and legacy_shift.get("claimed"):
+        pay = 0
 
     career_cash += pay
 
@@ -2641,11 +2695,7 @@ def build_default_career_schedule():
         {"title": "Press Interview", "event_id": "press_interview_01"},
         {"title": "Sign Autographs", "event_id": "sign_autographs_01"},
         {"title": "Head-to-Head", "event_id": "head_to_head_01"},
-        random.choice([
-            {"title": "Press Interview", "event_id": "press_interview_01"},
-            {"title": "Sign Autographs", "event_id": "sign_autographs_01"},
-            {"title": "Head-to-Head", "event_id": "head_to_head_01"},
-        ]),
+        {"title": "Bigfoot Night", "event_id": "bigfoot_night"},
     ]
     random.shuffle(monthly_public_events)
 
@@ -3262,6 +3312,8 @@ blackjack_round_start_bet = 0
 free_play_achievement_fans_earned = 0
 
 # Press interview event runtime
+career_interview_recent_ids = []
+career_bigfoot_story = new_story()
 career_interview_questions = []
 career_interview_index = 0
 career_interview_media_heat = 0
@@ -4140,11 +4192,8 @@ floating_logo = pygame.image.load(
 ).convert_alpha()
 
 
-menu_background_surfaces = {}
-for asset_id, asset_data in MENU_BACKGROUNDS.items():
-    menu_background_surfaces[asset_id] = pygame.image.load(
-        asset_data["path"]
-    ).convert_alpha()
+background_catalog = CosmeticCatalog(MENU_BACKGROUNDS, "bg_default")
+menu_background_surfaces = background_catalog.surfaces
 
 avatar_base_options = [
     "base_01",
@@ -4234,7 +4283,7 @@ play_background_image = pygame.transform.smoothscale(
 # looking motion while processing substantially fewer pixels
 # than the old 4x path.
 
-menu_background_drift_surfaces = {}
+menu_background_drift_cache = SingleDriftCache()
 
 drift_width = (
     BASE_WIDTH
@@ -4245,23 +4294,6 @@ drift_height = (
     BASE_HEIGHT
     + MENU_DRIFT_MARGIN * 2
 )
-
-for asset_id, surface in (
-    menu_background_surfaces.items()
-):
-
-    menu_background_drift_surfaces[
-        asset_id
-    ] = pygame.transform.smoothscale(
-        surface,
-        (
-            drift_width
-            * MENU_DRIFT_SCALE,
-
-            drift_height
-            * MENU_DRIFT_SCALE
-        )
-    )
 
 menu_drift_render_surface = pygame.Surface(
     (
@@ -4278,18 +4310,12 @@ FELTS.update({
     "f_case_" + key: {"name": item["name"], "path": item["felt_path"]}
     for key, item in CASE_ITEMS.items() if item["kind"] == "cosmetic"
 })
-felt_surfaces = {}
-for asset_id, asset_data in FELTS.items():
-    felt_surfaces[asset_id] = pygame.image.load(
-        asset_data["path"]
-    ).convert_alpha()
+felt_catalog = CosmeticCatalog(FELTS, "f_default")
+felt_surfaces = felt_catalog.surfaces
 
 
-title_surfaces = {}
-for asset_id, asset_data in TITLES.items():
-    title_surfaces[asset_id] = pygame.image.load(
-        asset_data["path"]
-    ).convert_alpha()
+title_catalog = CosmeticCatalog(TITLES, "title_default")
+title_surfaces = title_catalog.surfaces
 
 # ==================================================
 # CUSTOM CURSORS
@@ -6354,8 +6380,8 @@ def draw_blackjack():
             game_surface.blit(tooltip, tooltip_rect)
 
 
-def grant_rating_cosmetics():
-    if current_game_mode in ("career", "head_to_head"):
+def grant_rating_cosmetics(force=False):
+    if force or current_game_mode in ("career", "head_to_head"):
         unlock_ratings(career_ratings, (MENU_BACKGROUNDS, FELTS, TITLES),
                        (unlocked_menu_backgrounds, unlocked_felts, unlocked_titles))
 
@@ -7231,6 +7257,7 @@ def start_texas_holdem_session(
     # Start poker session
     # ==================================================
 
+    texas_holdem_game.career_session_rated = current_game_mode == "career"
     texas_holdem_game.learning_store = globals().get("career_poker_learning") if current_game_mode == "career" else None
     texas_holdem_game.start_session(
         opponents,
@@ -7274,6 +7301,7 @@ def finish_texas_holdem_session():
         )
 
         texas_holdem_buy_in_active = False
+        track_night_cash(globals(), "texas_holdem", texas_holdem_session_net)
         rate_poker_cash_out("texas_holdem", texas_holdem_game)
 
     if (
@@ -7286,7 +7314,7 @@ def finish_texas_holdem_session():
     texas_holdem_hand_win_sound_at = 0
 
     if (
-            texas_holdem_game.current_stage != "ready"
+            len(getattr(texas_holdem_game, "rating_seen_hands", ())) > 0
             and not getattr(texas_holdem_game, "session_xp_rewarded", False)
     ):
         won_session = texas_holdem_session_net > 0
@@ -7453,6 +7481,7 @@ def start_five_card_draw_session(
 
     reset_five_card_draw_ui_session()
 
+    five_card_draw_game.career_session_rated = current_game_mode == "career"
     five_card_draw_game.learning_store = globals().get("career_poker_learning") if current_game_mode == "career" else None
     five_card_draw_game.start_session(
         opponents,
@@ -7502,6 +7531,7 @@ def finish_five_card_draw_session():
         )
 
         five_card_draw_buy_in_active = False
+        track_night_cash(globals(), "five_card_draw", five_card_draw_session_net)
         rate_poker_cash_out("five_card_draw", five_card_draw_game)
 
     if (
@@ -7518,7 +7548,7 @@ def finish_five_card_draw_session():
     five_card_draw_session_end_at = 0
 
     if (
-            five_card_draw_game.current_stage != "ready"
+            len(getattr(five_card_draw_game, "rating_seen_hands", ())) > 0
             and not getattr(five_card_draw_game, "session_xp_rewarded", False)
     ):
         won_session = five_card_draw_session_net > 0
@@ -7823,6 +7853,7 @@ def start_seven_card_stud_session(
 
     reset_seven_card_stud_ui_session()
 
+    seven_card_stud_game.career_session_rated = current_game_mode == "career"
     seven_card_stud_game.learning_store = globals().get("career_poker_learning") if current_game_mode == "career" else None
     seven_card_stud_game.start_session(
         opponents,
@@ -7870,6 +7901,7 @@ def finish_seven_card_stud_session():
         )
 
         seven_card_stud_buy_in_active = False
+        track_night_cash(globals(), "seven_card_stud", seven_card_stud_session_net)
         rate_poker_cash_out("seven_card_stud", seven_card_stud_game)
 
     if (
@@ -7886,7 +7918,7 @@ def finish_seven_card_stud_session():
     seven_card_stud_session_end_at = 0
 
     if (
-            seven_card_stud_game.current_stage != "ready"
+            len(getattr(seven_card_stud_game, "rating_seen_hands", ())) > 0
             and not getattr(seven_card_stud_game, "session_xp_rewarded", False)
     ):
         won_session = seven_card_stud_session_net > 0
@@ -8249,6 +8281,7 @@ def settle_roulette_round():
         bets=[dict(bet) for bet in roulette_game.bets],
     )
 
+    track_night_cash(globals(), "roulette", net_result)
     roulette_game.payout_claimed = True
 
 def settle_blackjack_round():
@@ -8331,6 +8364,7 @@ def settle_blackjack_round():
         starting_bet=blackjack_round_start_bet,
     )
 
+    track_night_cash(globals(), "blackjack", net_result)
     blackjack_game.payout_claimed = True
 
 def settle_horse_race_result():
@@ -8809,6 +8843,7 @@ def finish_horse_races_session():
             races=horse_races_game.races_completed,
             profitable_races=horse_races_game.races_with_profit,
         )
+        track_night_cash(globals(), "horse_races", horse_races_session_net)
         horse_races_game.reward_claimed = True
 
     if current_game_mode == "free":
@@ -8901,6 +8936,7 @@ def claim_faro_session_result():
         turns=faro_game.turns_dealt,
     )
 
+    track_night_cash(globals(), "faro", faro_session_net)
     faro_game.reward_claimed = True
     return faro_session_net
 
@@ -9039,6 +9075,7 @@ def finish_five_o_poker_session():
             hands_won=five_o_poker_game.hands_won,
             five_o_wins=five_o_poker_game.five_o_wins,
         )
+        track_night_cash(globals(), "five_o_poker", five_o_poker_session_net)
         five_o_poker_game.reward_claimed = True
 
     if current_game_mode == "free":
@@ -9161,6 +9198,7 @@ def finish_blind_mans_bluff_session():
             hands=blind_mans_bluff_game.hands_played,
             hands_won=blind_mans_bluff_game.hands_won,
         )
+        track_night_cash(globals(), "blind_mans_bluff", blind_mans_bluff_session_net)
         blind_mans_bluff_game.reward_claimed = True
 
     if current_game_mode == "free":
@@ -10002,6 +10040,9 @@ def build_profile_save_data():
     # Calendar / event history
     # ----------------------------
 
+    career_data["interview_recent_ids"] = list(career_interview_recent_ids)
+    career_data["bigfoot_story"] = copy.deepcopy(career_bigfoot_story)
+
     career_data[
         "completed_days"
     ] = list(
@@ -10573,7 +10614,15 @@ def apply_profile_save_data(
         requested_deal_mode = "random"
     game.set_deal_mode(requested_deal_mode)
 
+    global career_interview_recent_ids, career_bigfoot_story
+    career_bigfoot_story = normalize_story(data.get("career", {}).get("bigfoot_story"))
+    for entry in career_current_schedule:
+        if entry.get("event_id") == "career_encounter" and not entry.get("completed"):
+            entry.update(title="Bigfoot Night", event_id="bigfoot_night")
+    history = data.get("career", {}).get("interview_recent_ids", [])
+    career_interview_recent_ids = [value for value in history if isinstance(value, str)][-12:] if isinstance(history, list) else []
     sync_achievement_cosmetic_rewards()
+    grant_rating_cosmetics(force=True)
     sync_career_npc_runtime_state()
     sync_selected_cosmetics()
     apply_selected_cursor()
@@ -11583,7 +11632,21 @@ debug_xp_rect = pygame.Rect(
     45
 )
 
+def refresh_cosmetic_assets():
+    background_catalog.refresh()
+    title_catalog.refresh()
+    if felt_catalog.refresh():
+        sync_selected_cosmetics()
+
+
+def cosmetic_art_available(asset_id):
+    catalog = {CUSTOMIZE_BACKGROUNDS: background_catalog,
+               CUSTOMIZE_FELTS: felt_catalog, CUSTOMIZE_TITLES: title_catalog}.get(customize_category)
+    return catalog.available(asset_id) if catalog is not None else True
+
+
 def get_customize_data():
+    refresh_cosmetic_assets()
     if current_game_mode in ("career", "head_to_head") or current_profile_slot is not None:
         unlock_ratings(career_ratings, (MENU_BACKGROUNDS, FELTS, TITLES),
                        (unlocked_menu_backgrounds, unlocked_felts, unlocked_titles))
@@ -11661,6 +11724,10 @@ def equip_customize_item(asset_id):
     global selected_felt
     global selected_title
     global selected_cursor
+
+    refresh_cosmetic_assets()
+    if not cosmetic_art_available(asset_id):
+        return
 
     if customize_category == CUSTOMIZE_BACKGROUNDS:
         if asset_id not in unlocked_menu_backgrounds:
@@ -17078,7 +17145,7 @@ def draw_career_leaderboards():
 
         if change_text:
             change_surface = (
-                leaderboard_tiny_font.render(
+                pygame.font.Font(None, 24).render(
                     change_text,
                     True,
                     change_color
@@ -17089,7 +17156,7 @@ def draw_career_leaderboards():
                 change_surface,
                 (
                     rating_rect.right + 5,
-                    row_rect.y + 12
+                    row_rect.centery - change_surface.get_height() // 2
                 )
             )
 
@@ -17581,56 +17648,6 @@ def draw_career_news():
         "Return to Career"
     )
 
-PRESS_INTERVIEW_QUESTION_POOL = [
-    {
-        "question": "A reporter asks what separates you from the rest of the field.",
-        "answers": [
-            ("I prepare hard and try not to waste opportunities.", 18, 1.10),
-            ("Look at the rankings. That should answer it.", 6, 1.28),
-            ("Next question. I don't owe anyone an explanation.", -28, -0.75),
-        ],
-    },
-    {
-        "question": "They ask whether your recent success has changed you.",
-        "answers": [
-            ("I hope not. I'm still trying to improve.", 22, 1.12),
-            ("Absolutely. Winning is more fun when people notice.", 8, 1.20),
-            ("This interview is already getting annoying.", -30, -0.85),
-        ],
-    },
-    {
-        "question": "A rival says your current rating is inflated. Your response?",
-        "answers": [
-            ("We'll settle it at the table.", 20, 1.18),
-            ("They're welcome to keep talking while I keep winning.", 10, 1.32),
-            ("They're a joke. Print that exactly.", -18, 0.35),
-        ],
-    },
-    {
-        "question": "The interviewer asks what you think of your growing fanbase.",
-        "answers": [
-            ("It means a lot that people spend their time following this.", 28, 1.30),
-            ("I appreciate them, but I try not to think about numbers.", 18, 1.08),
-            ("Fans come and go. I play for myself.", -12, 0.35),
-        ],
-    },
-    {
-        "question": "They ask for one prediction about the rest of your season.",
-        "answers": [
-            ("More good matches, hopefully. Nothing is guaranteed.", 20, 1.08),
-            ("I'm coming for number one.", 12, 1.38),
-            ("Everyone else should probably give up now.", -10, 0.55),
-        ],
-    },
-    {
-        "question": "A camera catches you after a rough result. What do you say?",
-        "answers": [
-            ("Bad day. I'll learn from it and be back.", 24, 1.16),
-            ("Sometimes the cards are brutal. That's the game.", 12, 1.02),
-            ("The whole thing was ridiculous. I'm done talking.", -26, -0.65),
-        ],
-    },
-]
 
 
 def start_press_interview_event():
@@ -17640,10 +17657,9 @@ def start_press_interview_event():
     global career_interview_fan_change
     global career_interview_feedback
 
-    career_interview_questions = random.sample(
-        PRESS_INTERVIEW_QUESTION_POOL,
-        min(3, len(PRESS_INTERVIEW_QUESTION_POOL))
-    )
+    global career_interview_recent_ids
+    career_interview_questions = select_interview(career_interview_recent_ids)
+    career_interview_recent_ids = (career_interview_recent_ids + [q['id'] for q in career_interview_questions])[-12:]
     career_interview_index = 0
     career_interview_media_heat = 0
     career_interview_fan_change = 0
@@ -17679,19 +17695,9 @@ def handle_press_interview_answer(answer_index):
     if not (0 <= answer_index < len(answers)):
         return False
 
-    _label, heat_delta, appeal = answers[answer_index]
-    old_heat = career_interview_media_heat
-    career_interview_media_heat = max(
-        -100,
-        min(100, career_interview_media_heat + int(heat_delta))
+    career_interview_media_heat, proposed_change = answer_outcome(
+        career_interview_media_heat, answers[answer_index], career_rating, career_fans
     )
-
-    popularity_scale = max(
-        90,
-        int(120 + career_rating * 0.18 + math.sqrt(max(0, career_fans)) * 2.2)
-    )
-    heat_scale = 1.0 + max(-0.35, min(0.45, old_heat / 180.0))
-    proposed_change = int(round(popularity_scale * float(appeal) * heat_scale))
     actual_change = award_career_fans(
         proposed_change,
         "Press interview"
@@ -18171,7 +18177,7 @@ def draw_career_event():
     game_surface.blit(title, title.get_rect(center=(BASE_WIDTH // 2, 150)))
 
     progress = difficulty_detail_font.render(
-        f"Question {min(career_interview_index + 1, 3)} of 3",
+        f"Question {min(career_interview_index + 1, len(career_interview_questions))} of {len(career_interview_questions)}",
         True,
         (205, 210, 215)
     )
@@ -20320,10 +20326,9 @@ def draw_splash_screen():
 
 def draw_drifting_menu_background():
 
-    background = (
-        menu_background_drift_surfaces[
-            selected_menu_background
-        ]
+    background = menu_background_drift_cache.get(
+        selected_menu_background, menu_background_surfaces[selected_menu_background],
+        (drift_width * MENU_DRIFT_SCALE, drift_height * MENU_DRIFT_SCALE)
     )
 
     time_sec = (
@@ -21157,9 +21162,7 @@ def draw_customize_menu():
         selected_id
     ) = get_customize_data()
 
-    asset_ids = list(
-        asset_data.keys()
-    )
+    asset_ids = get_customize_asset_ids()
 
     start_index = (
         customize_page
@@ -21248,7 +21251,7 @@ def draw_customize_menu():
         # Unlocked preview
         # ------------------------
 
-        if unlocked:
+        if unlocked and cosmetic_art_available(asset_id):
             source_surface = (
                 surface_data[
                     asset_id
@@ -21304,7 +21307,7 @@ def draw_customize_menu():
 
             locked_text = (
                 option_value_font.render(
-                    "LOCKED",
+                    "ARTWORK UNAVAILABLE" if unlocked else "LOCKED",
                     True,
                     (
                         160,
@@ -21325,7 +21328,7 @@ def draw_customize_menu():
                 locked_rect
             )
             kind = {CUSTOMIZE_BACKGROUNDS: "backgrounds", CUSTOMIZE_FELTS: "felts", CUSTOMIZE_TITLES: "titles"}.get(customize_category, "cursors")
-            requirement = lock_reason(asset_id, data, kind, LEVEL_UNLOCKS, ACHIEVEMENT_DEFINITIONS)
+            requirement = os.path.basename(data.get("path", "")) if unlocked else lock_reason(asset_id, data, kind, LEVEL_UNLOCKS, ACHIEVEMENT_DEFINITIONS)
             reason_font = pygame.font.Font(None, 23)
             words, rows = requirement.split(), [""]
             for word in words:
@@ -21334,6 +21337,13 @@ def draw_customize_menu():
                     rows.append(word)
                 else:
                     rows[-1] = trial
+            progress_text = "Add or re-save this PNG" if unlocked else rating_lock_progress(data, career_ratings)
+            if progress_text:
+                rows.append(progress_text)
+            # Centre the full lock explanation inside its preview area.
+            locked_rect.centery = lock_rect.centery - max(0, len(rows)-1)*11
+            pygame.draw.rect(game_surface, (75, 75, 75), lock_rect)
+            game_surface.blit(locked_text, locked_rect)
             for row_index, row in enumerate(rows):
                 label = reason_font.render(row, True, (230, 230, 230))
                 game_surface.blit(label, label.get_rect(midtop=(lock_rect.centerx, locked_rect.bottom + 8 + 22 * row_index)))
@@ -23092,6 +23102,16 @@ while running:
         # CAREER HUB
         # ==========================================
 
+        elif current_state == STATE_CAREER_ACTIVITY:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                action = career_activity_screen.click(game_mouse_pos)
+                if action is not None:
+                    audio.play_sound("button_click")
+                    handle_career_activity(action)
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                auto_save_career()
+                current_state = STATE_CAREER_HUB
+
         elif current_state == STATE_CAREER_HUB:
 
             if (
@@ -23287,15 +23307,7 @@ while running:
 
                         ):
 
-                            pay = (
-                                complete_career_work_day()
-                            )
-
-                            print(
-                                "Career work complete:",
-                                get_career_job_name(),
-                                f"+${pay}"
-                            )
+                            complete_career_work_day()
 
                         # ----------------------------
                         # Random event
@@ -23319,9 +23331,10 @@ while running:
                             elif event_id == "head_to_head_01":
                                 start_head_to_head_event()
 
-                            current_state = (
-                                STATE_CAREER_EVENT
-                            )
+                            if event_id in ("career_encounter", "bigfoot_night"):
+                                start_career_activity(work=False)
+                            else:
+                                current_state = STATE_CAREER_EVENT
 
                 elif career_jobs_rect.collidepoint(
                         game_mouse_pos
@@ -26001,7 +26014,8 @@ while running:
                             index
                         )
 
-                        play_control_sound(audio, "select")
+                        if not score_four_game.round_complete:
+                            play_control_sound(audio, "select")
                         clicked_number = True
                         break
 
@@ -28456,6 +28470,12 @@ while running:
 
         draw_free_play_select()
 
+
+    elif current_state == STATE_CAREER_ACTIVITY:
+        draw_submenu_background(overlay_alpha=100)
+        career_activity_screen.draw(game_surface,
+            career_current_schedule[career_day_of_month - 1]["career_activity"],
+            game_mouse_pos, career_cash, career_bigfoot_story)
 
     elif current_state == STATE_CAREER_HUB:
 

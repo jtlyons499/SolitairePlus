@@ -17,6 +17,7 @@ from career_ratings import (GAME_RATING_KEYS, GAME_CATEGORIES, CATEGORY_KEYS, RA
 from career_rating_events import (record_poker_showdown, record_result,
                                  settle_competitive_result, settle_house_result,
                                  settle_poker_session)
+from career_session_summary import track_night_cash
 from texas_holdem import TexasHoldemGame
 from five_card_draw import FiveCardDrawGame
 from seven_card_stud import SevenCardStudGame
@@ -30,7 +31,7 @@ def main_functions(*names, **values):
     """Execute actual orchestration functions without launching the asset UI."""
     nodes = [node for node in MAIN_TREE.body if isinstance(node, ast.FunctionDef) and node.name in names]
     assert len(nodes) == len(names)
-    namespace = dict(grant_rating_cosmetics=lambda: None, current_game_mode="career", career_rating=1000,
+    namespace = dict(track_night_cash=track_night_cash, grant_rating_cosmetics=lambda: None, current_game_mode="career", career_rating=1000,
                      career_ratings=make_player_rating_bundle(), career_rating_results={},
                      career_leaderboard_state={}, GAME_RATING_KEYS=GAME_RATING_KEYS,
                      apply_rating_change=apply_rating_change, settle_house_result=settle_house_result,

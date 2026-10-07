@@ -1,3 +1,4 @@
+from career_activities import normalize_story
 """Career-world regression tests; run from the project root with unittest."""
 import ast
 import copy
@@ -261,6 +262,7 @@ class MainIntegrationTests(unittest.TestCase):
         profile = profiles.make_default_profile()
         profile["profile_version"] = 6
         profile["settings"]["score_four_layout"] = "wide"
+        profile["career"]["interview_recent_ids"] = ["learning", "future"]
         profile["identity"].update(country="CAN", age=37, hometown="Ottawa",
                                     bio="A patient card player.", favorite_suit="Hearts")
         npc = npc_manager.BASE_NPCS[0]
@@ -272,13 +274,14 @@ class MainIntegrationTests(unittest.TestCase):
         game.set_deal_mode = lambda mode: setattr(game, "deal_mode", mode)
         env = main_functions(("apply_profile_save_data", "build_profile_save_data",
                               "sync_career_npc_runtime_state"), dict(
-            copy=copy, game=game, score_four_game=SimpleNamespace(layout="compact"), store_event_progress=store_event_progress, make_default_profile=profiles.make_default_profile,
+            copy=copy, normalize_story=normalize_story, game=game, score_four_game=SimpleNamespace(layout="compact"), store_event_progress=store_event_progress, make_default_profile=profiles.make_default_profile,
             avatar_bases=["base_01"], avatar_eyes=["eyes_01"], avatar_hair=["hair_01"],
             avatar_tops=["top_01"], avatar_glasses=[], favorite_suit_options=["Hearts"],
             cursor_runtime_surfaces={"cursor": None}, VERIFIED_DEALS_ENABLED=False,
             clamp_fans=clamp_fans, normalize_rating_bundle=normalize_rating_bundle,
             normalize_achievement_state=normalize_achievement_state,
             get_next_level_xp=lambda level: 100, sync_achievement_cosmetic_rewards=lambda: None,
+            grant_rating_cosmetics=lambda **kwargs: None,
             sync_selected_cosmetics=lambda: None, apply_selected_cursor=lambda: None,
             BASE_NPCS=npc_manager.BASE_NPCS, ensure_career_world=ensure_career_world,
             sync_npc_runtime_state=npc_manager.sync_npc_runtime_state))
@@ -288,6 +291,7 @@ class MainIntegrationTests(unittest.TestCase):
         self.assertEqual(env["score_four_game"].layout, "wide")
         saved = env["build_profile_save_data"]()
         self.assertEqual(saved["settings"]["score_four_layout"], "wide")
+        self.assertEqual(saved["career"]["interview_recent_ids"], ["learning", "future"])
         self.assertEqual(saved["cryptid_creatures"], env["cryptid_collection_state"])
         self.assertEqual(saved["profile_version"], profiles.PROFILE_VERSION)
         self.assertEqual(saved["career"]["cash"], 23549)
