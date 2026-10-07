@@ -1,4 +1,4 @@
-from career_activities import normalize_story
+from career_activities import normalize_story, reconcile_story_cosmetics
 """Career-world regression tests; run from the project root with unittest."""
 import ast
 import copy
@@ -274,7 +274,7 @@ class MainIntegrationTests(unittest.TestCase):
         game.set_deal_mode = lambda mode: setattr(game, "deal_mode", mode)
         env = main_functions(("apply_profile_save_data", "build_profile_save_data",
                               "sync_career_npc_runtime_state"), dict(
-            copy=copy, normalize_story=normalize_story, game=game, score_four_game=SimpleNamespace(layout="compact"), store_event_progress=store_event_progress, make_default_profile=profiles.make_default_profile,
+            copy=copy, normalize_story=normalize_story, reconcile_story_cosmetics=reconcile_story_cosmetics, game=game, score_four_game=SimpleNamespace(layout="compact"), store_event_progress=store_event_progress, make_default_profile=profiles.make_default_profile,
             avatar_bases=["base_01"], avatar_eyes=["eyes_01"], avatar_hair=["hair_01"],
             avatar_tops=["top_01"], avatar_glasses=[], favorite_suit_options=["Hearts"],
             cursor_runtime_surfaces={"cursor": None}, VERIFIED_DEALS_ENABLED=False,

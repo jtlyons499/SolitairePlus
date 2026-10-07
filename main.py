@@ -1,4 +1,4 @@
-from career_activities import new_story, normalize_story, start_night, choose_option
+from career_activities import new_story, normalize_story, start_night, choose_option, reconcile_story_cosmetics
 from career_activities_ui import CareerActivityScreen
 from cosmetic_assets import CosmeticCatalog, SingleDriftCache
 from press_interview import PRESS_INTERVIEW_QUESTION_POOL, select_interview, answer_outcome
@@ -2359,7 +2359,7 @@ def advance_career_day(
 def start_career_activity(work=False):
     global current_state
     entry = career_current_schedule[career_day_of_month - 1]
-    if entry.get("career_activity", {}).get("kind") != "bigfoot":
+    if entry.get("career_activity", {}).get("kind") != "bigfoot" or (entry["career_activity"].get("version") != 2 and not entry["career_activity"].get("claimed")):
         entry["career_activity"] = start_night(career_bigfoot_story)
     current_state = STATE_CAREER_ACTIVITY
     auto_save_career()
@@ -2378,6 +2378,7 @@ def handle_career_activity(action):
         if receipt is not None:
             career_cash += receipt["cash"]
             state["fan_change"] = award_career_fans(receipt["fans"], "Bigfoot Night") if receipt["fans"] else 0
+            reconcile_story_cosmetics(career_bigfoot_story, unlocked_menu_backgrounds, unlocked_felts, unlocked_titles)
             auto_save_career()
 
 
@@ -10621,6 +10622,7 @@ def apply_profile_save_data(
             entry.update(title="Bigfoot Night", event_id="bigfoot_night")
     history = data.get("career", {}).get("interview_recent_ids", [])
     career_interview_recent_ids = [value for value in history if isinstance(value, str)][-12:] if isinstance(history, list) else []
+    reconcile_story_cosmetics(career_bigfoot_story, unlocked_menu_backgrounds, unlocked_felts, unlocked_titles)
     sync_achievement_cosmetic_rewards()
     grant_rating_cosmetics(force=True)
     sync_career_npc_runtime_state()

@@ -1,82 +1,127 @@
-"""Bigfoot Night: persistent route map, recap and manually authored choices."""
+"""Readable story pages, choices and map for Bigfoot Night."""
 from pathlib import Path
 import pygame
+from career_activities import STORY, requirement_reason
 
 MAP_PATH = 'assets/events/bigfoot_night/map.png'
-POINTS = {'Camp': (280, 520), 'Forest': (465, 345), 'Clearing': (270, 205)}
 
 class CareerActivityScreen:
     def __init__(self):
         self.buttons = []
         self.map_image = None
         self.map_signature = None
+        self.view = 'intro'
+        self.page = 0
+        self.identity = None
 
-    def text(self, surface, text, x, y, width, size=28, colour=(242, 244, 232)):
+    def lines(self, text, width, size):
         font = pygame.font.Font(None, size)
-        lines, line = [], ''
-        for word in text.split():
-            trial = (line+' '+word).strip()
-            if line and font.size(trial)[0] > width:
-                lines.append(line); line=word
-            else: line=trial
-        lines.append(line)
-        for line in lines:
-            surface.blit(font.render(line, True, colour), (x,y))
-            y += font.get_linesize()+4
+        lines = []
+        for paragraph in text.split('\n'):
+            line = ''
+            for word in paragraph.split():
+                trial = (line+' '+word).strip()
+                if line and font.size(trial)[0] > width:
+                    lines.append(line);line=word
+                else:line=trial
+            lines.append(line)
+        return lines
+
+    def text(self, surface, text, x, y, width, size=28, colour=(242,244,232)):
+        font=pygame.font.Font(None,size)
+        for line in self.lines(text,width,size):
+            surface.blit(font.render(line,True,colour),(x,y))
+            y+=font.get_linesize()+4
         return y
 
-    def button(self, surface, rect, label, action, mouse, enabled=True):
-        rect=pygame.Rect(rect)
-        hover=mouse is not None and rect.collidepoint(mouse)
-        pygame.draw.rect(surface, (50,85,68) if enabled else (45,49,46),rect,border_radius=12)
+    def button(self, surface, rect, label, action, mouse, enabled=True, detail=''):
+        rect=pygame.Rect(rect);hover=mouse is not None and rect.collidepoint(mouse)
+        pygame.draw.rect(surface,(50,85,68) if enabled else (40,47,43),rect,border_radius=12)
         pygame.draw.rect(surface,(218,202,129) if hover and enabled else (103,135,112),rect,2,border_radius=12)
-        self.text(surface,label,rect.x+14,rect.y+12,rect.width-28,26,(245,244,224) if enabled else (155,155,150))
+        self.text(surface,label,rect.x+14,rect.y+12,rect.width-28,26,(245,244,224) if enabled else (155,165,155))
+        if detail:
+            self.text(surface,detail,rect.x+14,rect.bottom-29,rect.width-28,21,(222,205,140) if enabled else (165,165,155))
         self.buttons.append((rect,action,enabled))
 
     def load_map(self):
         path=Path(MAP_PATH)
         try:
             stat=path.stat();signature=(stat.st_mtime_ns,stat.st_size)
-        except OSError: signature=None
+        except OSError:signature=None
         if signature!=self.map_signature:
             self.map_signature=signature;self.map_image=None
             if signature:
-                try:self.map_image=pygame.transform.smoothscale(pygame.image.load(str(path)),(530,470))
+                try:
+                    image=pygame.image.load(str(path))
+                    # Fit artwork without distorting its original proportions.
+                    ratio=min(530/image.get_width(),440/image.get_height())
+                    self.map_image=pygame.transform.smoothscale(image,(round(image.get_width()*ratio),round(image.get_height()*ratio)))
                 except (OSError,pygame.error):pass
 
-    def draw(self, surface, state, mouse, cash, story=None):
-        self.buttons=[];story=story or {'location':'Camp','shoes':False,'clues':0,'last_result':''}
-        panel=pygame.Rect(60,35,1246,690)
-        pygame.draw.rect(surface,(15,29,24),panel,border_radius=20)
-        pygame.draw.rect(surface,(108,140,110),panel,2,border_radius=20)
-        self.text(surface,f"BIGFOOT NIGHT — NIGHT {state['night']}",90,60,1100,44)
+    def draw_map(self,surface,story):
+        rect=pygame.Rect(85,160,530,440)
+        pygame.draw.rect(surface,(29,54,38),rect,border_radius=16)
         self.load_map()
-        map_rect=pygame.Rect(85,155,530,470)
-        if self.map_image:surface.blit(self.map_image,map_rect)
+        if self.map_image:surface.blit(self.map_image,self.map_image.get_rect(center=rect.center))
+        points={name:(round(rect.x+xy[0]*rect.width),round(rect.y+xy[1]*rect.height)) for name,xy in STORY['locations'].items()}
+        pygame.draw.lines(surface,(135,131,95),False,list(points.values()),4)
+        for name,point in points.items():
+            current=story['location']==name;visited=name in story['visited_locations']
+            pygame.draw.circle(surface,(255,216,95) if current else (145,181,132) if visited else (68,94,72),point,14 if current else 9)
+            label=pygame.font.Font(None,23).render(name,True,(255,239,180) if current else (209,221,202))
+            caption=label.get_rect(midtop=(point[0],point[1]+16));caption.clamp_ip(rect)
+            surface.blit(label,caption)
+        self.text(surface,'Items',90,618,520,26,(222,205,140))
+        inventory=', '.join(STORY['items'][key] for key in story['items']) or 'None yet'
+        self.text(surface,inventory,90,649,520,25)
+        attitude={'trusted':'Trusted','distrustful':'Distrusted','clout_chaser':'Clout chaser'}.get(story['flags'].get('attitude'),'Unknown')
+        self.text(surface,'Bigfoot’s impression: '+attitude,90,705,520,24)
+
+    def draw(self,surface,state,mouse,cash,story):
+        identity=(id(state),state.get('scene'),state['night'],state['claimed'])
+        if identity!=self.identity:
+            self.identity=identity;self.view='result' if state['claimed'] else 'intro';self.page=0
+        self.buttons=[]
+        pygame.draw.rect(surface,(15,29,24),(60,35,1246,705),border_radius=20)
+        pygame.draw.rect(surface,(108,140,110),(60,35,1246,705),2,border_radius=20)
+        self.text(surface,f"BIGFOOT NIGHT  •  INVESTIGATION DAY {state['night']}",90,60,1150,40)
+        title=STORY['scenes'].get(state.get('scene'),{}).get('title','INVESTIGATION COMPLETE')
+        self.text(surface,title,655,115,605,29,(222,205,140))
+        self.draw_map(surface,story)
+        if self.view in ('intro','result'):
+            body=state.get('result_text','') if state['claimed'] else state['intro']
+            lines=self.lines(body,605,30);per_page=13;count=max(1,(len(lines)+per_page-1)//per_page)
+            self.page=min(self.page,count-1)
+            font=pygame.font.Font(None,30)
+            for i,line in enumerate(lines[self.page*per_page:(self.page+1)*per_page]):
+                surface.blit(font.render(line,True,(242,244,232)),(655,165+i*(font.get_linesize()+4)))
+            if count>1:
+                self.button(surface,(655,564,180,45),'Previous',('page',-1),mouse,self.page>0)
+                self.text(surface,f'{self.page+1}/{count}',935,575,100,25)
+                self.button(surface,(1080,564,180,45),'Next page',('page',1),mouse,self.page<count-1)
+            if state['claimed'] and state.get('stage')!='complete':
+                labels=[f"Cash: ${state['cash_change']:+,}",f"Fans: {state['fan_change']:+,}"]
+                cosmetics=[STORY['cosmetics'][key]['name']+' '+STORY['cosmetics'][key]['kind'].rstrip('s') for key in state.get('earned_cosmetics',[])]
+                if cosmetics:labels.append('Unlocked: '+', '.join(cosmetics))
+                self.text(surface,'  |  '.join(labels),655,615,605,25,(248,223,129))
+            label='Continue to calendar' if state['claimed'] else 'Choose your action'
+            self.button(surface,(655,674,605,48),label,'continue' if state['claimed'] else 'choices',mouse)
         else:
-            pygame.draw.rect(surface,(29,54,38),map_rect,border_radius=16)
-            pygame.draw.lines(surface,(135,131,95),False,[POINTS[x] for x in ('Camp','Forest','Clearing')],5)
-        for location,point in POINTS.items():
-            current=story['location']==location
-            pygame.draw.circle(surface,(255,216,95) if current else (130,162,118),point,15 if current else 10)
-            self.text(surface,location,point[0]+22,point[1]-12,140,28)
-        self.text(surface,f"Location: {story['location']}  |  Clues: {story['clues']}",90,643,520,27)
-        self.text(surface,'Gear: Sasquatch Shoes' if story['shoes'] else 'Gear: Everyday shoes',90,680,520,26)
-        x,y,width=655,140,605
-        if state['claimed']:
-            y=self.text(surface,state['result_text'],x,y,width,31)
-            self.text(surface,f"Fans: {state['fan_change']:+d}   |   Cash: ${state['cash_change']:+d}",x,max(y+25,360),width,32,(248,223,129))
-            self.button(surface,(655,595,605,65),'Continue to calendar','continue',mouse)
-        else:
-            y=self.text(surface,state['intro'],x,y,width,28)
-            # Keep every authored choice visible; use compact four-choice layout.
-            count=len(state['options']);top=max(325,min(y+20,365 if count==4 else 390))
-            height=67 if count==4 else 88;gap=9
             for i,choice in enumerate(state['options']):
-                extra=' • Unlocks Sasquatch Shoes' if choice['changes'].get('shoes') else ''
-                label=f"{choice['name']}\n".replace('\n',' ') + f"({choice['fans']:+d} fans, ${choice['cash']:+d})"+extra
-                self.button(surface,(655,top+i*(height+gap),605,height),label,('choice',i),mouse,cash+choice['cash']>=0)
+                reason=requirement_reason(story,choice,cash)
+                effects=choice['effects'];details=[]
+                if effects['cash']:details.append(f"${effects['cash']:+,}")
+                if effects['fans']:details.append(f"{effects['fans']:+,} fans")
+                details += [STORY['items'][key] for key in effects['items']]
+                details += ['Unlock: '+STORY['cosmetics'][key]['name'] for key in effects['cosmetics']]
+                self.button(surface,(655,163+i*123,605,113),choice['text'],('choice',i),mouse,not reason,reason or ' • '.join(details))
+            self.button(surface,(655,674,605,48),'Read scene again','intro',mouse)
 
     def click(self,pos):
         if pos is None:return None
-        return next((action for rect,action,enabled in self.buttons if enabled and rect.collidepoint(pos)),None)
+        action=next((action for rect,action,enabled in self.buttons if enabled and rect.collidepoint(pos)),None)
+        if action in ('choices','intro'):
+            self.view=action;self.page=0;return action
+        if isinstance(action,tuple) and action[0]=='page':
+            self.page=max(0,self.page+action[1]);return action
+        return action

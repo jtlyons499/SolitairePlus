@@ -1,0 +1,496 @@
+{
+  "version": 2,
+  "start": "hq_start",
+  "items": {
+    "lucky_dart": "Lucky Dart",
+    "sasquatch_sandals": "Sasquatch Sandals",
+    "mg42": "MG 42"
+  },
+  "locations": {
+    "Headquarters": [
+      0.2,
+      0.82
+    ],
+    "Camp": [
+      0.68,
+      0.69
+    ],
+    "Mean Yeti Mountain": [
+      0.29,
+      0.48
+    ],
+    "Mountain Campsite": [
+      0.72,
+      0.3
+    ],
+    "Bigfoot’s Ladder": [
+      0.26,
+      0.1
+    ]
+  },
+  "cosmetics": {
+    "title_wendigo": {
+      "name": "Wendigo",
+      "kind": "titles",
+      "path": "assets/ui/menu_ui/titles/title_wendigo.png",
+      "unlock_description": "Defeat the Wendigo using the MG 42",
+      "order": 4000
+    },
+    "bg_wendigo": {
+      "name": "Wendigo",
+      "kind": "backgrounds",
+      "path": "assets/ui/menu_ui/backgrounds/bg_wendigo.png",
+      "unlock_description": "Defeat the Wendigo using Sasquatch Sandals",
+      "order": 4001
+    },
+    "f_wendigo": {
+      "name": "Wendigo",
+      "kind": "felts",
+      "path": "assets/ui/menu_ui/felts/f_wendigo.png",
+      "unlock_description": "Defeat the Wendigo using Lucky Dart",
+      "order": 4002
+    },
+    "bg_the_reverent": {
+      "name": "The Reverent",
+      "kind": "backgrounds",
+      "path": "assets/ui/menu_ui/backgrounds/bg_the_reverent.png",
+      "unlock_description": "Finish Bigfoot Night with The Reverent ending",
+      "order": 4003
+    },
+    "bg_inner_circle": {
+      "name": "Inner Circle",
+      "kind": "backgrounds",
+      "path": "assets/ui/menu_ui/backgrounds/bg_inner_circle.png",
+      "unlock_description": "Finish Bigfoot Night with the Inner Circle ending",
+      "order": 4004
+    },
+    "bg_cast_out": {
+      "name": "Cast Out",
+      "kind": "backgrounds",
+      "path": "assets/ui/menu_ui/backgrounds/bg_cast_out.png",
+      "unlock_description": "Finish Bigfoot Night with the Cast Out ending",
+      "order": 4005
+    }
+  },
+  "scenes": {
+    "hq_start": {
+      "title": "CHAPTER 1 — HEADQUARTERS",
+      "location": "Headquarters",
+      "intro": "As a Bigfoot enthusiast, you are excited to have finally joined a group of like-minded individuals and begun your journey toward finding Bigfoot and unlocking its powers. The headquarters is a little musty, some smoke hangs in the air, and idle chatter and laughter abound.",
+      "options": [
+        {
+          "id": "hq_start_1",
+          "text": "Have some mead with your fellow investigators and gamble.",
+          "requires": {},
+          "effects": {
+            "cash": 50,
+            "fans": 0,
+            "items": [
+              "lucky_dart"
+            ],
+            "flags": {},
+            "cosmetics": []
+          },
+          "result": "You enjoy a buzz while making money playing darts. You’ll head out another time.",
+          "next": "hq_social"
+        },
+        {
+          "id": "hq_start_2",
+          "text": "Ask around about the most expensive footing gear, then buy some.",
+          "requires": {},
+          "effects": {
+            "cash": -50,
+            "fans": 0,
+            "items": [
+              "sasquatch_sandals"
+            ],
+            "flags": {},
+            "cosmetics": []
+          },
+          "result": "You now have the coolest footing apparel and feel very prepared to go out next time.",
+          "next": "hq_sandals"
+        },
+        {
+          "id": "hq_start_3",
+          "text": "Head right out on your first Bigfoot excursion with the gang.",
+          "requires": {},
+          "effects": {
+            "cash": 0,
+            "fans": 0,
+            "items": [],
+            "flags": {},
+            "cosmetics": []
+          },
+          "result": "A few hours into the night, your group runs out of beer and begins to head home. However, as you’re walking back, you hear a twig snap. You all set up your tents and anxiously pass the night…",
+          "next": "camp_arrival"
+        }
+      ]
+    },
+    "hq_social": {
+      "title": "HEADQUARTERS, AFTER SOCIALIZING",
+      "location": "Headquarters",
+      "intro": "The last night at Bigfoot Society Headquarters was a great time, but you still haven’t gotten your feet wet with a real adventure. Perhaps tonight’s the night…",
+      "options": [
+        {
+          "id": "hq_social_1",
+          "text": "Head right out on your first Bigfoot excursion with the gang.",
+          "requires": {},
+          "effects": {
+            "cash": 0,
+            "fans": 0,
+            "items": [],
+            "flags": {},
+            "cosmetics": []
+          },
+          "result": "A few hours into the night, your group runs out of beer and begins to head home. However, as you’re walking back, you hear a twig snap. You all set up your tents and anxiously pass the night…",
+          "next": "camp_arrival"
+        }
+      ]
+    },
+    "hq_sandals": {
+      "title": "HEADQUARTERS, WITH SANDALS",
+      "location": "Headquarters",
+      "intro": "Your Sasquatch Sandals are ready for their debut. The other investigators are gathering their supplies, and you still need somewhere to sleep.",
+      "options": [
+        {
+          "id": "hq_sandals_1",
+          "text": "Pick out a tent and head out with the gang.",
+          "requires": {},
+          "effects": {
+            "cash": 0,
+            "fans": 0,
+            "items": [],
+            "flags": {},
+            "cosmetics": []
+          },
+          "result": "With the coolest footing apparel and a tent picked out, you feel prepared for your first outing. A few hours into the night, your group runs out of beer and begins to head home. However, as you’re walking back, you hear a twig snap. You all set up your tents and anxiously pass the night…",
+          "next": "camp_arrival"
+        }
+      ]
+    },
+    "camp_arrival": {
+      "title": "CHAPTER 2 — CAMP ARRIVAL",
+      "location": "Camp",
+      "intro": "The sunrise illuminates your orange tent just as you emerge from it. You and the others discuss what to do next.",
+      "options": [
+        {
+          "id": "camp_arrival_1",
+          "text": "Set up cameras, tree blinds, and net traps to try apprehending Bigfoot.",
+          "requires": {},
+          "effects": {
+            "cash": 0,
+            "fans": 500,
+            "items": [],
+            "flags": {
+              "cameras_installed": true
+            },
+            "cosmetics": []
+          },
+          "result": "You share the camera feeds live on bigfoot-society.big/foot and see viewers pour in fast. With the equipment ready, you settle in and wait for nightfall.",
+          "next": "camp_chaos"
+        },
+        {
+          "id": "camp_arrival_2",
+          "text": "Buy a self-defense tool from a fellow Footer.",
+          "requires": {},
+          "effects": {
+            "cash": -50,
+            "fans": 0,
+            "items": [
+              "mg42"
+            ],
+            "flags": {},
+            "cosmetics": []
+          },
+          "result": "You purchase a recoil-operated, air-cooled light machine gun for $50 from your associate, Bert. You load some ammo belts and climb into your foxhole for the night.",
+          "next": "camp_chaos"
+        }
+      ]
+    },
+    "camp_chaos": {
+      "title": "CHAPTER 3 — CAMP CHAOS",
+      "location": "Camp",
+      "intro": "Under the intense moonlight, you can clearly see the fear in your companions’ eyes. The tension in the air cracks as a roar echoes between the leaves and branches. It’s time to act.",
+      "options": [
+        {
+          "id": "camp_chaos_1",
+          "text": "Move like Hermes with your fancy sandals and fall back to the fortified line of Bigfoot defense.",
+          "requires": {
+            "items": [
+              "sasquatch_sandals"
+            ]
+          },
+          "effects": {
+            "cash": 0,
+            "fans": 0,
+            "items": [],
+            "flags": {},
+            "cosmetics": []
+          },
+          "result": "Your breathing is rapid as you step over empty beer cans and cigarette butts. You brace for what might come next. Eventually, the forest quiets, and you settle in to rest. Tomorrow, you’ll track whatever left those footprints…",
+          "next": "mountain"
+        },
+        {
+          "id": "camp_chaos_2",
+          "text": "Fire wildly into the night.",
+          "requires": {
+            "items": [
+              "mg42"
+            ]
+          },
+          "effects": {
+            "cash": 0,
+            "fans": 0,
+            "items": [],
+            "flags": {
+              "attitude": "distrustful"
+            },
+            "cosmetics": []
+          },
+          "result": "The barrel of your machine gun emits flashes of light. In those split moments, you see a giant creature in a sort of half-jog, half-walk. You hear it release an unsettling yawp as it scatters. You’ll have to try tracking it in the daylight…",
+          "next": "mountain"
+        },
+        {
+          "id": "camp_chaos_3",
+          "text": "Reach for your phone and try to capture evidence.",
+          "requires": {},
+          "effects": {
+            "cash": 0,
+            "fans": 0,
+            "items": [],
+            "flags": {
+              "attitude": "clout_chaser"
+            },
+            "cosmetics": []
+          },
+          "result": "Your old smartphone fails to launch the camera app quickly, and you look up to see a real live Bigfoot, right in front of you. It gives you a stern look of disappointment, then runs off into the woods. You’ll have to sleep and try following the tracks tomorrow…",
+          "next": "mountain"
+        },
+        {
+          "id": "camp_chaos_4",
+          "text": "Crouch down, close your eyes, and listen.",
+          "requires": {},
+          "effects": {
+            "cash": 0,
+            "fans": 0,
+            "items": [],
+            "flags": {
+              "attitude": "trusted"
+            },
+            "cosmetics": []
+          },
+          "result": "In the darkness, all the commotion quiets down, and you hear a deep but faint voice. ‘Why do you seek me so tirelessly? Follow me, if you insist, but you must come with an open mind.’ You drift off to sleep, ready to track Bigfoot further tomorrow.",
+          "next": "mountain"
+        }
+      ]
+    },
+    "mountain": {
+      "title": "CHAPTER 4 — MEAN YETI MOUNTAIN",
+      "location": "Mean Yeti Mountain",
+      "intro": "The Bigfoot Society’s best are now further out than they’ve ever been, following the footprints left last night to a mountain. The sky is clear, and it’s a cool, crisp day. You can make out most of the giant formation before clouds obscure the tallest peaks.",
+      "options": [
+        {
+          "id": "mountain_1",
+          "text": "Lead the group and look for points of interest.",
+          "requires": {
+            "items": [
+              "sasquatch_sandals"
+            ]
+          },
+          "effects": {
+            "cash": 500,
+            "fans": 0,
+            "items": [],
+            "flags": {},
+            "cosmetics": []
+          },
+          "result": "With your powerful sandals, you scout out the trail and lead everyone up the mountain. You stumble upon a campsite, with torn magazine pages strewn about the place. It seems to have been abandoned for decades… so obviously the loot is yours. You find $500 among the abandoned belongings and set up camp there.",
+          "next": "mountain_campsite"
+        },
+        {
+          "id": "mountain_2",
+          "text": "Listen for another sign.",
+          "requires": {
+            "attitude": [
+              "trusted"
+            ]
+          },
+          "effects": {
+            "cash": 0,
+            "fans": 0,
+            "items": [],
+            "flags": {},
+            "cosmetics": []
+          },
+          "result": "As you sit down on some rocks while everyone fills their canteens, you relax and hear the voice again. ‘This mountain is called Mean Yeti Mountain, but we are not the mean creatures here. Please, keep going on this journey and we will all become one with nature…just keep vigilant.’ You set up camp with your head spinning. Your fellow Footers are skeptical but excited by your story.",
+          "next": "mountain_campsite"
+        },
+        {
+          "id": "mountain_3",
+          "text": "Slowly scale Mean Yeti Mountain.",
+          "requires": {},
+          "effects": {
+            "cash": 0,
+            "fans": 0,
+            "items": [],
+            "flags": {},
+            "cosmetics": []
+          },
+          "result": "You and the group feel more relaxed as you hike and begin to joke about everyone’s reactions last night. Member Paula makes fun of Member Bert for having tripped and fallen on his face. You get to level ground and settle in for the night.",
+          "next": "mountain_campsite"
+        }
+      ]
+    },
+    "mountain_campsite": {
+      "title": "CHAPTER 5 — MOUNTAIN CAMPING",
+      "location": "Mountain Campsite",
+      "intro": "The campsite did well in keeping the group warm and happy last night. Now it is time for the scary part: reaching the top of the mountain. As you all make it up past the last twist and the last turn, you stand together at the top, upon a flattened apex. Across from you is an ominous creature with its back turned. One of you gasps and it turns around: it’s a Wendigo! The mythical cannibal!",
+      "options": [
+        {
+          "id": "mountain_campsite_1",
+          "text": "Open a can of whoop ass on the Wendigo!",
+          "requires": {
+            "items": [
+              "mg42"
+            ]
+          },
+          "effects": {
+            "cash": 5000,
+            "fans": 0,
+            "items": [],
+            "flags": {},
+            "cosmetics": [
+              "title_wendigo"
+            ]
+          },
+          "result": "Without thinking, you rain down bullets on the terrifying creature. It lets out a shuddering bleat and melts into a puddle of cosmic acid. After the acid dries up, a nice pile of cash is left behind. And also an unlockable main menu title! Next up is the final trek to Bigfoot’s Ladder…",
+          "next": "ladder"
+        },
+        {
+          "id": "mountain_campsite_2",
+          "text": "Run circles around that creep!",
+          "requires": {
+            "items": [
+              "sasquatch_sandals"
+            ]
+          },
+          "effects": {
+            "cash": 5000,
+            "fans": 0,
+            "items": [],
+            "flags": {},
+            "cosmetics": [
+              "bg_wendigo"
+            ]
+          },
+          "result": "You sprint forward and then dash to the side. The Wendigo stumbles and you begin to run around it in circles. The creature’s head turns wildly as it grows dizzy and implodes. Where it once stood now lies a pile of cash, and a new menu background!",
+          "next": "ladder"
+        },
+        {
+          "id": "mountain_campsite_3",
+          "text": "Throw the lucky dart!",
+          "requires": {
+            "items": [
+              "lucky_dart"
+            ]
+          },
+          "effects": {
+            "cash": 10000,
+            "fans": 0,
+            "items": [],
+            "flags": {},
+            "cosmetics": [
+              "f_wendigo"
+            ]
+          },
+          "result": "You take out the magic dart from the Headquarters and toss it…bullseye! The Wendigo surrenders in shame, and then also explodes into a million pieces. He left behind a giant cartoon money bag and a new custom felt!",
+          "next": "ladder"
+        },
+        {
+          "id": "mountain_campsite_4",
+          "text": "Punch the creature!",
+          "requires": {},
+          "effects": {
+            "cash": 0,
+            "fans": 0,
+            "items": [],
+            "flags": {},
+            "cosmetics": []
+          },
+          "result": "The group begins to throw beer cans at the Wendigo and it gets annoyed and starts to chase after them. You take advantage of the distraction and punch the beast in the back of the head. The monster was defeated and your group prepares to head towards Bigfoot’s Ladder.",
+          "next": "ladder"
+        }
+      ]
+    },
+    "ladder": {
+      "title": "CHAPTER 6 — BIGFOOT’S LADDER",
+      "location": "Bigfoot’s Ladder",
+      "intro": "After a long, arduous journey, Bigfoot Society’s best and brightest arrive at the fabled landmark: Bigfoot’s Ladder. The Ladder is a seemingly endless spiral staircase made of stars and made by The Star People. It has been written in the ancient bigfoot tomes that the staircase leads to Bigfoot Heaven, open only to bigfoots and those who are on the same spiritual wavelength. The unwelcome who try to enter are launched back down the stairs like a sack of trespassing potatoes.",
+      "options": [
+        {
+          "id": "ladder_1",
+          "text": "Head home happy knowing that the Ladder is real",
+          "requires": {},
+          "effects": {
+            "cash": 15000,
+            "fans": 0,
+            "items": [],
+            "flags": {
+              "ending": "reverent"
+            },
+            "cosmetics": [
+              "bg_the_reverent"
+            ]
+          },
+          "result": "You gaze in a sense of vicarious awe, feeling deeply happy that the bigfoots have a place so befitting of their magnificence. Knowing that you do not belong in their home, you smile that you made the journey anyway, and begin to head home with your group. You have received $15,000 from a bigfoot accountant, as well as a new game background.",
+          "next": "finished"
+        },
+        {
+          "id": "ladder_2",
+          "text": "Climb up as the magic voice guides you",
+          "requires": {
+            "attitude": [
+              "trusted"
+            ]
+          },
+          "effects": {
+            "cash": 20000,
+            "fans": 0,
+            "items": [],
+            "flags": {
+              "ending": "inner_circle"
+            },
+            "cosmetics": [
+              "bg_inner_circle"
+            ]
+          },
+          "result": "You hear the wise bigfoot’s voice again as he guides you up the sky piercing staircase. Time and meaning slip away, you stop thinking and simply melt up the stairs. After what feels like centuries, you glance up and see a bigfoot at a golden gate. It takes your hand and leads you into bigfoot paradise. You live and die a thousand times, explore distant galaxies, become the dust in all essence. Then you suddenly awake back home, with $20,000 in your pocket and a new background customization option.",
+          "next": "finished"
+        },
+        {
+          "id": "ladder_3",
+          "text": "Force your way up the stairs",
+          "requires": {
+            "attitude": [
+              "distrustful",
+              "clout_chaser"
+            ]
+          },
+          "effects": {
+            "cash": 10000,
+            "fans": 0,
+            "items": [],
+            "flags": {
+              "ending": "cast_out"
+            },
+            "cosmetics": [
+              "bg_cast_out"
+            ]
+          },
+          "result": "You tell the group you’re going to see Bigfoot Heaven one way or another, and make the grueling climb. You push the bigfoot at the gate away and enter. You see bigfoots in harmony, listening to reggae and playing chess. Suddenly your vision goes black, and then you awake to realize your soul has been trapped in a statue of a bigfoot riding a skateboard in a high school art classroom. You receive $10,000 and a new background..",
+          "next": "finished"
+        }
+      ]
+    }
+  }
+}

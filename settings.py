@@ -741,3 +741,6 @@ GAME_UNLOCK_LEVELS = {
 
 from rating_unlocks import add_rating_catalogs
 add_rating_catalogs(MENU_BACKGROUNDS, FELTS, TITLES)
+
+from career_activities import add_story_catalogs
+add_story_catalogs(MENU_BACKGROUNDS, FELTS, TITLES)
