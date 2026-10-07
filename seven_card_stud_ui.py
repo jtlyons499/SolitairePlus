@@ -2052,7 +2052,7 @@ def draw_npc_seat(
 
     hand = game.npc_hands[index] if index < len(game.npc_hands) else []
     if not busted:
-        card_w, card_h, step_x = 54, 75, 18
+        card_w, card_h, step_x = 76, 106, 27
         card_count = min(7, len(hand))
         total_width = card_w + max(0, card_count - 1) * step_x
         cards_center_x = anchor_x + 46
@@ -2409,11 +2409,11 @@ def draw_seven_card_stud(
         )
 
     # Larger, more intentional seven-card player spread.
-    card_w, card_h, step_x = 76, 106, 55
+    card_w, card_h, step_x = 98, 137, 70
     hand = game.player_hand[:7]
     total_width = card_w + max(0, len(hand) - 1) * step_x
     start_x = 683 - total_width // 2
-    player_card_y = 520
+    player_card_y = 502
 
     for card_index, card in enumerate(hand):
         x = start_x + card_index * step_x
@@ -2489,3 +2489,4 @@ def draw_seven_card_stud(
         surface.blit(hand_surface, hand_surface.get_rect(bottomright=(STUD_ACTION_PANEL_RECT.right - 6, STUD_ACTION_PANEL_RECT.y - 8)))
 
     draw_action_panel(surface, mouse_pos, game, next_hand_seconds=next_hand_seconds)
+

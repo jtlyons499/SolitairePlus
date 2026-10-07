@@ -774,7 +774,7 @@ class TexasHoldemGame:
     def get_preflop_first_actor_index(self):
 
         live_indexes = (
-            self.get_live_player_indexes()
+            self.get_active_player_indexes()
         )
 
         if len(live_indexes) < 2:
@@ -1080,11 +1080,12 @@ class TexasHoldemGame:
             "BB"
         )
 
-        # The nominal big blind establishes the opening wager even
-        # if the BB seat could only post a short all-in blind.
-        self.current_bet = (
-            self.big_blind
-        )
+        # A short big blind retains the nominal wager at a multiway table.
+        # Heads-up against an all-in opponent, only the actual contribution
+        # can be called: there is nobody left to contest any extra chips.
+        actual_blind = max([self.player_round_bet, *self.npc_round_bets])
+        lone_caller = len(self.get_active_player_indexes()) == 2 and len(self.get_actionable_player_indexes()) <= 1
+        self.current_bet = actual_blind if lone_caller else self.big_blind
 
         self.last_raise_size = (
             self.big_blind
@@ -3601,6 +3602,8 @@ class TexasHoldemGame:
 
         if not self.can_player_act_now():
             return False
+        if len(self.get_actionable_player_indexes()) <= 1:
+            return False
 
         # If the player already acted and has only
         # been brought back by a short all-in raise,
@@ -4823,3 +4826,4 @@ class TexasHoldemGame:
         return HAND_NAMES[
             result[0][0]
         ]
+

@@ -1023,7 +1023,12 @@ def _decide_trait_action(
 
     early_street = stage in ("preflop", "flop", "pre_draw", "third", "fourth", "forehead_bet")
     pessimism = t["pessimism"] * max(0.0, (0.48 - strength) / 0.48) if early_street else 0.0
-    survival = t["tenacity"] * survival_risk * max(0.0, 1.0 - strength)
+    # A short stack must eventually take a reasonable stand rather than
+    # letting a maximum-tenacity rival fold down indefinitely.
+    tenacity_weight = min(t["tenacity"], 0.72)
+    short_stack = context.get("stack", 0) <= 6 * max(1, context.get("minimum_open_bet", 1))
+    if short_stack: tenacity_weight *= 0.55
+    survival = tenacity_weight * survival_risk * max(0.0, 1.0 - strength)
     profile["open_base"] = max(0.005, profile["open_base"] - 0.18*pessimism)
     profile["bluff_chance"] *= max(0.05, 1.0 - 0.75*pessimism - 0.80*survival)
 
@@ -1405,3 +1410,4 @@ def _decide_trait_action(
         "pot_odds": pot_odds,
         "required_strength": required_strength,
     }
+

@@ -6,7 +6,7 @@ All variation is seeded per NPC/month so loading a profile cannot reroll it.
 import hashlib
 import random
 
-from career_ratings import GAME_RATING_KEYS, RATING_KEYS, apply_rating_change, ensure_npc_career_state
+from career_ratings import CATEGORY_KEYS as GAME_RATING_KEYS, GAME_CATEGORIES, RATING_KEYS, apply_rating_change, ensure_npc_career_state
 from career_fans import ensure_npc_fan_state
 
 DEVELOPMENT_VERSION = 1
@@ -50,6 +50,12 @@ def ensure_npc_development(state, npc, year, month, world_seed=0, prospect=False
     state = ensure_npc_career_state(state, npc)
     existing = state.get("development")
     if isinstance(existing, dict) and existing.get("version") == DEVELOPMENT_VERSION:
+        for field in ("anchor_ratings", "peak_ratings", "last_targets", "carry"):
+            values = existing[field]
+            for category in GAME_RATING_KEYS:
+                if category not in values:
+                    old = [float(value) for key, value in values.items() if GAME_CATEGORIES.get(key) == category]
+                    values[category] = sum(old)/len(old) if old else (0 if field == "carry" else state["ratings"][category])
         return existing
     seed = stable_seed(world_seed, npc.get("id"), "development")
     rng = random.Random(seed)
@@ -139,7 +145,7 @@ def advance_npc_development(state, npc, year, month, world_seed=0):
         state["age"] = max(0, int(state["age"])) + 1
         development["last_birthday_year"] = int(year)
     rng = random.Random(stable_seed(development["seed"], serial, "form"))
-    active_games = set(rng.sample(list(GAME_RATING_KEYS), rng.randint(2, 4)))
+    active_games = set(rng.sample(list(GAME_RATING_KEYS), rng.randint(1, 3)))
     before = state["ratings"]["overall"]
     changes = dict.fromkeys(RATING_KEYS, 0)
     age = effective_age(state, month)
@@ -153,7 +159,7 @@ def advance_npc_development(state, npc, year, month, world_seed=0):
         raw = target - previous_target + reversion + form + development["carry"][key]
         delta = int(round(raw))
         development["carry"][key] = round(raw - delta, 6)
-        changes[key] = apply_rating_change(state["ratings"], key, delta)
+        changes[key] = apply_rating_change(state["ratings"], key, delta, scale_rewards=False)
         development["last_targets"][key] = round(target, 6)
     state["rating"] = state["ratings"]["overall"]
     changes["overall"] = state["rating"] - before
@@ -162,3 +168,4 @@ def advance_npc_development(state, npc, year, month, world_seed=0):
     development["last_simulated_month"] = serial
     ensure_npc_fan_state(state, npc)
     return True
+

@@ -5359,7 +5359,8 @@ def draw_texas_holdem(
         detail_font,
         player_name,
         felt_surface,
-        next_hand_seconds=None
+        next_hand_seconds=None,
+        show_utility_buttons=True
 ):
     poker_chip_images = (
         get_poker_chip_images()
@@ -6867,23 +6868,24 @@ def draw_texas_holdem(
     # Top-right utility buttons
     # ==================================================
 
-    draw_modern_button(
-        game_surface,
-        holdem_options_rect,
-        "OPTIONS",
-        mouse_pos,
-        holdem_small_font,
-        enabled=True
-    )
+    if show_utility_buttons:
+        draw_modern_button(
+            game_surface,
+            holdem_options_rect,
+            "OPTIONS",
+            mouse_pos,
+            holdem_small_font,
+            enabled=True
+        )
 
-    draw_modern_button(
-        game_surface,
-        holdem_exit_rect,
-        "EXIT",
-        mouse_pos,
-        holdem_small_font,
-        enabled=bool(holdem_game.hand_complete)
-    )
+        draw_modern_button(
+            game_surface,
+            holdem_exit_rect,
+            "EXIT",
+            mouse_pos,
+            holdem_small_font,
+            enabled=bool(holdem_game.hand_complete)
+        )
 
     # ==================================================
     # Final speech-bubble overlay pass

@@ -18,7 +18,7 @@ from career_npc_development import (ability_target, advance_npc_development,
                                     ensure_npc_development, month_index)
 from career_npc_world import (add_prospect, advance_career_world, career_roster,
                               ensure_career_world)
-from career_ratings import GAME_RATING_KEYS, derive_overall, normalize_rating_bundle
+from career_ratings import CATEGORY_KEYS as GAME_RATING_KEYS, derive_overall, normalize_rating_bundle
 from npc_personality import TRAIT_NAMES
 from career_event_progress import store_event_progress
 
@@ -115,10 +115,10 @@ class DevelopmentTests(unittest.TestCase):
         state = {"age": 71, "birthday_month": 1, "rating": 2500,
                  "ratings": dict.fromkeys(GAME_RATING_KEYS, 2500)}
         curve = ensure_npc_development(state, npc, 2026, 1, 10)
-        self.assertEqual(ability_target(curve, "solitaire", 71), 2500)
+        self.assertEqual(ability_target(curve, "strategy", 71), 2500)
         self.assertTrue(38 <= curve["decline_start"] <= 45)
-        self.assertTrue(3 <= 2500 - ability_target(curve, "solitaire", 72) <= 7)
-        self.assertGreaterEqual(ability_target(curve, "solitaire", 200), 2000)
+        self.assertTrue(3 <= 2500 - ability_target(curve, "strategy", 72) <= 7)
+        self.assertGreaterEqual(ability_target(curve, "strategy", 200), 2000)
         self.assertEqual(development_stage(state, 1), "Veteran · gradual decline")
 
     def test_supernatural_original_character_is_preserved(self):
@@ -260,6 +260,7 @@ class MainIntegrationTests(unittest.TestCase):
         self.addCleanup(npc_manager.sync_npc_runtime_state, {})
         profile = profiles.make_default_profile()
         profile["profile_version"] = 6
+        profile["settings"]["score_four_layout"] = "wide"
         profile["identity"].update(country="CAN", age=37, hometown="Ottawa",
                                     bio="A patient card player.", favorite_suit="Hearts")
         npc = npc_manager.BASE_NPCS[0]
@@ -271,7 +272,7 @@ class MainIntegrationTests(unittest.TestCase):
         game.set_deal_mode = lambda mode: setattr(game, "deal_mode", mode)
         env = main_functions(("apply_profile_save_data", "build_profile_save_data",
                               "sync_career_npc_runtime_state"), dict(
-            copy=copy, game=game, store_event_progress=store_event_progress, make_default_profile=profiles.make_default_profile,
+            copy=copy, game=game, score_four_game=SimpleNamespace(layout="compact"), store_event_progress=store_event_progress, make_default_profile=profiles.make_default_profile,
             avatar_bases=["base_01"], avatar_eyes=["eyes_01"], avatar_hair=["hair_01"],
             avatar_tops=["top_01"], avatar_glasses=[], favorite_suit_options=["Hearts"],
             cursor_runtime_surfaces={"cursor": None}, VERIFIED_DEALS_ENABLED=False,
@@ -284,7 +285,9 @@ class MainIntegrationTests(unittest.TestCase):
         env["apply_profile_save_data"](profile)
         self.assertEqual(env["career_npc_world"]["started_month"], month_index(2045, 9))
         self.assertEqual(env["career_leaderboard_state"][npc["id"]]["age"], 71)
+        self.assertEqual(env["score_four_game"].layout, "wide")
         saved = env["build_profile_save_data"]()
+        self.assertEqual(saved["settings"]["score_four_layout"], "wide")
         self.assertEqual(saved["cryptid_creatures"], env["cryptid_collection_state"])
         self.assertEqual(saved["profile_version"], profiles.PROFILE_VERSION)
         self.assertEqual(saved["career"]["cash"], 23549)
@@ -355,3 +358,4 @@ class MainIntegrationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

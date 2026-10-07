@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import pygame
 from mp_widgets import wooden_button,TextInput
+from texas_holdem_ui import draw_holdem_glossy_button
 from standalone_table import StandaloneTable
 from lan_session import OnlineTable
 from room_session import RoomTable
@@ -42,6 +43,7 @@ def main():
     host_rect=pygame.Rect(533,460,300,60);join_rect=pygame.Rect(883,460,300,60)
     address_rect=pygame.Rect(423,380,520,52);leave_rect=pygame.Rect(1130,15,210,40);ready_rect=pygame.Rect(800,20,280,40)
     relay_rect=pygame.Rect(183,590,520,48);code_rect=pygame.Rect(723,590,460,48)
+    quit_rect=pygame.Rect(740,15,160,40)
     options_rect=pygame.Rect(915,15,150,40)
     profile_rect=pygame.Rect(1110,15,230,40)
     create_rect=pygame.Rect(363,660,300,55);room_join_rect=pygame.Rect(703,660,300,55)
@@ -53,6 +55,19 @@ def main():
             if event.type==pygame.QUIT:running=False;continue
             if event.type==pygame.KEYDOWN and event.key==pygame.K_F11:
                 options.values['fullscreen']=not options.values['fullscreen'];options.save();screen=options.display();continue
+            if event.type==pygame.MOUSEBUTTONDOWN and event.button==1:
+                if options.open:clickable=[rect for rect,action in options.buttons]
+                elif profile_screen.open:clickable=[rect for rect,action in profile_screen.buttons]
+                else:
+                    clickable=[options_rect,profile_rect]
+                    if table is None:clickable += [quit_rect,start_rect,host_rect,join_rect,create_rect,room_join_rect]
+                    else:
+                        clickable.append(leave_rect)
+                        if isinstance(table,RoomTable):clickable += [rect for rect,action in room_view.buttons]
+                if any(rect.collidepoint(mouse) for rect in clickable):sound('button_click')
+            if table is None and not options.open and not profile_screen.open and event.type==pygame.MOUSEBUTTONDOWN and event.button==1 and quit_rect.collidepoint(mouse):
+                running=False
+                continue
             if options.open:
                 if options.event(event,mouse,table):screen=options.display()
                 if not options.open and table is None:pygame.key.start_text_input()
@@ -120,8 +135,8 @@ def main():
                 if ui.update_holdem_bet_slider(mouse,g):continue
                 action=ui.get_texas_holdem_action(mouse,g)
                 if not action:continue
-                if action=='options':ui.holdem_options_open=True
-                elif action=='return' or (action=='next_hand' and table.finished):
+                if action in ('options','return'):continue  # Outer Options/Leave Table own these controls.
+                elif action=='next_hand' and table.finished:
                     
                     if isinstance(table,(OnlineTable,RoomTable)):table.close()
                     table=None;pygame.key.start_text_input()
@@ -145,21 +160,26 @@ def main():
             if online or not ui.holdem_options_open:
                 key=table.update(pygame.time.get_ticks())
                 if key:sound(key)
-            if isinstance(table,RoomTable):room_view.draw(table)
+            if isinstance(table,RoomTable):room_view.draw(table,mouse)
             elif not online or table.playable:
-                ui.draw_texas_holdem(canvas,mouse,table.game,view.cards,view.back,view.background,view.title,view.button,view.portrait,font,font,font,table.name,view.felt)
+                ui.draw_texas_holdem(canvas,mouse,table.game,view.cards,view.back,view.background,view.title,view.button,view.portrait,font,font,font,table.name,view.felt,show_utility_buttons=False)
             else:
                 appearance.background(canvas);label=font.render(table.status,True,(245,233,201));canvas.blit(label,label.get_rect(center=(683,320)))
                 label=font.render('Share the room code and relay address with your friend.',True,(245,233,201));canvas.blit(label,label.get_rect(center=(683,385)))
-            wooden_button(canvas,appearance,leave_rect,'Leave table',font,hover=leave_rect.collidepoint(mouse))
+            draw_holdem_glossy_button(canvas,leave_rect,'Leave table',mouse,pygame.font.Font(None,26))
             if isinstance(table,OnlineTable) and table.playable and table.game.hand_complete:
                 alive=sum(stack>0 for stack in [table.game.player_stack,*table.game.npc_stacks])
                 text='Table finished' if alive<2 else f'Ready ({table.game.ready_count}/2)' if table.game.you_ready else 'Ready for next hand'
                 pygame.draw.rect(canvas,(65,96,77),ready_rect,border_radius=8);image=pygame.font.Font(None,26).render(text,True,(245,233,201));canvas.blit(image,image.get_rect(center=ready_rect.center))
             if isinstance(table,OnlineTable):
                 label=pygame.font.Font(None,22).render(table.status,True,(245,233,201));canvas.blit(label,(450,72))
-        wooden_button(canvas,appearance,profile_rect,f'Edit Profile • Lv {profile.level}',pygame.font.Font(None,24),hover=profile_rect.collidepoint(mouse))
-        wooden_button(canvas,appearance,options_rect,'Options',pygame.font.Font(None,26),hover=options_rect.collidepoint(mouse))
+        if table is None:
+            wooden_button(canvas,appearance,profile_rect,f'Edit Profile • Lv {profile.level}',pygame.font.Font(None,24),hover=profile_rect.collidepoint(mouse))
+            wooden_button(canvas,appearance,options_rect,'Options',pygame.font.Font(None,26),hover=options_rect.collidepoint(mouse))
+            wooden_button(canvas,appearance,quit_rect,'Quit Game',pygame.font.Font(None,26),hover=quit_rect.collidepoint(mouse))
+        else:
+            draw_holdem_glossy_button(canvas,profile_rect,f'Edit Profile • Lv {profile.level}',mouse,pygame.font.Font(None,24))
+            draw_holdem_glossy_button(canvas,options_rect,'Options',mouse,pygame.font.Font(None,26))
         if profile_screen.open:profile_screen.draw(canvas,table)
         if options.open:options.draw(canvas,table)
         screen.fill((0,0,0));screen.blit(pygame.transform.smoothscale(canvas,(round(1366*scale),round(768*scale))),offset);pygame.display.flip();clock.tick(60)

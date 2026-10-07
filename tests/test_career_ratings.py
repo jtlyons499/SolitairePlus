@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import patch
 
 import profile as profile_module
-from career_ratings import (GAME_RATING_KEYS, RATING_KEYS, apply_rating_change,
+from career_ratings import (GAME_RATING_KEYS, GAME_CATEGORIES, CATEGORY_KEYS, RATING_KEYS, apply_rating_change,
                             boost_npc_overall, derive_overall, elo_delta,
                             ensure_npc_career_state, make_npc_rating_bundle,
                             make_player_rating_bundle, migrate_profile_ratings,
@@ -30,7 +30,7 @@ def main_functions(*names, **values):
     """Execute actual orchestration functions without launching the asset UI."""
     nodes = [node for node in MAIN_TREE.body if isinstance(node, ast.FunctionDef) and node.name in names]
     assert len(nodes) == len(names)
-    namespace = dict(current_game_mode="career", career_rating=1000,
+    namespace = dict(grant_rating_cosmetics=lambda: None, current_game_mode="career", career_rating=1000,
                      career_ratings=make_player_rating_bundle(), career_rating_results={},
                      career_leaderboard_state={}, GAME_RATING_KEYS=GAME_RATING_KEYS,
                      apply_rating_change=apply_rating_change, settle_house_result=settle_house_result,
@@ -52,11 +52,11 @@ class RatingTests(unittest.TestCase):
         for key in GAME_RATING_KEYS:
             bundle = make_player_rating_bundle()
             self.assertEqual(apply_rating_change(bundle, key, 70), 70)
-            self.assertEqual(bundle["overall"], 1010)
-            self.assertTrue(all(bundle[other] == 1000 for other in GAME_RATING_KEYS if other != key))
+            self.assertAlmostEqual(bundle["overall"], 1000 + 70 * {"strategy":.55,"poker":.35,"casino":.1}[GAME_CATEGORIES[key]])
+            self.assertTrue(all(bundle[other] == 1000 for other in GAME_RATING_KEYS if GAME_CATEGORIES[other] != GAME_CATEGORIES[key]))
         with self.assertRaises(ValueError):
             apply_rating_change(bundle, "overall", 100)
-        bundle["solitaire"] = 105
+        bundle["strategy"] = 105
         self.assertEqual(apply_rating_change(bundle, "solitaire", -40), -5)
         self.assertEqual(bundle["overall"], derive_overall(bundle))
 
@@ -66,12 +66,13 @@ class RatingTests(unittest.TestCase):
         career = old["career"]
         career.update(rating=9000, cash=23549, job="developer", fans=420,
                       owned_residences=["dingy_apartment", "penthouse"], custom_feature={"keep": True})
+        career["ratings"] = dict.fromkeys(("solitaire", "score_four", "texas_holdem", "five_card_draw", "seven_card_stud", "blackjack", "roulette"), 1000)
         career["ratings"].update(overall=9000, solitaire=1700, blackjack=1300)
         before = copy.deepcopy(career)
         migrate_profile_ratings(old)
-        self.assertEqual(career["ratings"]["solitaire"], 1700)
-        self.assertEqual(career["ratings"]["blackjack"], 1300)
-        self.assertEqual(career["rating"], 1143)
+        self.assertEqual(career["ratings"]["strategy"], 1350)
+        self.assertEqual(career["ratings"]["casino"], 1150)
+        self.assertEqual(career["rating"], 1207.5)
         for key in ("cash", "fans", "job", "owned_residences", "custom_feature"):
             self.assertEqual(career[key], before[key])
         migrated = copy.deepcopy(old)
@@ -81,7 +82,7 @@ class RatingTests(unittest.TestCase):
         migrate_profile_ratings(oldest)
         self.assertEqual(oldest["career"]["ratings"]["solitaire"], 1700)
         self.assertEqual(oldest["career"]["ratings"]["texas_holdem"], 1000)
-        self.assertEqual(oldest["career"]["rating"], 1100)
+        self.assertEqual(oldest["career"]["rating"], 1385)
 
     def test_three_save_slots_migrate_and_round_trip(self):
         with tempfile.TemporaryDirectory() as folder, patch.object(profile_module, "SAVE_FOLDER", folder):
@@ -92,16 +93,16 @@ class RatingTests(unittest.TestCase):
                 Path(profile_module.get_profile_path(slot)).write_text(json.dumps(old), encoding="utf-8")
                 loaded = profile_module.load_profile(slot)
                 self.assertEqual(loaded["profile_version"], profile_module.PROFILE_VERSION)
-                self.assertEqual(loaded["career"]["rating"], 1000 + slot * 100)
+                self.assertEqual(loaded["career"]["rating"], 1000 + slot * 385)
                 profile_module.save_profile(loaded, slot)
                 self.assertEqual(profile_module.load_profile(slot), loaded)
 
     def test_npc_migration_never_overwrites_game_ratings_from_legacy_overall(self):
         bundle = dict.fromkeys(RATING_KEYS, 1500)
-        bundle["blackjack"] = 2200
+        bundle["casino"] = 2200
         state = {"rating": 9900, "age": 71, "ratings": bundle}
         ensure_npc_career_state(state, npc(), random.Random(1))
-        self.assertEqual(state["rating"], 1600)
+        self.assertEqual(state["rating"], 1570)
         self.assertEqual(state["ratings"]["solitaire"], 1500)
         self.assertEqual(state["ratings"]["blackjack"], 2200)
         self.assertEqual(state["age"], 71)
@@ -117,32 +118,32 @@ class RatingTests(unittest.TestCase):
             ratings, stats = make_player_rating_bundle(), {}
             states = {"rival": {"rating": 1000, "ratings": make_player_rating_bundle()}}
             delta = settle_competitive_result(ratings, stats, states, "score_four", npc(), score)
-            self.assertEqual(delta, 24 if score else -24)
+            self.assertEqual(delta, 60 if score else -10)
             self.assertEqual(states["rival"]["ratings"]["score_four"], 1000 - delta)
-            self.assertEqual(ratings["solitaire"], 1000)
+            self.assertEqual(ratings["strategy"], 1000 + delta)
             self.assertEqual(states["rival"]["rating"], derive_overall(states["rival"]["ratings"]))
         self.assertGreater(elo_delta(1000, 2000, 1), elo_delta(1000, 800, 1))
         self.assertLess(abs(elo_delta(1000, 2000, 0)), abs(elo_delta(1000, 800, 0)))
         self.assertEqual(elo_delta(1000, 1000, 0.5), 0)
 
     def test_house_points_ignore_wager_size_and_push_is_neutral(self):
-        for key, unit in (("blackjack", 8), ("roulette", 4)):
+        for key, unit in (("blackjack", 15), ("roulette", 12), ("faro", 12)):
             for net in (1, 23549):
                 ratings, stats = make_player_rating_bundle(), {}
                 self.assertEqual(settle_house_result(ratings, stats, key, net), unit)
                 self.assertEqual(stats[key]["wins"], 1)
-                self.assertEqual(settle_house_result(ratings, stats, key, -net), -unit)
+                self.assertEqual(settle_house_result(ratings, stats, key, -net), -5)
                 self.assertEqual(settle_house_result(ratings, stats, key, 0), 0)
-                self.assertEqual(ratings[key], 1000)
+                self.assertEqual(ratings[key], 1000 + unit - 5)
                 self.assertEqual(stats[key]["played"], 3)
 
     def test_monthly_npc_updates_are_per_game_with_category_changes(self):
         state = ensure_npc_career_state({"rating": 1600}, npc(), random.Random(1))
         before = copy.deepcopy(state["ratings"])
         simulate_npc_rating_month(state, npc(), rng=random.Random(7))
-        changed = [key for key in GAME_RATING_KEYS if state["ratings"][key] != before[key]]
-        self.assertGreaterEqual(len(changed), 2)
-        self.assertLessEqual(len(changed), 4)
+        changed = [key for key in CATEGORY_KEYS if state["ratings"][key] != before[key]]
+        self.assertGreaterEqual(len(changed), 1)
+        self.assertLessEqual(len(changed), 3)
         self.assertEqual(state["last_changes"]["overall"], state["rating"] - before["overall"])
         self.assertEqual(state["rating"], derive_overall(state["ratings"]))
 
@@ -169,7 +170,7 @@ class RatingTests(unittest.TestCase):
             delta = settle_poker_session(ratings, stats, states, key, game)
             self.assertGreater(delta, 0)
             self.assertEqual(ratings[key], 1000 + delta)
-            self.assertTrue(all(ratings[other] == 1000 for other in GAME_RATING_KEYS if other != key))
+            self.assertTrue(all(ratings[other] == 1000 for other in GAME_RATING_KEYS if GAME_CATEGORIES[other] != GAME_CATEGORIES[key]))
             after = copy.deepcopy((ratings, stats, states))
             self.assertEqual(settle_poker_session(ratings, stats, states, key, game), 0)
             self.assertEqual((ratings, stats, states), after)
@@ -187,7 +188,7 @@ class RatingTests(unittest.TestCase):
         self.assertEqual((env["career_ratings"], env["career_rating_results"], env["career_leaderboard_state"]), before)
         env["current_game_mode"] = "career"
         self.assertEqual(env["award_career_rating"]("solitaire", 70), 70)
-        self.assertEqual(env["career_rating"], 1010)
+        self.assertEqual(env["career_rating"], 1038.5)
         self.assertEqual(env["award_career_rating"]("overall", 500), 0)
 
     def test_house_payout_guards_rate_exactly_once_including_free_play(self):
@@ -221,8 +222,8 @@ class RatingTests(unittest.TestCase):
             if mode == "career":
                 self.assertEqual(env["career_rating_results"]["blackjack"]["played"], 1)
                 self.assertEqual(env["career_rating_results"]["roulette"]["played"], 1)
-                self.assertEqual(env["career_ratings"]["blackjack"], 1008)
-                self.assertEqual(env["career_ratings"]["roulette"], 1004)
+                self.assertEqual(env["career_ratings"]["blackjack"], 1027)
+                self.assertEqual(env["career_ratings"]["roulette"], 1027)
             else:
                 self.assertEqual(env["career_rating_results"], {})
                 self.assertEqual(env["career_ratings"], make_player_rating_bundle())
@@ -291,3 +292,4 @@ class RatingTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

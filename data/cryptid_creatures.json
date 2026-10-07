@@ -16,7 +16,7 @@
         "precision_pierce",
         "rot"
       ],
-      "description": "An ancient coastal hunter whose pincers probe the seams of armor.",
+      "description": "An ancient scorpion that got tired of needing a frog to traverse lakes.",
       "rarity": "Common",
       "art": "sea_scorpion_grene.png"
     },
@@ -35,7 +35,7 @@
         "kick",
         "tuck"
       ],
-      "description": "A winter raider who survives by striking quickly and slipping away.",
+      "description": "Frosty's forgotten brother who now lurks .",
       "rarity": "Common",
       "art": "snow_goblin_thede.png"
     },
@@ -54,7 +54,7 @@
         "torch",
         "protect"
       ],
-      "description": "A stubborn candle whose little flame refuses to go out.",
+      "description": "A sentient and aggressive candle.",
       "rarity": "Common",
       "art": "cando_thede.png"
     },
@@ -73,7 +73,7 @@
         "lightning",
         "brace"
       ],
-      "description": "A wandering fire magician who saves their fiercest flame for a clear opening.",
+      "description": "A magician versed in the arts of fire and flames and hot things.",
       "rarity": "Common",
       "art": "enflamer_thede.png"
     },
@@ -92,7 +92,7 @@
         "pain",
         "forewarn"
       ],
-      "description": "An old scholar whose preparations can be as dangerous as his spells.",
+      "description": "An old wizard who loves the city life.",
       "rarity": "Common",
       "art": "merlin_polis.png"
     },
@@ -111,7 +111,7 @@
         "pummel",
         "rearm"
       ],
-      "description": "A forge-born creature hammering armor into both weapons and shelter.",
+      "description": "A brutish brute who brutes brutally across the bow.",
       "rarity": "Common",
       "art": "atorn_polis.png"
     },
@@ -130,7 +130,7 @@
         "pound",
         "tuck"
       ],
-      "description": "One watchful eye follows every challenger to this giant.",
+      "description": "A typically friendly giant who can still fight if pressured.",
       "rarity": "Common",
       "art": "clops_thede.png"
     },

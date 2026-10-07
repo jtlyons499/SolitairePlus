@@ -121,7 +121,7 @@ class CollectionTests(unittest.TestCase):
                 profiles.save_profile(data,slot)
             for slot in (1,2,3):
                 data=profiles.load_profile(slot)
-                self.assertEqual(data['profile_version'],8)
+                self.assertEqual(data['profile_version'],profiles.PROFILE_VERSION)
                 self.assertEqual(data['cryptid_creatures']['pack_seed'],slot)
                 self.assertEqual(data['cryptid_creatures']['packs']['creature'],0 if slot==1 else slot)
             original=Path(profiles.get_profile_path(1)).read_bytes()
@@ -337,3 +337,4 @@ class CollectionUiTests(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main()
+

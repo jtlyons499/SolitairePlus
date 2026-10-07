@@ -2615,6 +2615,7 @@ class Game:
             challenge_id
         ]
 
+        self.set_difficulty("normal")
         self.challenge_id = (
             challenge_id
         )
@@ -4300,3 +4301,4 @@ class Game:
                 x,
                 y + index * self.drag_spacing
             )
+

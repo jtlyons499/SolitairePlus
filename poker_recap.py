@@ -1,7 +1,7 @@
 """Exact pot awards with a player-controlled review screen."""
 import pygame
 
-OPEN = pygame.Rect(18, 82, 180, 40)
+OPEN = pygame.Rect(278, 580, 150, 26)
 CLOSE = pygame.Rect(898, 652, 198, 48)
 PREV = pygame.Rect(272, 652, 160, 48)
 NEXT = pygame.Rect(444, 652, 160, 48)
@@ -68,10 +68,10 @@ def draw_recap(surface, mouse, game):
         hover = enabled and mouse is not None and rect.collidepoint(mouse)
         pygame.draw.rect(surface, (52,100,78) if hover else (29,57,49), rect, border_radius=8)
         pygame.draw.rect(surface, (232,195,105) if enabled else (95,110,105), rect, 2, border_radius=8)
-        text = font.render(value, True, (245,240,221) if enabled else (130,145,139))
+        text = pygame.font.Font(None, 24 if rect == OPEN else 29).render(value, True, (245,240,221) if enabled else (130,145,139))
         surface.blit(text, text.get_rect(center=rect.center))
     if not getattr(game, 'recap_open', False):
-        button(OPEN, 'POT RECAP')
+        button(OPEN, 'Payout details')
         return
     overlay = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
     overlay.fill((0,0,0,195));surface.blit(overlay,(0,0))
@@ -94,3 +94,4 @@ def draw_recap(surface, mouse, game):
         surface.blit(image,(272,184+i*46));surface.set_clip(clip)
     surface.blit(font.render(f'Page {page+1} / {pages}',True,(207,219,210)),(652,665))
     button(PREV,'Previous',page>0);button(NEXT,'Next',page+1<pages);button(CLOSE,'Back to table')
+

@@ -1105,39 +1105,27 @@ def draw_holdem_showdown_banner(
         )
     )
 
-    rect = pygame.Rect(
-        358,
-        452,
-        650,
-        48
-    )
+    # Keep the explanation readable and fit the banner to its contents.
+    result = holdem_game.result_text.strip()
+    awards = getattr(holdem_game, 'last_pot_awards', [])
+    if ' with ' not in result.lower() and 'fold' not in result.lower():
+        explanations = list(dict.fromkeys(pot.get('hand') or 'Everyone else folded' for pot in awards))
+        if explanations:
+            result += ' — ' + '; '.join(explanations)
+    font = pygame.font.Font(None, 29)
+    rows = ['']
+    for word in result.split():
+        trial = (rows[-1] + ' ' + word).strip()
+        if font.size(trial)[0] > 630 and rows[-1]: rows.append(word)
+        else: rows[-1] = trial
+    width = min(666, max(220, max(font.size(row)[0] for row in rows) + 36))
+    height = 20 + len(rows)*29
+    rect = pygame.Rect(683-width//2, 495-height, width, height)
+    draw_translucent_panel(surface, rect, (10, 12, 14, 240), border_color=border, border_width=2, radius=12)
+    for index, row in enumerate(rows):
+        label = font.render(row, True, WHITE)
+        surface.blit(label, label.get_rect(center=(rect.centerx, rect.y+10+29*index+14)))
 
-    draw_translucent_panel(
-        surface,
-        rect,
-        (
-            10,
-            12,
-            14,
-            225
-        ),
-        border_color=border,
-        border_width=(
-            4
-            if player_won
-            else 2
-        ),
-        radius=12
-    )
-
-    blit_text_fit(
-        surface,
-        holdem_game.result_text,
-        fonts["small"],
-        WHITE,
-        rect,
-        padding=18
-    )
 
 
 # ==================================================
@@ -1269,6 +1257,9 @@ def draw_texas_holdem_buy_in(
         title_surface,
         title_rect
     )
+
+    eligible = small_font.render('Rated session: complete at least 1 hand, then cash out', True, (217, 231, 228))
+    game_surface.blit(eligible, eligible.get_rect(center=(683, 251)))
 
     # ==================================================
     # Career cash
@@ -5743,8 +5734,8 @@ def draw_texas_holdem(
             game_surface,
             holdem_game,
             index + 1,
-            portrait_rect.x,
-            portrait_rect.y - 26
+            portrait_rect.x - 45,
+            portrait_rect.bottom + 4
         )
 
         # ------------------------------------------
@@ -6811,6 +6802,11 @@ def draw_texas_holdem(
     # Game log / Chat panel
     # ==================================================
 
+    completed = len(getattr(holdem_game, 'rating_seen_hands', ()))
+    rating_status = f'Rated after 1 completed hand • Completed: {completed}'
+    rating_label = pygame.font.Font(None, 24).render(rating_status, True, (231, 239, 234))
+    game_surface.blit(rating_label, (22, 553))
+
     draw_holdem_log_panel(
         game_surface=game_surface,
         detail_font=detail_font,
@@ -6979,3 +6975,4 @@ def get_texas_holdem_action(
         return "options"
 
     return None
+

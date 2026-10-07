@@ -397,7 +397,7 @@ DIFFICULTY_RULES = {
         "stock_pass_limit": None,
         "hint_limit": None,
         "undo_history_limit": None,
-        "reward_multiplier": 0.70,
+        "reward_multiplier": 0.85,
         "shuffle_enabled": True,
     },
 
@@ -415,7 +415,7 @@ DIFFICULTY_RULES = {
         "stock_pass_limit": 10,
         "hint_limit": 15,
         "undo_history_limit": None,
-        "reward_multiplier": 1.25,
+        "reward_multiplier": 1.5,
         "shuffle_enabled": False,
     },
 
@@ -424,7 +424,7 @@ DIFFICULTY_RULES = {
         "stock_pass_limit": 8,
         "hint_limit": 0,
         "undo_history_limit": 20,
-        "reward_multiplier": 1.50,
+        "reward_multiplier": 2.0,
         "shuffle_enabled": False,
     },
 
@@ -433,7 +433,7 @@ DIFFICULTY_RULES = {
         "stock_pass_limit": 3,
         "hint_limit": 0,
         "undo_history_limit": 5,
-        "reward_multiplier": 1.85,
+        "reward_multiplier": 3.0,
         "shuffle_enabled": False,
     },
 }
@@ -444,25 +444,25 @@ CAREER_CHALLENGE_RULES = {
     "draw_3": {
         "name": "3 Draw",
         "stock_draw_count": 3,
-        "stock_pass_limit": 3,
-        "hint_limit": 1,
-        "undo_history_limit": 10,
-        "reward_multiplier": 1.35,
+        "stock_pass_limit": None,
+        "hint_limit": None,
+        "undo_history_limit": None,
+        "reward_multiplier": 1.5,
         "clean_stock_bonus": 1.0,
         "notice_title": "3 DRAW",
         "notice_lines": [
             "Draw three cards from the stock at a time.",
-            "You have three stock passes for the round.",
+            "Stock passes, hints and undo are unlimited.",
         ],
     },
 
     "no_undo": {
         "name": "No Undo",
         "stock_draw_count": 1,
-        "stock_pass_limit": 5,
-        "hint_limit": 2,
+        "stock_pass_limit": None,
+        "hint_limit": None,
         "undo_history_limit": 0,
-        "reward_multiplier": 1.40,
+        "reward_multiplier": 2.0,
         "clean_stock_bonus": 1.0,
         "notice_title": "NO UNDO",
         "notice_lines": [
@@ -474,10 +474,10 @@ CAREER_CHALLENGE_RULES = {
     "no_hints": {
         "name": "No Hints",
         "stock_draw_count": 1,
-        "stock_pass_limit": 4,
+        "stock_pass_limit": None,
         "hint_limit": 0,
-        "undo_history_limit": 10,
-        "reward_multiplier": 1.40,
+        "undo_history_limit": None,
+        "reward_multiplier": 1.5,
         "clean_stock_bonus": 1.0,
         "notice_title": "NO HINTS",
         "notice_lines": [
@@ -489,10 +489,10 @@ CAREER_CHALLENGE_RULES = {
     "all_or_nothing": {
         "name": "All or Nothing",
         "stock_draw_count": 1,
-        "stock_pass_limit": 5,
-        "hint_limit": 3,
-        "undo_history_limit": 10,
-        "reward_multiplier": 1.55,
+        "stock_pass_limit": None,
+        "hint_limit": None,
+        "undo_history_limit": None,
+        "reward_multiplier": 2.0,
         "clean_stock_bonus": 1.0,
         "notice_title": "ALL OR NOTHING",
         "notice_lines": [
@@ -738,3 +738,6 @@ GAME_UNLOCK_LEVELS = {
     "blind_mans_bluff": 10,
     "five_card_draw": 10,
 }
+
+from rating_unlocks import add_rating_catalogs
+add_rating_catalogs(MENU_BACKGROUNDS, FELTS, TITLES)

@@ -4,7 +4,7 @@ import json
 import os
 import tempfile
 
-from career_ratings import migrate_profile_ratings
+from career_ratings import migrate_profile_ratings, make_player_rating_bundle, RATING_SCHEMA_VERSION
 from cryptid_collection import new_collection, normalize_collection
 
 
@@ -14,7 +14,7 @@ from cryptid_collection import new_collection, normalize_collection
 
 SAVE_FOLDER = "saves"
 
-PROFILE_VERSION = 8
+PROFILE_VERSION = 9
 
 PROFILE_SLOT_COUNT = 3
 
@@ -79,20 +79,10 @@ def make_default_profile():
 
             "rating": 1000,
 
-            # Overall is derived from the seven game ratings. The legacy
-            # field mirrors it for job unlocks and older UI callers.
-            "rating_schema_version": 2,
+            # Global is derived from Strategy, Poker and Casino.
+            "rating_schema_version": RATING_SCHEMA_VERSION,
             "rating_results": {},
-            "ratings": {
-                "overall": 1000,
-                "solitaire": 1000,
-                "texas_holdem": 1000,
-                "five_card_draw": 1000,
-                "seven_card_stud": 1000,
-                "blackjack": 1000,
-                "roulette": 1000,
-                "score_four": 1000,
-            },
+            "ratings": make_player_rating_bundle(),
 
             "cash": 0,
             "fans": 0,
@@ -305,3 +295,4 @@ def delete_profile(slot):
         os.remove(
             path
         )
+

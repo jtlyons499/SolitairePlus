@@ -113,10 +113,10 @@ class SixRelayTests(unittest.TestCase):
             for c in clients:c.update(now)
             for c in clients:
                 if c.message['type']=='state' and not c.game.hand_complete and c.game.current_actor==0:c.act('check_call')
-            if host.game.hand_complete and len(host.authority.humans)==6 and all(c.message['type']=='state' for c in clients):break
+            if (host.game.hand_complete or host.game.hand_number>1) and len(host.authority.humans)==6 and all(c.message['type']=='state' for c in clients):break
             time.sleep(.004)
         self.assertEqual(len(host.authority.humans),6)
-        self.assertTrue(host.game.hand_complete)
+        self.assertTrue(host.game.hand_complete or host.game.hand_number>1)
         extra=RoomTable('Seventh',False,self.address,host.code);self.peers.append(extra)
         deadline=time.monotonic()+3
         while not extra.failed and time.monotonic()<deadline:extra.update(now);time.sleep(.01)

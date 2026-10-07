@@ -31,9 +31,15 @@ class TableView:
             path=ROOT/str(npc.get('portrait',''))
             self.portraits[key]=pygame.image.load(path).convert_alpha() if path.is_file() else draw_layered_portrait(npc,rect.w)
         image=self.portraits[key]
-        if image is not None:self.surface.blit(pygame.transform.smoothscale(image,rect.size),rect)
+        if image is not None:
+            layer=pygame.Surface(rect.size,pygame.SRCALPHA)
+            pygame.draw.ellipse(layer,(36,65,58),layer.get_rect())
+            layer.blit(pygame.transform.smoothscale(image,rect.size),(0,0))
+            mask=pygame.Surface(rect.size,pygame.SRCALPHA);pygame.draw.ellipse(mask,(255,255,255,255),mask.get_rect())
+            layer.blit(mask,(0,0),special_flags=pygame.BLEND_RGBA_MULT);self.surface.blit(layer,rect)
         else:
-            pygame.draw.rect(self.surface,(43,74,68),rect,border_radius=8)
+            pygame.draw.ellipse(self.surface,(43,74,68),rect)
             initial=self.font.render(npc.get('name','?')[0],True,(242,229,192));self.surface.blit(initial,initial.get_rect(center=rect.center))
+        pygame.draw.ellipse(self.surface,(226,235,220),rect,2)
     def draw(self,table):
-        ui.draw_texas_holdem(self.surface,pygame.mouse.get_pos(),table.game,self.cards,self.back,self.background,self.title,self.button,self.portrait,self.font,self.font,self.font,table.name,self.felt)
+        ui.draw_texas_holdem(self.surface,pygame.mouse.get_pos(),table.game,self.cards,self.back,self.background,self.title,self.button,self.portrait,self.font,self.font,self.font,table.name,self.felt,show_utility_buttons=False)

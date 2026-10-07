@@ -32,8 +32,10 @@ class FlowTests(unittest.TestCase):
 
     def test_auto_next_without_any_ready(self):
         t=RoomAuthority('Host');t.join(1,'Guest');t.start();now=self.finish(t);hand=t.game.hand_number
-        t.update(now+1);t.update(now+6999);self.assertEqual(t.game.hand_number,hand)
-        t.update(now+7001);self.assertEqual(t.game.hand_number,hand+1)
+        t.update(now+1);self.assertEqual(t.view(1)["next_hand_seconds"],6)
+        t.update(now+1001);self.assertEqual(t.view(1)["next_hand_seconds"],5)
+        t.update(now+5999);self.assertEqual(t.game.hand_number,hand)
+        t.update(now+6001);self.assertEqual(t.game.hand_number,hand+1)
 
     def test_sit_out_defers_preserves_chips_skips_blinds_and_rejoins(self):
         for who in (0,1):
@@ -44,20 +46,21 @@ class FlowTests(unittest.TestCase):
             self.assertTrue(t.act(who,'sit_out',0,t.revision))
             self.assertEqual(t.game.player_hand if not seat else t.game.npc_hands[seat-1],hand)
             now=self.finish(t);stack=([t.game.player_stack,*t.game.npc_stacks])[seat]
-            t.update(now+1);t.update(now+7001)
+            t.update(now+1);t.update(now+6001)
             self.assertNotIn(seat,t.game.hand_seat_indexes)
             self.assertNotIn(seat,(t.game.small_blind_index,t.game.big_blind_index))
             self.assertEqual(([t.game.player_stack,*t.game.npc_stacks])[seat],stack)
             self.assertEqual(t.game.player_hand if not seat else t.game.npc_hands[seat-1],[])
             self.assertTrue(t.game.player_folded if not seat else t.game.npc_folded[seat-1])
             self.assertTrue(t.act(who,'sit_out',0,t.revision))
-            now=self.finish(t,now+8000);t.update(now+1);t.update(now+7001)
+            now=self.finish(t,now+8000);t.update(now+1);t.update(now+6001)
             self.assertIn(seat,t.game.hand_seat_indexes)
 
     def test_last_payout_survives_new_hand(self):
         t=RoomAuthority('Host');t.start();self.finish(t)
         room=RoomTable.__new__(RoomTable);room.game=ClientGame();room.profile=None;room.last_payout=None
         room.apply(t.view(0));hand=room.last_payout.hand_number
+        room.apply(t.view(0));self.assertEqual(len(room.payout_history),1)
         t.act(0,'next_hand',0,t.revision);room.apply(t.view(0))
         self.assertEqual(room.last_payout.hand_number,hand);self.assertGreater(room.game.hand_number,hand)
 

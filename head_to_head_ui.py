@@ -108,8 +108,12 @@ def draw_head_to_head_selection(
     subtitle = body_font.render(
         "Choose a rival for a timed Klondike race. First to 52 foundation cards wins.",
         True,
-        (220, 226, 223),
+        (255, 255, 255),
     )
+    rect = subtitle.get_rect(center=(BASE_WIDTH // 2, 134))
+    shade = pygame.Surface((rect.width + 24, rect.height + 12), pygame.SRCALPHA)
+    pygame.draw.rect(shade, (0, 0, 0, 185), shade.get_rect(), border_radius=8)
+    surface.blit(shade, rect.inflate(24, 12))
     surface.blit(subtitle, subtitle.get_rect(center=(BASE_WIDTH // 2, 134)))
 
     player_panel = pygame.Rect(468, 145, 430, 52)
@@ -122,7 +126,7 @@ def draw_head_to_head_selection(
         surface.blit(avatar, (player_panel.x + 14, player_panel.y + 4))
 
     player_label = small_font.render(
-        f"{player_name}  •  Solitaire {int(player_rating):,}",
+        f"{player_name}  •  Strategy {int(player_rating):,}",
         True,
         (246, 237, 203),
     )
@@ -131,6 +135,12 @@ def draw_head_to_head_selection(
         player_label,
         player_label.get_rect(center=(label_center_x, player_panel.centery))
     )
+
+    note = pygame.font.Font(None, 27).render('Rated race: wins earn Strategy points; losses and forfeits cost Strategy points.', True, (246, 240, 224))
+    note_rect = note.get_rect(center=(BASE_WIDTH//2, 604))
+    backing = pygame.Surface(note_rect.inflate(24, 14).size, pygame.SRCALPHA)
+    pygame.draw.rect(backing, (0, 0, 0, 190), backing.get_rect(), border_radius=8)
+    surface.blit(backing, note_rect.inflate(24, 14)); surface.blit(note, note_rect)
 
     for index, opponent in enumerate(opponents[:4]):
         rect = OPPONENT_CARD_RECTS[index]
@@ -294,4 +304,5 @@ def draw_head_to_head_hud(
         surface.blit(count_surface, count_surface.get_rect(center=(BASE_WIDTH // 2, BASE_HEIGHT // 2)))
         sub = body_font.render("First to clear all 52 foundation cards wins.", True, (250, 250, 245))
         surface.blit(sub, sub.get_rect(center=(BASE_WIDTH // 2, BASE_HEIGHT // 2 + 82)))
+
 

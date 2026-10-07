@@ -424,6 +424,20 @@ OPTIONAL_COSMETICS = {
 }
 
 
+# New cosmetics are granted retroactively by the existing reward reconciliation.
+for definition in ACHIEVEMENT_DEFINITIONS:
+    reward = {
+        "first_roulette_win": {"type": "felt", "id": "f_wheel_winner"},
+        "challenge_no_undo": {"type": "background", "id": "bg_no_going_back"},
+        "table_clear": {"type": "title", "id": "title_table_clear"},
+    }.get(definition["id"])
+    if reward:
+        definition.setdefault("rewards", []).append(reward)
+OPTIONAL_COSMETICS["felt"]["f_wheel_winner"] = {"name": "Wheel Winner", "path": "assets/ui/menu_ui/felts/f_wheel_winner.png", "order": 990}
+OPTIONAL_COSMETICS["background"]["bg_no_going_back"] = {"name": "No Going Back", "path": "assets/ui/menu_ui/backgrounds/bg_no_going_back.png", "order": 990}
+OPTIONAL_COSMETICS["title"]["title_table_clear"] = {"name": "Table Clear", "path": "assets/ui/menu_ui/titles/title_table_clear.png", "order": 990}
+
+
 def make_default_achievement_state():
     return {
         "unlocked": [],
@@ -649,4 +663,5 @@ def register_optional_cosmetics(menu_backgrounds, felts, titles):
         for asset_id, metadata in entries.items():
             if os.path.exists(metadata["path"]):
                 target.setdefault(asset_id, dict(metadata))
+
 

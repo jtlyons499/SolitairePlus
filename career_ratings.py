@@ -3,73 +3,92 @@ import random
 from career_fans import ensure_npc_fan_state
 
 
-RATING_KEYS = (
-    "overall",
-    "solitaire",
-    "texas_holdem",
-    "five_card_draw",
-    "seven_card_stud",
-    "blackjack",
-    "roulette",
-    "score_four",
-)
-
-RATING_DISPLAY_NAMES = {
-    "overall": "Overall",
-    "solitaire": "Solitaire",
-    "texas_holdem": "Texas Hold'em",
-    "five_card_draw": "Five-Card Draw",
-    "seven_card_stud": "Seven-Card Stud",
-    "blackjack": "Blackjack",
-    "roulette": "Roulette",
-    "score_four": "Score-Four",
+CATEGORY_KEYS = ("strategy", "poker", "casino")
+RATING_KEYS = ("overall", *CATEGORY_KEYS)
+GAME_CATEGORIES = {
+    "solitaire": "strategy", "score_four": "strategy",
+    "texas_holdem": "poker", "five_card_draw": "poker",
+    "seven_card_stud": "poker", "five_o_poker": "poker",
+    "blackjack": "casino", "roulette": "casino", "faro": "casino",
 }
-
-
-GAME_RATING_KEYS = RATING_KEYS[1:]
-RATING_SCHEMA_VERSION = 2
+GAME_RATING_KEYS = tuple(GAME_CATEGORIES)
+RATING_DISPLAY_NAMES = {
+    "overall": "Global Rating", "strategy": "Strategy Games Rating",
+    "poker": "Poker Rating", "casino": "Casino Rating",
+    **{game: category.title() + " Rating" for game, category in GAME_CATEGORIES.items()},
+}
+RATING_SCHEMA_VERSION = 3
 MIN_RATING = 100
+
+
+class RatingPoints(float):
+    """Fractional save precision with whole-point UI formatting."""
+    def __format__(self, spec):
+        return format(int(round(self)), spec.replace("f", "d") if "f" not in spec else spec)
+
+    def __str__(self):
+        return str(int(round(self)))
 
 
 def _rating(value, fallback=1000):
     try:
-        return max(MIN_RATING, int(value))
+        import math
+        value = float(value)
+        return RatingPoints(max(MIN_RATING, value if math.isfinite(value) else float(fallback)))
     except (TypeError, ValueError, OverflowError):
-        return max(MIN_RATING, int(fallback))
+        return RatingPoints(max(MIN_RATING, float(fallback)))
 
 
 def derive_overall(ratings):
-    """Equal-weight average of seven game ratings, rounded to nearest integer."""
-    return (sum(_rating(ratings.get(key, 1000)) for key in GAME_RATING_KEYS) + 3) // 7
+    return _rating(sum(float(ratings.get(key, 1000)) * weight
+                       for key, weight in zip(CATEGORY_KEYS, (.55, .35, .10))))
+
+
+def _finish_bundle(ratings):
+    for game, category in GAME_CATEGORIES.items():
+        ratings[game] = ratings[category]
+    ratings["overall"] = derive_overall(ratings)
+    return ratings
 
 
 def make_player_rating_bundle(legacy_rating=1000):
-    ratings = dict.fromkeys(GAME_RATING_KEYS, 1000)
-    ratings["solitaire"] = _rating(legacy_rating)
-    ratings["overall"] = derive_overall(ratings)
-    return ratings
+    return _finish_bundle({"strategy": _rating(legacy_rating), "poker": _rating(1000), "casino": _rating(1000)})
 
 
 def normalize_rating_bundle(bundle, legacy_rating=1000):
     ratings = make_player_rating_bundle(legacy_rating)
     if isinstance(bundle, dict):
-        for key in GAME_RATING_KEYS:
-            ratings[key] = _rating(bundle.get(key, ratings[key]), ratings[key])
-    ratings["overall"] = derive_overall(ratings)
-    return ratings
+        for category in CATEGORY_KEYS:
+            if category in bundle:
+                ratings[category] = _rating(bundle[category])
+            else:
+                previous = [float(_rating(bundle[game])) for game, group in GAME_CATEGORIES.items()
+                            if group == category and game in bundle]
+                if previous:
+                    ratings[category] = _rating(sum(previous) / len(previous))
+    return _finish_bundle(ratings)
 
 
-def apply_rating_change(ratings, game_key, amount):
-    """Change only the named game; Overall is always recalculated."""
-    if game_key not in GAME_RATING_KEYS:
-        raise ValueError(f"{game_key!r} is not an independently rated game")
+def reward_scale(rating):
+    steps = max(0, int((float(rating) - 1000) // 100))
+    return max(.10, 1.0 - .005 * steps)
+
+
+def apply_rating_change(ratings, game_key, amount, *, scale_rewards=True):
+    category = GAME_CATEGORIES.get(game_key, game_key if game_key in CATEGORY_KEYS else None)
+    if category is None:
+        raise ValueError(f"{game_key!r} is not rated")
     normalized = normalize_rating_bundle(ratings)
-    before = normalized[game_key]
-    normalized[game_key] = _rating(before + int(amount))
-    normalized["overall"] = derive_overall(normalized)
+    before = normalized[category]
+    amount = float(amount)
+    if amount > 0 and scale_rewards:
+        amount *= reward_scale(before)
+    normalized[category] = _rating(float(before) + amount)
+    _finish_bundle(normalized)
     ratings.clear()
     ratings.update(normalized)
-    return normalized[game_key] - before
+    # UI notifications stay integral; fractional progress persists in the save.
+    return int(round(normalized[category])) - int(round(before))
 
 
 def elo_delta(player_rating, opponent_rating, score, k=48):
@@ -89,7 +108,7 @@ def elo_delta(player_rating, opponent_rating, score, k=48):
 def update_npc_rating(state, npc, game_key, amount):
     state = ensure_npc_career_state(state, npc)
     before = state["rating"]
-    actual = apply_rating_change(state["ratings"], game_key, amount)
+    actual = apply_rating_change(state["ratings"], game_key, amount, scale_rewards=False)
     state["rating"] = state["ratings"]["overall"]
     state["last_changes"][game_key] = actual
     state["last_change"] = state["rating"] - before
@@ -98,11 +117,11 @@ def update_npc_rating(state, npc, game_key, amount):
 
 
 def boost_npc_overall(state, target):
-    """Seed a superstar by shifting all seven skills, never writing Overall."""
+    """Seed a superstar by shifting three categories, never writing Global."""
     ratings = normalize_rating_bundle(state["ratings"])
     difference = _rating(target) - ratings["overall"]
-    for key in GAME_RATING_KEYS:
-        apply_rating_change(ratings, key, difference)
+    for key in CATEGORY_KEYS:
+        apply_rating_change(ratings, key, difference, scale_rewards=False)
     state["ratings"] = ratings
     state["rating"] = ratings["overall"]
 
@@ -115,7 +134,7 @@ def simulate_npc_rating_month(state, npc, star=False, rng=None):
     limits = {"elite": (-45, 50), "strong": (-50, 45), "mid": (-55, 55), "low": (-60, 60)}
     low, high = (-25, 55) if star else limits.get(npc.get("skill_tier"), (-55, 55))
     state["last_changes"] = dict.fromkeys(RATING_KEYS, 0)
-    for key in rng.sample(list(GAME_RATING_KEYS), rng.randint(2, 4)):
+    for key in rng.sample(list(CATEGORY_KEYS), rng.randint(1, 3)):
         state["last_changes"][key] = apply_rating_change(state["ratings"], key, rng.randint(low, high))
     state["rating"] = state["ratings"]["overall"]
     state["last_change"] = state["rating"] - before
@@ -191,18 +210,15 @@ def make_npc_rating_bundle(base_rating, skill_tier="mid", rng=None):
     rng = rng or random
     base_rating = _rating(base_rating)
     spread = _npc_rating_spread_for_tier(skill_tier)
-    ratings = {key: _rating(base_rating + rng.randint(-spread, spread)) for key in GAME_RATING_KEYS}
-    ratings["solitaire"] = base_rating
-    ratings["overall"] = derive_overall(ratings)
-    return ratings
+    ratings = {key: _rating(base_rating + rng.randint(-spread, spread)) for key in CATEGORY_KEYS}
+    ratings["strategy"] = base_rating
+    return _finish_bundle(ratings)
 
 
 def normalize_npc_rating_bundle(bundle, legacy_rating=1000):
-    base = _rating(legacy_rating)
-    bundle = bundle if isinstance(bundle, dict) else {}
-    ratings = {key: _rating(bundle.get(key, base), base) for key in GAME_RATING_KEYS}
-    ratings["overall"] = derive_overall(ratings)
-    return ratings
+    if not isinstance(bundle, dict) or not bundle:
+        return _finish_bundle({key: _rating(legacy_rating) for key in CATEGORY_KEYS})
+    return normalize_rating_bundle(bundle, legacy_rating)
 
 
 def ensure_npc_career_state(state, npc, rng=None):
@@ -267,4 +283,5 @@ def advance_npc_age_for_month(state, npc, month):
 
     state["age"] = max(0, int(state.get("age", 0))) + 1
     return True
+
 

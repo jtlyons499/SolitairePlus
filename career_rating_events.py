@@ -21,6 +21,9 @@ def settle_competitive_result(ratings, results, states, game_key, opponent, scor
     state = ensure_npc_career_state(states.setdefault(npc_id, {}), opponent)
     states[npc_id] = state
     requested = elo_delta(ratings[game_key], state["ratings"][game_key], score)
+    if game_key == "score_four":
+        rewards = {"low": 45, "mid": 60, "strong": 50, "elite": 65}
+        requested = rewards.get(opponent.get("skill_tier"), 60) if score == 1 else -10 if score == 0 else 0
     actual = apply_rating_change(ratings, game_key, requested)
     npc_actual = update_npc_rating(state, opponent, game_key, -actual)
     record_result(results, game_key, score, actual)
@@ -30,11 +33,11 @@ def settle_competitive_result(ratings, results, states, game_key, opponent, scor
 
 def settle_house_result(ratings, results, game_key, net):
     """House games use a modest performance index; wagers cannot boost points."""
-    if game_key not in ("blackjack", "roulette"):
+    if game_key not in ("blackjack", "roulette", "faro"):
         raise ValueError("Not a rated house game")
     score = 1.0 if net > 0 else 0.0 if net < 0 else 0.5
-    unit = 8 if game_key == "blackjack" else 4
-    actual = apply_rating_change(ratings, game_key, unit if net > 0 else -unit if net < 0 else 0)
+    unit = 15 if game_key == "blackjack" else 12
+    actual = apply_rating_change(ratings, game_key, unit if net > 0 else -5 if net < 0 else 0)
     record_result(results, game_key, score, actual)
     return actual
 
@@ -80,7 +83,7 @@ def settle_poker_session(ratings, results, states, game_key, game):
         npc_states.append(state)
     starting_ratings = [ratings[game_key], *(state["ratings"][game_key] for state in npc_states)]
     count = len(stacks)
-    k = 32 * min(1.0, hands / 5.0) / (count - 1)
+    k = min(240.0, 12.0 * hands) / (count - 1)
     deltas, scores = [0] * count, [0.0] * count
     for left in range(count):
         for right in range(left + 1, count):
@@ -96,3 +99,4 @@ def settle_poker_session(ratings, results, states, game_key, game):
         npc_actual = update_npc_rating(state, npc, game_key, delta)
         record_result(state["rating_results"], game_key, score, npc_actual)
     return actual
+

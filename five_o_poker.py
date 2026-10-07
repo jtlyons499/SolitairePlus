@@ -26,10 +26,8 @@ class FiveOPokerGame:
     column hidden from the opponent, then one betting round and five paired
     poker-hand comparisons.
 
-    The source rules do not specify a betting limit. For this project the one
-    betting round uses a compact fixed wager: check/bet, then call/fold. There
-    are no raises. This keeps the focus on the five simultaneous hands while
-    preserving the bluff/fold decision that the rules require.
+    One pot-based betting round supports checks, bets, calls, raises and folds.
+    Opponent responses pause briefly, followed by sequential column reveals.
     """
 
     HIDDEN_CARD_INDEX = 3
@@ -80,7 +78,15 @@ class FiveOPokerGame:
         # actually read each comparison before the final result appears.
         self.showdown_revealed_columns = 0
         self.showdown_reveal_started_at = 0.0
-        self.showdown_reveal_interval = 0.9
+        self.showdown_reveal_interval = 1.1
+        self.fast_reveal = False
+        self.sounds_enabled = True
+        self.options_open = False
+        self.bet_fraction = .5
+        self.pending_npc_at = 0.0
+        self.player_betting_paid = 0
+        self.npc_betting_paid = 0
+        self.raise_count = 0
         self.pending_showdown_result_text = ""
         self.showdown_pending_finish = False
 
@@ -123,6 +129,9 @@ class FiveOPokerGame:
         return paid
 
     def start_hand(self):
+        self.hand_start_player_stack = self.player_stack
+        self.pending_npc_at = 0.0
+        self.player_betting_paid = self.npc_betting_paid = 0
         if self.player_stack < self.ante or self.npc_stack < self.ante:
             self.session_complete = True
             self.phase = "session_over"
@@ -319,6 +328,9 @@ class FiveOPokerGame:
     def _begin_betting(self):
         self.phase = "betting"
         self.current_bet = 0
+        self.player_betting_paid = self.npc_betting_paid = 0
+        self.raise_count = 0
+        self.pending_npc_at = 0.0
         self.player_drawn_card = None
         self.result_text = (
             f"All five hands are built. One betting round for ${self.get_effective_bet_unit():,}."
@@ -333,6 +345,7 @@ class FiveOPokerGame:
         if decision.get("action") == "bet" and self.get_effective_bet_unit() > 0:
             amount = self.get_effective_bet_unit()
             self.current_bet = self._commit_npc(amount)
+            self.npc_betting_paid = self.current_bet
             self.last_npc_action = f"{self.get_npc_name()} bets ${self.current_bet:,}."
             self.bet_state = "player_response"
             self.result_text = f"{self.get_npc_name()} opens for ${self.current_bet:,}. Call or fold."
@@ -342,19 +355,59 @@ class FiveOPokerGame:
             self.result_text = f"{self.get_npc_name()} checks. Action is on you."
 
     def get_effective_bet_unit(self):
-        return max(0, min(self.bet_unit, self.player_stack, self.npc_stack))
+        ceiling = min(self.player_stack + self.player_betting_paid, self.npc_stack + self.npc_betting_paid)
+        minimum = max(self.ante * 2, self.current_bet * 2)
+        target = round_chip_amount(max(self.pot, self.ante * 4) * self.bet_fraction, minimum=minimum)
+        return max(0, min(ceiling, target))
 
     def get_player_actions(self):
-        if self.phase != "betting" or self.hand_complete:
+        if self.phase != "betting" or self.hand_complete or self.pending_npc_at:
             return []
         if self.bet_state in ("player_open", "player_last_open"):
-            actions = ["check"]
-            if self.get_effective_bet_unit() > 0:
+            return ["check", "bet"] if self.get_effective_bet_unit() > 0 else ["check"]
+        if self.bet_state == "player_response":
+            actions = ["fold", "call"]
+            if self.raise_count < 3 and self.get_effective_bet_unit() > self.current_bet:
                 actions.append("bet")
             return actions
-        if self.bet_state == "player_response":
-            return ["fold", "call"]
         return []
+
+    def _queue_opponent(self):
+        self.pending_npc_at = time.monotonic() + .65
+        self.result_text = f"{self.get_npc_name()} is considering the action…"
+
+    def _finish_opponent_response(self):
+        self.pending_npc_at = 0.0
+        if not self.current_bet:
+            decision = self._npc_decision(facing_bet=False)
+            if decision.get("action") == "bet" and self.get_effective_bet_unit():
+                self.current_bet = self._commit_npc(self.get_effective_bet_unit())
+                self.npc_betting_paid = self.current_bet
+                self.bet_state = "player_response"
+                self.last_npc_action = f"{self.get_npc_name()} bets ${self.current_bet:,}."
+                self.result_text = self.last_npc_action + " Call, raise or fold."
+            else:
+                self.last_npc_action = f"{self.get_npc_name()} checks."
+                self._showdown()
+            return
+        decision = self._npc_decision(facing_bet=True)
+        if decision.get("action") == "fold":
+            self.npc_folded = True
+            self.last_npc_action = f"{self.get_npc_name()} folds."
+            self._award_fold_win(player_won=True)
+        elif decision.get("action") == "raise" and self.raise_count < 3 and self.get_effective_bet_unit() > self.current_bet:
+            target = self.get_effective_bet_unit()
+            self.npc_betting_paid += self._commit_npc(target - self.npc_betting_paid)
+            self.current_bet = self.npc_betting_paid
+            self.raise_count += 1
+            self.bet_state = "player_response"
+            self.last_npc_action = f"{self.get_npc_name()} raises to ${self.current_bet:,}."
+            self.result_text = self.last_npc_action + " Call, raise or fold."
+        else:
+            paid = self._commit_npc(self.current_bet - self.npc_betting_paid)
+            self.npc_betting_paid += paid
+            self.last_npc_action = f"{self.get_npc_name()} calls ${paid:,}."
+            self._showdown()
 
     def _known_npc_strength(self, samples=120):
         """Estimate how often the NPC wins 3+ columns without peeking at the
@@ -400,7 +453,7 @@ class FiveOPokerGame:
     def _npc_decision(self, facing_bet=False):
         strength = self._known_npc_strength()
         personality = get_poker_personality(self.npc)
-        amount_to_call = self.current_bet if facing_bet else 0
+        amount_to_call = max(0, self.current_bet - self.npc_betting_paid) if facing_bet else 0
         context = {
             "stage": "showdown_bet",
             "personality_traits": get_npc_traits(self.npc),
@@ -426,49 +479,28 @@ class FiveOPokerGame:
         return decision
 
     def player_check(self):
-        if "check" not in self.get_player_actions():
-            return False
+        if "check" not in self.get_player_actions(): return False
         self.last_player_action = "Checked"
-
-        if self.bet_state == "player_last_open":
-            self._showdown()
-            return True
-
-        decision = self._npc_decision(facing_bet=False)
-        if decision.get("action") == "bet" and self.get_effective_bet_unit() > 0:
-            amount = self.get_effective_bet_unit()
-            self.current_bet = self._commit_npc(amount)
-            self.last_npc_action = f"{self.get_npc_name()} bets ${self.current_bet:,}."
-            self.bet_state = "player_response"
-            self.result_text = f"{self.get_npc_name()} bets ${self.current_bet:,}. Call or fold."
-        else:
-            self.last_npc_action = f"{self.get_npc_name()} checks."
-            self._showdown()
+        if self.bet_state == "player_last_open": self._showdown()
+        else: self._queue_opponent()
         return True
 
     def player_bet(self):
-        if "bet" not in self.get_player_actions():
-            return False
-        amount = self.get_effective_bet_unit()
-        if amount <= 0:
-            return False
-        self.current_bet = self._commit_player(amount)
-        self.last_player_action = f"Bet ${self.current_bet:,}"
-        decision = self._npc_decision(facing_bet=True)
-        if decision.get("action") == "fold":
-            self.npc_folded = True
-            self.last_npc_action = f"{self.get_npc_name()} folds."
-            self._award_fold_win(player_won=True)
-        else:
-            paid = self._commit_npc(self.current_bet)
-            self.last_npc_action = f"{self.get_npc_name()} calls ${paid:,}."
-            self._showdown()
+        if "bet" not in self.get_player_actions(): return False
+        target = self.get_effective_bet_unit()
+        if target <= self.current_bet: return False
+        raised = self.current_bet > 0
+        self.player_betting_paid += self._commit_player(target - self.player_betting_paid)
+        self.current_bet = self.player_betting_paid
+        if raised: self.raise_count += 1
+        self.last_player_action = f"{'Raised to' if raised else 'Bet'} ${self.current_bet:,}"
+        self._queue_opponent()
         return True
 
     def player_call(self):
-        if "call" not in self.get_player_actions():
-            return False
-        paid = self._commit_player(self.current_bet)
+        if "call" not in self.get_player_actions(): return False
+        paid = self._commit_player(self.current_bet - self.player_betting_paid)
+        self.player_betting_paid += paid
         self.last_player_action = f"Called ${paid:,}"
         self._showdown()
         return True
@@ -575,13 +607,15 @@ class FiveOPokerGame:
         self.showdown_pending_finish = True
 
     def update(self):
+        if self.pending_npc_at and time.monotonic() >= self.pending_npc_at:
+            self._finish_opponent_response()
         if not self.showdown_pending_finish or self.hand_complete:
             return
 
         elapsed = time.monotonic() - self.showdown_reveal_started_at
         target_count = min(
             5,
-            int(elapsed / self.showdown_reveal_interval) + 1,
+            int(elapsed / (.25 if self.fast_reveal else self.showdown_reveal_interval)) + 1,
         )
 
         if target_count > self.showdown_revealed_columns:
@@ -590,7 +624,7 @@ class FiveOPokerGame:
         if self.showdown_revealed_columns >= 5:
             # Let the fifth comparison sit on screen for one reveal interval
             # before showing the final hand result / Next Hand controls.
-            final_hold = self.showdown_reveal_interval * 5
+            final_hold = (.25 if self.fast_reveal else self.showdown_reveal_interval) * 5
             if elapsed >= final_hold:
                 self.result_text = self.pending_showdown_result_text
                 self.showdown_pending_finish = False
@@ -645,4 +679,5 @@ class FiveOPokerGame:
             and self.player_stack >= self.ante
             and self.npc_stack >= self.ante
         )
+
 

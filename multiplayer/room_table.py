@@ -1,5 +1,6 @@
 """Six-seat authority with humans taking over only between hands."""
 import copy
+import math
 import random
 import texas_holdem_ui as ui
 from lan_table import TwoHumanGame
@@ -38,7 +39,7 @@ class RoomAuthority:
         self.names=[host_name]+[n['name'] for n in self.npcs]
         self.humans={0:0};self.connections={0:host_name};self.waiting=[];self.departed=set()
         self.game=None;self.revision=0;self.ready=set();self.due=0;self.starting_stack=5000;self.new_seats=set()
-        self.chips_added=0;self.table_notices=[];self.sit_out=set();self.resume_at=None;self.completed_hand=0;self.table_speed=ui.holdem_table_speed
+        self.chips_added=0;self.table_notices=[];self.sit_out=set();self.resume_at=None;self.completed_hand=0;self.next_hand_seconds=6;self.table_speed=ui.holdem_table_speed
     def join(self, identity, name):
         if identity in self.connections:return
         self.connections[identity]=name
@@ -112,6 +113,7 @@ class RoomAuthority:
         message['sit_out']=identity in self.sit_out
         message['resting_seats']=sorted(self.game.sitting_out)
         message['table_speed']=self.table_speed
+        message['next_hand_seconds']=self.next_hand_seconds
         return message
     def act(self, identity, action, amount=0, revision=None):
         if identity not in self.connections or revision!=self.revision:return False
@@ -167,7 +169,7 @@ class RoomAuthority:
             if sum(s>0 for s in [self.game.player_stack,*self.game.npc_stacks])>1:
                 self.game.sitting_out={self.humans[i] for i in self.sit_out if i in self.humans}
                 if len(self.game.get_live_player_indexes())<2:return
-                self.ready.clear();self.new_seats.clear();self.game.start_hand();self.revision+=1;self.due=0;self.resume_at=None
+                self.ready.clear();self.new_seats.clear();self.game.start_hand();self.revision+=1;self.due=0;self.resume_at=None;self.next_hand_seconds=6
     def replace_busted_npcs(self):
         occupied=set(self.humans.values())
         for seat in range(1,6):
@@ -192,7 +194,9 @@ class RoomAuthority:
             if self.waiting or self.departed:self.boundary();self.revision+=1
             if self.completed_hand!=g.hand_number:
                 self.completed_hand=g.hand_number
-                self.resume_at=now+{'slow':10000,'normal':7000,'fast':4500}.get(self.table_speed,7000)
+                self.resume_at=now+6000
+            seconds=max(0,math.ceil((self.resume_at-now)/1000)) if self.resume_at is not None else 6
+            if seconds!=self.next_hand_seconds:self.next_hand_seconds=seconds;self.revision+=1
             if self.resume_at is not None and now>=self.resume_at:self.ready.update(self.required())
             self.next_if_ready();return
         complete=g.is_betting_round_complete()

@@ -1,5 +1,5 @@
 {
-    "profile_version": 8,
+    "profile_version": 9,
     "cryptid_creatures": {
         "schema_version": 1,
         "owned": {
@@ -143,9 +143,9 @@
         ],
         "active_deck": 0,
         "packs": {
-            "creature": 0
+            "creature": 2
         },
-        "rewarded_through_level": 10,
+        "rewarded_through_level": 11,
         "pack_seed": 7607528742727147233,
         "packs_opened": 2,
         "pending_reveal": null,
@@ -154,6 +154,17 @@
         "draws": 0,
         "battle_serial": 1,
         "last_rewarded_battle": 0
+    },
+    "poker_learning": {
+        "version": 1,
+        "games": {}
+    },
+    "case_opening": {
+        "version": 1,
+        "opened": 0,
+        "spent": 0,
+        "inventory": {},
+        "history": []
     },
     "identity": {
         "name": "Ribeye",
@@ -172,24 +183,29 @@
         }
     },
     "progression": {
-        "level": 10,
-        "xp": 2642,
+        "level": 11,
+        "xp": 2712,
         "solitaire_points": 452
     },
     "career": {
         "unlocked": false,
-        "rating": 1211,
-        "rating_schema_version": 2,
+        "rating": 1407.0,
+        "rating_schema_version": 3,
         "rating_results": {},
         "ratings": {
-            "solitaire": 1780,
-            "texas_holdem": 1000,
-            "five_card_draw": 1000,
-            "seven_card_stud": 1000,
-            "blackjack": 1000,
-            "roulette": 1000,
-            "score_four": 1700,
-            "overall": 1211
+            "strategy": 1740.0,
+            "poker": 1000.0,
+            "casino": 1000.0,
+            "solitaire": 1740.0,
+            "score_four": 1740.0,
+            "texas_holdem": 1000.0,
+            "five_card_draw": 1000.0,
+            "seven_card_stud": 1000.0,
+            "five_o_poker": 1000.0,
+            "blackjack": 1000.0,
+            "roulette": 1000.0,
+            "faro": 1000.0,
+            "overall": 1407.0
         },
         "cash": 728,
         "fans": 126587,
@@ -208,23 +224,28 @@
         ],
         "leaderboard_state": {
             "monkus_carlton": {
-                "rating": 2664,
+                "rating": 2778.4416666666666,
                 "last_change": 0,
                 "ratings": {
-                    "solitaire": 3177,
-                    "texas_holdem": 2515,
-                    "five_card_draw": 2632,
-                    "seven_card_stud": 2417,
-                    "blackjack": 2542,
-                    "roulette": 2581,
-                    "score_four": 2786,
-                    "overall": 2664
+                    "strategy": 2981.5,
+                    "poker": 2521.3333333333335,
+                    "casino": 2561.5,
+                    "solitaire": 2981.5,
+                    "score_four": 2981.5,
+                    "texas_holdem": 2521.3333333333335,
+                    "five_card_draw": 2521.3333333333335,
+                    "seven_card_stud": 2521.3333333333335,
+                    "five_o_poker": 2521.3333333333335,
+                    "blackjack": 2561.5,
+                    "roulette": 2561.5,
+                    "faro": 2561.5,
+                    "overall": 2778.4416666666666
                 },
                 "age": 47,
                 "birthday_month": 10,
                 "public_appeal": "magnetic",
-                "fans": 625757,
-                "rating_schema_version": 2,
+                "fans": 738064,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 0,
                     "solitaire": 0,
@@ -249,7 +270,10 @@
                         "seven_card_stud": 2417,
                         "blackjack": 2534,
                         "roulette": 2581,
-                        "score_four": 2793
+                        "score_four": 2793,
+                        "strategy": 2985.0,
+                        "poker": 2521.3333333333335,
+                        "casino": 2557.5
                     },
                     "peak_age": 36,
                     "peak_ratings": {
@@ -259,7 +283,10 @@
                         "seven_card_stud": 2417,
                         "blackjack": 2534,
                         "roulette": 2581,
-                        "score_four": 2793
+                        "score_four": 2793,
+                        "strategy": 2985.0,
+                        "poker": 2521.3333333333335,
+                        "casino": 2557.5
                     },
                     "decline_start": 38,
                     "decline_per_year": 5.31,
@@ -273,7 +300,10 @@
                         "seven_card_stud": 2416.5575,
                         "blackjack": 2533.5575,
                         "roulette": 2580.5575,
-                        "score_four": 2792.5575
+                        "score_four": 2792.5575,
+                        "strategy": 2984.5575,
+                        "poker": 2520.8908333333334,
+                        "casino": 2557.0575
                     },
                     "carry": {
                         "solitaire": -0.4425,
@@ -282,7 +312,10 @@
                         "seven_card_stud": -0.4425,
                         "blackjack": -0.4425,
                         "roulette": -0.4425,
-                        "score_four": -0.4425
+                        "score_four": -0.4425,
+                        "strategy": -0.4425,
+                        "poker": -0.44250000000000006,
+                        "casino": -0.4425
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -290,23 +323,28 @@
                 }
             },
             "gary_undo": {
-                "rating": 2420,
+                "rating": 2367.5916666666667,
                 "last_change": 1,
                 "ratings": {
-                    "solitaire": 2348,
-                    "texas_holdem": 2350,
-                    "five_card_draw": 2359,
-                    "seven_card_stud": 2549,
-                    "blackjack": 2495,
-                    "roulette": 2583,
-                    "score_four": 2259,
-                    "overall": 2420
+                    "strategy": 2303.5,
+                    "poker": 2419.3333333333335,
+                    "casino": 2539.0,
+                    "solitaire": 2303.5,
+                    "score_four": 2303.5,
+                    "texas_holdem": 2419.3333333333335,
+                    "five_card_draw": 2419.3333333333335,
+                    "seven_card_stud": 2419.3333333333335,
+                    "five_o_poker": 2419.3333333333335,
+                    "blackjack": 2539.0,
+                    "roulette": 2539.0,
+                    "faro": 2539.0,
+                    "overall": 2367.5916666666667
                 },
                 "age": 39,
                 "birthday_month": 10,
                 "public_appeal": "steady",
-                "fans": 326853,
-                "rating_schema_version": 2,
+                "fans": 298393,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 1,
                     "solitaire": 12,
@@ -331,7 +369,10 @@
                         "seven_card_stud": 2548,
                         "blackjack": 2495,
                         "roulette": 2583,
-                        "score_four": 2259
+                        "score_four": 2259,
+                        "strategy": 2297.5,
+                        "poker": 2419.0,
+                        "casino": 2539.0
                     },
                     "peak_age": 37,
                     "peak_ratings": {
@@ -341,7 +382,10 @@
                         "seven_card_stud": 2548,
                         "blackjack": 2495,
                         "roulette": 2583,
-                        "score_four": 2259
+                        "score_four": 2259,
+                        "strategy": 2297.5,
+                        "poker": 2419.0,
+                        "casino": 2539.0
                     },
                     "decline_start": 40,
                     "decline_per_year": 4.092,
@@ -355,7 +399,10 @@
                         "seven_card_stud": 2548.0,
                         "blackjack": 2495.0,
                         "roulette": 2583.0,
-                        "score_four": 2259.0
+                        "score_four": 2259.0,
+                        "strategy": 2297.5,
+                        "poker": 2419.0,
+                        "casino": 2539.0
                     },
                     "carry": {
                         "solitaire": 0.0,
@@ -364,7 +411,10 @@
                         "seven_card_stud": 0.0,
                         "blackjack": 0.0,
                         "roulette": 0.0,
-                        "score_four": 0.0
+                        "score_four": 0.0,
+                        "strategy": 0.0,
+                        "poker": 0.0,
+                        "casino": 0.0
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -372,23 +422,28 @@
                 }
             },
             "big_mike": {
-                "rating": 2392,
+                "rating": 2339.4583333333335,
                 "last_change": 3,
                 "ratings": {
-                    "solitaire": 2343,
-                    "texas_holdem": 2445,
-                    "five_card_draw": 2247,
-                    "seven_card_stud": 2420,
-                    "blackjack": 2579,
-                    "roulette": 2486,
-                    "score_four": 2226,
-                    "overall": 2392
+                    "strategy": 2284.5,
+                    "poker": 2370.6666666666665,
+                    "casino": 2532.5,
+                    "solitaire": 2284.5,
+                    "score_four": 2284.5,
+                    "texas_holdem": 2370.6666666666665,
+                    "five_card_draw": 2370.6666666666665,
+                    "seven_card_stud": 2370.6666666666665,
+                    "five_o_poker": 2370.6666666666665,
+                    "blackjack": 2532.5,
+                    "roulette": 2532.5,
+                    "faro": 2532.5,
+                    "overall": 2339.4583333333335
                 },
                 "age": 25,
                 "birthday_month": 10,
                 "public_appeal": "reserved",
-                "fans": 274210,
-                "rating_schema_version": 2,
+                "fans": 249963,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 3,
                     "solitaire": -6,
@@ -413,7 +468,10 @@
                         "seven_card_stud": 2409,
                         "blackjack": 2578,
                         "roulette": 2485,
-                        "score_four": 2213
+                        "score_four": 2213,
+                        "strategy": 2281.0,
+                        "poker": 2366.3333333333335,
+                        "casino": 2531.5
                     },
                     "peak_age": 38,
                     "peak_ratings": {
@@ -423,7 +481,10 @@
                         "seven_card_stud": 2548,
                         "blackjack": 2791,
                         "roulette": 2596,
-                        "score_four": 2303
+                        "score_four": 2303,
+                        "strategy": 2415.0,
+                        "poker": 2495.3333333333335,
+                        "casino": 2693.5
                     },
                     "decline_start": 45,
                     "decline_per_year": 4.361,
@@ -437,7 +498,10 @@
                         "seven_card_stud": 2409.891026,
                         "blackjack": 2579.365385,
                         "roulette": 2485.711538,
-                        "score_four": 2213.576923
+                        "score_four": 2213.576923,
+                        "strategy": 2281.8589745,
+                        "poker": 2367.160256333333,
+                        "casino": 2532.5384615000003
                     },
                     "carry": {
                         "solitaire": 0.141026,
@@ -446,7 +510,10 @@
                         "seven_card_stud": -0.108974,
                         "blackjack": 0.365385,
                         "roulette": -0.288462,
-                        "score_four": -0.423077
+                        "score_four": -0.423077,
+                        "strategy": -0.14102549999999997,
+                        "poker": -0.173077,
+                        "casino": 0.03846150000000001
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -454,23 +521,28 @@
                 }
             },
             "shelly_barn": {
-                "rating": 2742,
+                "rating": 2766.125,
                 "last_change": 0,
                 "ratings": {
-                    "solitaire": 2655,
-                    "texas_holdem": 2693,
-                    "five_card_draw": 2818,
-                    "seven_card_stud": 2811,
-                    "blackjack": 2672,
-                    "roulette": 2636,
-                    "score_four": 2908,
-                    "overall": 2742
+                    "strategy": 2781.5,
+                    "poker": 2774.0,
+                    "casino": 2654.0,
+                    "solitaire": 2781.5,
+                    "score_four": 2781.5,
+                    "texas_holdem": 2774.0,
+                    "five_card_draw": 2774.0,
+                    "seven_card_stud": 2774.0,
+                    "five_o_poker": 2774.0,
+                    "blackjack": 2654.0,
+                    "roulette": 2654.0,
+                    "faro": 2654.0,
+                    "overall": 2766.125
                 },
                 "age": 42,
                 "birthday_month": 1,
                 "public_appeal": "magnetic",
-                "fans": 701258,
-                "rating_schema_version": 2,
+                "fans": 725656,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 0,
                     "solitaire": 0,
@@ -495,7 +567,10 @@
                         "seven_card_stud": 2806,
                         "blackjack": 2675,
                         "roulette": 2636,
-                        "score_four": 2908
+                        "score_four": 2908,
+                        "strategy": 2781.5,
+                        "poker": 2772.3333333333335,
+                        "casino": 2655.5
                     },
                     "peak_age": 35,
                     "peak_ratings": {
@@ -505,7 +580,10 @@
                         "seven_card_stud": 2806,
                         "blackjack": 2675,
                         "roulette": 2636,
-                        "score_four": 2908
+                        "score_four": 2908,
+                        "strategy": 2781.5,
+                        "poker": 2772.3333333333335,
+                        "casino": 2655.5
                     },
                     "decline_start": 43,
                     "decline_per_year": 6.541,
@@ -519,7 +597,10 @@
                         "seven_card_stud": 2806.0,
                         "blackjack": 2675.0,
                         "roulette": 2636.0,
-                        "score_four": 2908.0
+                        "score_four": 2908.0,
+                        "strategy": 2781.5,
+                        "poker": 2772.3333333333335,
+                        "casino": 2655.5
                     },
                     "carry": {
                         "solitaire": 0.0,
@@ -528,7 +609,10 @@
                         "seven_card_stud": 0.0,
                         "blackjack": 0.0,
                         "roulette": 0.0,
-                        "score_four": 0.0
+                        "score_four": 0.0,
+                        "strategy": 0.0,
+                        "poker": 0.0,
+                        "casino": 0.0
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -536,23 +620,28 @@
                 }
             },
             "molly_courts": {
-                "rating": 1631,
+                "rating": 1619.5083333333334,
                 "last_change": 2,
                 "ratings": {
-                    "solitaire": 1670,
-                    "texas_holdem": 1582,
-                    "five_card_draw": 1695,
-                    "seven_card_stud": 1630,
-                    "blackjack": 1675,
-                    "roulette": 1627,
-                    "score_four": 1537,
-                    "overall": 1631
+                    "strategy": 1603.5,
+                    "poker": 1635.6666666666667,
+                    "casino": 1651.0,
+                    "solitaire": 1603.5,
+                    "score_four": 1603.5,
+                    "texas_holdem": 1635.6666666666667,
+                    "five_card_draw": 1635.6666666666667,
+                    "seven_card_stud": 1635.6666666666667,
+                    "five_o_poker": 1635.6666666666667,
+                    "blackjack": 1651.0,
+                    "roulette": 1651.0,
+                    "faro": 1651.0,
+                    "overall": 1619.5083333333334
                 },
                 "age": 7,
                 "birthday_month": 5,
                 "public_appeal": "charming",
-                "fans": 64887,
-                "rating_schema_version": 2,
+                "fans": 62550,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 2,
                     "solitaire": 0,
@@ -577,7 +666,10 @@
                         "seven_card_stud": 1629,
                         "blackjack": 1673,
                         "roulette": 1630,
-                        "score_four": 1536
+                        "score_four": 1536,
+                        "strategy": 1603.0,
+                        "poker": 1631.0,
+                        "casino": 1651.5
                     },
                     "peak_age": 23,
                     "peak_ratings": {
@@ -587,7 +679,10 @@
                         "seven_card_stud": 1824,
                         "blackjack": 1795,
                         "roulette": 1799,
-                        "score_four": 1741
+                        "score_four": 1741,
+                        "strategy": 1741.5,
+                        "poker": 1808.6666666666667,
+                        "casino": 1797.0
                     },
                     "decline_start": 42,
                     "decline_per_year": 3.825,
@@ -601,7 +696,10 @@
                         "seven_card_stud": 1630.042781,
                         "blackjack": 1673.652406,
                         "roulette": 1630.903743,
-                        "score_four": 1537.096257
+                        "score_four": 1537.096257,
+                        "strategy": 1603.740642,
+                        "poker": 1631.9500893333334,
+                        "casino": 1652.2780745
                     },
                     "carry": {
                         "solitaire": 0.385027,
@@ -610,7 +708,10 @@
                         "seven_card_stud": 0.042781,
                         "blackjack": -0.347594,
                         "roulette": -0.096257,
-                        "score_four": 0.096257
+                        "score_four": 0.096257,
+                        "strategy": 0.240642,
+                        "poker": -0.04991066666666668,
+                        "casino": -0.2219255
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -618,23 +719,28 @@
                 }
             },
             "rosalie_de_leon": {
-                "rating": 1974,
+                "rating": 1937.8666666666668,
                 "last_change": 4,
                 "ratings": {
-                    "solitaire": 1862,
-                    "texas_holdem": 1992,
-                    "five_card_draw": 2071,
-                    "seven_card_stud": 2067,
-                    "blackjack": 1969,
-                    "roulette": 1992,
-                    "score_four": 1864,
-                    "overall": 1974
+                    "strategy": 1863.0,
+                    "poker": 2043.3333333333333,
+                    "casino": 1980.5,
+                    "solitaire": 1863.0,
+                    "score_four": 1863.0,
+                    "texas_holdem": 2043.3333333333333,
+                    "five_card_draw": 2043.3333333333333,
+                    "seven_card_stud": 2043.3333333333333,
+                    "five_o_poker": 2043.3333333333333,
+                    "blackjack": 1980.5,
+                    "roulette": 1980.5,
+                    "faro": 1980.5,
+                    "overall": 1937.8666666666668
                 },
                 "age": 11,
                 "birthday_month": 7,
                 "public_appeal": "charming",
-                "fans": 158928,
-                "rating_schema_version": 2,
+                "fans": 146006,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 4,
                     "solitaire": 13,
@@ -659,7 +765,10 @@
                         "seven_card_stud": 2065,
                         "blackjack": 1963,
                         "roulette": 1990,
-                        "score_four": 1863
+                        "score_four": 1863,
+                        "strategy": 1856.0,
+                        "poker": 2041.6666666666667,
+                        "casino": 1976.5
                     },
                     "peak_age": 22,
                     "peak_ratings": {
@@ -669,7 +778,10 @@
                         "seven_card_stud": 2260,
                         "blackjack": 2072,
                         "roulette": 2212,
-                        "score_four": 1971
+                        "score_four": 1971,
+                        "strategy": 1972.0,
+                        "poker": 2233.0,
+                        "casino": 2142.0
                     },
                     "decline_start": 38,
                     "decline_per_year": 5.356,
@@ -683,7 +795,10 @@
                         "seven_card_stud": 2066.511628,
                         "blackjack": 1963.844961,
                         "roulette": 1991.72093,
-                        "score_four": 1863.837209
+                        "score_four": 1863.837209,
+                        "strategy": 1856.8992245,
+                        "poker": 2043.1498706666669,
+                        "casino": 1977.7829455
                     },
                     "carry": {
                         "solitaire": -0.03876,
@@ -692,7 +807,10 @@
                         "seven_card_stud": -0.488372,
                         "blackjack": -0.155039,
                         "roulette": -0.27907,
-                        "score_four": -0.162791
+                        "score_four": -0.162791,
+                        "strategy": -0.10077549999999999,
+                        "poker": -0.18346266666666666,
+                        "casino": -0.21705449999999998
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -700,23 +818,28 @@
                 }
             },
             "danny_de_leon": {
-                "rating": 1709,
+                "rating": 1745.3583333333336,
                 "last_change": 0,
                 "ratings": {
-                    "solitaire": 1897,
-                    "texas_holdem": 1648,
-                    "five_card_draw": 1662,
-                    "seven_card_stud": 1720,
-                    "blackjack": 1682,
-                    "roulette": 1639,
-                    "score_four": 1712,
-                    "overall": 1709
+                    "strategy": 1804.5,
+                    "poker": 1676.6666666666667,
+                    "casino": 1660.5,
+                    "solitaire": 1804.5,
+                    "score_four": 1804.5,
+                    "texas_holdem": 1676.6666666666667,
+                    "five_card_draw": 1676.6666666666667,
+                    "seven_card_stud": 1676.6666666666667,
+                    "five_o_poker": 1676.6666666666667,
+                    "blackjack": 1660.5,
+                    "roulette": 1660.5,
+                    "faro": 1660.5,
+                    "overall": 1745.3583333333336
                 },
                 "age": 9,
                 "birthday_month": 4,
                 "public_appeal": "steady",
-                "fans": 70279,
-                "rating_schema_version": 2,
+                "fans": 77655,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 0,
                     "solitaire": 1,
@@ -741,7 +864,10 @@
                         "seven_card_stud": 1717,
                         "blackjack": 1682,
                         "roulette": 1638,
-                        "score_four": 1721
+                        "score_four": 1721,
+                        "strategy": 1808.5,
+                        "poker": 1675.0,
+                        "casino": 1660.0
                     },
                     "peak_age": 22,
                     "peak_ratings": {
@@ -751,7 +877,10 @@
                         "seven_card_stud": 1851,
                         "blackjack": 1756,
                         "roulette": 1811,
-                        "score_four": 1814
+                        "score_four": 1814,
+                        "strategy": 1936.0,
+                        "poker": 1824.3333333333333,
+                        "casino": 1783.5
                     },
                     "decline_start": 45,
                     "decline_per_year": 3.224,
@@ -765,7 +894,10 @@
                         "seven_card_stud": 1717.893333,
                         "blackjack": 1682.493333,
                         "roulette": 1639.153333,
-                        "score_four": 1721.62
+                        "score_four": 1721.62,
+                        "strategy": 1809.35,
+                        "poker": 1675.9955556666666,
+                        "casino": 1660.8233329999998
                     },
                     "carry": {
                         "solitaire": 0.08,
@@ -774,7 +906,10 @@
                         "seven_card_stud": -0.106667,
                         "blackjack": 0.493333,
                         "roulette": 0.153333,
-                        "score_four": -0.38
+                        "score_four": -0.38,
+                        "strategy": -0.15,
+                        "poker": -0.004444333333333324,
+                        "casino": 0.323333
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -782,23 +917,28 @@
                 }
             },
             "olga_mire": {
-                "rating": 2748,
+                "rating": 2740.466666666667,
                 "last_change": 1,
                 "ratings": {
-                    "solitaire": 2782,
-                    "texas_holdem": 2804,
-                    "five_card_draw": 2679,
-                    "seven_card_stud": 2906,
-                    "blackjack": 2560,
-                    "roulette": 2865,
-                    "score_four": 2638,
-                    "overall": 2748
+                    "strategy": 2710.0,
+                    "poker": 2796.3333333333335,
+                    "casino": 2712.5,
+                    "solitaire": 2710.0,
+                    "score_four": 2710.0,
+                    "texas_holdem": 2796.3333333333335,
+                    "five_card_draw": 2796.3333333333335,
+                    "seven_card_stud": 2796.3333333333335,
+                    "five_o_poker": 2796.3333333333335,
+                    "blackjack": 2712.5,
+                    "roulette": 2712.5,
+                    "faro": 2712.5,
+                    "overall": 2740.466666666667
                 },
                 "age": 31,
                 "birthday_month": 6,
                 "public_appeal": "camera_shy",
-                "fans": 391738,
-                "rating_schema_version": 2,
+                "fans": 387277,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 1,
                     "solitaire": 3,
@@ -823,7 +963,10 @@
                         "seven_card_stud": 2905,
                         "blackjack": 2559,
                         "roulette": 2863,
-                        "score_four": 2636
+                        "score_four": 2636,
+                        "strategy": 2707.5,
+                        "poker": 2798.0,
+                        "casino": 2711.0
                     },
                     "peak_age": 38,
                     "peak_ratings": {
@@ -833,7 +976,10 @@
                         "seven_card_stud": 2986,
                         "blackjack": 2665,
                         "roulette": 2998,
-                        "score_four": 2827
+                        "score_four": 2827,
+                        "strategy": 2915.5,
+                        "poker": 2918.6666666666665,
+                        "casino": 2831.5
                     },
                     "decline_start": 38,
                     "decline_per_year": 6.355,
@@ -847,7 +993,10 @@
                         "seven_card_stud": 2906.0125,
                         "blackjack": 2560.325,
                         "roulette": 2864.6875,
-                        "score_four": 2638.3875
+                        "score_four": 2638.3875,
+                        "strategy": 2710.1,
+                        "poker": 2799.508333333333,
+                        "casino": 2712.50625
                     },
                     "carry": {
                         "solitaire": -0.1875,
@@ -856,7 +1005,10 @@
                         "seven_card_stud": 0.0125,
                         "blackjack": 0.325,
                         "roulette": -0.3125,
-                        "score_four": 0.3875
+                        "score_four": 0.3875,
+                        "strategy": 0.1,
+                        "poker": 0.17500000000000002,
+                        "casino": 0.0062500000000000056
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -864,23 +1016,28 @@
                 }
             },
             "chet_hanks": {
-                "rating": 1402,
+                "rating": 1409.6083333333333,
                 "last_change": -1,
                 "ratings": {
-                    "solitaire": 1413,
-                    "texas_holdem": 1471,
-                    "five_card_draw": 1380,
-                    "seven_card_stud": 1573,
-                    "blackjack": 1284,
-                    "roulette": 1334,
-                    "score_four": 1360,
-                    "overall": 1402
+                    "strategy": 1386.5,
+                    "poker": 1474.6666666666667,
+                    "casino": 1309.0,
+                    "solitaire": 1386.5,
+                    "score_four": 1386.5,
+                    "texas_holdem": 1474.6666666666667,
+                    "five_card_draw": 1474.6666666666667,
+                    "seven_card_stud": 1474.6666666666667,
+                    "five_o_poker": 1474.6666666666667,
+                    "blackjack": 1309.0,
+                    "roulette": 1309.0,
+                    "faro": 1309.0,
+                    "overall": 1409.6083333333333
                 },
                 "age": 39,
                 "birthday_month": 2,
                 "public_appeal": "steady",
-                "fans": 25389,
-                "rating_schema_version": 2,
+                "fans": 26095,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": -1,
                     "solitaire": -12,
@@ -905,7 +1062,10 @@
                         "seven_card_stud": 1573,
                         "blackjack": 1284,
                         "roulette": 1325,
-                        "score_four": 1360
+                        "score_four": 1360,
+                        "strategy": 1392.5,
+                        "poker": 1474.6666666666667,
+                        "casino": 1304.5
                     },
                     "peak_age": 35,
                     "peak_ratings": {
@@ -915,7 +1075,10 @@
                         "seven_card_stud": 1573,
                         "blackjack": 1284,
                         "roulette": 1325,
-                        "score_four": 1360
+                        "score_four": 1360,
+                        "strategy": 1392.5,
+                        "poker": 1474.6666666666667,
+                        "casino": 1304.5
                     },
                     "decline_start": 45,
                     "decline_per_year": 3.329,
@@ -929,7 +1092,10 @@
                         "seven_card_stud": 1573.0,
                         "blackjack": 1284.0,
                         "roulette": 1325.0,
-                        "score_four": 1360.0
+                        "score_four": 1360.0,
+                        "strategy": 1392.5,
+                        "poker": 1474.6666666666667,
+                        "casino": 1304.5
                     },
                     "carry": {
                         "solitaire": 0.0,
@@ -938,7 +1104,10 @@
                         "seven_card_stud": 0.0,
                         "blackjack": 0.0,
                         "roulette": 0.0,
-                        "score_four": 0.0
+                        "score_four": 0.0,
+                        "strategy": 0.0,
+                        "poker": 0.0,
+                        "casino": 0.0
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -946,23 +1115,28 @@
                 }
             },
             "nurse_ratched": {
-                "rating": 1304,
+                "rating": 1278.3583333333333,
                 "last_change": -3,
                 "ratings": {
-                    "solitaire": 1371,
-                    "texas_holdem": 1323,
-                    "five_card_draw": 1219,
-                    "seven_card_stud": 1207,
-                    "blackjack": 1394,
-                    "roulette": 1439,
-                    "score_four": 1172,
-                    "overall": 1304
+                    "strategy": 1271.5,
+                    "poker": 1249.6666666666667,
+                    "casino": 1416.5,
+                    "solitaire": 1271.5,
+                    "score_four": 1271.5,
+                    "texas_holdem": 1249.6666666666667,
+                    "five_card_draw": 1249.6666666666667,
+                    "seven_card_stud": 1249.6666666666667,
+                    "five_o_poker": 1249.6666666666667,
+                    "blackjack": 1416.5,
+                    "roulette": 1416.5,
+                    "faro": 1416.5,
+                    "overall": 1278.3583333333333
                 },
                 "age": 46,
                 "birthday_month": 6,
                 "public_appeal": "charming",
-                "fans": 19512,
-                "rating_schema_version": 2,
+                "fans": 17322,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": -3,
                     "solitaire": -1,
@@ -987,7 +1161,10 @@
                         "seven_card_stud": 1208,
                         "blackjack": 1395,
                         "roulette": 1440,
-                        "score_four": 1176
+                        "score_four": 1176,
+                        "strategy": 1274.0,
+                        "poker": 1255.6666666666667,
+                        "casino": 1417.5
                     },
                     "peak_age": 39,
                     "peak_ratings": {
@@ -997,7 +1174,10 @@
                         "seven_card_stud": 1208,
                         "blackjack": 1395,
                         "roulette": 1440,
-                        "score_four": 1176
+                        "score_four": 1176,
+                        "strategy": 1274.0,
+                        "poker": 1255.6666666666667,
+                        "casino": 1417.5
                     },
                     "decline_start": 43,
                     "decline_per_year": 6.947,
@@ -1011,7 +1191,10 @@
                         "seven_card_stud": 1207.421083,
                         "blackjack": 1394.421083,
                         "roulette": 1439.421083,
-                        "score_four": 1175.421083
+                        "score_four": 1175.421083,
+                        "strategy": 1273.421083,
+                        "poker": 1255.0877496666665,
+                        "casino": 1416.921083
                     },
                     "carry": {
                         "solitaire": 0.421083,
@@ -1020,7 +1203,10 @@
                         "seven_card_stud": 0.421083,
                         "blackjack": 0.421083,
                         "roulette": 0.421083,
-                        "score_four": 0.421083
+                        "score_four": 0.421083,
+                        "strategy": 0.421083,
+                        "poker": 0.42108300000000004,
+                        "casino": 0.421083
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -1028,23 +1214,28 @@
                 }
             },
             "bob_gumble": {
-                "rating": 1566,
+                "rating": 1614.15,
                 "last_change": -4,
                 "ratings": {
-                    "solitaire": 1745,
-                    "texas_holdem": 1445,
-                    "five_card_draw": 1366,
-                    "seven_card_stud": 1653,
-                    "blackjack": 1542,
-                    "roulette": 1537,
-                    "score_four": 1671,
-                    "overall": 1566
+                    "strategy": 1708.0,
+                    "poker": 1488.0,
+                    "casino": 1539.5,
+                    "solitaire": 1708.0,
+                    "score_four": 1708.0,
+                    "texas_holdem": 1488.0,
+                    "five_card_draw": 1488.0,
+                    "seven_card_stud": 1488.0,
+                    "five_o_poker": 1488.0,
+                    "blackjack": 1539.5,
+                    "roulette": 1539.5,
+                    "faro": 1539.5,
+                    "overall": 1614.15
                 },
                 "age": 76,
                 "birthday_month": 5,
                 "public_appeal": "steady",
-                "fans": 45604,
-                "rating_schema_version": 2,
+                "fans": 53097,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": -4,
                     "solitaire": -10,
@@ -1069,7 +1260,10 @@
                         "seven_card_stud": 1655,
                         "blackjack": 1543,
                         "roulette": 1538,
-                        "score_four": 1679
+                        "score_four": 1679,
+                        "strategy": 1717.0,
+                        "poker": 1491.0,
+                        "casino": 1540.5
                     },
                     "peak_age": 40,
                     "peak_ratings": {
@@ -1079,7 +1273,10 @@
                         "seven_card_stud": 1655,
                         "blackjack": 1543,
                         "roulette": 1538,
-                        "score_four": 1679
+                        "score_four": 1679,
+                        "strategy": 1717.0,
+                        "poker": 1491.0,
+                        "casino": 1540.5
                     },
                     "decline_start": 41,
                     "decline_per_year": 6.873,
@@ -1093,7 +1290,10 @@
                         "seven_card_stud": 1654.42725,
                         "blackjack": 1542.42725,
                         "roulette": 1537.42725,
-                        "score_four": 1678.42725
+                        "score_four": 1678.42725,
+                        "strategy": 1716.42725,
+                        "poker": 1490.42725,
+                        "casino": 1539.92725
                     },
                     "carry": {
                         "solitaire": 0.42725,
@@ -1102,7 +1302,10 @@
                         "seven_card_stud": 0.42725,
                         "blackjack": 0.42725,
                         "roulette": 0.42725,
-                        "score_four": 0.42725
+                        "score_four": 0.42725,
+                        "strategy": 0.42725,
+                        "poker": 0.4272500000000001,
+                        "casino": 0.42725
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -1110,23 +1313,28 @@
                 }
             },
             "evelyn_smythe": {
-                "rating": 1708,
+                "rating": 1711.9666666666667,
                 "last_change": 31,
                 "ratings": {
-                    "solitaire": 1572,
-                    "texas_holdem": 1654,
-                    "five_card_draw": 1804,
-                    "seven_card_stud": 1613,
-                    "blackjack": 1873,
-                    "roulette": 1559,
-                    "score_four": 1878,
-                    "overall": 1708
+                    "strategy": 1725.0,
+                    "poker": 1690.3333333333333,
+                    "casino": 1716.0,
+                    "solitaire": 1725.0,
+                    "score_four": 1725.0,
+                    "texas_holdem": 1690.3333333333333,
+                    "five_card_draw": 1690.3333333333333,
+                    "seven_card_stud": 1690.3333333333333,
+                    "five_o_poker": 1690.3333333333333,
+                    "blackjack": 1716.0,
+                    "roulette": 1716.0,
+                    "faro": 1716.0,
+                    "overall": 1711.9666666666667
                 },
                 "age": 34,
                 "birthday_month": 3,
                 "public_appeal": "steady",
-                "fans": 70081,
-                "rating_schema_version": 2,
+                "fans": 70676,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 31,
                     "solitaire": 40,
@@ -1151,7 +1359,10 @@
                         "seven_card_stud": 1580,
                         "blackjack": 1838,
                         "roulette": 1539,
-                        "score_four": 1866
+                        "score_four": 1866,
+                        "strategy": 1699.0,
+                        "poker": 1653.6666666666667,
+                        "casino": 1688.5
                     },
                     "peak_age": 35,
                     "peak_ratings": {
@@ -1161,7 +1372,10 @@
                         "seven_card_stud": 1801,
                         "blackjack": 2014,
                         "roulette": 1688,
-                        "score_four": 1969
+                        "score_four": 1969,
+                        "strategy": 1847.0,
+                        "poker": 1855.0,
+                        "casino": 1851.0
                     },
                     "decline_start": 44,
                     "decline_per_year": 6.82,
@@ -1175,7 +1389,10 @@
                         "seven_card_stud": 1624.2,
                         "blackjack": 1873.2,
                         "roulette": 1568.8,
-                        "score_four": 1886.6
+                        "score_four": 1886.6,
+                        "strategy": 1728.6,
+                        "poker": 1693.9333333333334,
+                        "casino": 1721.0
                     },
                     "carry": {
                         "solitaire": -0.4,
@@ -1184,7 +1401,10 @@
                         "seven_card_stud": 0.2,
                         "blackjack": 0.2,
                         "roulette": -0.2,
-                        "score_four": -0.4
+                        "score_four": -0.4,
+                        "strategy": -0.4,
+                        "poker": -0.06666666666666667,
+                        "casino": 0.0
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -1192,23 +1412,28 @@
                 }
             },
             "gringo_starr": {
-                "rating": 1150,
+                "rating": 1188.1,
                 "last_change": -4,
                 "ratings": {
-                    "solitaire": 1291,
-                    "texas_holdem": 1089,
-                    "five_card_draw": 1094,
-                    "seven_card_stud": 1129,
-                    "blackjack": 1097,
-                    "roulette": 1132,
-                    "score_four": 1219,
-                    "overall": 1150
+                    "strategy": 1255.0,
+                    "poker": 1104.0,
+                    "casino": 1114.5,
+                    "solitaire": 1255.0,
+                    "score_four": 1255.0,
+                    "texas_holdem": 1104.0,
+                    "five_card_draw": 1104.0,
+                    "seven_card_stud": 1104.0,
+                    "five_o_poker": 1104.0,
+                    "blackjack": 1114.5,
+                    "roulette": 1114.5,
+                    "faro": 1114.5,
+                    "overall": 1188.1
                 },
                 "age": 68,
                 "birthday_month": 5,
                 "public_appeal": "charming",
-                "fans": 8944,
-                "rating_schema_version": 2,
+                "fans": 11042,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": -4,
                     "solitaire": -1,
@@ -1233,7 +1458,10 @@
                         "seven_card_stud": 1137,
                         "blackjack": 1098,
                         "roulette": 1144,
-                        "score_four": 1220
+                        "score_four": 1220,
+                        "strategy": 1256.0,
+                        "poker": 1107.3333333333333,
+                        "casino": 1121.0
                     },
                     "peak_age": 40,
                     "peak_ratings": {
@@ -1243,7 +1471,10 @@
                         "seven_card_stud": 1137,
                         "blackjack": 1098,
                         "roulette": 1144,
-                        "score_four": 1220
+                        "score_four": 1220,
+                        "strategy": 1256.0,
+                        "poker": 1107.3333333333333,
+                        "casino": 1121.0
                     },
                     "decline_start": 40,
                     "decline_per_year": 6.76,
@@ -1257,7 +1488,10 @@
                         "seven_card_stud": 1136.436667,
                         "blackjack": 1097.436667,
                         "roulette": 1143.436667,
-                        "score_four": 1219.436667
+                        "score_four": 1219.436667,
+                        "strategy": 1255.436667,
+                        "poker": 1106.7700003333332,
+                        "casino": 1120.436667
                     },
                     "carry": {
                         "solitaire": 0.436667,
@@ -1266,7 +1500,10 @@
                         "seven_card_stud": 0.436667,
                         "blackjack": 0.436667,
                         "roulette": 0.436667,
-                        "score_four": 0.436667
+                        "score_four": 0.436667,
+                        "strategy": 0.436667,
+                        "poker": 0.4366670000000001,
+                        "casino": 0.436667
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -1274,23 +1511,28 @@
                 }
             },
             "rupert_craft": {
-                "rating": 1060,
+                "rating": 1043.0833333333335,
                 "last_change": 1,
                 "ratings": {
-                    "solitaire": 957,
-                    "texas_holdem": 1189,
-                    "five_card_draw": 1121,
-                    "seven_card_stud": 947,
-                    "blackjack": 1099,
-                    "roulette": 1042,
-                    "score_four": 1065,
-                    "overall": 1060
+                    "strategy": 1011.0,
+                    "poker": 1085.6666666666667,
+                    "casino": 1070.5,
+                    "solitaire": 1011.0,
+                    "score_four": 1011.0,
+                    "texas_holdem": 1085.6666666666667,
+                    "five_card_draw": 1085.6666666666667,
+                    "seven_card_stud": 1085.6666666666667,
+                    "five_o_poker": 1085.6666666666667,
+                    "blackjack": 1070.5,
+                    "roulette": 1070.5,
+                    "faro": 1070.5,
+                    "overall": 1043.0833333333335
                 },
                 "age": 64,
                 "birthday_month": 6,
                 "public_appeal": "reserved",
-                "fans": 3879,
-                "rating_schema_version": 2,
+                "fans": 3453,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 1,
                     "solitaire": 0,
@@ -1315,7 +1557,10 @@
                         "seven_card_stud": 935,
                         "blackjack": 1096,
                         "roulette": 1043,
-                        "score_four": 1065
+                        "score_four": 1065,
+                        "strategy": 1011.0,
+                        "poker": 1083.6666666666667,
+                        "casino": 1069.5
                     },
                     "peak_age": 42,
                     "peak_ratings": {
@@ -1325,7 +1570,10 @@
                         "seven_card_stud": 935,
                         "blackjack": 1096,
                         "roulette": 1043,
-                        "score_four": 1065
+                        "score_four": 1065,
+                        "strategy": 1011.0,
+                        "poker": 1083.6666666666667,
+                        "casino": 1069.5
                     },
                     "decline_start": 45,
                     "decline_per_year": 5.439,
@@ -1339,7 +1587,10 @@
                         "seven_card_stud": 934.54675,
                         "blackjack": 1095.54675,
                         "roulette": 1042.54675,
-                        "score_four": 1064.54675
+                        "score_four": 1064.54675,
+                        "strategy": 1010.54675,
+                        "poker": 1083.2134166666667,
+                        "casino": 1069.04675
                     },
                     "carry": {
                         "solitaire": -0.45325,
@@ -1348,7 +1599,10 @@
                         "seven_card_stud": -0.45325,
                         "blackjack": -0.45325,
                         "roulette": -0.45325,
-                        "score_four": -0.45325
+                        "score_four": -0.45325,
+                        "strategy": -0.45325,
+                        "poker": -0.45325,
+                        "casino": -0.45325
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -1356,23 +1610,28 @@
                 }
             },
             "chum_whopper": {
-                "rating": 2690,
+                "rating": 2655.858333333333,
                 "last_change": 3,
                 "ratings": {
-                    "solitaire": 2743,
-                    "texas_holdem": 2633,
-                    "five_card_draw": 2709,
-                    "seven_card_stud": 2646,
-                    "blackjack": 2726,
-                    "roulette": 2861,
-                    "score_four": 2510,
-                    "overall": 2690
+                    "strategy": 2626.5,
+                    "poker": 2662.6666666666665,
+                    "casino": 2793.5,
+                    "solitaire": 2626.5,
+                    "score_four": 2626.5,
+                    "texas_holdem": 2662.6666666666665,
+                    "five_card_draw": 2662.6666666666665,
+                    "seven_card_stud": 2662.6666666666665,
+                    "five_o_poker": 2662.6666666666665,
+                    "blackjack": 2793.5,
+                    "roulette": 2793.5,
+                    "faro": 2793.5,
+                    "overall": 2655.858333333333
                 },
                 "age": 30,
                 "birthday_month": 11,
                 "public_appeal": "camera_shy",
-                "fans": 360159,
-                "rating_schema_version": 2,
+                "fans": 341951,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 3,
                     "solitaire": 5,
@@ -1397,7 +1656,10 @@
                         "seven_card_stud": 2634,
                         "blackjack": 2725,
                         "roulette": 2860,
-                        "score_four": 2509
+                        "score_four": 2509,
+                        "strategy": 2623.5,
+                        "poker": 2658.0,
+                        "casino": 2792.5
                     },
                     "peak_age": 41,
                     "peak_ratings": {
@@ -1407,7 +1669,10 @@
                         "seven_card_stud": 2768,
                         "blackjack": 2871,
                         "roulette": 2927,
-                        "score_four": 2664
+                        "score_four": 2664,
+                        "strategy": 2764.5,
+                        "poker": 2801.3333333333335,
+                        "casino": 2899.0
                     },
                     "decline_start": 42,
                     "decline_per_year": 4.711,
@@ -1421,7 +1686,10 @@
                         "seven_card_stud": 2635.007519,
                         "blackjack": 2726.097744,
                         "roulette": 2860.503759,
-                        "score_four": 2510.165414
+                        "score_four": 2510.165414,
+                        "strategy": 2624.5601505,
+                        "poker": 2659.077694333333,
+                        "casino": 2793.3007515
                     },
                     "carry": {
                         "solitaire": -0.045113,
@@ -1430,7 +1698,10 @@
                         "seven_card_stud": 0.007519,
                         "blackjack": 0.097744,
                         "roulette": -0.496241,
-                        "score_four": 0.165414
+                        "score_four": 0.165414,
+                        "strategy": 0.0601505,
+                        "poker": -0.255639,
+                        "casino": -0.1992485
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -1438,23 +1709,28 @@
                 }
             },
             "melinda_cromwell": {
-                "rating": 2291,
+                "rating": 2268.6833333333334,
                 "last_change": -2,
                 "ratings": {
-                    "solitaire": 2276,
-                    "texas_holdem": 2383,
-                    "five_card_draw": 2083,
-                    "seven_card_stud": 2370,
-                    "blackjack": 2246,
-                    "roulette": 2460,
-                    "score_four": 2218,
-                    "overall": 2291
+                    "strategy": 2247.0,
+                    "poker": 2278.6666666666665,
+                    "casino": 2353.0,
+                    "solitaire": 2247.0,
+                    "score_four": 2247.0,
+                    "texas_holdem": 2278.6666666666665,
+                    "five_card_draw": 2278.6666666666665,
+                    "seven_card_stud": 2278.6666666666665,
+                    "five_o_poker": 2278.6666666666665,
+                    "blackjack": 2353.0,
+                    "roulette": 2353.0,
+                    "faro": 2353.0,
+                    "overall": 2268.6833333333334
                 },
                 "age": 52,
                 "birthday_month": 6,
                 "public_appeal": "reserved",
-                "fans": 229277,
-                "rating_schema_version": 2,
+                "fans": 219783,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": -2,
                     "solitaire": 0,
@@ -1479,7 +1755,10 @@
                         "seven_card_stud": 2370,
                         "blackjack": 2258,
                         "roulette": 2460,
-                        "score_four": 2223
+                        "score_four": 2223,
+                        "strategy": 2249.5,
+                        "poker": 2278.6666666666665,
+                        "casino": 2359.0
                     },
                     "peak_age": 40,
                     "peak_ratings": {
@@ -1489,7 +1768,10 @@
                         "seven_card_stud": 2370,
                         "blackjack": 2258,
                         "roulette": 2460,
-                        "score_four": 2223
+                        "score_four": 2223,
+                        "strategy": 2249.5,
+                        "poker": 2278.6666666666665,
+                        "casino": 2359.0
                     },
                     "decline_start": 42,
                     "decline_per_year": 4.045,
@@ -1503,7 +1785,10 @@
                         "seven_card_stud": 2369.662917,
                         "blackjack": 2257.662917,
                         "roulette": 2459.662917,
-                        "score_four": 2222.662917
+                        "score_four": 2222.662917,
+                        "strategy": 2249.162917,
+                        "poker": 2278.329583666667,
+                        "casino": 2358.662917
                     },
                     "carry": {
                         "solitaire": -0.337083,
@@ -1512,7 +1797,10 @@
                         "seven_card_stud": -0.337083,
                         "blackjack": -0.337083,
                         "roulette": -0.337083,
-                        "score_four": -0.337083
+                        "score_four": -0.337083,
+                        "strategy": -0.337083,
+                        "poker": -0.337083,
+                        "casino": -0.337083
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -1520,23 +1808,28 @@
                 }
             },
             "luke_jingle": {
-                "rating": 2115,
+                "rating": 2107.5583333333334,
                 "last_change": 73,
                 "ratings": {
-                    "solitaire": 1992,
-                    "texas_holdem": 2179,
-                    "five_card_draw": 2224,
-                    "seven_card_stud": 1962,
-                    "blackjack": 2205,
-                    "roulette": 2044,
-                    "score_four": 2199,
-                    "overall": 2115
+                    "strategy": 2095.5,
+                    "poker": 2121.6666666666665,
+                    "casino": 2124.5,
+                    "solitaire": 2095.5,
+                    "score_four": 2095.5,
+                    "texas_holdem": 2121.6666666666665,
+                    "five_card_draw": 2121.6666666666665,
+                    "seven_card_stud": 2121.6666666666665,
+                    "five_o_poker": 2121.6666666666665,
+                    "blackjack": 2124.5,
+                    "roulette": 2124.5,
+                    "faro": 2124.5,
+                    "overall": 2107.5583333333334
                 },
                 "age": 37,
                 "birthday_month": 12,
                 "public_appeal": "reserved",
-                "fans": 163224,
-                "rating_schema_version": 2,
+                "fans": 160569,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 73,
                     "solitaire": 106,
@@ -1561,7 +1854,10 @@
                         "seven_card_stud": 1900,
                         "blackjack": 2133,
                         "roulette": 1997,
-                        "score_four": 2112
+                        "score_four": 2112,
+                        "strategy": 1999.0,
+                        "poker": 2055.6666666666665,
+                        "casino": 2065.0
                     },
                     "peak_age": 38,
                     "peak_ratings": {
@@ -1571,7 +1867,10 @@
                         "seven_card_stud": 2025,
                         "blackjack": 2253,
                         "roulette": 2115,
-                        "score_four": 2308
+                        "score_four": 2308,
+                        "strategy": 2196.5,
+                        "poker": 2188.3333333333335,
+                        "casino": 2184.0
                     },
                     "decline_start": 39,
                     "decline_per_year": 4.131,
@@ -1585,7 +1884,10 @@
                         "seven_card_stud": 1962.5,
                         "blackjack": 2193.0,
                         "roulette": 2056.0,
-                        "score_four": 2210.0
+                        "score_four": 2210.0,
+                        "strategy": 2097.75,
+                        "poker": 2122.0,
+                        "casino": 2124.5
                     },
                     "carry": {
                         "solitaire": 0.5,
@@ -1594,7 +1896,10 @@
                         "seven_card_stud": 0.5,
                         "blackjack": -0.0,
                         "roulette": -0.0,
-                        "score_four": -0.0
+                        "score_four": -0.0,
+                        "strategy": 0.25,
+                        "poker": 0.3333333333333333,
+                        "casino": 0.0
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2025,
@@ -1602,23 +1907,28 @@
                 }
             },
             "gunther_hindenburg": {
-                "rating": 1713,
+                "rating": 1715.0500000000002,
                 "last_change": 0,
                 "ratings": {
-                    "solitaire": 1707,
-                    "texas_holdem": 1651,
-                    "five_card_draw": 1629,
-                    "seven_card_stud": 1754,
-                    "blackjack": 1710,
-                    "roulette": 1782,
-                    "score_four": 1759,
-                    "overall": 1713
+                    "strategy": 1733.0,
+                    "poker": 1678.0,
+                    "casino": 1746.0,
+                    "solitaire": 1733.0,
+                    "score_four": 1733.0,
+                    "texas_holdem": 1678.0,
+                    "five_card_draw": 1678.0,
+                    "seven_card_stud": 1678.0,
+                    "five_o_poker": 1678.0,
+                    "blackjack": 1746.0,
+                    "roulette": 1746.0,
+                    "faro": 1746.0,
+                    "overall": 1715.0500000000002
                 },
                 "age": 45,
                 "birthday_month": 7,
                 "public_appeal": "magnetic",
-                "fans": 92396,
-                "rating_schema_version": 2,
+                "fans": 92916,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 0,
                     "solitaire": -9,
@@ -1643,7 +1953,10 @@
                         "seven_card_stud": 1754,
                         "blackjack": 1700,
                         "roulette": 1782,
-                        "score_four": 1759
+                        "score_four": 1759,
+                        "strategy": 1737.5,
+                        "poker": 1678.0,
+                        "casino": 1741.0
                     },
                     "peak_age": 41,
                     "peak_ratings": {
@@ -1653,7 +1966,10 @@
                         "seven_card_stud": 1754,
                         "blackjack": 1700,
                         "roulette": 1782,
-                        "score_four": 1759
+                        "score_four": 1759,
+                        "strategy": 1737.5,
+                        "poker": 1678.0,
+                        "casino": 1741.0
                     },
                     "decline_start": 41,
                     "decline_per_year": 5.941,
@@ -1667,7 +1983,10 @@
                         "seven_card_stud": 1753.504917,
                         "blackjack": 1699.504917,
                         "roulette": 1781.504917,
-                        "score_four": 1758.504917
+                        "score_four": 1758.504917,
+                        "strategy": 1737.004917,
+                        "poker": 1677.504917,
+                        "casino": 1740.504917
                     },
                     "carry": {
                         "solitaire": -0.495083,
@@ -1676,7 +1995,10 @@
                         "seven_card_stud": -0.495083,
                         "blackjack": -0.495083,
                         "roulette": -0.495083,
-                        "score_four": -0.495083
+                        "score_four": -0.495083,
+                        "strategy": -0.495083,
+                        "poker": -0.495083,
+                        "casino": -0.495083
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -1684,23 +2006,28 @@
                 }
             },
             "crikey_dingo": {
-                "rating": 1960,
+                "rating": 1943.4333333333334,
                 "last_change": -1,
                 "ratings": {
-                    "solitaire": 1872,
-                    "texas_holdem": 2083,
-                    "five_card_draw": 1895,
-                    "seven_card_stud": 2063,
-                    "blackjack": 1924,
-                    "roulette": 1960,
-                    "score_four": 1926,
-                    "overall": 1960
+                    "strategy": 1899.0,
+                    "poker": 2013.6666666666667,
+                    "casino": 1942.0,
+                    "solitaire": 1899.0,
+                    "score_four": 1899.0,
+                    "texas_holdem": 2013.6666666666667,
+                    "five_card_draw": 2013.6666666666667,
+                    "seven_card_stud": 2013.6666666666667,
+                    "five_o_poker": 2013.6666666666667,
+                    "blackjack": 1942.0,
+                    "roulette": 1942.0,
+                    "faro": 1942.0,
+                    "overall": 1943.4333333333334
                 },
                 "age": 27,
                 "birthday_month": 9,
                 "public_appeal": "charming",
-                "fans": 153952,
-                "rating_schema_version": 2,
+                "fans": 148052,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": -1,
                     "solitaire": 9,
@@ -1725,7 +2052,10 @@
                         "seven_card_stud": 2068,
                         "blackjack": 1923,
                         "roulette": 1961,
-                        "score_four": 1933
+                        "score_four": 1933,
+                        "strategy": 1898.0,
+                        "poker": 2014.6666666666667,
+                        "casino": 1942.0
                     },
                     "peak_age": 40,
                     "peak_ratings": {
@@ -1735,7 +2065,10 @@
                         "seven_card_stud": 2297,
                         "blackjack": 2074,
                         "roulette": 2133,
-                        "score_four": 2085
+                        "score_four": 2085,
+                        "strategy": 2010.5,
+                        "poker": 2191.6666666666665,
+                        "casino": 2103.5
                     },
                     "decline_start": 44,
                     "decline_per_year": 4.151,
@@ -1749,7 +2082,10 @@
                         "seven_card_stud": 2069.477419,
                         "blackjack": 1923.974194,
                         "roulette": 1962.109677,
-                        "score_four": 1933.980645
+                        "score_four": 1933.980645,
+                        "strategy": 1898.7258065,
+                        "poker": 2015.8086019999998,
+                        "casino": 1943.0419355
                     },
                     "carry": {
                         "solitaire": 0.470968,
@@ -1758,7 +2094,10 @@
                         "seven_card_stud": 0.477419,
                         "blackjack": -0.025806,
                         "roulette": 0.109677,
-                        "score_four": -0.019355
+                        "score_four": -0.019355,
+                        "strategy": 0.2258065,
+                        "poker": 0.14193533333333333,
+                        "casino": 0.0419355
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -1766,23 +2105,28 @@
                 }
             },
             "jairo_ponytail": {
-                "rating": 1711,
+                "rating": 1708.5500000000002,
                 "last_change": 3,
                 "ratings": {
-                    "solitaire": 1666,
-                    "texas_holdem": 1657,
-                    "five_card_draw": 1604,
-                    "seven_card_stud": 1743,
-                    "blackjack": 1752,
-                    "roulette": 1768,
-                    "score_four": 1784,
-                    "overall": 1711
+                    "strategy": 1725.0,
+                    "poker": 1668.0,
+                    "casino": 1760.0,
+                    "solitaire": 1725.0,
+                    "score_four": 1725.0,
+                    "texas_holdem": 1668.0,
+                    "five_card_draw": 1668.0,
+                    "seven_card_stud": 1668.0,
+                    "five_o_poker": 1668.0,
+                    "blackjack": 1760.0,
+                    "roulette": 1760.0,
+                    "faro": 1760.0,
+                    "overall": 1708.5500000000002
                 },
                 "age": 33,
                 "birthday_month": 10,
                 "public_appeal": "charming",
-                "fans": 81984,
-                "rating_schema_version": 2,
+                "fans": 81294,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 3,
                     "solitaire": 2,
@@ -1807,7 +2151,10 @@
                         "seven_card_stud": 1742,
                         "blackjack": 1743,
                         "roulette": 1773,
-                        "score_four": 1781
+                        "score_four": 1781,
+                        "strategy": 1722.5,
+                        "poker": 1665.0,
+                        "casino": 1758.0
                     },
                     "peak_age": 36,
                     "peak_ratings": {
@@ -1817,7 +2164,10 @@
                         "seven_card_stud": 1942,
                         "blackjack": 1882,
                         "roulette": 1962,
-                        "score_four": 1886
+                        "score_four": 1886,
+                        "strategy": 1820.0,
+                        "poker": 1823.0,
+                        "casino": 1922.0
                     },
                     "decline_start": 43,
                     "decline_per_year": 5.108,
@@ -1831,7 +2181,10 @@
                         "seven_card_stud": 1747.555556,
                         "blackjack": 1746.861111,
                         "roulette": 1778.25,
-                        "score_four": 1783.916667
+                        "score_four": 1783.916667,
+                        "strategy": 1725.2083335,
+                        "poker": 1669.3888889999998,
+                        "casino": 1762.5555555
                     },
                     "carry": {
                         "solitaire": 0.5,
@@ -1840,7 +2193,10 @@
                         "seven_card_stud": -0.444444,
                         "blackjack": -0.138889,
                         "roulette": 0.25,
-                        "score_four": -0.083333
+                        "score_four": -0.083333,
+                        "strategy": 0.2083335,
+                        "poker": -0.27777766666666664,
+                        "casino": 0.055555499999999994
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -1848,23 +2204,28 @@
                 }
             },
             "iona_mcdougal": {
-                "rating": 2129,
+                "rating": 2149.9583333333335,
                 "last_change": 2,
                 "ratings": {
-                    "solitaire": 2075,
-                    "texas_holdem": 2325,
-                    "five_card_draw": 2099,
-                    "seven_card_stud": 2193,
-                    "blackjack": 1984,
-                    "roulette": 2019,
-                    "score_four": 2208,
-                    "overall": 2129
+                    "strategy": 2141.5,
+                    "poker": 2205.6666666666665,
+                    "casino": 2001.5,
+                    "solitaire": 2141.5,
+                    "score_four": 2141.5,
+                    "texas_holdem": 2205.6666666666665,
+                    "five_card_draw": 2205.6666666666665,
+                    "seven_card_stud": 2205.6666666666665,
+                    "five_o_poker": 2205.6666666666665,
+                    "blackjack": 2001.5,
+                    "roulette": 2001.5,
+                    "faro": 2001.5,
+                    "overall": 2149.9583333333335
                 },
                 "age": 59,
                 "birthday_month": 10,
                 "public_appeal": "steady",
-                "fans": 190840,
-                "rating_schema_version": 2,
+                "fans": 198673,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 2,
                     "solitaire": 8,
@@ -1889,7 +2250,10 @@
                         "seven_card_stud": 2193,
                         "blackjack": 1973,
                         "roulette": 2019,
-                        "score_four": 2211
+                        "score_four": 2211,
+                        "strategy": 2139.0,
+                        "poker": 2207.3333333333335,
+                        "casino": 1996.0
                     },
                     "peak_age": 35,
                     "peak_ratings": {
@@ -1899,7 +2263,10 @@
                         "seven_card_stud": 2193,
                         "blackjack": 1973,
                         "roulette": 2019,
-                        "score_four": 2211
+                        "score_four": 2211,
+                        "strategy": 2139.0,
+                        "poker": 2207.3333333333335,
+                        "casino": 1996.0
                     },
                     "decline_start": 38,
                     "decline_per_year": 4.837,
@@ -1913,7 +2280,10 @@
                         "seven_card_stud": 2192.596917,
                         "blackjack": 1972.596917,
                         "roulette": 2018.596917,
-                        "score_four": 2210.596917
+                        "score_four": 2210.596917,
+                        "strategy": 2138.596917,
+                        "poker": 2206.9302503333333,
+                        "casino": 1995.596917
                     },
                     "carry": {
                         "solitaire": -0.403083,
@@ -1922,7 +2292,10 @@
                         "seven_card_stud": -0.403083,
                         "blackjack": -0.403083,
                         "roulette": -0.403083,
-                        "score_four": -0.403083
+                        "score_four": -0.403083,
+                        "strategy": -0.403083,
+                        "poker": -0.403083,
+                        "casino": -0.403083
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -1930,23 +2303,28 @@
                 }
             },
             "jiu_wang": {
-                "rating": 2063,
+                "rating": 2023.4750000000001,
                 "last_change": 2,
                 "ratings": {
-                    "solitaire": 2033,
-                    "texas_holdem": 2008,
-                    "five_card_draw": 2088,
-                    "seven_card_stud": 1997,
-                    "blackjack": 2301,
-                    "roulette": 2067,
-                    "score_four": 1946,
-                    "overall": 2063
+                    "strategy": 1989.5,
+                    "poker": 2031.0,
+                    "casino": 2184.0,
+                    "solitaire": 1989.5,
+                    "score_four": 1989.5,
+                    "texas_holdem": 2031.0,
+                    "five_card_draw": 2031.0,
+                    "seven_card_stud": 2031.0,
+                    "five_o_poker": 2031.0,
+                    "blackjack": 2184.0,
+                    "roulette": 2184.0,
+                    "faro": 2184.0,
+                    "overall": 2023.4750000000001
                 },
                 "age": 22,
                 "birthday_month": 3,
                 "public_appeal": "reserved",
-                "fans": 146484,
-                "rating_schema_version": 2,
+                "fans": 134418,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 2,
                     "solitaire": 0,
@@ -1971,7 +2349,10 @@
                         "seven_card_stud": 1991,
                         "blackjack": 2300,
                         "roulette": 2066,
-                        "score_four": 1945
+                        "score_four": 1945,
+                        "strategy": 1989.0,
+                        "poker": 2028.3333333333333,
+                        "casino": 2183.0
                     },
                     "peak_age": 38,
                     "peak_ratings": {
@@ -1981,7 +2362,10 @@
                         "seven_card_stud": 2159,
                         "blackjack": 2473,
                         "roulette": 2167,
-                        "score_four": 2155
+                        "score_four": 2155,
+                        "strategy": 2154.0,
+                        "poker": 2158.3333333333335,
+                        "casino": 2320.0
                     },
                     "decline_start": 43,
                     "decline_per_year": 4.596,
@@ -1995,7 +2379,10 @@
                         "seven_card_stud": 1991.908108,
                         "blackjack": 2300.935135,
                         "roulette": 2066.545946,
-                        "score_four": 1946.135135
+                        "score_four": 1946.135135,
+                        "strategy": 1989.891892,
+                        "poker": 2029.0360360000002,
+                        "casino": 2183.7405405
                     },
                     "carry": {
                         "solitaire": -0.351351,
@@ -2004,7 +2391,10 @@
                         "seven_card_stud": -0.091892,
                         "blackjack": -0.064865,
                         "roulette": -0.454054,
-                        "score_four": 0.135135
+                        "score_four": 0.135135,
+                        "strategy": -0.10810800000000001,
+                        "poker": -0.29729733333333336,
+                        "casino": -0.2594595
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -2012,23 +2402,28 @@
                 }
             },
             "jacques_rousseau": {
-                "rating": 1899,
+                "rating": 1921.2749999999999,
                 "last_change": 0,
                 "ratings": {
-                    "solitaire": 1855,
-                    "texas_holdem": 1929,
-                    "five_card_draw": 1892,
-                    "seven_card_stud": 2020,
-                    "blackjack": 1820,
-                    "roulette": 1774,
-                    "score_four": 2000,
-                    "overall": 1899
+                    "strategy": 1927.5,
+                    "poker": 1947.0,
+                    "casino": 1797.0,
+                    "solitaire": 1927.5,
+                    "score_four": 1927.5,
+                    "texas_holdem": 1947.0,
+                    "five_card_draw": 1947.0,
+                    "seven_card_stud": 1947.0,
+                    "five_o_poker": 1947.0,
+                    "blackjack": 1797.0,
+                    "roulette": 1797.0,
+                    "faro": 1797.0,
+                    "overall": 1921.2749999999999
                 },
                 "age": 46,
                 "birthday_month": 1,
                 "public_appeal": "steady",
-                "fans": 115074,
-                "rating_schema_version": 2,
+                "fans": 121244,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 0,
                     "solitaire": 12,
@@ -2053,7 +2448,10 @@
                         "seven_card_stud": 2020,
                         "blackjack": 1824,
                         "roulette": 1774,
-                        "score_four": 2006
+                        "score_four": 2006,
+                        "strategy": 1924.5,
+                        "poker": 1947.6666666666667,
+                        "casino": 1799.0
                     },
                     "peak_age": 36,
                     "peak_ratings": {
@@ -2063,7 +2461,10 @@
                         "seven_card_stud": 2020,
                         "blackjack": 1824,
                         "roulette": 1774,
-                        "score_four": 2006
+                        "score_four": 2006,
+                        "strategy": 1924.5,
+                        "poker": 1947.6666666666667,
+                        "casino": 1799.0
                     },
                     "decline_start": 40,
                     "decline_per_year": 5.449,
@@ -2077,7 +2478,10 @@
                         "seven_card_stud": 2019.545917,
                         "blackjack": 1823.545917,
                         "roulette": 1773.545917,
-                        "score_four": 2005.545917
+                        "score_four": 2005.545917,
+                        "strategy": 1924.045917,
+                        "poker": 1947.2125836666667,
+                        "casino": 1798.545917
                     },
                     "carry": {
                         "solitaire": -0.454083,
@@ -2086,7 +2490,10 @@
                         "seven_card_stud": -0.454083,
                         "blackjack": -0.454083,
                         "roulette": -0.454083,
-                        "score_four": -0.454083
+                        "score_four": -0.454083,
+                        "strategy": -0.454083,
+                        "poker": -0.454083,
+                        "casino": -0.454083
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -2094,23 +2501,28 @@
                 }
             },
             "palina_pepper": {
-                "rating": 1910,
+                "rating": 1935.4166666666665,
                 "last_change": 10,
                 "ratings": {
-                    "solitaire": 2027,
-                    "texas_holdem": 1832,
-                    "five_card_draw": 2079,
-                    "seven_card_stud": 1835,
-                    "blackjack": 1879,
-                    "roulette": 1818,
-                    "score_four": 1901,
-                    "overall": 1910
+                    "strategy": 1964.0,
+                    "poker": 1915.3333333333333,
+                    "casino": 1848.5,
+                    "solitaire": 1964.0,
+                    "score_four": 1964.0,
+                    "texas_holdem": 1915.3333333333333,
+                    "five_card_draw": 1915.3333333333333,
+                    "seven_card_stud": 1915.3333333333333,
+                    "five_o_poker": 1915.3333333333333,
+                    "blackjack": 1848.5,
+                    "roulette": 1848.5,
+                    "faro": 1848.5,
+                    "overall": 1935.4166666666665
                 },
                 "age": 36,
                 "birthday_month": 3,
                 "public_appeal": "magnetic",
-                "fans": 153572,
-                "rating_schema_version": 2,
+                "fans": 162868,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 10,
                     "solitaire": 8,
@@ -2135,7 +2547,10 @@
                         "seven_card_stud": 1822,
                         "blackjack": 1875,
                         "roulette": 1812,
-                        "score_four": 1895
+                        "score_four": 1895,
+                        "strategy": 1957.0,
+                        "poker": 1900.3333333333333,
+                        "casino": 1843.5
                     },
                     "peak_age": 38,
                     "peak_ratings": {
@@ -2145,7 +2560,10 @@
                         "seven_card_stud": 2048,
                         "blackjack": 1946,
                         "roulette": 1907,
-                        "score_four": 2044
+                        "score_four": 2044,
+                        "strategy": 2096.5,
+                        "poker": 2068.6666666666665,
+                        "casino": 1926.5
                     },
                     "decline_start": 41,
                     "decline_per_year": 6.598,
@@ -2159,7 +2577,10 @@
                         "seven_card_stud": 1835.294118,
                         "blackjack": 1879.176471,
                         "roulette": 1817.588235,
-                        "score_four": 1903.764706
+                        "score_four": 1903.764706,
+                        "strategy": 1965.2058825,
+                        "poker": 1910.2352943333333,
+                        "casino": 1848.382353
                     },
                     "carry": {
                         "solitaire": -0.352941,
@@ -2168,7 +2589,10 @@
                         "seven_card_stud": 0.294118,
                         "blackjack": 0.176471,
                         "roulette": -0.411765,
-                        "score_four": -0.235294
+                        "score_four": -0.235294,
+                        "strategy": -0.29411750000000003,
+                        "poker": -0.098039,
+                        "casino": -0.117647
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -2176,23 +2600,28 @@
                 }
             },
             "kurwa_kryzbywlewski": {
-                "rating": 2023,
+                "rating": 2028.275,
                 "last_change": -6,
                 "ratings": {
-                    "solitaire": 1988,
-                    "texas_holdem": 1900,
-                    "five_card_draw": 1814,
-                    "seven_card_stud": 2052,
-                    "blackjack": 2202,
-                    "roulette": 2035,
-                    "score_four": 2171,
-                    "overall": 2023
+                    "strategy": 2079.5,
+                    "poker": 1922.0,
+                    "casino": 2118.5,
+                    "solitaire": 2079.5,
+                    "score_four": 2079.5,
+                    "texas_holdem": 1922.0,
+                    "five_card_draw": 1922.0,
+                    "seven_card_stud": 1922.0,
+                    "five_o_poker": 1922.0,
+                    "blackjack": 2118.5,
+                    "roulette": 2118.5,
+                    "faro": 2118.5,
+                    "overall": 2028.275
                 },
                 "age": 48,
                 "birthday_month": 9,
                 "public_appeal": "steady",
-                "fans": 152748,
-                "rating_schema_version": 2,
+                "fans": 154419,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": -6,
                     "solitaire": -11,
@@ -2217,7 +2646,10 @@
                         "seven_card_stud": 2052,
                         "blackjack": 2211,
                         "roulette": 2045,
-                        "score_four": 2181
+                        "score_four": 2181,
+                        "strategy": 2090.0,
+                        "poker": 1922.0,
+                        "casino": 2128.0
                     },
                     "peak_age": 36,
                     "peak_ratings": {
@@ -2227,7 +2659,10 @@
                         "seven_card_stud": 2052,
                         "blackjack": 2211,
                         "roulette": 2045,
-                        "score_four": 2181
+                        "score_four": 2181,
+                        "strategy": 2090.0,
+                        "poker": 1922.0,
+                        "casino": 2128.0
                     },
                     "decline_start": 38,
                     "decline_per_year": 3.042,
@@ -2241,7 +2676,10 @@
                         "seven_card_stud": 2051.7465,
                         "blackjack": 2210.7465,
                         "roulette": 2044.7465,
-                        "score_four": 2180.7465
+                        "score_four": 2180.7465,
+                        "strategy": 2089.7465,
+                        "poker": 1921.7465,
+                        "casino": 2127.7465
                     },
                     "carry": {
                         "solitaire": -0.2535,
@@ -2250,7 +2688,10 @@
                         "seven_card_stud": -0.2535,
                         "blackjack": -0.2535,
                         "roulette": -0.2535,
-                        "score_four": -0.2535
+                        "score_four": -0.2535,
+                        "strategy": -0.2535,
+                        "poker": -0.2535,
+                        "casino": -0.2535
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -2258,23 +2699,28 @@
                 }
             },
             "rusty_lewis": {
-                "rating": 1597,
+                "rating": 1561.2833333333333,
                 "last_change": 0,
                 "ratings": {
-                    "solitaire": 1519,
-                    "texas_holdem": 1631,
-                    "five_card_draw": 1662,
-                    "seven_card_stud": 1548,
-                    "blackjack": 1744,
-                    "roulette": 1576,
-                    "score_four": 1501,
-                    "overall": 1597
+                    "strategy": 1510.0,
+                    "poker": 1613.6666666666667,
+                    "casino": 1660.0,
+                    "solitaire": 1510.0,
+                    "score_four": 1510.0,
+                    "texas_holdem": 1613.6666666666667,
+                    "five_card_draw": 1613.6666666666667,
+                    "seven_card_stud": 1613.6666666666667,
+                    "five_o_poker": 1613.6666666666667,
+                    "blackjack": 1660.0,
+                    "roulette": 1660.0,
+                    "faro": 1660.0,
+                    "overall": 1561.2833333333333
                 },
                 "age": 32,
                 "birthday_month": 11,
                 "public_appeal": "charming",
-                "fans": 58412,
-                "rating_schema_version": 2,
+                "fans": 52045,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 0,
                     "solitaire": 1,
@@ -2299,7 +2745,10 @@
                         "seven_card_stud": 1547,
                         "blackjack": 1745,
                         "roulette": 1575,
-                        "score_four": 1503
+                        "score_four": 1503,
+                        "strategy": 1510.5,
+                        "poker": 1612.3333333333333,
+                        "casino": 1660.0
                     },
                     "peak_age": 39,
                     "peak_ratings": {
@@ -2309,7 +2758,10 @@
                         "seven_card_stud": 1661,
                         "blackjack": 1963,
                         "roulette": 1669,
-                        "score_four": 1579
+                        "score_four": 1579,
+                        "strategy": 1595.0,
+                        "poker": 1730.3333333333333,
+                        "casino": 1816.0
                     },
                     "decline_start": 43,
                     "decline_per_year": 3.073,
@@ -2323,7 +2775,10 @@
                         "seven_card_stud": 1548.341176,
                         "blackjack": 1747.564706,
                         "roulette": 1576.105882,
-                        "score_four": 1503.894118
+                        "score_four": 1503.894118,
+                        "strategy": 1511.494118,
+                        "poker": 1613.7215683333334,
+                        "casino": 1661.835294
                     },
                     "carry": {
                         "solitaire": 0.094118,
@@ -2332,7 +2787,10 @@
                         "seven_card_stud": 0.341176,
                         "blackjack": -0.435294,
                         "roulette": 0.105882,
-                        "score_four": -0.105882
+                        "score_four": -0.105882,
+                        "strategy": -0.005882000000000005,
+                        "poker": 0.05490166666666666,
+                        "casino": -0.16470600000000002
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -2340,23 +2798,28 @@
                 }
             },
             "lionel_braggart": {
-                "rating": 897,
+                "rating": 892.5833333333334,
                 "last_change": 0,
                 "ratings": {
-                    "solitaire": 928,
-                    "texas_holdem": 1015,
-                    "five_card_draw": 896,
-                    "seven_card_stud": 824,
-                    "blackjack": 951,
-                    "roulette": 828,
-                    "score_four": 834,
-                    "overall": 897
+                    "strategy": 881.0,
+                    "poker": 911.6666666666666,
+                    "casino": 889.5,
+                    "solitaire": 881.0,
+                    "score_four": 881.0,
+                    "texas_holdem": 911.6666666666666,
+                    "five_card_draw": 911.6666666666666,
+                    "seven_card_stud": 911.6666666666666,
+                    "five_o_poker": 911.6666666666666,
+                    "blackjack": 889.5,
+                    "roulette": 889.5,
+                    "faro": 889.5,
+                    "overall": 892.5833333333334
                 },
                 "age": 63,
                 "birthday_month": 8,
                 "public_appeal": "steady",
-                "fans": 1237,
-                "rating_schema_version": 2,
+                "fans": 1184,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 0,
                     "solitaire": -9,
@@ -2381,7 +2844,10 @@
                         "seven_card_stud": 824,
                         "blackjack": 951,
                         "roulette": 817,
-                        "score_four": 834
+                        "score_four": 834,
+                        "strategy": 885.5,
+                        "poker": 913.0,
+                        "casino": 884.0
                     },
                     "peak_age": 35,
                     "peak_ratings": {
@@ -2391,7 +2857,10 @@
                         "seven_card_stud": 824,
                         "blackjack": 951,
                         "roulette": 817,
-                        "score_four": 834
+                        "score_four": 834,
+                        "strategy": 885.5,
+                        "poker": 913.0,
+                        "casino": 884.0
                     },
                     "decline_start": 41,
                     "decline_per_year": 5.615,
@@ -2405,7 +2874,10 @@
                         "seven_card_stud": 823.532083,
                         "blackjack": 950.532083,
                         "roulette": 816.532083,
-                        "score_four": 833.532083
+                        "score_four": 833.532083,
+                        "strategy": 885.032083,
+                        "poker": 912.532083,
+                        "casino": 883.532083
                     },
                     "carry": {
                         "solitaire": -0.467917,
@@ -2414,7 +2886,10 @@
                         "seven_card_stud": -0.467917,
                         "blackjack": -0.467917,
                         "roulette": -0.467917,
-                        "score_four": -0.467917
+                        "score_four": -0.467917,
+                        "strategy": -0.467917,
+                        "poker": -0.4679170000000001,
+                        "casino": -0.467917
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -2422,23 +2897,28 @@
                 }
             },
             "inshallah_intifada": {
-                "rating": 1033,
+                "rating": 1021.9416666666666,
                 "last_change": 1,
                 "ratings": {
-                    "solitaire": 1029,
-                    "texas_holdem": 1027,
-                    "five_card_draw": 1154,
-                    "seven_card_stud": 1111,
-                    "blackjack": 989,
-                    "roulette": 994,
-                    "score_four": 930,
-                    "overall": 1033
+                    "strategy": 979.5,
+                    "poker": 1097.3333333333333,
+                    "casino": 991.5,
+                    "solitaire": 979.5,
+                    "score_four": 979.5,
+                    "texas_holdem": 1097.3333333333333,
+                    "five_card_draw": 1097.3333333333333,
+                    "seven_card_stud": 1097.3333333333333,
+                    "five_o_poker": 1097.3333333333333,
+                    "blackjack": 991.5,
+                    "roulette": 991.5,
+                    "faro": 991.5,
+                    "overall": 1021.9416666666666
                 },
                 "age": 28,
                 "birthday_month": 3,
                 "public_appeal": "reserved",
-                "fans": 3219,
-                "rating_schema_version": 2,
+                "fans": 2954,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 1,
                     "solitaire": -5,
@@ -2463,7 +2943,10 @@
                         "seven_card_stud": 1110,
                         "blackjack": 988,
                         "roulette": 992,
-                        "score_four": 927
+                        "score_four": 927,
+                        "strategy": 980.5,
+                        "poker": 1095.3333333333333,
+                        "casino": 990.0
                     },
                     "peak_age": 37,
                     "peak_ratings": {
@@ -2473,7 +2956,10 @@
                         "seven_card_stud": 1179,
                         "blackjack": 1120,
                         "roulette": 1187,
-                        "score_four": 1010
+                        "score_four": 1010,
+                        "strategy": 1063.0,
+                        "poker": 1207.6666666666667,
+                        "casino": 1153.5
                     },
                     "decline_start": 39,
                     "decline_per_year": 4.558,
@@ -2487,7 +2973,10 @@
                         "seven_card_stud": 1110.683168,
                         "blackjack": 989.306931,
                         "roulette": 993.930693,
-                        "score_four": 927.821782
+                        "score_four": 927.821782,
+                        "strategy": 981.3168315,
+                        "poker": 1096.4455443333334,
+                        "casino": 991.6188119999999
                     },
                     "carry": {
                         "solitaire": -0.188119,
@@ -2496,7 +2985,10 @@
                         "seven_card_stud": -0.316832,
                         "blackjack": 0.306931,
                         "roulette": -0.069307,
-                        "score_four": -0.178218
+                        "score_four": -0.178218,
+                        "strategy": -0.1831685,
+                        "poker": -0.22112233333333334,
+                        "casino": 0.118812
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -2504,23 +2996,28 @@
                 }
             },
             "manuel_nadal": {
-                "rating": 1071,
+                "rating": 1077.5916666666667,
                 "last_change": -4,
                 "ratings": {
-                    "solitaire": 1179,
-                    "texas_holdem": 1202,
-                    "five_card_draw": 1037,
-                    "seven_card_stud": 1011,
-                    "blackjack": 1133,
-                    "roulette": 950,
-                    "score_four": 982,
-                    "overall": 1071
+                    "strategy": 1080.5,
+                    "poker": 1083.3333333333333,
+                    "casino": 1041.5,
+                    "solitaire": 1080.5,
+                    "score_four": 1080.5,
+                    "texas_holdem": 1083.3333333333333,
+                    "five_card_draw": 1083.3333333333333,
+                    "seven_card_stud": 1083.3333333333333,
+                    "five_o_poker": 1083.3333333333333,
+                    "blackjack": 1041.5,
+                    "roulette": 1041.5,
+                    "faro": 1041.5,
+                    "overall": 1077.5916666666667
                 },
                 "age": 54,
                 "birthday_month": 8,
                 "public_appeal": "steady",
-                "fans": 4744,
-                "rating_schema_version": 2,
+                "fans": 4934,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": -4,
                     "solitaire": 0,
@@ -2545,7 +3042,10 @@
                         "seven_card_stud": 1011,
                         "blackjack": 1144,
                         "roulette": 962,
-                        "score_four": 992
+                        "score_four": 992,
+                        "strategy": 1085.5,
+                        "poker": 1083.3333333333333,
+                        "casino": 1053.0
                     },
                     "peak_age": 35,
                     "peak_ratings": {
@@ -2555,7 +3055,10 @@
                         "seven_card_stud": 1011,
                         "blackjack": 1144,
                         "roulette": 962,
-                        "score_four": 992
+                        "score_four": 992,
+                        "strategy": 1085.5,
+                        "poker": 1083.3333333333333,
+                        "casino": 1053.0
                     },
                     "decline_start": 45,
                     "decline_per_year": 5.421,
@@ -2569,7 +3072,10 @@
                         "seven_card_stud": 1010.54825,
                         "blackjack": 1143.54825,
                         "roulette": 961.54825,
-                        "score_four": 991.54825
+                        "score_four": 991.54825,
+                        "strategy": 1085.04825,
+                        "poker": 1082.8815833333335,
+                        "casino": 1052.54825
                     },
                     "carry": {
                         "solitaire": -0.45175,
@@ -2578,7 +3084,10 @@
                         "seven_card_stud": -0.45175,
                         "blackjack": -0.45175,
                         "roulette": -0.45175,
-                        "score_four": -0.45175
+                        "score_four": -0.45175,
+                        "strategy": -0.45175,
+                        "poker": -0.45174999999999993,
+                        "casino": -0.45175
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -2586,23 +3095,28 @@
                 }
             },
             "mary_lafleur": {
-                "rating": 1239,
+                "rating": 1221.6916666666666,
                 "last_change": 0,
                 "ratings": {
-                    "solitaire": 1236,
-                    "texas_holdem": 1118,
-                    "five_card_draw": 1206,
-                    "seven_card_stud": 1139,
-                    "blackjack": 1382,
-                    "roulette": 1348,
-                    "score_four": 1241,
-                    "overall": 1239
+                    "strategy": 1238.5,
+                    "poker": 1154.3333333333333,
+                    "casino": 1365.0,
+                    "solitaire": 1238.5,
+                    "score_four": 1238.5,
+                    "texas_holdem": 1154.3333333333333,
+                    "five_card_draw": 1154.3333333333333,
+                    "seven_card_stud": 1154.3333333333333,
+                    "five_o_poker": 1154.3333333333333,
+                    "blackjack": 1365.0,
+                    "roulette": 1365.0,
+                    "faro": 1365.0,
+                    "overall": 1221.6916666666666
                 },
                 "age": 23,
                 "birthday_month": 9,
                 "public_appeal": "charming",
-                "fans": 14362,
-                "rating_schema_version": 2,
+                "fans": 13122,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 0,
                     "solitaire": 1,
@@ -2627,7 +3141,10 @@
                         "seven_card_stud": 1143,
                         "blackjack": 1382,
                         "roulette": 1347,
-                        "score_four": 1240
+                        "score_four": 1240,
+                        "strategy": 1237.5,
+                        "poker": 1157.3333333333333,
+                        "casino": 1364.5
                     },
                     "peak_age": 39,
                     "peak_ratings": {
@@ -2637,7 +3154,10 @@
                         "seven_card_stud": 1276,
                         "blackjack": 1452,
                         "roulette": 1541,
-                        "score_four": 1424
+                        "score_four": 1424,
+                        "strategy": 1398.5,
+                        "poker": 1282.0,
+                        "casino": 1496.5
                     },
                     "decline_start": 39,
                     "decline_per_year": 6.802,
@@ -2651,7 +3171,10 @@
                         "seven_card_stud": 1143.696335,
                         "blackjack": 1382.366492,
                         "roulette": 1348.015707,
-                        "score_four": 1240.963351
+                        "score_four": 1240.963351,
+                        "strategy": 1238.342932,
+                        "poker": 1157.9860386666667,
+                        "casino": 1365.1910995
                     },
                     "carry": {
                         "solitaire": -0.277487,
@@ -2660,7 +3183,10 @@
                         "seven_card_stud": -0.303665,
                         "blackjack": 0.366492,
                         "roulette": 0.015707,
-                        "score_four": -0.036649
+                        "score_four": -0.036649,
+                        "strategy": -0.15706799999999999,
+                        "poker": -0.013961333333333345,
+                        "casino": 0.19109949999999998
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -2668,23 +3194,28 @@
                 }
             },
             "chiara_sammartano": {
-                "rating": 1259,
+                "rating": 1285.9,
                 "last_change": 6,
                 "ratings": {
-                    "solitaire": 1272,
-                    "texas_holdem": 1348,
-                    "five_card_draw": 1191,
-                    "seven_card_stud": 1259,
-                    "blackjack": 1186,
-                    "roulette": 1194,
-                    "score_four": 1360,
-                    "overall": 1259
+                    "strategy": 1316.0,
+                    "poker": 1266.0,
+                    "casino": 1190.0,
+                    "solitaire": 1316.0,
+                    "score_four": 1316.0,
+                    "texas_holdem": 1266.0,
+                    "five_card_draw": 1266.0,
+                    "seven_card_stud": 1266.0,
+                    "five_o_poker": 1266.0,
+                    "blackjack": 1190.0,
+                    "roulette": 1190.0,
+                    "faro": 1190.0,
+                    "overall": 1285.9
                 },
                 "age": 39,
                 "birthday_month": 10,
                 "public_appeal": "charming",
-                "fans": 15833,
-                "rating_schema_version": 2,
+                "fans": 17894,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 6,
                     "solitaire": 6,
@@ -2709,7 +3240,10 @@
                         "seven_card_stud": 1245,
                         "blackjack": 1183,
                         "roulette": 1187,
-                        "score_four": 1357
+                        "score_four": 1357,
+                        "strategy": 1311.5,
+                        "poker": 1259.6666666666667,
+                        "casino": 1185.0
                     },
                     "peak_age": 42,
                     "peak_ratings": {
@@ -2719,7 +3253,10 @@
                         "seven_card_stud": 1475,
                         "blackjack": 1278,
                         "roulette": 1346,
-                        "score_four": 1460
+                        "score_four": 1460,
+                        "strategy": 1428.5,
+                        "poker": 1434.3333333333333,
+                        "casino": 1312.0
                     },
                     "decline_start": 45,
                     "decline_per_year": 6.849,
@@ -2733,7 +3270,10 @@
                         "seven_card_stud": 1251.388889,
                         "blackjack": 1185.638889,
                         "roulette": 1191.416667,
-                        "score_four": 1359.861111
+                        "score_four": 1359.861111,
+                        "strategy": 1314.75,
+                        "poker": 1264.5185183333333,
+                        "casino": 1188.5277780000001
                     },
                     "carry": {
                         "solitaire": -0.361111,
@@ -2742,7 +3282,10 @@
                         "seven_card_stud": 0.388889,
                         "blackjack": -0.361111,
                         "roulette": 0.416667,
-                        "score_four": -0.138889
+                        "score_four": -0.138889,
+                        "strategy": -0.25,
+                        "poker": 0.18518500000000002,
+                        "casino": 0.027777999999999997
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -2750,23 +3293,28 @@
                 }
             },
             "memphis_van_dijk": {
-                "rating": 877,
+                "rating": 886.5416666666667,
                 "last_change": -3,
                 "ratings": {
-                    "solitaire": 901,
-                    "texas_holdem": 853,
-                    "five_card_draw": 761,
-                    "seven_card_stud": 865,
-                    "blackjack": 967,
-                    "roulette": 854,
-                    "score_four": 940,
-                    "overall": 877
+                    "strategy": 920.5,
+                    "poker": 826.3333333333334,
+                    "casino": 910.5,
+                    "solitaire": 920.5,
+                    "score_four": 920.5,
+                    "texas_holdem": 826.3333333333334,
+                    "five_card_draw": 826.3333333333334,
+                    "seven_card_stud": 826.3333333333334,
+                    "five_o_poker": 826.3333333333334,
+                    "blackjack": 910.5,
+                    "roulette": 910.5,
+                    "faro": 910.5,
+                    "overall": 886.5416666666667
                 },
                 "age": 42,
                 "birthday_month": 12,
                 "public_appeal": "steady",
-                "fans": 1039,
-                "rating_schema_version": 2,
+                "fans": 1124,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": -3,
                     "solitaire": 0,
@@ -2791,7 +3339,10 @@
                         "seven_card_stud": 865,
                         "blackjack": 977,
                         "roulette": 854,
-                        "score_four": 940
+                        "score_four": 940,
+                        "strategy": 920.5,
+                        "poker": 829.6666666666666,
+                        "casino": 915.5
                     },
                     "peak_age": 36,
                     "peak_ratings": {
@@ -2801,7 +3352,10 @@
                         "seven_card_stud": 865,
                         "blackjack": 977,
                         "roulette": 854,
-                        "score_four": 940
+                        "score_four": 940,
+                        "strategy": 920.5,
+                        "poker": 829.6666666666666,
+                        "casino": 915.5
                     },
                     "decline_start": 43,
                     "decline_per_year": 3.376,
@@ -2815,7 +3369,10 @@
                         "seven_card_stud": 865.0,
                         "blackjack": 977.0,
                         "roulette": 854.0,
-                        "score_four": 940.0
+                        "score_four": 940.0,
+                        "strategy": 920.5,
+                        "poker": 829.6666666666666,
+                        "casino": 915.5
                     },
                     "carry": {
                         "solitaire": 0.0,
@@ -2824,7 +3381,10 @@
                         "seven_card_stud": 0.0,
                         "blackjack": 0.0,
                         "roulette": 0.0,
-                        "score_four": 0.0
+                        "score_four": 0.0,
+                        "strategy": 0.0,
+                        "poker": 0.0,
+                        "casino": 0.0
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2025,
@@ -2832,23 +3392,28 @@
                 }
             },
             "harpreet_rajah": {
-                "rating": 2583,
+                "rating": 2532.0583333333334,
                 "last_change": 1,
                 "ratings": {
-                    "solitaire": 2581,
-                    "texas_holdem": 2656,
-                    "five_card_draw": 2544,
-                    "seven_card_stud": 2485,
-                    "blackjack": 2697,
-                    "roulette": 2738,
-                    "score_four": 2378,
-                    "overall": 2583
+                    "strategy": 2479.5,
+                    "poker": 2561.6666666666665,
+                    "casino": 2717.5,
+                    "solitaire": 2479.5,
+                    "score_four": 2479.5,
+                    "texas_holdem": 2561.6666666666665,
+                    "five_card_draw": 2561.6666666666665,
+                    "seven_card_stud": 2561.6666666666665,
+                    "five_o_poker": 2561.6666666666665,
+                    "blackjack": 2717.5,
+                    "roulette": 2717.5,
+                    "faro": 2717.5,
+                    "overall": 2532.0583333333334
                 },
                 "age": 35,
                 "birthday_month": 7,
                 "public_appeal": "steady",
-                "fans": 425619,
-                "rating_schema_version": 2,
+                "fans": 392838,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 1,
                     "solitaire": 1,
@@ -2873,7 +3438,10 @@
                         "seven_card_stud": 2490,
                         "blackjack": 2698,
                         "roulette": 2737,
-                        "score_four": 2376
+                        "score_four": 2376,
+                        "strategy": 2478.0,
+                        "poker": 2561.6666666666665,
+                        "casino": 2717.5
                     },
                     "peak_age": 42,
                     "peak_ratings": {
@@ -2883,7 +3451,10 @@
                         "seven_card_stud": 2709,
                         "blackjack": 2893,
                         "roulette": 2847,
-                        "score_four": 2509
+                        "score_four": 2509,
+                        "strategy": 2598.5,
+                        "poker": 2757.3333333333335,
+                        "casino": 2870.0
                     },
                     "decline_start": 42,
                     "decline_per_year": 5.592,
@@ -2897,7 +3468,10 @@
                         "seven_card_stud": 2492.703704,
                         "blackjack": 2700.407407,
                         "roulette": 2738.358025,
-                        "score_four": 2377.641975
+                        "score_four": 2377.641975,
+                        "strategy": 2479.487654,
+                        "poker": 2564.0823046666665,
+                        "casino": 2719.382716
                     },
                     "carry": {
                         "solitaire": 0.333333,
@@ -2906,7 +3480,10 @@
                         "seven_card_stud": -0.296296,
                         "blackjack": 0.407407,
                         "roulette": 0.358025,
-                        "score_four": -0.358025
+                        "score_four": -0.358025,
+                        "strategy": -0.012345999999999996,
+                        "poker": -0.2510286666666666,
+                        "casino": 0.382716
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -2914,23 +3491,28 @@
                 }
             },
             "betty_bleep": {
-                "rating": 1006,
+                "rating": 1005.7750000000001,
                 "last_change": -3,
                 "ratings": {
-                    "solitaire": 995,
-                    "texas_holdem": 981,
-                    "five_card_draw": 1140,
-                    "seven_card_stud": 966,
-                    "blackjack": 1016,
-                    "roulette": 946,
-                    "score_four": 996,
-                    "overall": 1006
+                    "strategy": 995.5,
+                    "poker": 1029.0,
+                    "casino": 981.0,
+                    "solitaire": 995.5,
+                    "score_four": 995.5,
+                    "texas_holdem": 1029.0,
+                    "five_card_draw": 1029.0,
+                    "seven_card_stud": 1029.0,
+                    "five_o_poker": 1029.0,
+                    "blackjack": 981.0,
+                    "roulette": 981.0,
+                    "faro": 981.0,
+                    "overall": 1005.7750000000001
                 },
                 "age": 74,
                 "birthday_month": 5,
                 "public_appeal": "charming",
-                "fans": 3488,
-                "rating_schema_version": 2,
+                "fans": 3462,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": -3,
                     "solitaire": -1,
@@ -2955,7 +3537,10 @@
                         "seven_card_stud": 978,
                         "blackjack": 1017,
                         "roulette": 947,
-                        "score_four": 997
+                        "score_four": 997,
+                        "strategy": 996.5,
+                        "poker": 1035.0,
+                        "casino": 982.0
                     },
                     "peak_age": 36,
                     "peak_ratings": {
@@ -2965,7 +3550,10 @@
                         "seven_card_stud": 978,
                         "blackjack": 1017,
                         "roulette": 947,
-                        "score_four": 997
+                        "score_four": 997,
+                        "strategy": 996.5,
+                        "poker": 1035.0,
+                        "casino": 982.0
                     },
                     "decline_start": 42,
                     "decline_per_year": 6.014,
@@ -2979,7 +3567,10 @@
                         "seven_card_stud": 977.498833,
                         "blackjack": 1016.498833,
                         "roulette": 946.498833,
-                        "score_four": 996.498833
+                        "score_four": 996.498833,
+                        "strategy": 995.998833,
+                        "poker": 1034.4988329999999,
+                        "casino": 981.498833
                     },
                     "carry": {
                         "solitaire": 0.498833,
@@ -2988,7 +3579,10 @@
                         "seven_card_stud": 0.498833,
                         "blackjack": 0.498833,
                         "roulette": 0.498833,
-                        "score_four": 0.498833
+                        "score_four": 0.498833,
+                        "strategy": 0.498833,
+                        "poker": 0.498833,
+                        "casino": 0.498833
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -2996,23 +3590,28 @@
                 }
             },
             "max_goblet": {
-                "rating": 1248,
+                "rating": 1272.4750000000001,
                 "last_change": -3,
                 "ratings": {
-                    "solitaire": 1371,
-                    "texas_holdem": 1367,
-                    "five_card_draw": 1242,
-                    "seven_card_stud": 1231,
-                    "blackjack": 1121,
-                    "roulette": 1195,
-                    "score_four": 1206,
-                    "overall": 1248
+                    "strategy": 1288.5,
+                    "poker": 1280.0,
+                    "casino": 1158.0,
+                    "solitaire": 1288.5,
+                    "score_four": 1288.5,
+                    "texas_holdem": 1280.0,
+                    "five_card_draw": 1280.0,
+                    "seven_card_stud": 1280.0,
+                    "five_o_poker": 1280.0,
+                    "blackjack": 1158.0,
+                    "roulette": 1158.0,
+                    "faro": 1158.0,
+                    "overall": 1272.4750000000001
                 },
                 "age": 82,
                 "birthday_month": 12,
                 "public_appeal": "steady",
-                "fans": 12941,
-                "rating_schema_version": 2,
+                "fans": 14519,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": -3,
                     "solitaire": -10,
@@ -3037,7 +3636,10 @@
                         "seven_card_stud": 1237,
                         "blackjack": 1121,
                         "roulette": 1195,
-                        "score_four": 1206
+                        "score_four": 1206,
+                        "strategy": 1293.5,
+                        "poker": 1285.3333333333333,
+                        "casino": 1158.0
                     },
                     "peak_age": 39,
                     "peak_ratings": {
@@ -3047,7 +3649,10 @@
                         "seven_card_stud": 1237,
                         "blackjack": 1121,
                         "roulette": 1195,
-                        "score_four": 1206
+                        "score_four": 1206,
+                        "strategy": 1293.5,
+                        "poker": 1285.3333333333333,
+                        "casino": 1158.0
                     },
                     "decline_start": 45,
                     "decline_per_year": 3.659,
@@ -3061,7 +3666,10 @@
                         "seven_card_stud": 1236.695083,
                         "blackjack": 1120.695083,
                         "roulette": 1194.695083,
-                        "score_four": 1205.695083
+                        "score_four": 1205.695083,
+                        "strategy": 1293.195083,
+                        "poker": 1285.0284163333333,
+                        "casino": 1157.695083
                     },
                     "carry": {
                         "solitaire": -0.304917,
@@ -3070,7 +3678,10 @@
                         "seven_card_stud": -0.304917,
                         "blackjack": -0.304917,
                         "roulette": -0.304917,
-                        "score_four": -0.304917
+                        "score_four": -0.304917,
+                        "strategy": -0.304917,
+                        "poker": -0.304917,
+                        "casino": -0.304917
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2025,
@@ -3078,23 +3689,28 @@
                 }
             },
             "hugh_minx": {
-                "rating": 2009,
+                "rating": 2011.9500000000003,
                 "last_change": 3,
                 "ratings": {
-                    "solitaire": 1920,
-                    "texas_holdem": 1938,
-                    "five_card_draw": 2152,
-                    "seven_card_stud": 1865,
-                    "blackjack": 1973,
-                    "roulette": 2085,
-                    "score_four": 2132,
-                    "overall": 2009
+                    "strategy": 2026.0,
+                    "poker": 1985.0,
+                    "casino": 2029.0,
+                    "solitaire": 2026.0,
+                    "score_four": 2026.0,
+                    "texas_holdem": 1985.0,
+                    "five_card_draw": 1985.0,
+                    "seven_card_stud": 1985.0,
+                    "five_o_poker": 1985.0,
+                    "blackjack": 2029.0,
+                    "roulette": 2029.0,
+                    "faro": 2029.0,
+                    "overall": 2011.9500000000003
                 },
                 "age": 14,
                 "birthday_month": 4,
                 "public_appeal": "charming",
-                "fans": 171835,
-                "rating_schema_version": 2,
+                "fans": 172593,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 3,
                     "solitaire": 2,
@@ -3119,7 +3735,10 @@
                         "seven_card_stud": 1852,
                         "blackjack": 1970,
                         "roulette": 2084,
-                        "score_four": 2131
+                        "score_four": 2131,
+                        "strategy": 2024.5,
+                        "poker": 1980.3333333333333,
+                        "casino": 2027.0
                     },
                     "peak_age": 19,
                     "peak_ratings": {
@@ -3129,7 +3748,10 @@
                         "seven_card_stud": 1921,
                         "blackjack": 2150,
                         "roulette": 2159,
-                        "score_four": 2198
+                        "score_four": 2198,
+                        "strategy": 2120.0,
+                        "poker": 2094.6666666666665,
+                        "casino": 2154.5
                     },
                     "decline_start": 42,
                     "decline_per_year": 4.389,
@@ -3143,7 +3765,10 @@
                         "seven_card_stud": 1853.277778,
                         "blackjack": 1973.333333,
                         "roulette": 2085.388889,
-                        "score_four": 2132.240741
+                        "score_four": 2132.240741,
+                        "strategy": 2026.2685185,
+                        "poker": 1982.4506173333332,
+                        "casino": 2029.361111
                     },
                     "carry": {
                         "solitaire": 0.296296,
@@ -3152,7 +3777,10 @@
                         "seven_card_stud": 0.277778,
                         "blackjack": 0.333333,
                         "roulette": 0.388889,
-                        "score_four": 0.240741
+                        "score_four": 0.240741,
+                        "strategy": 0.2685185,
+                        "poker": 0.11728400000000001,
+                        "casino": 0.36111099999999996
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -3160,23 +3788,28 @@
                 }
             },
             "addled_grandfather": {
-                "rating": 2070,
+                "rating": 2058.5,
                 "last_change": -3,
                 "ratings": {
-                    "solitaire": 2144,
-                    "texas_holdem": 1994,
-                    "five_card_draw": 1997,
-                    "seven_card_stud": 2072,
-                    "blackjack": 2325,
-                    "roulette": 1972,
-                    "score_four": 1988,
-                    "overall": 2070
+                    "strategy": 2066.0,
+                    "poker": 2021.0,
+                    "casino": 2148.5,
+                    "solitaire": 2066.0,
+                    "score_four": 2066.0,
+                    "texas_holdem": 2021.0,
+                    "five_card_draw": 2021.0,
+                    "seven_card_stud": 2021.0,
+                    "five_o_poker": 2021.0,
+                    "blackjack": 2148.5,
+                    "roulette": 2148.5,
+                    "faro": 2148.5,
+                    "overall": 2058.5
                 },
                 "age": 90,
                 "birthday_month": 7,
                 "public_appeal": "charming",
-                "fans": 195971,
-                "rating_schema_version": 2,
+                "fans": 191055,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": -3,
                     "solitaire": -7,
@@ -3201,7 +3834,10 @@
                         "seven_card_stud": 2073,
                         "blackjack": 2326,
                         "roulette": 1973,
-                        "score_four": 1993
+                        "score_four": 1993,
+                        "strategy": 2072.0,
+                        "poker": 2023.6666666666667,
+                        "casino": 2149.5
                     },
                     "peak_age": 38,
                     "peak_ratings": {
@@ -3211,7 +3847,10 @@
                         "seven_card_stud": 2073,
                         "blackjack": 2326,
                         "roulette": 1973,
-                        "score_four": 1993
+                        "score_four": 1993,
+                        "strategy": 2072.0,
+                        "poker": 2023.6666666666667,
+                        "casino": 2149.5
                     },
                     "decline_start": 41,
                     "decline_per_year": 6.876,
@@ -3225,7 +3864,10 @@
                         "seven_card_stud": 2072.427,
                         "blackjack": 2325.427,
                         "roulette": 1972.427,
-                        "score_four": 1992.427
+                        "score_four": 1992.427,
+                        "strategy": 2071.427,
+                        "poker": 2023.0936666666666,
+                        "casino": 2148.927
                     },
                     "carry": {
                         "solitaire": 0.427,
@@ -3234,7 +3876,10 @@
                         "seven_card_stud": 0.427,
                         "blackjack": 0.427,
                         "roulette": 0.427,
-                        "score_four": 0.427
+                        "score_four": 0.427,
+                        "strategy": 0.427,
+                        "poker": 0.427,
+                        "casino": 0.427
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -3242,23 +3887,28 @@
                 }
             },
             "hog_shots": {
-                "rating": 1026,
+                "rating": 1047.7833333333333,
                 "last_change": 6,
                 "ratings": {
-                    "solitaire": 1211,
-                    "texas_holdem": 996,
-                    "five_card_draw": 1054,
-                    "seven_card_stud": 928,
-                    "blackjack": 965,
-                    "roulette": 1063,
-                    "score_four": 967,
-                    "overall": 1026
+                    "strategy": 1089.0,
+                    "poker": 992.6666666666666,
+                    "casino": 1014.0,
+                    "solitaire": 1089.0,
+                    "score_four": 1089.0,
+                    "texas_holdem": 992.6666666666666,
+                    "five_card_draw": 992.6666666666666,
+                    "seven_card_stud": 992.6666666666666,
+                    "five_o_poker": 992.6666666666666,
+                    "blackjack": 1014.0,
+                    "roulette": 1014.0,
+                    "faro": 1014.0,
+                    "overall": 1047.7833333333333
                 },
                 "age": 34,
                 "birthday_month": 11,
                 "public_appeal": "steady",
-                "fans": 3480,
-                "rating_schema_version": 2,
+                "fans": 4034,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 6,
                     "solitaire": 8,
@@ -3283,7 +3933,10 @@
                         "seven_card_stud": 923,
                         "blackjack": 956,
                         "roulette": 1054,
-                        "score_four": 961
+                        "score_four": 961,
+                        "strategy": 1082.0,
+                        "poker": 987.6666666666666,
+                        "casino": 1005.0
                     },
                     "peak_age": 36,
                     "peak_ratings": {
@@ -3293,7 +3946,10 @@
                         "seven_card_stud": 1042,
                         "blackjack": 1119,
                         "roulette": 1236,
-                        "score_four": 1105
+                        "score_four": 1105,
+                        "strategy": 1185.5,
+                        "poker": 1156.6666666666667,
+                        "casino": 1177.5
                     },
                     "decline_start": 38,
                     "decline_per_year": 3.069,
@@ -3307,7 +3963,10 @@
                         "seven_card_stud": 927.76,
                         "blackjack": 962.52,
                         "roulette": 1061.28,
-                        "score_four": 966.76
+                        "score_four": 966.76,
+                        "strategy": 1086.1399999999999,
+                        "poker": 994.4266666666666,
+                        "casino": 1011.9
                     },
                     "carry": {
                         "solitaire": -0.48,
@@ -3316,7 +3975,10 @@
                         "seven_card_stud": -0.24,
                         "blackjack": -0.48,
                         "roulette": 0.28,
-                        "score_four": -0.24
+                        "score_four": -0.24,
+                        "strategy": -0.36,
+                        "poker": -0.24,
+                        "casino": -0.09999999999999998
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -3324,23 +3986,28 @@
                 }
             },
             "loopy_valez": {
-                "rating": 1205,
+                "rating": 1244.4583333333335,
                 "last_change": -1,
                 "ratings": {
-                    "solitaire": 1339,
-                    "texas_holdem": 1274,
-                    "five_card_draw": 1139,
-                    "seven_card_stud": 1111,
-                    "blackjack": 1195,
-                    "roulette": 1100,
-                    "score_four": 1274,
-                    "overall": 1205
+                    "strategy": 1306.5,
+                    "poker": 1174.6666666666667,
+                    "casino": 1147.5,
+                    "solitaire": 1306.5,
+                    "score_four": 1306.5,
+                    "texas_holdem": 1174.6666666666667,
+                    "five_card_draw": 1174.6666666666667,
+                    "seven_card_stud": 1174.6666666666667,
+                    "five_o_poker": 1174.6666666666667,
+                    "blackjack": 1147.5,
+                    "roulette": 1147.5,
+                    "faro": 1147.5,
+                    "overall": 1244.4583333333335
                 },
                 "age": 666,
                 "birthday_month": 1,
                 "public_appeal": "reserved",
-                "fans": 9166,
-                "rating_schema_version": 2,
+                "fans": 11167,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": -1,
                     "solitaire": 0,
@@ -3365,7 +4032,10 @@
                         "seven_card_stud": 1111,
                         "blackjack": 1198,
                         "roulette": 1100,
-                        "score_four": 1274
+                        "score_four": 1274,
+                        "strategy": 1306.5,
+                        "poker": 1177.6666666666667,
+                        "casino": 1149.0
                     },
                     "peak_age": 36,
                     "peak_ratings": {
@@ -3375,7 +4045,10 @@
                         "seven_card_stud": 1111,
                         "blackjack": 1198,
                         "roulette": 1100,
-                        "score_four": 1274
+                        "score_four": 1274,
+                        "strategy": 1306.5,
+                        "poker": 1177.6666666666667,
+                        "casino": 1149.0
                     },
                     "decline_start": 39,
                     "decline_per_year": 3.013,
@@ -3389,7 +4062,10 @@
                         "seven_card_stud": 1111.0,
                         "blackjack": 1198.0,
                         "roulette": 1100.0,
-                        "score_four": 1274.0
+                        "score_four": 1274.0,
+                        "strategy": 1306.5,
+                        "poker": 1177.6666666666667,
+                        "casino": 1149.0
                     },
                     "carry": {
                         "solitaire": 0.0,
@@ -3398,7 +4074,10 @@
                         "seven_card_stud": 0.0,
                         "blackjack": 0.0,
                         "roulette": 0.0,
-                        "score_four": 0.0
+                        "score_four": 0.0,
+                        "strategy": 0.0,
+                        "poker": 0.0,
+                        "casino": 0.0
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -3406,23 +4085,28 @@
                 }
             },
             "mimi_roquanda": {
-                "rating": 773,
+                "rating": 813.6500000000001,
                 "last_change": 0,
                 "ratings": {
-                    "solitaire": 874,
-                    "texas_holdem": 683,
-                    "five_card_draw": 764,
-                    "seven_card_stud": 656,
-                    "blackjack": 657,
-                    "roulette": 864,
-                    "score_four": 916,
-                    "overall": 773
+                    "strategy": 895.0,
+                    "poker": 701.0,
+                    "casino": 760.5,
+                    "solitaire": 895.0,
+                    "score_four": 895.0,
+                    "texas_holdem": 701.0,
+                    "five_card_draw": 701.0,
+                    "seven_card_stud": 701.0,
+                    "five_o_poker": 701.0,
+                    "blackjack": 760.5,
+                    "roulette": 760.5,
+                    "faro": 760.5,
+                    "overall": 813.6500000000001
                 },
                 "age": 73,
                 "birthday_month": 1,
                 "public_appeal": "camera_shy",
-                "fans": 331,
-                "rating_schema_version": 2,
+                "fans": 436,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 0,
                     "solitaire": -5,
@@ -3447,7 +4131,10 @@
                         "seven_card_stud": 656,
                         "blackjack": 657,
                         "roulette": 867,
-                        "score_four": 916
+                        "score_four": 916,
+                        "strategy": 897.5,
+                        "poker": 697.6666666666666,
+                        "casino": 762.0
                     },
                     "peak_age": 38,
                     "peak_ratings": {
@@ -3457,7 +4144,10 @@
                         "seven_card_stud": 656,
                         "blackjack": 657,
                         "roulette": 867,
-                        "score_four": 916
+                        "score_four": 916,
+                        "strategy": 897.5,
+                        "poker": 697.6666666666666,
+                        "casino": 762.0
                     },
                     "decline_start": 45,
                     "decline_per_year": 3.425,
@@ -3471,7 +4161,10 @@
                         "seven_card_stud": 655.714583,
                         "blackjack": 656.714583,
                         "roulette": 866.714583,
-                        "score_four": 915.714583
+                        "score_four": 915.714583,
+                        "strategy": 897.214583,
+                        "poker": 697.3812496666666,
+                        "casino": 761.714583
                     },
                     "carry": {
                         "solitaire": -0.285417,
@@ -3480,7 +4173,10 @@
                         "seven_card_stud": -0.285417,
                         "blackjack": -0.285417,
                         "roulette": -0.285417,
-                        "score_four": -0.285417
+                        "score_four": -0.285417,
+                        "strategy": -0.285417,
+                        "poker": -0.285417,
+                        "casino": -0.285417
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -3488,23 +4184,28 @@
                 }
             },
             "captain_steve": {
-                "rating": 1223,
+                "rating": 1250.1000000000001,
                 "last_change": 0,
                 "ratings": {
-                    "solitaire": 1481,
-                    "texas_holdem": 1141,
-                    "five_card_draw": 1164,
-                    "seven_card_stud": 1118,
-                    "blackjack": 1354,
-                    "roulette": 1141,
-                    "score_four": 1159,
-                    "overall": 1223
+                    "strategy": 1320.0,
+                    "poker": 1141.0,
+                    "casino": 1247.5,
+                    "solitaire": 1320.0,
+                    "score_four": 1320.0,
+                    "texas_holdem": 1141.0,
+                    "five_card_draw": 1141.0,
+                    "seven_card_stud": 1141.0,
+                    "five_o_poker": 1141.0,
+                    "blackjack": 1247.5,
+                    "roulette": 1247.5,
+                    "faro": 1247.5,
+                    "overall": 1250.1000000000001
                 },
                 "age": 24,
                 "birthday_month": 6,
                 "public_appeal": "charming",
-                "fans": 13256,
-                "rating_schema_version": 2,
+                "fans": 15159,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 0,
                     "solitaire": 1,
@@ -3529,7 +4230,10 @@
                         "seven_card_stud": 1120,
                         "blackjack": 1353,
                         "roulette": 1148,
-                        "score_four": 1158
+                        "score_four": 1158,
+                        "strategy": 1319.0,
+                        "poker": 1140.3333333333333,
+                        "casino": 1250.5
                     },
                     "peak_age": 42,
                     "peak_ratings": {
@@ -3539,7 +4243,10 @@
                         "seven_card_stud": 1347,
                         "blackjack": 1510,
                         "roulette": 1322,
-                        "score_four": 1320
+                        "score_four": 1320,
+                        "strategy": 1461.5,
+                        "poker": 1342.0,
+                        "casino": 1416.0
                     },
                     "decline_start": 42,
                     "decline_per_year": 3.32,
@@ -3553,7 +4260,10 @@
                         "seven_card_stud": 1121.070755,
                         "blackjack": 1353.740566,
                         "roulette": 1148.820755,
-                        "score_four": 1158.764151
+                        "score_four": 1158.764151,
+                        "strategy": 1319.67217,
+                        "poker": 1141.2845913333333,
+                        "casino": 1251.2806605
                     },
                     "carry": {
                         "solitaire": -0.419811,
@@ -3562,7 +4272,10 @@
                         "seven_card_stud": 0.070755,
                         "blackjack": -0.259434,
                         "roulette": -0.179245,
-                        "score_four": -0.235849
+                        "score_four": -0.235849,
+                        "strategy": -0.32783,
+                        "poker": -0.048742,
+                        "casino": -0.2193395
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -3570,23 +4283,28 @@
                 }
             },
             "elinur_butter": {
-                "rating": 2140,
+                "rating": 2174.3416666666667,
                 "last_change": 0,
                 "ratings": {
-                    "solitaire": 2235,
-                    "texas_holdem": 2052,
-                    "five_card_draw": 2161,
-                    "seven_card_stud": 2076,
-                    "blackjack": 2005,
-                    "roulette": 2217,
-                    "score_four": 2236,
-                    "overall": 2140
+                    "strategy": 2235.5,
+                    "poker": 2096.3333333333335,
+                    "casino": 2111.0,
+                    "solitaire": 2235.5,
+                    "score_four": 2235.5,
+                    "texas_holdem": 2096.3333333333335,
+                    "five_card_draw": 2096.3333333333335,
+                    "seven_card_stud": 2096.3333333333335,
+                    "five_o_poker": 2096.3333333333335,
+                    "blackjack": 2111.0,
+                    "roulette": 2111.0,
+                    "faro": 2111.0,
+                    "overall": 2174.3416666666667
                 },
                 "age": 24,
                 "birthday_month": 2,
                 "public_appeal": "charming",
-                "fans": 226342,
-                "rating_schema_version": 2,
+                "fans": 242164,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 0,
                     "solitaire": 1,
@@ -3611,7 +4329,10 @@
                         "seven_card_stud": 2076,
                         "blackjack": 2004,
                         "roulette": 2216,
-                        "score_four": 2236
+                        "score_four": 2236,
+                        "strategy": 2235.0,
+                        "poker": 2096.3333333333335,
+                        "casino": 2110.0
                     },
                     "peak_age": 38,
                     "peak_ratings": {
@@ -3621,7 +4342,10 @@
                         "seven_card_stud": 2285,
                         "blackjack": 2229,
                         "roulette": 2365,
-                        "score_four": 2342
+                        "score_four": 2342,
+                        "strategy": 2379.5,
+                        "poker": 2282.0,
+                        "casino": 2297.0
                     },
                     "decline_start": 45,
                     "decline_per_year": 5.498,
@@ -3635,7 +4359,10 @@
                         "seven_card_stud": 2077.30625,
                         "blackjack": 2005.40625,
                         "roulette": 2216.93125,
-                        "score_four": 2236.6625
+                        "score_four": 2236.6625,
+                        "strategy": 2235.903125,
+                        "poker": 2097.49375,
+                        "casino": 2111.16875
                     },
                     "carry": {
                         "solitaire": 0.14375,
@@ -3644,7 +4371,10 @@
                         "seven_card_stud": 0.30625,
                         "blackjack": 0.40625,
                         "roulette": -0.06875,
-                        "score_four": -0.3375
+                        "score_four": -0.3375,
+                        "strategy": -0.09687500000000002,
+                        "poker": 0.16041666666666668,
+                        "casino": 0.16875
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -3652,23 +4382,28 @@
                 }
             },
             "sultan_griffin": {
-                "rating": 1965,
+                "rating": 1946.9333333333334,
                 "last_change": 0,
                 "ratings": {
-                    "solitaire": 1957,
-                    "texas_holdem": 1966,
-                    "five_card_draw": 1852,
-                    "seven_card_stud": 2076,
-                    "blackjack": 1963,
-                    "roulette": 2048,
-                    "score_four": 1893,
-                    "overall": 1965
+                    "strategy": 1925.0,
+                    "poker": 1964.6666666666667,
+                    "casino": 2005.5,
+                    "solitaire": 1925.0,
+                    "score_four": 1925.0,
+                    "texas_holdem": 1964.6666666666667,
+                    "five_card_draw": 1964.6666666666667,
+                    "seven_card_stud": 1964.6666666666667,
+                    "five_o_poker": 1964.6666666666667,
+                    "blackjack": 2005.5,
+                    "roulette": 2005.5,
+                    "faro": 2005.5,
+                    "overall": 1946.9333333333334
                 },
                 "age": 23,
                 "birthday_month": 11,
                 "public_appeal": "magnetic",
-                "fans": 174511,
-                "rating_schema_version": 2,
+                "fans": 167075,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 0,
                     "solitaire": 1,
@@ -3693,7 +4428,10 @@
                         "seven_card_stud": 2075,
                         "blackjack": 1962,
                         "roulette": 2047,
-                        "score_four": 1891
+                        "score_four": 1891,
+                        "strategy": 1923.5,
+                        "poker": 1967.3333333333333,
+                        "casino": 2004.5
                     },
                     "peak_age": 37,
                     "peak_ratings": {
@@ -3703,7 +4441,10 @@
                         "seven_card_stud": 2214,
                         "blackjack": 2074,
                         "roulette": 2191,
-                        "score_four": 2044
+                        "score_four": 2044,
+                        "strategy": 2097.0,
+                        "poker": 2146.6666666666665,
+                        "casino": 2132.5
                     },
                     "decline_start": 39,
                     "decline_per_year": 5.948,
@@ -3717,7 +4458,10 @@
                         "seven_card_stud": 2075.822485,
                         "blackjack": 1962.662722,
                         "roulette": 2047.852071,
-                        "score_four": 1891.905325
+                        "score_four": 1891.905325,
+                        "strategy": 1924.526627,
+                        "poker": 1968.3944773333333,
+                        "casino": 2005.2573965000001
                     },
                     "carry": {
                         "solitaire": 0.147929,
@@ -3726,7 +4470,10 @@
                         "seven_card_stud": -0.177515,
                         "blackjack": -0.337278,
                         "roulette": -0.147929,
-                        "score_four": -0.094675
+                        "score_four": -0.094675,
+                        "strategy": 0.026627000000000005,
+                        "poker": 0.061144000000000004,
+                        "casino": -0.24260350000000003
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -3734,23 +4481,28 @@
                 }
             },
             "ami_amica": {
-                "rating": 1806,
+                "rating": 1733.2333333333333,
                 "last_change": 3,
                 "ratings": {
-                    "solitaire": 1648,
-                    "texas_holdem": 1642,
-                    "five_card_draw": 1997,
-                    "seven_card_stud": 1904,
-                    "blackjack": 2011,
-                    "roulette": 1834,
-                    "score_four": 1604,
-                    "overall": 1806
+                    "strategy": 1626.0,
+                    "poker": 1847.6666666666667,
+                    "casino": 1922.5,
+                    "solitaire": 1626.0,
+                    "score_four": 1626.0,
+                    "texas_holdem": 1847.6666666666667,
+                    "five_card_draw": 1847.6666666666667,
+                    "seven_card_stud": 1847.6666666666667,
+                    "five_o_poker": 1847.6666666666667,
+                    "blackjack": 1922.5,
+                    "roulette": 1922.5,
+                    "faro": 1922.5,
+                    "overall": 1733.2333333333333
                 },
                 "age": 23,
                 "birthday_month": 2,
                 "public_appeal": "steady",
-                "fans": 91308,
-                "rating_schema_version": 2,
+                "fans": 75142,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 3,
                     "solitaire": 1,
@@ -3775,7 +4527,10 @@
                         "seven_card_stud": 1900,
                         "blackjack": 2003,
                         "roulette": 1833,
-                        "score_four": 1606
+                        "score_four": 1606,
+                        "strategy": 1626.5,
+                        "poker": 1845.0,
+                        "casino": 1918.0
                     },
                     "peak_age": 39,
                     "peak_ratings": {
@@ -3785,7 +4540,10 @@
                         "seven_card_stud": 1980,
                         "blackjack": 2125,
                         "roulette": 1943,
-                        "score_four": 1687
+                        "score_four": 1687,
+                        "strategy": 1769.5,
+                        "poker": 1957.6666666666667,
+                        "casino": 2034.0
                     },
                     "decline_start": 44,
                     "decline_per_year": 4.756,
@@ -3799,7 +4557,10 @@
                         "seven_card_stud": 1900.434783,
                         "blackjack": 2003.663043,
                         "roulette": 1833.597826,
-                        "score_four": 1606.440217
+                        "score_four": 1606.440217,
+                        "strategy": 1627.2771735000001,
+                        "poker": 1845.6123189999998,
+                        "casino": 1918.6304344999999
                     },
                     "carry": {
                         "solitaire": 0.11413,
@@ -3808,7 +4569,10 @@
                         "seven_card_stud": 0.434783,
                         "blackjack": -0.336957,
                         "roulette": -0.402174,
-                        "score_four": 0.440217
+                        "score_four": 0.440217,
+                        "strategy": 0.2771735,
+                        "poker": -0.05434766666666668,
+                        "casino": -0.3695655
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -3816,23 +4580,28 @@
                 }
             },
             "bubbles_romney": {
-                "rating": 2510,
+                "rating": 2486.191666666667,
                 "last_change": 2,
                 "ratings": {
-                    "solitaire": 2416,
-                    "texas_holdem": 2325,
-                    "five_card_draw": 2436,
-                    "seven_card_stud": 2590,
-                    "blackjack": 2575,
-                    "roulette": 2678,
-                    "score_four": 2551,
-                    "overall": 2510
+                    "strategy": 2483.5,
+                    "poker": 2450.3333333333335,
+                    "casino": 2626.5,
+                    "solitaire": 2483.5,
+                    "score_four": 2483.5,
+                    "texas_holdem": 2450.3333333333335,
+                    "five_card_draw": 2450.3333333333335,
+                    "seven_card_stud": 2450.3333333333335,
+                    "five_o_poker": 2450.3333333333335,
+                    "blackjack": 2626.5,
+                    "roulette": 2626.5,
+                    "faro": 2626.5,
+                    "overall": 2486.191666666667
                 },
                 "age": 15,
                 "birthday_month": 4,
                 "public_appeal": "charming",
-                "fans": 439912,
-                "rating_schema_version": 2,
+                "fans": 423117,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 2,
                     "solitaire": 3,
@@ -3857,7 +4626,10 @@
                         "seven_card_stud": 2587,
                         "blackjack": 2576,
                         "roulette": 2677,
-                        "score_four": 2549
+                        "score_four": 2549,
+                        "strategy": 2481.0,
+                        "poker": 2447.6666666666665,
+                        "casino": 2626.5
                     },
                     "peak_age": 21,
                     "peak_ratings": {
@@ -3867,7 +4639,10 @@
                         "seven_card_stud": 2792,
                         "blackjack": 2795,
                         "roulette": 2877,
-                        "score_four": 2698
+                        "score_four": 2698,
+                        "strategy": 2668.0,
+                        "poker": 2618.3333333333335,
+                        "casino": 2836.0
                     },
                     "decline_start": 40,
                     "decline_per_year": 5.148,
@@ -3881,7 +4656,10 @@
                         "seven_card_stud": 2590.106061,
                         "blackjack": 2579.318182,
                         "roulette": 2680.030303,
-                        "score_four": 2551.257576
+                        "score_four": 2551.257576,
+                        "strategy": 2483.8333334999998,
+                        "poker": 2450.2525256666668,
+                        "casino": 2629.6742425
                     },
                     "carry": {
                         "solitaire": 0.409091,
@@ -3890,7 +4668,10 @@
                         "seven_card_stud": 0.106061,
                         "blackjack": 0.318182,
                         "roulette": 0.030303,
-                        "score_four": 0.257576
+                        "score_four": 0.257576,
+                        "strategy": 0.3333335,
+                        "poker": -0.08080766666666667,
+                        "casino": 0.17424250000000002
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -3898,23 +4679,28 @@
                 }
             },
             "jack_zitbomb": {
-                "rating": 2582,
+                "rating": 2607.166666666667,
                 "last_change": 3,
                 "ratings": {
-                    "solitaire": 2555,
-                    "texas_holdem": 2356,
-                    "five_card_draw": 2519,
-                    "seven_card_stud": 2791,
-                    "blackjack": 2401,
-                    "roulette": 2705,
-                    "score_four": 2745,
-                    "overall": 2582
+                    "strategy": 2650.0,
+                    "poker": 2555.3333333333335,
+                    "casino": 2553.0,
+                    "solitaire": 2650.0,
+                    "score_four": 2650.0,
+                    "texas_holdem": 2555.3333333333335,
+                    "five_card_draw": 2555.3333333333335,
+                    "seven_card_stud": 2555.3333333333335,
+                    "five_o_poker": 2555.3333333333335,
+                    "blackjack": 2553.0,
+                    "roulette": 2553.0,
+                    "faro": 2553.0,
+                    "overall": 2607.166666666667
                 },
                 "age": 27,
                 "birthday_month": 7,
                 "public_appeal": "steady",
-                "fans": 424959,
-                "rating_schema_version": 2,
+                "fans": 441656,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 3,
                     "solitaire": 1,
@@ -3939,7 +4725,10 @@
                         "seven_card_stud": 2790,
                         "blackjack": 2390,
                         "roulette": 2704,
-                        "score_four": 2740
+                        "score_four": 2740,
+                        "strategy": 2647.0,
+                        "poker": 2554.6666666666665,
+                        "casino": 2547.0
                     },
                     "peak_age": 40,
                     "peak_ratings": {
@@ -3949,7 +4738,10 @@
                         "seven_card_stud": 2937,
                         "blackjack": 2510,
                         "roulette": 2859,
-                        "score_four": 2811
+                        "score_four": 2811,
+                        "strategy": 2780.5,
+                        "poker": 2699.0,
+                        "casino": 2684.5
                     },
                     "decline_start": 44,
                     "decline_per_year": 5.354,
@@ -3963,7 +4755,10 @@
                         "seven_card_stud": 2790.960784,
                         "blackjack": 2390.784314,
                         "roulette": 2705.013072,
-                        "score_four": 2740.464052
+                        "score_four": 2740.464052,
+                        "strategy": 2647.8725489999997,
+                        "poker": 2555.610021666667,
+                        "casino": 2547.898693
                     },
                     "carry": {
                         "solitaire": 0.281046,
@@ -3972,7 +4767,10 @@
                         "seven_card_stud": -0.039216,
                         "blackjack": -0.215686,
                         "roulette": 0.013072,
-                        "score_four": 0.464052
+                        "score_four": 0.464052,
+                        "strategy": 0.372549,
+                        "poker": 0.27668833333333337,
+                        "casino": -0.101307
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -3980,23 +4778,28 @@
                 }
             },
             "doon_ficus": {
-                "rating": 2604,
+                "rating": 2581.2166666666667,
                 "last_change": 1,
                 "ratings": {
-                    "solitaire": 2726,
-                    "texas_holdem": 2749,
-                    "five_card_draw": 2521,
-                    "seven_card_stud": 2390,
-                    "blackjack": 2613,
-                    "roulette": 2802,
-                    "score_four": 2426,
-                    "overall": 2604
+                    "strategy": 2576.0,
+                    "poker": 2553.3333333333335,
+                    "casino": 2707.5,
+                    "solitaire": 2576.0,
+                    "score_four": 2576.0,
+                    "texas_holdem": 2553.3333333333335,
+                    "five_card_draw": 2553.3333333333335,
+                    "seven_card_stud": 2553.3333333333335,
+                    "five_o_poker": 2553.3333333333335,
+                    "blackjack": 2707.5,
+                    "roulette": 2707.5,
+                    "faro": 2707.5,
+                    "overall": 2581.2166666666667
                 },
                 "age": 29,
                 "birthday_month": 9,
                 "public_appeal": "reserved",
-                "fans": 386874,
-                "rating_schema_version": 2,
+                "fans": 373384,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 1,
                     "solitaire": 1,
@@ -4021,7 +4824,10 @@
                         "seven_card_stud": 2388,
                         "blackjack": 2609,
                         "roulette": 2799,
-                        "score_four": 2425
+                        "score_four": 2425,
+                        "strategy": 2575.0,
+                        "poker": 2555.0,
+                        "casino": 2704.0
                     },
                     "peak_age": 36,
                     "peak_ratings": {
@@ -4031,7 +4837,10 @@
                         "seven_card_stud": 2548,
                         "blackjack": 2706,
                         "roulette": 3018,
-                        "score_four": 2544
+                        "score_four": 2544,
+                        "strategy": 2667.5,
+                        "poker": 2686.6666666666665,
+                        "casino": 2862.0
                     },
                     "decline_start": 43,
                     "decline_per_year": 3.717,
@@ -4045,7 +4854,10 @@
                         "seven_card_stud": 2389.927711,
                         "blackjack": 2610.168675,
                         "roulette": 2801.638554,
-                        "score_four": 2426.433735
+                        "score_four": 2426.433735,
+                        "strategy": 2576.114458,
+                        "poker": 2556.586345333333,
+                        "casino": 2705.9036145
                     },
                     "carry": {
                         "solitaire": -0.204819,
@@ -4054,7 +4866,10 @@
                         "seven_card_stud": -0.072289,
                         "blackjack": 0.168675,
                         "roulette": -0.361446,
-                        "score_four": 0.433735
+                        "score_four": 0.433735,
+                        "strategy": 0.11445799999999999,
+                        "poker": -0.08032133333333334,
+                        "casino": -0.0963855
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -4064,21 +4879,26 @@
             "chad_whiskey": {
                 "age": 22,
                 "birthday_month": 12,
-                "rating": 997,
+                "rating": 1036.8833333333332,
                 "ratings": {
-                    "solitaire": 982,
-                    "texas_holdem": 935,
-                    "five_card_draw": 960,
-                    "seven_card_stud": 1122,
-                    "blackjack": 841,
-                    "roulette": 955,
-                    "score_four": 1182,
-                    "overall": 997
+                    "strategy": 1082.0,
+                    "poker": 1005.6666666666666,
+                    "casino": 898.0,
+                    "solitaire": 1082.0,
+                    "score_four": 1082.0,
+                    "texas_holdem": 1005.6666666666666,
+                    "five_card_draw": 1005.6666666666666,
+                    "seven_card_stud": 1005.6666666666666,
+                    "five_o_poker": 1005.6666666666666,
+                    "blackjack": 898.0,
+                    "roulette": 898.0,
+                    "faro": 898.0,
+                    "overall": 1036.8833333333332
                 },
                 "last_change": 3,
                 "public_appeal": "reserved",
-                "fans": 2473,
-                "rating_schema_version": 2,
+                "fans": 3288,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 3,
                     "solitaire": 8,
@@ -4103,7 +4923,10 @@
                         "seven_card_stud": 1125,
                         "blackjack": 840,
                         "roulette": 954,
-                        "score_four": 1178
+                        "score_four": 1178,
+                        "strategy": 1076.0,
+                        "poker": 1004.6666666666666,
+                        "casino": 897.0
                     },
                     "peak_age": 35,
                     "peak_ratings": {
@@ -4113,7 +4936,10 @@
                         "seven_card_stud": 1255,
                         "blackjack": 1043,
                         "roulette": 1134,
-                        "score_four": 1339
+                        "score_four": 1339,
+                        "strategy": 1224.5,
+                        "poker": 1184.0,
+                        "casino": 1088.5
                     },
                     "decline_start": 39,
                     "decline_per_year": 6.77,
@@ -4127,7 +4953,10 @@
                         "seven_card_stud": 1125.890411,
                         "blackjack": 841.390411,
                         "roulette": 955.232877,
-                        "score_four": 1179.10274
+                        "score_four": 1179.10274,
+                        "strategy": 1077.0171235,
+                        "poker": 1005.8949769999999,
+                        "casino": 898.311644
                     },
                     "carry": {
                         "solitaire": -0.068493,
@@ -4136,7 +4965,10 @@
                         "seven_card_stud": -0.109589,
                         "blackjack": 0.390411,
                         "roulette": 0.232877,
-                        "score_four": 0.10274
+                        "score_four": 0.10274,
+                        "strategy": 0.0171235,
+                        "poker": -0.10502299999999999,
+                        "casino": 0.31164400000000003
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2025,
@@ -4146,21 +4978,26 @@
             "mohammed_ramadan": {
                 "age": 29,
                 "birthday_month": 4,
-                "rating": 935,
+                "rating": 917.7666666666668,
                 "ratings": {
-                    "solitaire": 956,
-                    "texas_holdem": 773,
-                    "five_card_draw": 954,
-                    "seven_card_stud": 959,
-                    "blackjack": 847,
-                    "roulette": 1187,
-                    "score_four": 872,
-                    "overall": 935
+                    "strategy": 914.0,
+                    "poker": 895.3333333333334,
+                    "casino": 1017.0,
+                    "solitaire": 914.0,
+                    "score_four": 914.0,
+                    "texas_holdem": 895.3333333333334,
+                    "five_card_draw": 895.3333333333334,
+                    "seven_card_stud": 895.3333333333334,
+                    "five_o_poker": 895.3333333333334,
+                    "blackjack": 1017.0,
+                    "roulette": 1017.0,
+                    "faro": 1017.0,
+                    "overall": 917.7666666666668
                 },
                 "last_change": 1,
                 "public_appeal": "charming",
-                "fans": 1987,
-                "rating_schema_version": 2,
+                "fans": 1706,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": 1,
                     "solitaire": 1,
@@ -4185,7 +5022,10 @@
                         "seven_card_stud": 961,
                         "blackjack": 842,
                         "roulette": 1185,
-                        "score_four": 870
+                        "score_four": 870,
+                        "strategy": 912.5,
+                        "poker": 895.3333333333334,
+                        "casino": 1013.5
                     },
                     "peak_age": 38,
                     "peak_ratings": {
@@ -4195,7 +5035,10 @@
                         "seven_card_stud": 1055,
                         "blackjack": 947,
                         "roulette": 1381,
-                        "score_four": 1068
+                        "score_four": 1068,
+                        "strategy": 1055.0,
+                        "poker": 983.0,
+                        "casino": 1164.0
                     },
                     "decline_start": 44,
                     "decline_per_year": 4.491,
@@ -4209,7 +5052,10 @@
                         "seven_card_stud": 961.921569,
                         "blackjack": 843.029412,
                         "roulette": 1186.921569,
-                        "score_four": 871.941176
+                        "score_four": 871.941176,
+                        "strategy": 913.8970585,
+                        "poker": 896.1928106666666,
+                        "casino": 1014.9754905
                     },
                     "carry": {
                         "solitaire": -0.147059,
@@ -4218,7 +5064,10 @@
                         "seven_card_stud": -0.078431,
                         "blackjack": 0.029412,
                         "roulette": -0.078431,
-                        "score_four": -0.058824
+                        "score_four": -0.058824,
+                        "strategy": -0.10294149999999999,
+                        "poker": -0.14052266666666666,
+                        "casino": -0.0245095
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -4228,21 +5077,26 @@
             "em_marley": {
                 "age": 24,
                 "birthday_month": 3,
-                "rating": 1001,
+                "rating": 964.125,
                 "ratings": {
-                    "solitaire": 1001,
-                    "texas_holdem": 1041,
-                    "five_card_draw": 1056,
-                    "seven_card_stud": 816,
-                    "blackjack": 1039,
-                    "roulette": 1189,
-                    "score_four": 864,
-                    "overall": 1001
+                    "strategy": 932.5,
+                    "poker": 971.0,
+                    "casino": 1114.0,
+                    "solitaire": 932.5,
+                    "score_four": 932.5,
+                    "texas_holdem": 971.0,
+                    "five_card_draw": 971.0,
+                    "seven_card_stud": 971.0,
+                    "five_o_poker": 971.0,
+                    "blackjack": 1114.0,
+                    "roulette": 1114.0,
+                    "faro": 1114.0,
+                    "overall": 964.125
                 },
                 "last_change": -1,
                 "public_appeal": "steady",
-                "fans": 2896,
-                "rating_schema_version": 2,
+                "fans": 2173,
+                "rating_schema_version": 3,
                 "last_changes": {
                     "overall": -1,
                     "solitaire": 1,
@@ -4267,7 +5121,10 @@
                         "seven_card_stud": 819,
                         "blackjack": 1038,
                         "roulette": 1196,
-                        "score_four": 863
+                        "score_four": 863,
+                        "strategy": 931.5,
+                        "poker": 971.3333333333334,
+                        "casino": 1117.0
                     },
                     "peak_age": 37,
                     "peak_ratings": {
@@ -4277,7 +5134,10 @@
                         "seven_card_stud": 890,
                         "blackjack": 1220,
                         "roulette": 1330,
-                        "score_four": 944
+                        "score_four": 944,
+                        "strategy": 1049.5,
+                        "poker": 1068.3333333333333,
+                        "casino": 1275.0
                     },
                     "decline_start": 43,
                     "decline_per_year": 3.509,
@@ -4291,7 +5151,10 @@
                         "seven_card_stud": 819.47651,
                         "blackjack": 1039.221477,
                         "roulette": 1196.899329,
-                        "score_four": 863.543624
+                        "score_four": 863.543624,
+                        "strategy": 932.291946,
+                        "poker": 971.98434,
+                        "casino": 1118.060403
                     },
                     "carry": {
                         "solitaire": 0.040268,
@@ -4300,7 +5163,10 @@
                         "seven_card_stud": 0.47651,
                         "blackjack": 0.221477,
                         "roulette": -0.100671,
-                        "score_four": -0.456376
+                        "score_four": -0.456376,
+                        "strategy": -0.20805400000000002,
+                        "poker": -0.015660000000000004,
+                        "casino": 0.060403000000000005
                     },
                     "last_simulated_month": 24322,
                     "last_birthday_year": 2026,
@@ -4320,9 +5186,9 @@
         "leaderboard_star_id": "monkus_carlton",
         "year": 2026,
         "month": 11,
-        "day": 7,
-        "weekday_index": 1,
-        "career_day": 307,
+        "day": 14,
+        "weekday_index": 3,
+        "career_day": 314,
         "residence": "hippie_commune",
         "owned_residences": [
             "dingy_apartment",
@@ -6474,6 +7340,55 @@
                 "day": 6,
                 "completed": true,
                 "activity_type": "event"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 7,
+                "completed": true,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 8,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 9,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 10,
+                "completed": false,
+                "activity_type": "round"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 11,
+                "completed": false,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 12,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2026,
+                "month": 11,
+                "day": 13,
+                "completed": false,
+                "activity_type": "challenge"
             }
         ],
         "current_schedule": [
@@ -6537,7 +7452,7 @@
                 "day_number": 7,
                 "weekday_index": 1,
                 "activity_type": "casual_cards",
-                "completed": false,
+                "completed": true,
                 "title": "Casual Cards",
                 "game_ids": [
                     "score_four",
@@ -6757,6 +7672,14 @@
             }
         ],
         "news_items": [
+            {
+                "headline": "RIBEYE SITS IN FOR POKER NIGHT",
+                "body": "Ribeye logged time at the Poker Night tables without a major swing in either direction.",
+                "category": "poker",
+                "month": 11,
+                "year": 2026,
+                "career_day": 307
+            },
             {
                 "headline": "LUKE JINGLE SURGES UP RANKINGS",
                 "body": "Luke Jingle climbed 2 places this month and now sits at world #14.",
@@ -7148,63 +8071,64 @@
                 "month": 4,
                 "year": 2026,
                 "career_day": 91
-            },
-            {
-                "headline": "RIBEYE WINS HEAD-TO-HEAD SOLITAIRE RACE",
-                "body": "Ribeye beat Crikey Dingo to the final foundation card in 1:49 in a direct Klondike race.",
-                "category": "competition",
-                "month": 3,
-                "year": 2026,
-                "career_day": 90
             }
         ]
     },
     "cosmetics": {
-        "selected_menu_background": "bg_default",
-        "selected_felt": "f_default",
-        "selected_title": "title_default",
+        "selected_menu_background": "bg_petra",
+        "selected_felt": "f_fun_felt",
+        "selected_title": "title_isolation",
         "selected_card_back": "back_default",
         "selected_cursor": "cursor",
         "unlocked_menu_backgrounds": [
-            "bg_noodle",
-            "bg_et",
-            "bg_brazil",
             "bg_blue_doodle",
-            "bg_default",
+            "bg_petra",
+            "bg_brazil",
             "bg_microscope",
             "bg_wall",
-            "bg_petra",
             "bg_chichen",
-            "bg_gardens"
+            "bg_default",
+            "bg_et",
+            "bg_rating_strategy_1400",
+            "bg_gardens",
+            "bg_noodle",
+            "bg_giza"
         ],
         "unlocked_felts": [
-            "f_default",
-            "f_game_night",
-            "f_high_society",
-            "f_blanky",
-            "f_crystalized_grain",
-            "f_light_touch",
+            "f_wheel_winner",
             "f_rock_candy",
+            "f_rating_strategy_1150",
+            "f_default",
+            "f_rating_global_1300",
+            "f_blanky",
+            "f_rating_strategy_1600",
+            "f_crystalized_grain",
+            "f_gordon",
+            "f_light_touch",
             "f_fun_felt",
-            "f_crystalized",
-            "f_gordon"
+            "f_grain",
+            "f_high_society",
+            "f_game_night",
+            "f_crystalized"
         ],
         "unlocked_titles": [
-            "title_patience_dare",
-            "title_isolation",
             "title_default",
+            "title_shatter_1",
+            "title_patience_dare",
+            "title_tacit",
+            "title_cards",
             "title_solitary",
+            "title_soli_tare_red",
+            "title_solitaire_pixel",
+            "title_high_roller",
             "title_penciled",
             "title_cardshark",
-            "title_soli_tare_red",
-            "title_neon",
-            "title_high_roller",
             "title_patience_creep",
-            "title_soli_tare_blue",
+            "title_isolation",
+            "t_rating_strategy_1500",
             "title_top_dog",
-            "title_cards",
-            "title_solitaire_pixel",
-            "title_shatter_1"
+            "title_soli_tare_blue",
+            "title_neon"
         ],
         "unlocked_card_backs": [
             "back_default"
@@ -7249,6 +8173,7 @@
     },
     "settings": {
         "preferred_difficulty": "normal",
-        "solitaire_deal_mode": "random"
+        "solitaire_deal_mode": "random",
+        "score_four_layout": "compact"
     }
 }

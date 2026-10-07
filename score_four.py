@@ -2,12 +2,18 @@ import random
 import time
 
 from fractions import Fraction
+from score_four_difficulty import puzzle_pool
 
 
 class ScoreFourGame:
 
     def __init__(self):
 
+        self.layout = "compact"
+        self.difficulty = "standard"
+        self.difficulty_menu = False
+        self.rating_info_open = False
+        self.last_hint_at = 0.0
         self.competitive_reward = 0
 
         self.puzzle_start_time = 0.0
@@ -35,11 +41,11 @@ class ScoreFourGame:
         self.session_complete = False
         self.npc_skill_tier = "mid"
 
+        self.mode = "solo"
         self.new_puzzle()
 
-        self.card_suits = []
-
         self.reward_claimed = False
+        self.last_rating_change = None
 
         # ==================================================
         # Mode / competitive state
@@ -273,28 +279,28 @@ class ScoreFourGame:
                             f"{second_text}."
                         )
 
-        return "Try undoing a move and taking another approach."
+        active = [value for value in self.values if value is not None]
+        if len(active) == 1 and active[0] == 24:
+            return "Solved: 24!"
+        # A dead end gets a concrete first step from the original puzzle.
+        saved_values = self.values
+        self.values = [Fraction(number) for number in self.original_numbers]
+        try:
+            first_step = self.get_hint_step()
+        finally:
+            self.values = saved_values
+        return "Reset to the original four cards. " + first_step
+
+    def solo_hint_progress(self, now=None):
+        """Thirty seconds to the first hint and between subsequent hints."""
+        if self.mode != "solo" or self.session_complete or self.round_complete:
+            return 0.0
+        now = time.monotonic() if now is None else now
+        origin = max(self.puzzle_start_time, self.last_hint_at)
+        return max(0.0, min(1.0, (now - origin) / 30.0))
 
     def solo_hint_available(self):
-
-        if self.mode != "solo":
-            return False
-
-        if self.session_complete:
-            return False
-
-        if self.round_complete:
-            return False
-
-        if self.hint_used:
-            return False
-
-        elapsed = (
-                time.monotonic()
-                - self.puzzle_start_time
-        )
-
-        return elapsed >= 30.0
+        return self.solo_hint_progress() >= 1.0
 
     def request_solo_hint(self):
 
@@ -306,6 +312,7 @@ class ScoreFourGame:
         )
 
         self.hint_used = True
+        self.last_hint_at = time.monotonic()
 
         return True
 
@@ -441,7 +448,18 @@ class ScoreFourGame:
 
         return None
 
-    def start_solo_session(self):
+    def reset_current_puzzle(self):
+        if self.round_complete or self.session_complete or self.match_complete:
+            return False
+        self.values = [Fraction(number) for number in self.original_numbers]
+        self.selected_index = self.selected_operator = None
+        self.undo_stack.clear()
+        return True
+
+    def start_solo_session(self, difficulty=None):
+        if difficulty is not None:
+            puzzle_pool(difficulty)
+            self.difficulty = difficulty
 
         self.mode = "solo"
 
@@ -449,6 +467,7 @@ class ScoreFourGame:
 
         self.session_complete = False
         self.reward_claimed = False
+        self.last_rating_change = None
 
         self.match_complete = False
         self.match_winner = None
@@ -479,6 +498,7 @@ class ScoreFourGame:
         self.round_result = None
 
         self.reward_claimed = False
+        self.last_rating_change = None
 
         self.npc_skill_tier = (
             skill_tier
@@ -571,10 +591,10 @@ class ScoreFourGame:
         # ----------------------------------------------
 
         reward_table = {
-            "low": {"win": 45, "loss": 10},
-            "mid": {"win": 60, "loss": 15},
-            "strong": {"win": 80, "loss": 20},
-            "elite": {"win": 100, "loss": 25},
+            "low": {"win": 45, "loss": -10},
+            "mid": {"win": 60, "loss": -10},
+            "strong": {"win": 50, "loss": -10},
+            "elite": {"win": 65, "loss": -10},
         }
         rewards = reward_table.get(
             getattr(self, "npc_skill_tier", "mid"),
@@ -602,29 +622,11 @@ class ScoreFourGame:
 
     def new_puzzle(self):
 
-        while True:
-
-            numbers = [
-                random.randint(
-                    1,
-                    10
-                )
-                for _ in range(4)
-            ]
-
-            values = [
-                Fraction(number)
-                for number in numbers
-            ]
-
-            solution = (
-                self.solve_numbers(
-                    values
-                )
-            )
-
-            if solution is not None:
-                break
+        numbers = list(random.choice(puzzle_pool(self.difficulty if self.mode == "solo" else "standard")))
+        random.shuffle(numbers)
+        solution = self.solve_numbers([Fraction(number) for number in numbers])
+        if solution is None:
+            raise ValueError(f"Unsolvable ranked Score-Four puzzle: {numbers}")
 
         self.original_numbers = numbers
 
@@ -661,6 +663,7 @@ class ScoreFourGame:
 
         self.hint_text = None
         self.hint_used = False
+        self.last_hint_at = 0.0
 
     # ==================================================
     # Selection
@@ -873,19 +876,14 @@ class ScoreFourGame:
     # ==================================================
 
     def undo(self):
-
         if self.round_complete:
             return False
-
+        had_selection = self.selected_index is not None or self.selected_operator is not None
+        self.selected_index = self.selected_operator = None
         if not self.undo_stack:
-            return False
-
-        (
-            self.values,
-            self.selected_index,
-            self.selected_operator
-        ) = self.undo_stack.pop()
-
+            return had_selection
+        self.values, _selected_index, _selected_operator = self.undo_stack.pop()
+        self.hint_text = None
         return True
 
     # ==================================================
@@ -904,3 +902,4 @@ class ScoreFourGame:
             len(remaining_values) == 1
             and remaining_values[0] == 24
         )
+

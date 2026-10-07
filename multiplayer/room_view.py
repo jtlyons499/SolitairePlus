@@ -5,24 +5,31 @@ from mp_appearance import Appearance
 from mp_profile import MultiplayerProfile
 from mp_presentation import Presentation
 from mp_showdown import payout_lines,compact_result
-from texas_holdem_ui import get_card_key as card_key
+from texas_holdem_ui import get_card_key as card_key,draw_holdem_glossy_button
 
 class RoomView:
     def __init__(self,surface,assets,appearance=None,options=None,sound=None):
-        self.appearance=appearance or Appearance(MultiplayerProfile());self.presentation=Presentation(self.appearance,options,sound);self.details=False;self.details_scroll=0;self.badge_rects=[];self.dragging=False;self.slider=None;self.minimum=0;self.maximum=0;self.log_scroll=0
+        self.appearance=appearance or Appearance(MultiplayerProfile());self.presentation=Presentation(self.appearance,options,sound);self.details=False;self.details_scroll=0;self.history_index=-1;self.mouse=(-1,-1);self.badge_rects=[];self.dragging=False;self.slider=None;self.minimum=0;self.maximum=0;self.log_scroll=0
         self.surface=surface;self.assets=assets;self.buttons=[];self.raise_amount=100;self.hand=-1;self.editing=False;self.amount_text='';self.bet_input=TextInput()
         self.font=pygame.font.SysFont("georgia",23);self.small=pygame.font.SysFont("georgia",18);self.large=pygame.font.SysFont("georgia",29)
     def text(self,text,x,y,font=None,color=(246,237,207)):
         self.surface.blit((font or self.font).render(str(text),True,color),(x,y))
     def button(self,label,rect,action,enabled=True):
-        rect=pygame.Rect(rect);wooden_button(self.surface,self.appearance,rect,label,self.small,enabled)
+        rect=pygame.Rect(rect)
+        font=self.small if self.small.size(label)[0]<=rect.w-14 else pygame.font.SysFont('georgia',max(12,int(18*(rect.w-14)/self.small.size(label)[0])))
+        draw_holdem_glossy_button(self.surface,rect,label,self.mouse,font,enabled,attention=enabled and action=='check_call')
         if enabled:self.buttons.append((rect,action))
     def event(self,event,mouse,table):
         if self.details:
             if event.type==pygame.KEYDOWN and event.key==pygame.K_ESCAPE:self.details=False
             elif event.type==pygame.MOUSEWHEEL:self.details_scroll=max(0,self.details_scroll-event.y)
             elif event.type==pygame.MOUSEBUTTONDOWN and event.button==1:
-                if pygame.Rect(1020,165,105,38).collidepoint(mouse):self.details=False
+                for rect,action in self.buttons:
+                    if not rect.collidepoint(mouse):continue
+                    if action=='close_details':self.details=False
+                    elif action=='history_prev':self.history_index=max(0,self.history_index-1);self.details_scroll=0
+                    elif action=='history_next':self.history_index+=1;self.details_scroll=0
+                    break
             return True
         if event.type==pygame.MOUSEWHEEL:self.log_scroll=max(0,self.log_scroll-event.y);return True
         if event.type==pygame.MOUSEBUTTONUP:self.dragging=False
@@ -54,7 +61,7 @@ class RoomView:
                             if action[1]<=table.game.current_bet:table.act('check_call')
                             else:table.act('bet_raise',action[1])
                     elif action=='edit':self.editing=True;self.amount_text='';self.bet_input=TextInput();pygame.key.start_text_input()
-                    elif action=='details':self.details=True;self.details_scroll=0
+                    elif action=='details':self.details=True;self.details_scroll=0;self.history_index=len(getattr(table,'payout_history',[]))-1
                     elif action=='raise':table.act('bet_raise',self.raise_amount)
                     else:table.act(action)
                     return True
@@ -64,16 +71,19 @@ class RoomView:
         x,y,w,h,hidden=self.presentation.card_position(key,x,y,w,h,pygame.time.get_ticks())
         if hidden:image=self.assets.back
         self.surface.blit(pygame.transform.smoothscale(image,(w,h)),(x,y))
-    def draw(self,table):
+    def draw(self,table,mouse=None):
+        if mouse is not None:self.mouse=mouse
         s=self.surface;self.appearance.background(s);self.buttons=[];self.slider=None
         back=self.appearance.selected('back',self.assets.back.get_size())
         if back:self.assets.back=back
         logo=self.appearance.image('assets/poker/logos/texas_holdem.png',(225,76))
         if logo:s.blit(logo,(20,92))
         else:self.text('HOLD’EM',24,105,self.large)
-        self.text('MULTIPLAYER',24,20,self.small)
-        self.text('Room '+(table.code or '…'),430,23)
-        self.button('Copy code',(650,15,120,38),'copy',bool(table.code))
+        code_rect=pygame.Rect(20,15,310,40)
+        self.text('Room Code: '+(table.code or '…'),24,23)
+        if table.code:self.buttons.append((code_rect,'copy'))
+        if code_rect.collidepoint(self.mouse) and table.code and not self.details:
+            self.panel((350,20,120,30));self.text('copy code',361,23,self.small)
         self.text(table.status[:95],24,66,self.small)
         if table.failed:
             self.text('Connection ended. Leave and create/join a new room.',230,325,self.large);return
@@ -141,11 +151,11 @@ class RoomView:
             if roles:
                 self.panel((x-40,y-32,58,26));self.text('/'.join(roles),x-33,y-30,self.small)
         self.panel((20,610,365,140));self.text('Game Log',35,620)
-        self.button('Payout details',(195,618,175,30),'details',bool(getattr(table,'last_payout',None)) or g.hand_complete)
+        self.button('Payout History',(195,618,175,30),'details',bool(getattr(table,'last_payout',None)) or g.hand_complete)
         self.button('Rejoin next hand' if m.get('sit_out') else 'Sit out next hand',(20,566,205,32),'sit_out',not table.pending)
-        hand_label=self.small.render('Your hand: '+hand_type(g),True,(246,237,207))
+        hand_label=self.small.render(hand_type(g),True,(246,237,207))
         if hand_label.get_width()>410:hand_label=pygame.transform.smoothscale(hand_label,(410,hand_label.get_height()))
-        s.blit(hand_label,(925,575))
+        s.blit(hand_label,(24,110))
         if g.player_stack<=0 and (g.hand_complete or 0 not in g.hand_seat_indexes):
             self.button('Buy back $'+str(m.get('starting_stack',g.starting_stack)),(235,566,200,32),'buyback',not table.pending)
         lines=m.get('public_log',g.get_hand_history_lines())
@@ -161,8 +171,7 @@ class RoomView:
                 label=self.small.render(line,True,(246,237,207))
                 if label.get_width()>385:label=pygame.transform.smoothscale(label,(385,label.get_height()))
                 s.blit(label,(937,619+j*23))
-            self.text('Next deal starts automatically.',937,678,self.small)
-            self.button('Watching' if m.get('you_ready') and g.player_stack<=0 else 'Ready' if m.get('you_ready') else 'Watch next hand' if g.player_stack<=0 or m.get('sit_out') else 'Next hand',(935,709,390,32),'next_hand',not m.get('you_ready') and not table.pending)
+            self.text('Next hand in '+str(m.get('next_hand_seconds',6))+' seconds' if m.get('next_hand_seconds',6)>0 else 'Waiting for players to rejoin',937,678,self.small)
         else:
             active=g.current_actor==0 and g.actor_needs_action(0) and not table.pending
             call=g.get_player_amount_to_call();minimum=g.get_minimum_raise_to() if g.current_bet else g.big_blind
@@ -183,7 +192,15 @@ class RoomView:
                 action=('allin',maximum) if label=='ALL IN' else ('amount',value)
                 self.button(label,(935+j*99,710,92,29),action,active if label=='ALL IN' else canraise)
         self.presentation.draw(s,g,now,self.small)
-        if self.details:self.draw_details(getattr(table,'last_payout',None) or g)
+        if self.details:
+            history=getattr(table,'payout_history',[])
+            if history:
+                self.history_index=max(0,min(self.history_index,len(history)-1))
+                self.draw_details(history[self.history_index])
+                self.button('Previous',(745,165,115,38),'history_prev',self.history_index>0)
+                self.button('Next',(875,165,115,38),'history_next',self.history_index<len(history)-1)
+            else:self.draw_details(getattr(table,'last_payout',None) or g)
+
         if m.get('waiting_names'):self.text('Joining next hand: '+', '.join(m['waiting_names']),390,748,self.small)
 
     def panel(self,rect,active=False):
@@ -193,7 +210,7 @@ class RoomView:
 
     def draw_details(self,g):
         s=self.surface;shade=pygame.Surface(s.get_size(),pygame.SRCALPHA);shade.fill((0,0,0,185));s.blit(shade,(0,0))
-        self.panel((215,145,930,475));self.text('HAND '+str(g.hand_number)+' / PAYOUTS',240,163,self.large)
+        self.panel((215,145,930,475));self.text('Payout History • Hand '+str(g.hand_number),240,163,self.large)
         self.button('Close',(1020,165,105,38),'close_details')
         lines=payout_lines(g)
         lines+=['Revealed hands:']+[g.names[int(i)]+': '+hand for i,hand in getattr(g,'showdown_hands',{}).items()]

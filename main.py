@@ -1,3 +1,4 @@
+from rating_unlocks import unlock_ratings, lock_reason
 # Dispatch before importing single-player modules or initializing its window.
 import sys as _launch_sys
 if "--multiplayer" in _launch_sys.argv:
@@ -1767,7 +1768,7 @@ TRAINING_GAMES = {
     },
 }
 
-def build_career_event_summary():
+def _build_career_event_summary():
 
     global career_event_summary_title
     global career_event_summary_lines
@@ -1955,6 +1956,22 @@ def build_career_event_summary():
     career_event_summary_lines = [
         f"{event_name} completed."
     ]
+
+def build_career_event_summary():
+    global career_event_summary_lines
+    _build_career_event_summary()
+    lines = [line for line in career_event_summary_lines if not line.startswith(("Current Rating:", "Current Fans:", "Blackjack rating:"))]
+    delta = int(round(float(career_rating) - globals().get("career_event_start_global", float(career_rating))))
+    lines.append(f"Global Rating: {career_rating:,} ({delta:+d})")
+    changes = []
+    for key in ("strategy", "poker", "casino"):
+        diff = int(round(float(career_ratings[key]) - globals().get("career_event_start_"+key, float(career_ratings[key]))))
+        if diff: changes.append(f"{key.title()} {diff:+d}")
+    if changes: lines.append("  |  ".join(changes))
+    fans = career_fans - globals().get("career_event_start_fans", career_fans)
+    lines.append(f"Fans: {career_fans:,} ({fans:+d})")
+    career_event_summary_lines = lines
+
 
 def get_poker_starting_stack():
     if career_cash <= 2000:
@@ -5632,7 +5649,7 @@ def _render_blackjack_fit(text, max_width, size=21, bold=False, color=(255, 255,
 
 def _draw_blackjack_panel(rect, fill=(10, 28, 21, 205), border=(220, 190, 100), radius=12):
     panel = pygame.Surface(rect.size, pygame.SRCALPHA)
-    panel.fill(fill)
+    pygame.draw.rect(panel, fill, panel.get_rect(), border_radius=radius)
     game_surface.blit(panel, rect.topleft)
     pygame.draw.rect(
         game_surface,
@@ -5684,6 +5701,15 @@ def _draw_blackjack_dealer_identity(rect):
         hometown = "Unknown"
         favorite_suit = "Unknown"
 
+    portrait = game_surface.subsurface(portrait_rect).copy()
+    mask = pygame.Surface(portrait_rect.size, pygame.SRCALPHA)
+    pygame.draw.ellipse(mask, (255, 255, 255, 255), mask.get_rect())
+    portrait = portrait.convert_alpha()
+    portrait.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+    pygame.draw.rect(game_surface, (13, 25, 32), portrait_rect)
+    game_surface.blit(portrait, portrait_rect)
+    pygame.draw.ellipse(game_surface, (207, 225, 233), portrait_rect, 2)
+
     name_surface = _render_blackjack_fit(
         dealer_name,
         rect.width - 126,
@@ -5723,38 +5749,13 @@ def _draw_blackjack_dealer_identity(rect):
 
 
 def _draw_blackjack_background():
-    game_surface.fill((12, 66, 43))
+    from blackjack_presentation import draw_background
+    draw_background(game_surface, menu_background_surfaces.get(selected_menu_background), felt_surfaces.get(selected_felt))
 
-    # Subtle felt/table shape with a darker rail. The alpha panels on top keep
-    # the table readable while giving Blackjack its own identity.
-    table_shadow = pygame.Rect(342, 86, 686, 574)
-    pygame.draw.ellipse(
-        game_surface,
-        (72, 48, 28),
-        table_shadow
-    )
-    table_felt = table_shadow.inflate(-18, -18)
-    pygame.draw.ellipse(
-        game_surface,
-        (38, 112, 79),
-        table_felt
-    )
-    pygame.draw.ellipse(
-        game_surface,
-        (220, 214, 184),
-        table_felt,
-        2
-    )
 
-    title = blackjack_title_font.render(
-        "BLACKJACK",
-        True,
-        (245, 235, 205)
-    )
-    game_surface.blit(
-        title,
-        title.get_rect(center=(BASE_WIDTH // 2, 48))
-    )
+def _draw_blackjack_button(rect, label, mouse, font=None, selected=False):
+    from blackjack_presentation import draw_button
+    draw_button(game_surface, rect, label, mouse, font or blackjack_body_font, selected=selected)
 
 
 def draw_blackjack_bet():
@@ -5813,7 +5814,7 @@ def draw_blackjack_bet():
         for rect, label_text, percentage in bet_options:
             amount = get_blackjack_bet(percentage)
             label = f"{label_text}   ${amount:,}"
-            draw_menu_button(
+            _draw_blackjack_button(
                 rect,
                 label,
                 game_mouse_pos,
@@ -5841,7 +5842,7 @@ def draw_blackjack_bet():
             broke_detail.get_rect(center=(bet_panel.centerx, 410))
         )
 
-    draw_menu_button(
+    _draw_blackjack_button(
         blackjack_bet_return_rect,
         "Return",
         game_mouse_pos,
@@ -6119,7 +6120,7 @@ def draw_blackjack():
         session_text = "Session: $0"
     info_lines.append(session_text)
     if current_game_mode == "career":
-        info_lines.append(f"Session rating: {blackjack_session_rating_change:+d}")
+        info_lines.append(f"Casino: {career_ratings['casino']:,} ({blackjack_session_rating_change:+d})")
 
     for index, text in enumerate(info_lines):
         surface = blackjack_body_font.render(
@@ -6143,7 +6144,7 @@ def draw_blackjack():
     )
 
     next_bet_note = blackjack_small_font.render(
-        "Choose anytime. It applies after this hand.",
+        "Choose your next wager anytime.",
         True,
         (180, 196, 187)
     )
@@ -6166,7 +6167,7 @@ def draw_blackjack():
             button_text = f"{label_text}  ${amount:,}"
         else:
             button_text = f"{label_text}  ${amount:,}"
-        draw_menu_button(
+        _draw_blackjack_button(
             blackjack_bet_dropdown_rects[index],
             button_text,
             game_mouse_pos,
@@ -6225,12 +6226,6 @@ def draw_blackjack():
             radius=9
         )
         game_surface.blit(result_surface, result_rect)
-        if current_game_mode == "career" and getattr(blackjack_game, "rating_change", None) is not None:
-            rating_text = blackjack_small_font.render(
-                f"Blackjack rating {blackjack_game.rating_change:+}  |  {career_ratings['blackjack']:,}",
-                True, (245, 229, 165),
-            )
-            game_surface.blit(rating_text, rating_text.get_rect(center=(right_panel.centerx, 290)))
 
     elif blackjack_game.pending_natural_result is not None:
         reveal_surface = blackjack_body_font.render(
@@ -6251,13 +6246,13 @@ def draw_blackjack():
             not blackjack_game.round_complete
             and not blackjack_game.player_stood
     ):
-        draw_menu_button(
+        _draw_blackjack_button(
             blackjack_hit_rect,
             "Hit",
             game_mouse_pos,
             font=blackjack_body_font
         )
-        draw_menu_button(
+        _draw_blackjack_button(
             blackjack_stand_rect,
             "Stand",
             game_mouse_pos,
@@ -6267,7 +6262,7 @@ def draw_blackjack():
                 blackjack_game.can_double_down()
                 and career_cash >= blackjack_game.current_hand_bet()
         ):
-            draw_menu_button(
+            _draw_blackjack_button(
                 blackjack_double_rect,
                 "Double",
                 game_mouse_pos,
@@ -6278,7 +6273,7 @@ def draw_blackjack():
                 blackjack_game.can_split()
                 and career_cash >= blackjack_game.current_hand_bet()
         ):
-            draw_menu_button(
+            _draw_blackjack_button(
                 blackjack_split_rect,
                 "Split",
                 game_mouse_pos,
@@ -6287,7 +6282,7 @@ def draw_blackjack():
 
     elif blackjack_game.round_complete:
         if career_cash > 0:
-            draw_menu_button(
+            _draw_blackjack_button(
                 blackjack_deal_again_rect,
                 "Deal Next Hand",
                 game_mouse_pos,
@@ -6307,7 +6302,7 @@ def draw_blackjack():
     # Return is intentionally visible throughout the hand, but only clickable
     # after the result. The tooltip explains the disabled state.
     if blackjack_game.round_complete:
-        draw_menu_button(
+        _draw_blackjack_button(
             blackjack_return_rect,
             "Return",
             game_mouse_pos,
@@ -6359,6 +6354,12 @@ def draw_blackjack():
             game_surface.blit(tooltip, tooltip_rect)
 
 
+def grant_rating_cosmetics():
+    if current_game_mode in ("career", "head_to_head"):
+        unlock_ratings(career_ratings, (MENU_BACKGROUNDS, FELTS, TITLES),
+                       (unlocked_menu_backgrounds, unlocked_felts, unlocked_titles))
+
+
 def award_career_rating(rating_key, amount):
     """Apply a game reward and synchronize the derived Overall mirror."""
     global career_rating
@@ -6366,14 +6367,16 @@ def award_career_rating(rating_key, amount):
         return 0
     actual = apply_rating_change(career_ratings, rating_key, amount)
     career_rating = career_ratings["overall"]
+    grant_rating_cosmetics()
     return actual
 
 
 def adjust_debug_ratings(amount):
     global career_rating
-    for key in GAME_RATING_KEYS:
-        apply_rating_change(career_ratings, key, amount)
+    for key in ("strategy", "poker", "casino"):
+        apply_rating_change(career_ratings, key, amount, scale_rewards=False)
     career_rating = career_ratings["overall"]
+    grant_rating_cosmetics()
 
 
 def rate_competitive_game(game_key, opponent, won):
@@ -6385,6 +6388,7 @@ def rate_competitive_game(game_key, opponent, won):
         game_key, opponent, 1.0 if won else 0.0,
     )
     career_rating = career_ratings["overall"]
+    grant_rating_cosmetics()
     sync_career_npc_runtime_state()
     return change
 
@@ -6396,7 +6400,12 @@ def preview_competitive_rating(game_key, opponent, won):
     bundle = state.get("ratings") or opponent.get("career_ratings") or opponent.get("ratings") or {}
     opponent_rating = bundle.get(game_key, opponent.get("race_rating", opponent.get("rating", 1000)))
     requested = elo_delta(career_ratings[game_key], opponent_rating, 1 if won else 0)
-    return max(100, career_ratings[game_key] + requested) - career_ratings[game_key]
+    if game_key == "score_four":
+        requested = {"low":45, "mid":60, "strong":50, "elite":65}.get(opponent.get("skill_tier"),60) if won else -10
+    from career_ratings import reward_scale
+    if requested > 0: requested *= reward_scale(career_ratings[game_key])
+
+    return int(round(max(100, career_ratings[game_key] + requested))) - int(round(career_ratings[game_key]))
 
 
 def rate_house_game(game_key, net):
@@ -6405,6 +6414,7 @@ def rate_house_game(game_key, net):
         return 0
     change = settle_house_result(career_ratings, career_rating_results, game_key, net)
     career_rating = career_ratings["overall"]
+    grant_rating_cosmetics()
     return change
 
 
@@ -6417,6 +6427,7 @@ def rate_poker_cash_out(game_key, poker_game):
         game_key, poker_game,
     )
     career_rating = career_ratings["overall"]
+    grant_rating_cosmetics()
     sync_career_npc_runtime_state()
     return change
 
@@ -8266,8 +8277,14 @@ def settle_blackjack_round():
     blackjack_session_net += (
         net_result
     )
-    blackjack_game.rating_change = (rate_house_game("blackjack", net_result)
-                                   if current_game_mode == "career" else None)
+    if current_game_mode == "career":
+        if blackjack_game.is_split_round():
+            blackjack_game.rating_change = sum(rate_house_game("blackjack", 1 if result == "player" else -1 if result == "dealer" else 0)
+                                               for result in blackjack_game.player_hand_results)
+        else:
+            blackjack_game.rating_change = rate_house_game("blackjack", net_result)
+    else:
+        blackjack_game.rating_change = None
     blackjack_session_rating_change = globals().get("blackjack_session_rating_change", 0) + int(blackjack_game.rating_change or 0)
 
     if net_result > 0:
@@ -9003,7 +9020,9 @@ def finish_five_o_poker_session():
         else:
             reward_key = "loss"
 
-        rating_gain = TRAINING_RATING_REWARDS["five_o_poker"][reward_key]
+        requested = 12 * five_o_poker_game.hands_won - 5 * five_o_poker_game.hands_lost + 8 * five_o_poker_game.five_o_wins
+        rating_gain = award_career_rating("five_o_poker", requested)
+        record_result(career_rating_results, "five_o_poker", 1 if won_five_o_session else 0 if five_o_poker_session_net < 0 else .5, rating_gain)
     
         won_session = won_five_o_session
         if won_session:
@@ -10073,6 +10092,8 @@ def build_profile_save_data():
         {}
     )
 
+    profile_settings["score_four_layout"] = getattr(score_four_game, "layout", "compact")
+
     profile_settings[
         "solitaire_deal_mode"
     ] = game.deal_mode
@@ -10542,6 +10563,8 @@ def apply_profile_save_data(
         {}
     )
 
+    score_four_game.layout = "wide" if gameplay_settings.get("score_four_layout") == "wide" else "compact"
+
     requested_deal_mode = gameplay_settings.get(
         "solitaire_deal_mode",
         "random"
@@ -10740,16 +10763,11 @@ def draw_wrapped_text(
         )
 
 def draw_score_four_opponent_select():
-
-    draw_submenu_background(
-        overlay_alpha=135
-    )
-
-    draw_submenu_title(
-        "CHOOSE OPPONENT",
-        y=60,
-        width=500
-    )
+    from score_four_ui import background, logo, text
+    background(game_surface)
+    logo(game_surface)
+    text(game_surface, 'Choose a rival', (683, 140), 32, center=True)
+    text(game_surface, 'Win rewards include your Strategy rating adjustment', (683, 614), 24, center=True)
 
     for index, npc in enumerate(
             score_four_opponent_choices
@@ -10919,32 +10937,14 @@ def draw_score_four_opponent_select():
             )
         )
 
-        # ==========================================
-        # Favorite suit
-        # ==========================================
-
-        suit_surface = (
-            difficulty_detail_font.render(
-                (
-                    "Favorite suit: "
-                    f"{npc['favorite_suit']}"
-                ),
-                True,
-                (
-                    220,
-                    220,
-                    220
-                )
-            )
-        )
-
-        game_surface.blit(
-            suit_surface,
-            (
-                rect.x + 145,
-                rect.y + 127
-            )
-        )
+        if current_game_mode != "free":
+            gain = preview_competitive_rating("score_four", npc, True)
+            loss = preview_competitive_rating("score_four", npc, False)
+            reward_text = f"Win {gain:+d} / Loss {loss:+d} Strategy"
+        else:
+            reward_text = "Practice • No rating changes"
+        reward_label = pygame.font.Font(None, 24).render(reward_text, True, (225, 239, 244))
+        game_surface.blit(reward_label, reward_label.get_rect(center=(rect.centerx, rect.bottom - 24)))
 
     draw_menu_button(
         score_four_opponent_return_rect,
@@ -11154,1032 +11154,41 @@ def draw_score_four_npc_panel():
 
 
 
-def draw_score_four():
-
-    game_surface.fill(
-        (
-            20,
-            120,
-            35
-        )
-    )
-
-    # ==================================================
-    # Mode status
-    # ==================================================
-
-    if score_four_game.mode == "competitive":
-
-        if score_four_opponent_npc is not None:
-            opponent_name = (
-                score_four_opponent_npc["name"]
-            )
-        else:
-            opponent_name = "NPC"
-
-        status_text = (
-            f"YOU  {score_four_game.player_score}"
-            f"     -     "
-            f"{score_four_game.npc_score}  "
-            f"{opponent_name}"
-        )
-
-        status_surface = (
-            score_four_score_font.render(
-                status_text,
-                True,
-                (
-                    255,
-                    255,
-                    255
-                )
-            )
-        )
-
-        status_rect = (
-            status_surface.get_rect(
-                center=(
-                    BASE_WIDTH // 2,
-                    70
-                )
-            )
-        )
-
-        game_surface.blit(
-            status_surface,
-            status_rect
-        )
-
-        round_surface = (
-            score_four_round_font.render(
-                (
-                    f"ROUND "
-                    f"{score_four_game.round_number}"
-                    f"     BEST OF 5"
-                ),
-                True,
-                (
-                    255,
-                    230,
-                    0
-                )
-            )
-        )
-
-        round_rect = (
-            round_surface.get_rect(
-                center=(
-                    BASE_WIDTH // 2,
-                    105
-                )
-            )
-        )
-
-        game_surface.blit(
-            round_surface,
-            round_rect
-        )
-
-    else:
-
-        progress_text = (
-            f"Solved: "
-            f"{score_four_game.puzzles_completed}"
-            f"/"
-            f"{score_four_game.puzzles_required}"
-        )
-
-        progress_surface = (
-            difficulty_detail_font.render(
-                progress_text,
-                True,
-                (
-                    255,
-                    255,
-                    255
-                )
-            )
-        )
-
-        progress_rect = (
-            progress_surface.get_rect(
-                center=(
-                    BASE_WIDTH // 2,
-                    100
-                )
-            )
-        )
-
-        game_surface.blit(
-            progress_surface,
-            progress_rect
-        )
-
-    # ==================================================
-    # Original cards
-    # ==================================================
-
-    card_y = 155
-
-    card_width = 120
-    card_height = 168
-
-    card_gap = 24
-
-    total_card_width = (
-        card_width * 4
-        + card_gap * 3
-    )
-
-    card_start_x = (
-        BASE_WIDTH
-        - total_card_width
-    ) // 2
-
-    for index, number in enumerate(
-            score_four_game.original_numbers
-    ):
-
-        suit = (
-            score_four_game.card_suits[
-                index
-            ]
-        )
-
-        rank = (
-            "A"
-            if number == 1
-            else str(number)
-        )
-
-        suit_letter_map = {
-            "Clubs": "C",
-            "Diamonds": "D",
-            "Hearts": "H",
-            "Spades": "S",
-        }
-
-        card_key = (
-            f"{rank}"
-            f"{suit_letter_map[suit]}"
-        )
-
-        card_image = game.card_fronts[
-            card_key
-        ]
-
-        x = (
-            card_start_x
-            + index
-            * (
-                card_width
-                + card_gap
-            )
-        )
-
-        game_surface.blit(
-            card_image,
-            (
-                x,
-                card_y
-            )
-        )
-
-    # ==================================================
-    # Number tiles
-    # ==================================================
-
-    tile_size = 130
-    tile_gap = 8
-
-    tile_start_x = (
-        BASE_WIDTH // 2
-        - tile_size
-        - tile_gap // 2
-    )
-
-    tile_start_y = 335
-
-    score_four_number_rects.clear()
-
-    tile_positions = [
-        (
-            tile_start_x,
-            tile_start_y
-        ),
-        (
-            tile_start_x
-            + tile_size
-            + tile_gap,
-            tile_start_y
-        ),
-        (
-            tile_start_x,
-            tile_start_y
-            + tile_size
-            + tile_gap
-        ),
-        (
-            tile_start_x
-            + tile_size
-            + tile_gap,
-            tile_start_y
-            + tile_size
-            + tile_gap
-        ),
-    ]
-
-    for index, position in enumerate(
-            tile_positions
-    ):
-
-        rect = pygame.Rect(
-            position[0],
-            position[1],
-            tile_size,
-            tile_size
-        )
-
-        score_four_number_rects.append(
-            rect
-        )
-
-        value = (
-            score_four_game.values[
-                index
-            ]
-        )
-
-        selected = (
-            score_four_game.selected_index
-            == index
-        )
-
-        fill_color = (
-            (
-                255,
-                220,
-                120
-            )
-            if selected
-            else (
-                225,
-                225,
-                225
-            )
-        )
-
-        pygame.draw.rect(
-            game_surface,
-            fill_color,
-            rect
-        )
-
-        pygame.draw.rect(
-            game_surface,
-            (
-                20,
-                20,
-                20
-            ),
-            rect,
-            3
-        )
-
-        if value is not None:
-
-            if value.denominator == 1:
-                display_text = str(
-                    value.numerator
-                )
-
-            else:
-                display_text = (
-                    f"{value.numerator}/"
-                    f"{value.denominator}"
-                )
-
-            value_surface = (
-                options_title_font.render(
-                    display_text,
-                    True,
-                    (
-                        0,
-                        0,
-                        0
-                    )
-                )
-            )
-
-            value_rect = (
-                value_surface.get_rect(
-                    center=rect.center
-                )
-            )
-
-            game_surface.blit(
-                value_surface,
-                value_rect
-            )
-
-    # ==================================================
-    # Operators
-    # ==================================================
-
-    operator_y = (
-        tile_start_y
-        + tile_size * 2
-        + tile_gap
-        + 10
-    )
-
-    operator_width = 65
-    operator_height = 46
-
-    operator_symbols = [
-        (
-            "+",
-            "+"
-        ),
-        (
-            "-",
-            "−"
-        ),
-        (
-            "*",
-            "×"
-        ),
-        (
-            "/",
-            "÷"
-        ),
-    ]
-
-    total_operator_width = (
-        operator_width * 4
-    )
-
-    operator_start_x = (
-        BASE_WIDTH
-        - total_operator_width
-    ) // 2
-
-    score_four_operator_rects.clear()
-
-    for index, (
-        operator_id,
-        symbol
-    ) in enumerate(
-        operator_symbols
-    ):
-
-        rect = pygame.Rect(
-            operator_start_x
-            + index
-            * operator_width,
-            operator_y,
-            operator_width,
-            operator_height
-        )
-
-        score_four_operator_rects[
-            operator_id
-        ] = rect
-
-        selected = (
-            score_four_game.selected_operator
-            == operator_id
-        )
-
-        fill_color = (
-            (
-                255,
-                220,
-                120
-            )
-            if selected
-            else (
-                210,
-                210,
-                210
-            )
-        )
-
-        pygame.draw.rect(
-            game_surface,
-            fill_color,
-            rect
-        )
-
-        pygame.draw.rect(
-            game_surface,
-            (
-                20,
-                20,
-                20
-            ),
-            rect,
-            3
-        )
-
-        symbol_surface = (
-            option_label_font.render(
-                symbol,
-                True,
-                (
-                    0,
-                    0,
-                    0
-                )
-            )
-        )
-
-        symbol_rect = (
-            symbol_surface.get_rect(
-                center=rect.center
-            )
-        )
-
-        game_surface.blit(
-            symbol_surface,
-            symbol_rect
-        )
-
-    if score_four_game.solo_hint_available():
-        draw_button(
-            score_four_hint_rect,
-            "Hint",
-            font=difficulty_detail_font
-        )
-
-    # ==================================================
-    # Hint text
-    # ==================================================
-
-    if (
-            score_four_game.hint_text is not None
-            and not score_four_game.session_complete
-    ):
-        hint_surface = (
-            difficulty_detail_font.render(
-                score_four_game.hint_text,
-                True,
-                (
-                    255,
-                    230,
-                    0
-                )
-            )
-        )
-
-        hint_rect = (
-            hint_surface.get_rect(
-                center=(
-                    BASE_WIDTH // 2,
-                    675
-                )
-            )
-        )
-
-        game_surface.blit(
-            hint_surface,
-            hint_rect
-        )
-
-    # ==================================================
-    # Undo / Exit
-    # ==================================================
-
-    draw_button(
-        score_four_undo_rect,
-        "Undo",
-        font=difficulty_detail_font
-    )
-
-    draw_button(
-        score_four_exit_rect,
-        "Exit",
-        font=difficulty_detail_font
-    )
-
-    score_four_complete_rect = pygame.Rect(
-        BASE_WIDTH // 2 - 100,
-        585,
-        200,
-        48
-    )
-
-    draw_score_four_npc_panel()
-
-    # ==================================================
-    # Solved text
-    # ==================================================
-
-    if (
-            score_four_game.is_solved()
-            and not score_four_game.session_complete
-    ):
-
-        solved_surface = (
-            option_label_font.render(
-                "Solved!",
-                True,
-                (
-                    255,
-                    230,
-                    0
-                )
-            )
-        )
-
-        solved_rect = (
-            solved_surface.get_rect(
-                center=(
-                    BASE_WIDTH // 2,
-                    680
-                )
-            )
-        )
-
-        game_surface.blit(
-            solved_surface,
-            solved_rect
-        )
-
-    # ==================================================
-    # Competitive round result
-    # ==================================================
-
-    if (
-            score_four_game.mode
-            == "competitive"
-            and score_four_game.round_complete
-    ):
-
-        result_rect = pygame.Rect(
-            BASE_WIDTH // 2 - 325,
-            285,
-            650,
-            190
-        )
-
-        pygame.draw.rect(
-            game_surface,
-            (
-                25,
-                45,
-                30
-            ),
-            result_rect
-        )
-
-        pygame.draw.rect(
-            game_surface,
-            (
-                255,
-                255,
-                255
-            ),
-            result_rect,
-            3
-        )
-
-        # ==================================================
-        # Opponent portrait
-        # ==================================================
-
-        if score_four_opponent_npc is not None:
-            result_portrait_rect = pygame.Rect(
-                result_rect.x + 25,
-                result_rect.y + 35,
-                90,
-                90
-            )
-
-            draw_npc_portrait(
-                score_four_opponent_npc,
-                result_portrait_rect,
-                "score_four"
-            )
-
-        # ==================================================
-        # Result text
-        # ==================================================
-
-        if (
-                score_four_game.round_result
-                == "player"
-        ):
-
-            result_text = (
-                "YOU WIN THE ROUND!"
-            )
-
-        else:
-
-            if score_four_opponent_npc is not None:
-
-                result_text = (
-                    f"{score_four_opponent_npc['name']} "
-                    f"WINS THE ROUND!"
-                )
-
-            else:
-
-                result_text = (
-                    "NPC WINS THE ROUND!"
-                )
-
-        result_surface = (
-            option_label_font.render(
-                result_text,
-                True,
-                (
-                    255,
-                    230,
-                    0
-                )
-            )
-        )
-
-        result_text_rect = (
-            result_surface.get_rect(
-                center=(
-                    result_rect.centerx + 55,
-                    result_rect.y + 55
-                )
-            )
-        )
-
-        game_surface.blit(
-            result_surface,
-            result_text_rect
-        )
-
-        # ==================================================
-        # NPC solution
-        # ==================================================
-
-        if (
-                score_four_game.round_result
-                == "npc"
-        ):
-            solution_surface = (
-                difficulty_detail_font.render(
-                    (
-                            "Solution: "
-                            + score_four_game.solution
-                    ),
-                    True,
-                    (
-                        230,
-                        230,
-                        230
-                    )
-                )
-            )
-
-            solution_rect = (
-                solution_surface.get_rect(
-                    center=(
-                        result_rect.centerx + 55,
-                        result_rect.y + 120
-                    )
-                )
-            )
-
-            game_surface.blit(
-                solution_surface,
-                solution_rect
-            )
-
-    # ==================================================
-    # Solo session complete / result
-    # ==================================================
-
+def settle_score_four_session_result():
+    """Bank the completed result once, before the player dismisses the screen."""
+    global career_event_has_activity
+    if score_four_game.reward_claimed:
+        return
     if score_four_game.mode == "solo" and score_four_game.session_complete:
-        overlay_rect = pygame.Rect(
-            BASE_WIDTH // 2 - 230,
-            250,
-            460,
-            400
-        )
+        rating_change = award_career_rating('score_four', {'easy': 30, 'standard': 50, 'difficult': 70, 'extreme': 90}[score_four_game.difficulty])
+        if current_game_mode == 'career':
+            record_result(career_rating_results, 'score_four', 1.0, rating_change)
+        award_fans_for_rating_win(rating_change, 'Score-Four completion')
+        process_achievement_event('score_four_win', mode='solo')
+        award_game_xp('score_four_solo', won=True)
+        record_career_event_result('score_four', won=True, mode='solo')
+        score_four_game.reward_claimed = True
+        career_event_has_activity = True
+    elif score_four_game.mode == "competitive" and score_four_game.match_complete:
+        player_won_match = score_four_game.match_winner == 'player'
+        rating_change = rate_competitive_game('score_four', score_four_opponent_npc, player_won_match)
+        if player_won_match:
+            award_fans_for_rating_win(rating_change, 'Competitive Score-Four win')
+            process_achievement_event('score_four_win', mode='competitive')
+        award_game_xp('score_four_competitive', won=player_won_match)
+        record_career_event_result('score_four', won=player_won_match, mode='competitive', opponent=score_four_opponent_npc.get('name') if isinstance(score_four_opponent_npc, dict) else 'NPC', opponent_tier=score_four_opponent_npc.get('skill_tier') if isinstance(score_four_opponent_npc, dict) else 'mid', rating_reward=rating_change)
+        score_four_game.reward_claimed = True
+        career_event_has_activity = True
+    else:
+        return
+    score_four_game.last_rating_change = rating_change
 
-        pygame.draw.rect(
-            game_surface,
-            (
-                25,
-                45,
-                30
-            ),
-            overlay_rect
-        )
 
-        pygame.draw.rect(
-            game_surface,
-            (
-                255,
-                255,
-                255
-            ),
-            overlay_rect,
-            3
-        )
+def draw_score_four():
+    from score_four_ui import draw_score_four_table
+    settle_score_four_session_result()
+    draw_score_four_table(game_surface, score_four_game, game_mouse_pos, globals())
 
-        complete_surface = (
-            options_title_font.render(
-                "SOLO COMPLETE",
-                True,
-                (
-                    255,
-                    255,
-                    255
-                )
-            )
-        )
-
-        complete_rect = (
-            complete_surface.get_rect(
-                center=(
-                    overlay_rect.centerx,
-                    overlay_rect.y + 75
-                )
-            )
-        )
-
-        game_surface.blit(
-            complete_surface,
-            complete_rect
-        )
-
-        reward_surface = (
-            option_label_font.render(
-                "+60 Score-Four Rating" if current_game_mode == "career" else "Training complete",
-                True,
-                (
-                    255,
-                    230,
-                    0
-                )
-            )
-        )
-
-        reward_rect = (
-            reward_surface.get_rect(
-                center=(
-                    overlay_rect.centerx,
-                    overlay_rect.y + 155
-                )
-            )
-        )
-
-        game_surface.blit(
-            reward_surface,
-            reward_rect
-        )
-
-        summary_surface = (
-            difficulty_detail_font.render(
-                "3 Score-Four puzzles solved",
-                True,
-                (
-                    220,
-                    220,
-                    220
-                )
-            )
-        )
-
-        summary_rect = (
-            summary_surface.get_rect(
-                center=(
-                    overlay_rect.centerx,
-                    overlay_rect.y + 205
-                )
-            )
-        )
-
-        game_surface.blit(
-            summary_surface,
-            summary_rect
-        )
-
-        draw_button(
-            score_four_complete_rect,
-            "Continue",
-            font=difficulty_detail_font
-        )
-
-    # ==================================================
-    # Competitive match complete
-    # ==================================================
-
-    if (
-            score_four_game.mode
-            == "competitive"
-            and score_four_game.match_complete
-    ):
-
-        overlay_rect = pygame.Rect(
-            BASE_WIDTH // 2 - 260,
-            235,
-            520,
-            410
-        )
-
-        pygame.draw.rect(
-            game_surface,
-            (
-                25,
-                45,
-                30
-            ),
-            overlay_rect
-        )
-
-        pygame.draw.rect(
-            game_surface,
-            (
-                255,
-                255,
-                255
-            ),
-            overlay_rect,
-            3
-        )
-
-        title_surface = (
-            options_title_font.render(
-                "MATCH COMPLETE",
-                True,
-                (
-                    255,
-                    255,
-                    255
-                )
-            )
-        )
-
-        title_rect = (
-            title_surface.get_rect(
-                center=(
-                    overlay_rect.centerx,
-                    overlay_rect.y + 65
-                )
-            )
-        )
-
-        game_surface.blit(
-            title_surface,
-            title_rect
-        )
-
-        # ----------------------------------------------
-        # Winner
-        # ----------------------------------------------
-
-        if (
-                score_four_game.match_winner
-                == "player"
-        ):
-            winner_text = "YOU WIN!"
-
-        else:
-            winner_text = "NPC WINS"
-
-        winner_surface = (
-            option_label_font.render(
-                winner_text,
-                True,
-                (
-                    255,
-                    230,
-                    0
-                )
-            )
-        )
-
-        winner_rect = (
-            winner_surface.get_rect(
-                center=(
-                    overlay_rect.centerx,
-                    overlay_rect.y + 135
-                )
-            )
-        )
-
-        game_surface.blit(
-            winner_surface,
-            winner_rect
-        )
-
-        # ----------------------------------------------
-        # Final score
-        # ----------------------------------------------
-
-        score_text = (
-            f"YOU  {score_four_game.player_score}"
-            f"     -     "
-            f"{score_four_game.npc_score}  NPC"
-        )
-
-        score_surface = (
-            option_label_font.render(
-                score_text,
-                True,
-                (
-                    255,
-                    255,
-                    255
-                )
-            )
-        )
-
-        score_rect = (
-            score_surface.get_rect(
-                center=(
-                    overlay_rect.centerx,
-                    overlay_rect.y + 200
-                )
-            )
-        )
-
-        game_surface.blit(
-            score_surface,
-            score_rect
-        )
-
-        reward_surface = (
-            option_label_font.render(
-                (
-                    f"{preview_competitive_rating('score_four', score_four_opponent_npc, score_four_game.match_winner == 'player'):+} Score-Four Rating"
-                    if current_game_mode == "career" else "Practice match complete"
-                ),
-                True,
-                (
-                    255,
-                    230,
-                    0
-                )
-            )
-        )
-
-        reward_rect = (
-            reward_surface.get_rect(
-                center=(
-                    overlay_rect.centerx,
-                    overlay_rect.y + 250
-                )
-            )
-        )
-
-        game_surface.blit(
-            reward_surface,
-            reward_rect
-        )
-
-        # ----------------------------------------------
-        # NPC's final solution
-        # ----------------------------------------------
-
-        if (
-                score_four_game.round_result
-                == "npc"
-        ):
-            solution_surface = (
-                difficulty_detail_font.render(
-                    (
-                            "Solution: "
-                            + score_four_game.solution
-                    ),
-                    True,
-                    (
-                        220,
-                        220,
-                        220
-                    )
-                )
-            )
-
-            solution_rect = (
-                solution_surface.get_rect(
-                    center=(
-                        overlay_rect.centerx,
-                        overlay_rect.y + 295
-                    )
-                )
-            )
-
-            game_surface.blit(
-                solution_surface,
-                solution_rect
-            )
-
-        draw_button(
-            score_four_match_continue_rect,
-            "Continue",
-            font=difficulty_detail_font
-        )
 
 def draw_solitaire_help_diagram(panel_rect):
 
@@ -12420,150 +11429,11 @@ def draw_solitaire_help_diagram(panel_rect):
             )
 
 def draw_score_four_mode_select():
-
-    game_surface.fill(
-        (
-            20,
-            120,
-            35
-        )
-    )
-
-    # ==================================================
-    # Title
-    # ==================================================
-
-    title_surface = (
-        options_title_font.render(
-            "SCORE-FOUR",
-            True,
-            (
-                255,
-                255,
-                255
-            )
-        )
-    )
-
-    title_rect = (
-        title_surface.get_rect(
-            center=(
-                BASE_WIDTH // 2,
-                150
-            )
-        )
-    )
-
-    game_surface.blit(
-        title_surface,
-        title_rect
-    )
-
-    subtitle_surface = (
-        option_label_font.render(
-            "Choose a Mode",
-            True,
-            (
-                230,
-                230,
-                230
-            )
-        )
-    )
-
-    subtitle_rect = (
-        subtitle_surface.get_rect(
-            center=(
-                BASE_WIDTH // 2,
-                215
-            )
-        )
-    )
-
-    game_surface.blit(
-        subtitle_surface,
-        subtitle_rect
-    )
-
-    # ==================================================
-    # Mode buttons
-    # ==================================================
-
-    draw_button(
-        score_four_solo_rect,
-        "Solo",
-        font=option_label_font
-    )
-
-    draw_button(
-        score_four_competitive_rect,
-        "Competitive",
-        font=option_label_font
-    )
-
-    # --------------------------------------------------
-    # Descriptions
-    # --------------------------------------------------
-
-    solo_surface = (
-        difficulty_detail_font.render(
-            "Solve 3 puzzles",
-            True,
-            (
-                230,
-                230,
-                230
-            )
-        )
-    )
-
-    solo_rect = (
-        solo_surface.get_rect(
-            center=(
-                score_four_solo_rect.centerx,
-                score_four_solo_rect.bottom
-                + 30
-            )
-        )
-    )
-
-    game_surface.blit(
-        solo_surface,
-        solo_rect
-    )
-
-    competitive_surface = (
-        difficulty_detail_font.render(
-            "First to 3 wins",
-            True,
-            (
-                230,
-                230,
-                230
-            )
-        )
-    )
-
-    competitive_rect = (
-        competitive_surface.get_rect(
-            center=(
-                score_four_competitive_rect.centerx,
-                score_four_competitive_rect.bottom
-                + 30
-            )
-        )
-    )
-
-    game_surface.blit(
-        competitive_surface,
-        competitive_rect
-    )
-
-    draw_button(
-        score_four_mode_return_rect,
-        "Return",
-        font=difficulty_detail_font
-    )
+    from score_four_ui import draw_difficulty_select, draw_mode_select
+    if score_four_game.difficulty_menu:
+        draw_difficulty_select(game_surface, game_mouse_pos, globals())
+    else:
+        draw_mode_select(game_surface, score_four_game, game_mouse_pos, globals())
 
 # ==================================================
 # WINDOW HELPERS
@@ -12714,6 +11584,9 @@ debug_xp_rect = pygame.Rect(
 )
 
 def get_customize_data():
+    if current_game_mode in ("career", "head_to_head") or current_profile_slot is not None:
+        unlock_ratings(career_ratings, (MENU_BACKGROUNDS, FELTS, TITLES),
+                       (unlocked_menu_backgrounds, unlocked_felts, unlocked_titles))
     if customize_category == CUSTOMIZE_BACKGROUNDS:
         return (
             MENU_BACKGROUNDS,
@@ -12931,33 +11804,8 @@ def get_npc_leaderboard_snapshot():
 
     return rankings
 
-def get_solitaire_rating_reward(
-        current_rating
-):
-
-    if current_rating <= 999:
-        return 85
-
-    elif current_rating <= 1299:
-        return 75
-
-    elif current_rating <= 1599:
-        return 72
-
-    elif current_rating <= 1899:
-        return 67
-
-    elif current_rating <= 2099:
-        return 60
-
-    elif current_rating <= 2399:
-        return 50
-
-    elif current_rating <= 2799:
-        return 40
-
-    else:
-        return 25
+def get_solitaire_rating_reward(current_rating):
+    return 40
 
 def add_monthly_leaderboard_news(
         before,
@@ -13025,7 +11873,7 @@ def add_monthly_leaderboard_news(
             (
                 f"{new_number_one['name']} has overtaken "
                 f"{old_number_one['name']} for the top spot "
-                f"in the international Overall rankings."
+                f"in the international Global rankings."
             ),
             "leaderboard"
         )
@@ -13779,7 +12627,7 @@ def get_career_leaderboard(
                 "rating_key": rating_key,
                 "rating_label": RATING_DISPLAY_NAMES.get(
                     rating_key,
-                    "Overall"
+                    "Global"
                 ),
                 "ratings": dict(ratings),
                 "last_change": monthly_change,
@@ -13842,7 +12690,7 @@ def get_career_leaderboard(
             "rating_key": rating_key,
             "rating_label": RATING_DISPLAY_NAMES.get(
                 rating_key,
-                "Overall"
+                "Global"
             ),
             "ratings": dict(career_ratings),
             "last_change": 0,
@@ -14116,14 +12964,14 @@ def draw_career_event_summary():
 
     start_y = 280
     line_count = max(1, len(career_event_summary_lines))
-    line_spacing = min(58, max(36, 250 // max(1, line_count - 1)))
+    line_spacing = min(50, 260 // max(1, line_count - 1))
 
     for index, line_text in enumerate(
             career_event_summary_lines
     ):
 
         line_surface = (
-            option_label_font.render(
+            (pygame.font.Font(None, 28) if line_count > 7 else option_label_font).render(
                 line_text,
                 True,
                 (
@@ -15446,8 +14294,8 @@ def draw_career_hub():
     )
 
     career_lines = [
-        f"Overall Rating: {career_rating:,}",
-        f"Overall Rank: #{get_player_leaderboard_rank()}",
+        f"Global Rating: {career_rating:,}",
+        f"Global Rank: #{get_player_leaderboard_rank()}",
         f"Cash: ${career_cash:,}",
         f"Career Day: {career_day:,}",
         f"Residence: {get_career_residence_name()}",
@@ -17677,7 +16525,7 @@ def draw_career_leaderboard_bio():
     entry = selected_leaderboard_entry
     name = entry.get("name", "Unknown Player")
     rating = entry.get("rating", 1000)
-    rating_label = entry.get("rating_label", "Overall")
+    rating_label = entry.get("rating_label", "Global")
     personality = personality_summary(entry.get("npc") or entry)
 
     bio = entry.get("bio", "Professional card player.") or "Professional card player."
@@ -17702,7 +16550,7 @@ def draw_career_leaderboard_bio():
     )
 
     rating_surface = option_label_font.render(
-        f"{rating_label} Rating: {rating:,}",
+        f"{rating_label}: {rating:,}",
         True,
         (0, 0, 0)
     )
@@ -17873,7 +16721,7 @@ def draw_career_leaderboards():
 
     rating_label = RATING_DISPLAY_NAMES.get(
         career_leaderboard_rating_key,
-        "Overall"
+        "Global"
     )
 
     player_rank = (
@@ -17889,7 +16737,7 @@ def draw_career_leaderboards():
 
     player_info = (
         f"Your Rank: #{player_rank}     "
-        f"{rating_label} Rating: "
+        f"{rating_label}: "
         f"{selected_player_rating:,}"
     )
 
@@ -17933,7 +16781,7 @@ def draw_career_leaderboards():
 
     filter_surface = (
         option_value_font.render(
-            "Sort by: 7-Game AVG" if career_leaderboard_rating_key == "overall" else f"Sort by: {rating_label}",
+            "Sort by: " + {"overall": "Global", "strategy": "Strategy", "poker": "Poker", "casino": "Casino"}.get(career_leaderboard_rating_key, "Global"),
             True,
             (
                 20,
@@ -18171,7 +17019,7 @@ def draw_career_leaderboards():
 
         rating_surface = (
             difficulty_detail_font.render(
-                f"{entry['rating']:,}",
+                f"{round(entry['rating']):,}",
                 True,
                 (
                     0,
@@ -18202,10 +17050,8 @@ def draw_career_leaderboards():
         # Last movement in the selected game category
         # ----------------------------------------------
 
-        rating_change = entry.get(
-            "last_change",
-            0
-        )
+        # Keep fractional progress in saves; leaderboard movements are whole points.
+        rating_change = int(round(entry.get("last_change", 0)))
 
         if rating_change > 0:
             change_text = (
@@ -19127,7 +17973,7 @@ def finish_head_to_head_race(
         f"Race time: {elapsed_text}",
         f"Your progress: {player_progress}/52",
         f"Opponent rating: {opponent_rating:,}",
-        f"Solitaire rating change: {rating_change:+,}" if rating_change else "Solitaire rating change: 0",
+        f"Strategy rating change: {rating_change:+,}" if rating_change else "Strategy rating change: 0",
         (
             f"Fan change: {fans_earned:+,}"
             if fans_earned
@@ -19616,7 +18462,7 @@ def draw_poker_night_high_stakes_label(
     )
 
 
-def draw_career_event_select():
+def _draw_career_event_select():
     game_surface.fill(
         (
             20,
@@ -20165,6 +19011,25 @@ def draw_career_event_select():
             tooltip_surface,
             tooltip_surface.get_rect(center=tooltip_rect.center)
         )
+
+def draw_career_event_select():
+    _draw_career_event_select()
+    if not career_event_entry: return
+    from career_ratings import GAME_CATEGORIES
+    games = career_event_entry.get("game_ids", [])
+    count = len(games)
+    if not count: return
+    width, gap = 300, 30
+    start = (BASE_WIDTH - (width*count + gap*(count-1)))//2
+    for index, key in enumerate(games):
+        category = GAME_CATEGORIES.get(key)
+        label = ("RATED • " + category.upper()) if category else "UNRATED"
+        font = pygame.font.Font(None, 25)
+        text = font.render(label, True, (255, 239, 165) if category else (225, 225, 225))
+        rect = text.get_rect(center=(start + index*(width+gap) + width//2, 155))
+        pygame.draw.rect(game_surface, (10, 18, 25), rect.inflate(20, 6), border_radius=7)
+        game_surface.blit(text, rect)
+
 
 def draw_gameplay_ui():
 
@@ -22459,6 +21324,20 @@ def draw_customize_menu():
                 locked_text,
                 locked_rect
             )
+            kind = {CUSTOMIZE_BACKGROUNDS: "backgrounds", CUSTOMIZE_FELTS: "felts", CUSTOMIZE_TITLES: "titles"}.get(customize_category, "cursors")
+            requirement = lock_reason(asset_id, data, kind, LEVEL_UNLOCKS, ACHIEVEMENT_DEFINITIONS)
+            reason_font = pygame.font.Font(None, 23)
+            words, rows = requirement.split(), [""]
+            for word in words:
+                trial = (rows[-1] + " " + word).strip()
+                if reason_font.size(trial)[0] > lock_rect.width - 16:
+                    rows.append(word)
+                else:
+                    rows[-1] = trial
+            for row_index, row in enumerate(rows):
+                label = reason_font.render(row, True, (230, 230, 230))
+                game_surface.blit(label, label.get_rect(midtop=(lock_rect.centerx, locked_rect.bottom + 8 + 22 * row_index)))
+
 
         # ------------------------
         # Name
@@ -24512,6 +23391,34 @@ while running:
 
         elif current_state == STATE_SCORE_FOUR_MODE_SELECT:
 
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE and score_four_game.rating_info_open:
+                score_four_game.rating_info_open = False
+                continue
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and game_mouse_pos is not None:
+                from score_four_ui import handle_rating_info_click
+                if handle_rating_info_click(game_mouse_pos, score_four_game):
+                    audio.play_sound("button_click")
+                    continue
+
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and game_mouse_pos is not None:
+                from score_four_ui import LAYOUT_RECT, toggle_layout, play_control_sound
+                if not score_four_game.difficulty_menu and LAYOUT_RECT.collidepoint(game_mouse_pos):
+                    toggle_layout(score_four_game)
+                    play_control_sound(audio, "select")
+                    continue
+
+            if score_four_game.difficulty_menu and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and menu_mouse_pos is not None:
+                from score_four_ui import difficulty_action
+                choice = difficulty_action(menu_mouse_pos)
+                if choice == "back":
+                    score_four_game.difficulty_menu = False
+                elif choice:
+                    score_four_game.difficulty_menu = False
+                    score_four_game.start_solo_session(choice)
+                    current_state = STATE_SCORE_FOUR
+                audio.play_sound("button_click")
+                continue
+
             if (
                     event.type == pygame.MOUSEBUTTONDOWN
                     and event.button == 1
@@ -24532,11 +23439,7 @@ while running:
                         "button_click"
                     )
 
-                    score_four_game.start_solo_session()
-
-                    current_state = (
-                        STATE_SCORE_FOUR
-                    )
+                    score_four_game.difficulty_menu = True
 
                 # ------------------------------------------
                 # Competitive
@@ -26769,6 +25672,8 @@ while running:
                         and not faro_game.session_complete
                 ):
                     if faro_game.deal_turn():
+                        net = faro_game.last_profit - faro_game.last_loss - faro_game.last_doublet_loss
+                        if net: rate_house_game("faro", net)
                         audio.play_sound("card_draw")
                         if faro_game.turns_dealt > 0 and faro_game.wagered_total > 0:
                             career_event_has_activity = True
@@ -26797,7 +25702,10 @@ while running:
                     five_o_poker_game
                 )
 
-                if five_o_action == FIVE_O_ACTION_RETURN:
+                if five_o_action == "ui_click":
+                    audio.play_sound("button_click")
+
+                elif five_o_action == FIVE_O_ACTION_RETURN:
                     audio.play_sound("button_click")
                     finish_five_o_poker_session()
 
@@ -26960,6 +25868,22 @@ while running:
 
         elif current_state == STATE_SCORE_FOUR:
 
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE and score_four_game.rating_info_open:
+                score_four_game.rating_info_open = False
+                continue
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and game_mouse_pos is not None:
+                from score_four_ui import handle_rating_info_click
+                if handle_rating_info_click(game_mouse_pos, score_four_game):
+                    audio.play_sound("button_click")
+                    continue
+
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and game_mouse_pos is not None:
+                from score_four_ui import LAYOUT_RECT, toggle_layout, play_control_sound
+                if not score_four_game.difficulty_menu and LAYOUT_RECT.collidepoint(game_mouse_pos):
+                    toggle_layout(score_four_game)
+                    play_control_sound(audio, "select")
+                    continue
+
             # ----------------------------
             # TEMP DEBUG: complete training
             # ----------------------------
@@ -26999,32 +25923,7 @@ while running:
 
                     ):
 
-                        if not score_four_game.reward_claimed:
-                            rating_change = award_career_rating("score_four", 60)
-                            if current_game_mode == "career":
-                                record_result(career_rating_results, "score_four", 1.0, rating_change)
-                            award_fans_for_rating_win(
-                                60,
-                                "Score-Four completion"
-                            )
-                            process_achievement_event(
-                                "score_four_win",
-                                mode="solo",
-                            )
-                            award_game_xp(
-                                "score_four_solo",
-                                won=True,
-                            )
-
-                            record_career_event_result(
-                                "score_four",
-                                won=True,
-                                mode="solo",
-                            )
-
-                            score_four_game.reward_claimed = True
-
-                            career_event_has_activity = True
+                        settle_score_four_session_result()
 
                         audio.play_sound(
 
@@ -27056,47 +25955,7 @@ while running:
                             )
                     ):
 
-                        if not score_four_game.reward_claimed:
-                            player_won_match = score_four_game.match_winner == "player"
-                            rating_change = rate_competitive_game(
-                                "score_four", score_four_opponent_npc, player_won_match
-                            )
-
-                            if player_won_match:
-                                award_fans_for_rating_win(
-                                    score_four_game.competitive_reward,
-                                    "Competitive Score-Four win"
-                                )
-                                process_achievement_event(
-                                    "score_four_win",
-                                    mode="competitive",
-                                )
-
-                            award_game_xp(
-                                "score_four_competitive",
-                                won=player_won_match,
-                            )
-
-                            record_career_event_result(
-                                "score_four",
-                                won=player_won_match,
-                                mode="competitive",
-                                opponent=(
-                                    score_four_opponent_npc.get("name")
-                                    if isinstance(score_four_opponent_npc, dict)
-                                    else "NPC"
-                                ),
-                                opponent_tier=(
-                                    score_four_opponent_npc.get("skill_tier")
-                                    if isinstance(score_four_opponent_npc, dict)
-                                    else "mid"
-                                ),
-                                rating_reward=rating_change,
-                            )
-
-                            score_four_game.reward_claimed = True
-
-                            career_event_has_activity = True
+                        settle_score_four_session_result()
 
                         audio.play_sound(
                             "button_click"
@@ -27124,6 +25983,11 @@ while running:
                 # Number tiles
                 # ------------------------------------------
 
+                reset_rect = globals().get("score_four_reset_rect")
+                if reset_rect is not None and menu_mouse_pos is not None and reset_rect.collidepoint(menu_mouse_pos):
+                    if score_four_game.reset_current_puzzle(): play_control_sound(audio, "reset")
+                    continue
+
                 clicked_number = False
 
                 for index, rect in enumerate(
@@ -27137,6 +26001,7 @@ while running:
                             index
                         )
 
+                        play_control_sound(audio, "select")
                         clicked_number = True
                         break
 
@@ -27163,6 +26028,7 @@ while running:
                                 operator_id
                             )
 
+                            play_control_sound(audio, "operator")
                             clicked_operator = True
                             break
 
@@ -27177,9 +26043,7 @@ while running:
                     ):
 
                         if score_four_game.request_solo_hint():
-                            audio.play_sound(
-                                "button_click"
-                            )
+                            play_control_sound(audio, "hint")
 
                     # --------------------------------------
                     # Undo
@@ -27190,6 +26054,7 @@ while running:
                     ):
 
                         score_four_game.undo()
+                        play_control_sound(audio, "undo")
 
                     # --------------------------------------
                     # Exit
@@ -29969,6 +28834,8 @@ while running:
     if current_state == STATE_TEXAS_HOLDEM:
 
         now = pygame.time.get_ticks()
+        from holdem_turn_flow import repair_betting_turn
+        repair_betting_turn(texas_holdem_game)
 
         # ==================================================
         # Make sure an NPC turn is always scheduled
@@ -30785,4 +29652,5 @@ while running:
 
 
 pygame.quit()
+
 

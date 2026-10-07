@@ -5,7 +5,7 @@ import secrets
 
 from career_npc_development import (advance_npc_development, ensure_npc_development,
                                    month_index, rating_tier, stable_seed)
-from career_ratings import GAME_RATING_KEYS, ensure_npc_career_state
+from career_ratings import CATEGORY_KEYS as GAME_RATING_KEYS, ensure_npc_career_state
 from npc_avatars import ensure_prospect_avatar
 
 WORLD_VERSION = 1
@@ -153,3 +153,4 @@ def advance_career_world(world, states, base_roster, pool, year, month):
         stories.extend(_milestone_stories(states, career_roster(base_roster, states), current_year, current_month))
         world["last_simulated_month"] = serial
     return world, stories
+
