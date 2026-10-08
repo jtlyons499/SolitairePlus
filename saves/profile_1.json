@@ -14550,7 +14550,7 @@
     },
     "progression": {
         "level": 17,
-        "xp": 12647,
+        "xp": 12709,
         "solitaire_points": 723
     },
     "career": {
@@ -14609,8 +14609,8 @@
             "faro": 1097.5,
             "overall": 1645.2739166666668
         },
-        "cash": 72830,
-        "fans": 200345,
+        "cash": 72881,
+        "fans": 205748,
         "fan_rewarded_jobs": [
             "airline_pilot",
             "satellite_repair",
@@ -33517,9 +33517,9 @@
         "leaderboard_star_id": "jack_zitbomb",
         "year": 2060,
         "month": 5,
-        "day": 2,
+        "day": 7,
         "weekday_index": 1,
-        "career_day": 11807,
+        "career_day": 11812,
         "residence": "card_castle",
         "owned_residences": [
             "dingy_apartment",
@@ -73454,6 +73454,41 @@
                 "day": 1,
                 "completed": false,
                 "activity_type": "round"
+            },
+            {
+                "year": 2060,
+                "month": 5,
+                "day": 2,
+                "completed": true,
+                "activity_type": "casino_night"
+            },
+            {
+                "year": 2060,
+                "month": 5,
+                "day": 3,
+                "completed": false,
+                "activity_type": "work"
+            },
+            {
+                "year": 2060,
+                "month": 5,
+                "day": 4,
+                "completed": false,
+                "activity_type": "casual_cards"
+            },
+            {
+                "year": 2060,
+                "month": 5,
+                "day": 5,
+                "completed": false,
+                "activity_type": "challenge"
+            },
+            {
+                "year": 2060,
+                "month": 5,
+                "day": 6,
+                "completed": true,
+                "activity_type": "event"
             }
         ],
         "current_schedule": [
@@ -73468,7 +73503,7 @@
                 "day_number": 2,
                 "weekday_index": 1,
                 "activity_type": "casino_night",
-                "completed": false,
+                "completed": true,
                 "title": "Casino Night",
                 "game_ids": [
                     "blackjack",
@@ -73476,17 +73511,25 @@
                     "horse_races"
                 ],
                 "night_progress": {
-                    "career_event_has_activity": false,
-                    "career_event_result_log": [],
-                    "career_event_news_posted": false,
+                    "career_event_has_activity": true,
+                    "career_event_result_log": [
+                        {
+                            "game_id": "horse_races",
+                            "won": true,
+                            "net": 51,
+                            "races": 2,
+                            "profitable_races": 1
+                        }
+                    ],
+                    "career_event_news_posted": true,
                     "texas_holdem_session_net": 0,
                     "five_card_draw_session_net": 0,
                     "seven_card_stud_session_net": 0,
                     "blackjack_session_net": 0,
                     "blackjack_session_rating_change": 0,
                     "roulette_session_net": 0,
-                    "horse_races_session_net": 0,
-                    "horse_races_last_rewarded_races": 0,
+                    "horse_races_session_net": 51,
+                    "horse_races_last_rewarded_races": 2,
                     "faro_session_net": 0,
                     "five_o_poker_session_net": 0,
                     "blind_mans_bluff_session_net": 0,
@@ -73497,7 +73540,9 @@
                     "career_event_start_fans": 200345,
                     "career_event_start_cash": 72830,
                     "career_event_start_xp": 12527,
-                    "career_event_money_totals": {}
+                    "career_event_money_totals": {
+                        "horse_races": 51
+                    }
                 }
             },
             {
@@ -73532,9 +73577,43 @@
                 "day_number": 6,
                 "weekday_index": 0,
                 "activity_type": "event",
-                "completed": false,
+                "completed": true,
                 "title": "Press Interview",
-                "event_id": "press_interview_01"
+                "event_id": "press_interview_01",
+                "night_progress": {
+                    "career_event_has_activity": true,
+                    "career_event_result_log": [
+                        {
+                            "game_id": "horse_races",
+                            "won": true,
+                            "net": 51,
+                            "races": 2,
+                            "profitable_races": 1
+                        }
+                    ],
+                    "career_event_news_posted": true,
+                    "texas_holdem_session_net": 0,
+                    "five_card_draw_session_net": 0,
+                    "seven_card_stud_session_net": 0,
+                    "blackjack_session_net": 0,
+                    "blackjack_session_rating_change": 0,
+                    "roulette_session_net": 0,
+                    "horse_races_session_net": 51,
+                    "horse_races_last_rewarded_races": 2,
+                    "faro_session_net": 0,
+                    "five_o_poker_session_net": 0,
+                    "blind_mans_bluff_session_net": 0,
+                    "career_event_start_strategy": 1979.99,
+                    "career_event_start_poker": 1275.7983333333334,
+                    "career_event_start_casino": 1097.5,
+                    "career_event_start_global": 1645.2739166666668,
+                    "career_event_start_fans": 200345,
+                    "career_event_start_cash": 72830,
+                    "career_event_start_xp": 12527,
+                    "career_event_money_totals": {
+                        "horse_races": 51
+                    }
+                }
             },
             {
                 "day_number": 7,
@@ -73761,6 +73840,14 @@
             }
         ],
         "news_items": [
+            {
+                "headline": "DESSIN FINISHES CASINO NIGHT UP $51",
+                "body": "A profitable Horse Races session helped Dessin leave Casino Night $51 ahead overall.",
+                "category": "casino",
+                "month": 5,
+                "year": 2060,
+                "career_day": 11807
+            },
             {
                 "headline": "SOLITAIRE TABLE SHAPED FLYING OBJECT SPOTTED",
                 "body": "Two dozen residents of Las Clubes insist they saw a flying and glowing solitaire card table.",
@@ -74152,20 +74239,15 @@
                 "month": 6,
                 "year": 2059,
                 "career_day": 11476
-            },
-            {
-                "headline": "DESSIN TAKES ON SCORE-FOUR",
-                "body": "Dessin logged another appearance in Score-Four during Casual Cards week.",
-                "category": "cards",
-                "month": 5,
-                "year": 2059,
-                "career_day": 11467
             }
         ],
         "interview_recent_ids": [
             "original_6",
             "original_5",
-            "rematch"
+            "rematch",
+            "routine",
+            "ambition",
+            "respect"
         ],
         "bigfoot_story": {
             "schema": 2,
@@ -74295,71 +74377,71 @@
         "selected_card_back": "back_default",
         "selected_cursor": "gold_black",
         "unlocked_menu_backgrounds": [
-            "bg_sliced",
-            "bg_giza",
-            "bg_gardens",
             "bg_microscope",
-            "bg_lighthouse",
-            "bg_default",
-            "bg_brazil",
-            "bg_rating_global_1500",
-            "bg_petra",
-            "bg_mausoleum",
-            "bg_noodle",
-            "bg_chichen",
-            "bg_et",
-            "bg_wendigo",
             "bg_blue_doodle",
-            "bg_inner_circle",
-            "bg_rating_strategy_1950",
-            "bg_rating_strategy_1400",
             "bg_little_green_men",
-            "bg_wall"
+            "bg_petra",
+            "bg_chichen",
+            "bg_sliced",
+            "bg_rating_global_1500",
+            "bg_inner_circle",
+            "bg_et",
+            "bg_wall",
+            "bg_lighthouse",
+            "bg_wendigo",
+            "bg_rating_strategy_1950",
+            "bg_brazil",
+            "bg_mausoleum",
+            "bg_giza",
+            "bg_rating_strategy_1400",
+            "bg_noodle",
+            "bg_default",
+            "bg_gardens"
         ],
         "unlocked_felts": [
             "f_rating_poker_1100",
-            "f_rating_strategy_1800",
-            "f_rating_global_1300",
-            "f_fun_felt",
-            "f_rating_strategy_1150",
-            "f_rating_strategy_1600",
-            "f_blanky",
-            "f_grain",
-            "f_blue",
-            "f_high_society",
-            "f_sponge",
             "f_rock_candy",
-            "f_gordon",
+            "f_blanky",
+            "f_rating_global_1300",
+            "f_rating_strategy_1150",
             "f_crystalized",
-            "f_crystalized_grain",
             "f_game_night",
+            "f_gordon",
+            "f_blue",
+            "f_grain",
+            "f_high_society",
             "f_light_touch",
-            "f_default"
+            "f_rating_strategy_1600",
+            "f_crystalized_grain",
+            "f_fun_felt",
+            "f_rating_strategy_1800",
+            "f_default",
+            "f_sponge"
         ],
         "unlocked_titles": [
-            "title_patience_dare",
-            "title_top_dog",
+            "title_neon",
             "title_tacit",
-            "title_soli_tare_red",
-            "title_patience_creep",
-            "title_cardshark",
-            "t_rating_strategy_1900",
-            "title_soli_tare_blue",
+            "title_patience_dare",
             "title_isolation",
+            "title_soli_tare_red",
+            "title_soli_tare_blue",
+            "title_high_roller",
             "title_solitary",
             "title_default",
-            "title_cards",
-            "title_penciled_inv",
-            "title_high_roller",
             "title_penciled",
-            "title_shatter_3",
+            "title_shatter_2",
+            "t_rating_strategy_1900",
             "title_solitaire_pixel",
-            "t_rating_strategy_1500",
-            "title_table_captain",
             "title_shatter_1",
+            "title_patience_creep",
+            "title_top_dog",
+            "title_penciled_inv",
+            "title_table_captain",
             "title_table_clear",
-            "title_neon",
-            "title_shatter_2"
+            "title_cardshark",
+            "title_cards",
+            "title_shatter_3",
+            "t_rating_strategy_1500"
         ],
         "unlocked_card_backs": [
             "back_default"
