@@ -84,7 +84,7 @@ class RoomView:
         if table.code:self.buttons.append((code_rect,'copy'))
         if code_rect.collidepoint(self.mouse) and table.code and not self.details:
             self.panel((350,20,120,30));self.text('copy code',361,23,self.small)
-        self.text(table.status[:95],24,66,self.small)
+        self.text(table.status[:95],430,66,self.small)
         if table.failed:
             self.text('Connection ended. Leave and create/join a new room.',230,325,self.large);return
         m=table.message
@@ -153,9 +153,12 @@ class RoomView:
         self.panel((20,610,365,140));self.text('Game Log',35,620)
         self.button('Payout History',(195,618,175,30),'details',bool(getattr(table,'last_payout',None)) or g.hand_complete)
         self.button('Rejoin next hand' if m.get('sit_out') else 'Sit out next hand',(20,566,205,32),'sit_out',not table.pending)
-        hand_label=self.small.render(hand_type(g),True,(246,237,207))
-        if hand_label.get_width()>410:hand_label=pygame.transform.smoothscale(hand_label,(410,hand_label.get_height()))
-        s.blit(hand_label,(24,110))
+        self.panel((920,566,420,38))
+        description=hand_type(g)
+        if description.endswith('-high'):description='High card: '+description[:-5]
+        hand_label=self.font.render(description,True,(246,237,207))
+        if hand_label.get_width()>390:hand_label=pygame.transform.smoothscale(hand_label,(390,hand_label.get_height()))
+        s.blit(hand_label,hand_label.get_rect(midleft=(935,585)))
         if g.player_stack<=0 and (g.hand_complete or 0 not in g.hand_seat_indexes):
             self.button('Buy back $'+str(m.get('starting_stack',g.starting_stack)),(235,566,200,32),'buyback',not table.pending)
         lines=m.get('public_log',g.get_hand_history_lines())
