@@ -5,4 +5,13 @@ _project_root = str(Path(__file__).resolve().parent.parent)
 if _project_root not in sys.path:
     sys.path.append(_project_root)
 from shared import poker_speech as _implementation
+
+# Explicit exports allow IDEs to resolve the shared API.
+from shared.poker_speech import (
+    POKER_CHAT_POPUPS_ENABLED,
+    PokerSpeechOverlay,
+    is_poker_chat_popups_enabled,
+    set_poker_chat_popups_enabled,
+)
+
 sys.modules[__name__] = _implementation

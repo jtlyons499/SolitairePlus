@@ -14550,12 +14550,12 @@
     },
     "progression": {
         "level": 17,
-        "xp": 12709,
+        "xp": 12764,
         "solitaire_points": 723
     },
     "career": {
         "unlocked": false,
-        "rating": 1645.2739166666668,
+        "rating": 1639.7739166666668,
         "rating_schema_version": 3,
         "rating_results": {
             "solitaire": {
@@ -14566,11 +14566,11 @@
                 "last_change": 38
             },
             "score_four": {
-                "played": 13,
+                "played": 14,
                 "wins": 12,
                 "draws": 0,
-                "losses": 1,
-                "last_change": 43
+                "losses": 2,
+                "last_change": -10
             },
             "texas_holdem": {
                 "played": 11,
@@ -14595,11 +14595,11 @@
             }
         },
         "ratings": {
-            "strategy": 1979.99,
+            "strategy": 1969.99,
             "poker": 1275.7983333333334,
             "casino": 1097.5,
-            "solitaire": 1979.99,
-            "score_four": 1979.99,
+            "solitaire": 1969.99,
+            "score_four": 1969.99,
             "texas_holdem": 1275.7983333333334,
             "five_card_draw": 1275.7983333333334,
             "seven_card_stud": 1275.7983333333334,
@@ -14607,10 +14607,10 @@
             "blackjack": 1097.5,
             "roulette": 1097.5,
             "faro": 1097.5,
-            "overall": 1645.2739166666668
+            "overall": 1639.7739166666668
         },
         "cash": 72881,
-        "fans": 205748,
+        "fans": 205598,
         "fan_rewarded_jobs": [
             "airline_pilot",
             "satellite_repair",
@@ -33298,13 +33298,13 @@
             },
             "prospect_anton_weiss": {
                 "age": 8,
-                "rating": 478.9,
+                "rating": 484.4,
                 "ratings": {
-                    "strategy": 476.0,
+                    "strategy": 486.0,
                     "poker": 478.0,
                     "casino": 498.0,
-                    "solitaire": 476.0,
-                    "score_four": 476.0,
+                    "solitaire": 486.0,
+                    "score_four": 486.0,
                     "texas_holdem": 478.0,
                     "five_card_draw": 478.0,
                     "seven_card_stud": 478.0,
@@ -33312,7 +33312,7 @@
                     "blackjack": 498.0,
                     "roulette": 498.0,
                     "faro": 498.0,
-                    "overall": 478.9
+                    "overall": 484.4
                 },
                 "prospect_record": {
                     "id": "prospect_anton_weiss",
@@ -33354,14 +33354,23 @@
                 "joined_month": 24721,
                 "birthday_month": 4,
                 "rating_schema_version": 3,
-                "last_change": 11.999999999999943,
+                "last_change": 5.5,
                 "last_changes": {
-                    "overall": 11.999999999999943,
+                    "overall": 5.5,
                     "strategy": 16,
                     "poker": 8,
-                    "casino": 4
+                    "casino": 4,
+                    "score_four": 10
                 },
-                "rating_results": {},
+                "rating_results": {
+                    "score_four": {
+                        "played": 1,
+                        "wins": 1,
+                        "draws": 0,
+                        "losses": 0,
+                        "last_change": 10
+                    }
+                },
                 "public_appeal": "steady",
                 "fans": 350,
                 "development": {
@@ -33517,9 +33526,9 @@
         "leaderboard_star_id": "jack_zitbomb",
         "year": 2060,
         "month": 5,
-        "day": 7,
-        "weekday_index": 1,
-        "career_day": 11812,
+        "day": 8,
+        "weekday_index": 2,
+        "career_day": 11813,
         "residence": "card_castle",
         "owned_residences": [
             "dingy_apartment",
@@ -73489,6 +73498,13 @@
                 "day": 6,
                 "completed": true,
                 "activity_type": "event"
+            },
+            {
+                "year": 2060,
+                "month": 5,
+                "day": 7,
+                "completed": true,
+                "activity_type": "casual_cards"
             }
         ],
         "current_schedule": [
@@ -73619,13 +73635,46 @@
                 "day_number": 7,
                 "weekday_index": 1,
                 "activity_type": "casual_cards",
-                "completed": false,
+                "completed": true,
                 "title": "Casual Cards",
                 "game_ids": [
                     "score_four",
                     "bango",
                     "crazy_eights"
-                ]
+                ],
+                "night_progress": {
+                    "career_event_has_activity": true,
+                    "career_event_result_log": [
+                        {
+                            "game_id": "score_four",
+                            "won": false,
+                            "mode": "competitive",
+                            "opponent": "Anton Weiss",
+                            "opponent_tier": "low",
+                            "rating_reward": -10
+                        }
+                    ],
+                    "career_event_news_posted": true,
+                    "texas_holdem_session_net": 0,
+                    "five_card_draw_session_net": 0,
+                    "seven_card_stud_session_net": 0,
+                    "blackjack_session_net": 0,
+                    "blackjack_session_rating_change": 0,
+                    "roulette_session_net": 0,
+                    "horse_races_session_net": 0,
+                    "horse_races_last_rewarded_races": 0,
+                    "faro_session_net": 0,
+                    "five_o_poker_session_net": 0,
+                    "blind_mans_bluff_session_net": 0,
+                    "career_event_start_strategy": 1979.99,
+                    "career_event_start_poker": 1275.7983333333334,
+                    "career_event_start_casino": 1097.5,
+                    "career_event_start_global": 1645.2739166666668,
+                    "career_event_start_fans": 205748,
+                    "career_event_start_cash": 72881,
+                    "career_event_start_xp": 12709,
+                    "career_event_money_totals": {}
+                }
             },
             {
                 "day_number": 8,
@@ -73840,6 +73889,14 @@
             }
         ],
         "news_items": [
+            {
+                "headline": "DESSIN TAKES ON SCORE-FOUR",
+                "body": "Dessin logged another appearance in Score-Four during Casual Cards week.",
+                "category": "cards",
+                "month": 5,
+                "year": 2060,
+                "career_day": 11812
+            },
             {
                 "headline": "DESSIN FINISHES CASINO NIGHT UP $51",
                 "body": "A profitable Horse Races session helped Dessin leave Casino Night $51 ahead overall.",
@@ -74231,14 +74288,6 @@
                 "month": 6,
                 "year": 2059,
                 "career_day": 11476
-            },
-            {
-                "headline": "JACK ZITBOMB RETAINS WORLD #1",
-                "body": "Jack Zitbomb remains atop the international rankings with a rating of 3,394.",
-                "category": "leaderboard",
-                "month": 6,
-                "year": 2059,
-                "career_day": 11476
             }
         ],
         "interview_recent_ids": [
@@ -74377,71 +74426,71 @@
         "selected_card_back": "back_default",
         "selected_cursor": "gold_black",
         "unlocked_menu_backgrounds": [
-            "bg_microscope",
-            "bg_blue_doodle",
-            "bg_little_green_men",
             "bg_petra",
-            "bg_chichen",
-            "bg_sliced",
-            "bg_rating_global_1500",
-            "bg_inner_circle",
-            "bg_et",
-            "bg_wall",
-            "bg_lighthouse",
-            "bg_wendigo",
-            "bg_rating_strategy_1950",
-            "bg_brazil",
-            "bg_mausoleum",
-            "bg_giza",
-            "bg_rating_strategy_1400",
             "bg_noodle",
+            "bg_sliced",
+            "bg_giza",
+            "bg_blue_doodle",
+            "bg_mausoleum",
+            "bg_little_green_men",
+            "bg_et",
+            "bg_brazil",
+            "bg_wall",
+            "bg_rating_global_1500",
+            "bg_microscope",
+            "bg_chichen",
             "bg_default",
-            "bg_gardens"
+            "bg_gardens",
+            "bg_rating_strategy_1400",
+            "bg_lighthouse",
+            "bg_inner_circle",
+            "bg_rating_strategy_1950",
+            "bg_wendigo"
         ],
         "unlocked_felts": [
-            "f_rating_poker_1100",
             "f_rock_candy",
-            "f_blanky",
-            "f_rating_global_1300",
-            "f_rating_strategy_1150",
-            "f_crystalized",
-            "f_game_night",
-            "f_gordon",
             "f_blue",
-            "f_grain",
-            "f_high_society",
-            "f_light_touch",
             "f_rating_strategy_1600",
             "f_crystalized_grain",
             "f_fun_felt",
             "f_rating_strategy_1800",
-            "f_default",
-            "f_sponge"
+            "f_game_night",
+            "f_sponge",
+            "f_gordon",
+            "f_rating_poker_1100",
+            "f_rating_strategy_1150",
+            "f_blanky",
+            "f_light_touch",
+            "f_rating_global_1300",
+            "f_high_society",
+            "f_crystalized",
+            "f_grain",
+            "f_default"
         ],
         "unlocked_titles": [
-            "title_neon",
-            "title_tacit",
             "title_patience_dare",
+            "title_solitaire_pixel",
+            "title_cardshark",
+            "title_high_roller",
+            "title_tacit",
+            "title_neon",
+            "title_soli_tare_blue",
+            "title_default",
+            "title_penciled_inv",
+            "title_table_clear",
+            "title_cards",
+            "title_shatter_2",
             "title_isolation",
             "title_soli_tare_red",
-            "title_soli_tare_blue",
-            "title_high_roller",
-            "title_solitary",
-            "title_default",
-            "title_penciled",
-            "title_shatter_2",
-            "t_rating_strategy_1900",
-            "title_solitaire_pixel",
             "title_shatter_1",
             "title_patience_creep",
-            "title_top_dog",
-            "title_penciled_inv",
-            "title_table_captain",
-            "title_table_clear",
-            "title_cardshark",
-            "title_cards",
+            "t_rating_strategy_1500",
+            "title_penciled",
             "title_shatter_3",
-            "t_rating_strategy_1500"
+            "title_solitary",
+            "title_table_captain",
+            "title_top_dog",
+            "t_rating_strategy_1900"
         ],
         "unlocked_card_backs": [
             "back_default"
