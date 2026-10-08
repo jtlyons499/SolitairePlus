@@ -744,3 +744,6 @@ add_rating_catalogs(MENU_BACKGROUNDS, FELTS, TITLES)
 
 from career_activities import add_story_catalogs
 add_story_catalogs(MENU_BACKGROUNDS, FELTS, TITLES)
+
+from alien_night import STORY as ALIEN_STORY
+add_story_catalogs(MENU_BACKGROUNDS, FELTS, TITLES, data=ALIEN_STORY)

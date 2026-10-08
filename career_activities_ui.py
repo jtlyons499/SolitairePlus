@@ -2,11 +2,14 @@
 from pathlib import Path
 import pygame
 from career_activities import STORY, requirement_reason
+from alien_night import STORY as ALIEN_STORY
 
 MAP_PATH = 'assets/events/bigfoot_night/map.png'
 
 class CareerActivityScreen:
     def __init__(self):
+        self.story_data = STORY
+        self.map_path = MAP_PATH
         self.buttons = []
         self.map_image = None
         self.map_signature = None
@@ -44,9 +47,9 @@ class CareerActivityScreen:
         self.buttons.append((rect,action,enabled))
 
     def load_map(self):
-        path=Path(MAP_PATH)
+        path=Path(self.map_path)
         try:
-            stat=path.stat();signature=(stat.st_mtime_ns,stat.st_size)
+            stat=path.stat();signature=(str(path),stat.st_mtime_ns,stat.st_size)
         except OSError:signature=None
         if signature!=self.map_signature:
             self.map_signature=signature;self.map_image=None
@@ -63,7 +66,7 @@ class CareerActivityScreen:
         pygame.draw.rect(surface,(29,54,38),rect,border_radius=16)
         self.load_map()
         if self.map_image:surface.blit(self.map_image,self.map_image.get_rect(center=rect.center))
-        points={name:(round(rect.x+xy[0]*rect.width),round(rect.y+xy[1]*rect.height)) for name,xy in STORY['locations'].items()}
+        points={name:(round(rect.x+xy[0]*rect.width),round(rect.y+xy[1]*rect.height)) for name,xy in self.story_data['locations'].items()}
         pygame.draw.lines(surface,(135,131,95),False,list(points.values()),4)
         for name,point in points.items():
             current=story['location']==name;visited=name in story['visited_locations']
@@ -72,20 +75,26 @@ class CareerActivityScreen:
             caption=label.get_rect(midtop=(point[0],point[1]+16));caption.clamp_ip(rect)
             surface.blit(label,caption)
         self.text(surface,'Items',90,618,520,26,(222,205,140))
-        inventory=', '.join(STORY['items'][key] for key in story['items']) or 'None yet'
+        inventory=', '.join(self.story_data['items'][key] for key in story['items']) or 'None yet'
         self.text(surface,inventory,90,649,520,25)
         attitude={'trusted':'Trusted','distrustful':'Distrusted','clout_chaser':'Clout chaser'}.get(story['flags'].get('attitude'),'Unknown')
-        self.text(surface,'Bigfoot’s impression: '+attitude,90,705,520,24)
+        if self.story_data.get('kind') == 'alien':
+            attitude={'trusted':'Trusted','untrusted':'Untrusted','sympathetic':'Sympathetic'}.get(story['flags'].get('agents'),'Unknown')
+            self.text(surface,'Agents’ impression: '+attitude,90,705,520,24)
+        else:
+            self.text(surface,'Bigfoot’s impression: '+attitude,90,705,520,24)
 
     def draw(self,surface,state,mouse,cash,story):
+        self.story_data = ALIEN_STORY if state.get('kind') == 'alien' else STORY
+        self.map_path = 'assets/events/alien_night/map.png' if state.get('kind') == 'alien' else MAP_PATH
         identity=(id(state),state.get('scene'),state['night'],state['claimed'])
         if identity!=self.identity:
             self.identity=identity;self.view='result' if state['claimed'] else 'intro';self.page=0
         self.buttons=[]
         pygame.draw.rect(surface,(15,29,24),(60,35,1246,705),border_radius=20)
         pygame.draw.rect(surface,(108,140,110),(60,35,1246,705),2,border_radius=20)
-        self.text(surface,f"BIGFOOT NIGHT  •  INVESTIGATION DAY {state['night']}",90,60,1150,40)
-        title=STORY['scenes'].get(state.get('scene'),{}).get('title','INVESTIGATION COMPLETE')
+        self.text(surface,f"{self.story_data.get('name', 'Bigfoot Night').upper()}  •  INVESTIGATION DAY {state['night']}",90,60,1150,40)
+        title=self.story_data['scenes'].get(state.get('scene'),{}).get('title','INVESTIGATION COMPLETE')
         self.text(surface,title,655,115,605,29,(222,205,140))
         self.draw_map(surface,story)
         if self.view in ('intro','result'):
@@ -101,19 +110,19 @@ class CareerActivityScreen:
                 self.button(surface,(1080,564,180,45),'Next page',('page',1),mouse,self.page<count-1)
             if state['claimed'] and state.get('stage')!='complete':
                 labels=[f"Cash: ${state['cash_change']:+,}",f"Fans: {state['fan_change']:+,}"]
-                cosmetics=[STORY['cosmetics'][key]['name']+' '+STORY['cosmetics'][key]['kind'].rstrip('s') for key in state.get('earned_cosmetics',[])]
+                cosmetics=[self.story_data['cosmetics'][key]['name']+' '+self.story_data['cosmetics'][key]['kind'].rstrip('s') for key in state.get('earned_cosmetics',[])]
                 if cosmetics:labels.append('Unlocked: '+', '.join(cosmetics))
                 self.text(surface,'  |  '.join(labels),655,615,605,25,(248,223,129))
             label='Continue to calendar' if state['claimed'] else 'Choose your action'
             self.button(surface,(655,674,605,48),label,'continue' if state['claimed'] else 'choices',mouse)
         else:
             for i,choice in enumerate(state['options']):
-                reason=requirement_reason(story,choice,cash)
+                reason=requirement_reason(story,choice,cash,data=self.story_data)
                 effects=choice['effects'];details=[]
                 if effects['cash']:details.append(f"${effects['cash']:+,}")
                 if effects['fans']:details.append(f"{effects['fans']:+,} fans")
-                details += [STORY['items'][key] for key in effects['items']]
-                details += ['Unlock: '+STORY['cosmetics'][key]['name'] for key in effects['cosmetics']]
+                details += [self.story_data['items'][key] for key in effects['items']]
+                details += ['Unlock: '+self.story_data['cosmetics'][key]['name'] for key in effects['cosmetics']]
                 self.button(surface,(655,163+i*123,605,113),choice['text'],('choice',i),mouse,not reason,reason or ' • '.join(details))
             self.button(surface,(655,674,605,48),'Read scene again','intro',mouse)
 

@@ -520,6 +520,9 @@ class Game:
                 self.hint_limit
             )
 
+        from solitaire_restart import capture_deal
+        capture_deal(self)
+
         if play_shuffle:
             self.audio.play_sound(
                 "card_shuffle"

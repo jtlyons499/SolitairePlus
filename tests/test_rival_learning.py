@@ -127,8 +127,11 @@ class LearningTests(unittest.TestCase):
         exec(compile(ast.Module(body=save_nodes,type_ignores=[]),'actual profile save field','exec'),env)
         self.assertEqual(env['profile_data']['poker_learning'],bank)
         self.assertIsNot(env['profile_data']['poker_learning'],bank)
-        apply_nodes=functions['apply_profile_save_data'].body[:3]
-        self.assertTrue(isinstance(apply_nodes[0],ast.Global))
+        apply_nodes=[n for n in functions['apply_profile_save_data'].body
+                     if (isinstance(n,ast.Global) and 'career_poker_learning' in n.names)
+                     or (isinstance(n,ast.ImportFrom) and n.module=='poker_learning')
+                     or (isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='career_poker_learning' for t in n.targets))]
+        self.assertEqual(len(apply_nodes),3)
         env['data']={'poker_learning':bank}
         program=compile(ast.Module(body=apply_nodes,type_ignores=[]),'actual profile load field','exec')
         exec(program,env);self.assertEqual(env['career_poker_learning'],bank)

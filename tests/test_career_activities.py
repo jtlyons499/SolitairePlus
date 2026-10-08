@@ -1,3 +1,4 @@
+from alien_night import new_alien_story, refresh_adventure_schedule
 import ast
 import copy
 import json
@@ -84,7 +85,7 @@ class BigfootTests(unittest.TestCase):
     def test_main_claims_once_and_reopens_current_result(self):
         tree=ast.parse(Path('main.py').read_text());names={'start_career_activity','handle_career_activity'}
         code=compile(ast.Module(body=[n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name in names],type_ignores=[]),'main.py','exec')
-        scope=dict(start_night=start_night,choose_option=choose_option,reconcile_story_cosmetics=reconcile_story_cosmetics,
+        scope=dict(career_alien_story=new_alien_story(), refresh_adventure_schedule=refresh_adventure_schedule, start_night=start_night,choose_option=choose_option,reconcile_story_cosmetics=reconcile_story_cosmetics,
           career_current_schedule=[{}],career_day_of_month=1,career_bigfoot_story=new_story(),career_cash=100,
           unlocked_menu_backgrounds=set(),unlocked_felts=set(),unlocked_titles=set(),
           STATE_CAREER_ACTIVITY='story',STATE_CAREER_HUB='hub',auto_save_career=lambda:None,

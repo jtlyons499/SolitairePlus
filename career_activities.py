@@ -1,17 +1,16 @@
-"""Data-driven Bigfoot story engine. Authored content: data/bigfoot_story.json."""
+"""Data-driven adventure engine. Bigfoot is the default story definition."""
 import copy
 import json
 from pathlib import Path
 
-
 def validate_story(data):
     scenes = data['scenes']
     if data['start'] not in scenes:
-        raise ValueError('Bigfoot start scene does not exist')
+        raise ValueError('Story start scene does not exist')
     option_ids = set()
     for scene_id, scene in scenes.items():
         if scene['location'] not in data['locations'] or not scene['options']:
-            raise ValueError(f'Invalid Bigfoot scene: {scene_id}')
+            raise ValueError(f'Invalid story scene: {scene_id}')
         for option in scene['options']:
             if option['id'] in option_ids:
                 raise ValueError(f"Duplicate choice ID: {option['id']}")
@@ -29,6 +28,7 @@ def validate_story(data):
                 if cosmetic not in data['cosmetics']:
                     raise ValueError(f'Unknown cosmetic: {cosmetic}')
     reachable = set()
+
     def visit(scene_id):
         if scene_id == 'finished' or scene_id in reachable:
             return
@@ -37,21 +37,17 @@ def validate_story(data):
             visit(option['next'])
     visit(data['start'])
     if reachable != set(scenes):
-        raise ValueError('Bigfoot story contains unreachable scenes')
+        raise ValueError('Story contains unreachable scenes')
     return data
+STORY = validate_story(json.loads((Path(__file__).resolve().parent / 'data' / 'bigfoot_story.json').read_text(encoding='utf-8')))
 
+def new_story(*, data=None):
+    data = STORY if data is None else data
+    return {'schema': 2, 'visits': 0, 'scene': data['start'], 'location': data['scenes'][data['start']]['location'], 'items': [], 'flags': {}, 'cosmetics': [], 'history': [], 'visited_locations': [data['scenes'][data['start']]['location']], 'last_result': '', 'finished': False}
 
-STORY = validate_story(json.loads((Path(__file__).resolve().parent/'data'/'bigfoot_story.json').read_text(encoding='utf-8')))
-
-
-def new_story():
-    return {'schema': 2, 'visits': 0, 'scene': STORY['start'], 'location': 'Headquarters',
-            'items': [], 'flags': {}, 'cosmetics': [], 'history': [], 'visited_locations': ['Headquarters'],
-            'last_result': '', 'finished': False}
-
-
-def normalize_story(value):
-    result = new_story()
+def normalize_story(value, *, data=None):
+    data = STORY if data is None else data
+    result = new_story(data=data)
     if not isinstance(value, dict):
         return result
     try:
@@ -59,40 +55,35 @@ def normalize_story(value):
     except (TypeError, ValueError):
         pass
     if value.get('schema') != 2:
-        # The starter's looping Camp/Forest story has no matching full-story chapter.
-        # Preserve earned money externally, visit count and owned footwear; start the authored route at HQ.
         if value.get('shoes'):
             result['items'] = ['sasquatch_sandals']
         return result
-    result['scene'] = value.get('scene') if value.get('scene') in STORY['scenes'] or value.get('scene') == 'finished' else STORY['start']
+    result['scene'] = value.get('scene') if value.get('scene') in data['scenes'] or value.get('scene') == 'finished' else data['start']
     result['finished'] = result['scene'] == 'finished'
-    for key, catalog in (('items', STORY['items']), ('cosmetics', STORY['cosmetics']), ('visited_locations', STORY['locations'])):
+    for key, catalog in (('items', data['items']), ('cosmetics', data['cosmetics']), ('visited_locations', data['locations'])):
         values = value.get(key, [])
         if isinstance(values, list):
-            result[key] = list(dict.fromkeys(x for x in values if isinstance(x, str) and x in catalog))
+            result[key] = list(dict.fromkeys((x for x in values if isinstance(x, str) and x in catalog)))
     flags = value.get('flags', {})
     result['flags'] = copy.deepcopy(flags) if isinstance(flags, dict) else {}
-    result['location'] = "Bigfoot’s Ladder" if result['finished'] else STORY['scenes'][result['scene']]['location']
+    result['location'] = data.get('finish_location', 'Bigfoot’s Ladder') if result['finished'] else data['scenes'][result['scene']]['location']
     if result['location'] not in result['visited_locations']:
         result['visited_locations'].append(result['location'])
     result['last_result'] = str(value.get('last_result', ''))
     result['history'] = copy.deepcopy(value.get('history', [])) if isinstance(value.get('history'), list) else []
     return result
 
-
-def start_night(story):
+def start_night(story, *, data=None):
+    data = STORY if data is None else data
     if story['finished']:
-        return {'kind': 'bigfoot', 'version': 2, 'night': story['visits'], 'scene': 'finished',
-                'intro': 'Your Bigfoot investigation is complete.', 'options': [], 'claimed': True,
-                'stage': 'complete', 'result_text': story['last_result'], 'cash_change': 0, 'fan_change': 0}
-    scene = STORY['scenes'][story['scene']]
-    return {'kind': 'bigfoot', 'version': 2, 'night': story['visits']+1, 'scene': story['scene'],
-            'intro': scene['intro'], 'options': copy.deepcopy(scene['options']), 'claimed': False, 'stage': 'intro'}
+        return {'kind': data.get('kind', 'bigfoot'), 'version': 2, 'night': story['visits'], 'scene': 'finished', 'intro': 'Your ' + data.get('name', 'Bigfoot Night') + ' adventure is complete.', 'options': [], 'claimed': True, 'stage': 'complete', 'result_text': story['last_result'], 'cash_change': 0, 'fan_change': 0}
+    scene = data['scenes'][story['scene']]
+    return {'kind': data.get('kind', 'bigfoot'), 'version': 2, 'night': story['visits'] + 1, 'scene': story['scene'], 'intro': scene['intro'], 'options': copy.deepcopy(scene['options']), 'claimed': False, 'stage': 'intro'}
 
-
-def requirement_reason(story, option, cash):
+def requirement_reason(story, option, cash, *, data=None):
+    data = STORY if data is None else data
     requirements = option['requires']
-    missing = [STORY['items'][item] for item in requirements.get('items', []) if item not in story['items']]
+    missing = [data['items'][item] for item in requirements.get('items', []) if item not in story['items']]
     if missing:
         return 'Requires: ' + ', '.join(missing)
     if requirements.get('attitude') and story['flags'].get('attitude') not in requirements['attitude']:
@@ -101,18 +92,17 @@ def requirement_reason(story, option, cash):
         return f"Requires: ${-option['effects']['cash']:,}"
     return ''
 
-
-def choose_option(story, night, index, cash):
+def choose_option(story, night, index, cash, *, data=None):
+    data = STORY if data is None else data
     if night.get('claimed') or story['finished'] or night.get('scene') != story['scene']:
         return None
     if not isinstance(index, int) or not 0 <= index < len(night['options']):
         return None
-    # Resolve by authored ID, never trust reward values from the saved UI snapshot.
     option_id = night['options'][index]['id']
-    choice = next((o for o in STORY['scenes'][story['scene']]['options'] if o['id'] == option_id), None)
-    if choice is None or any(h.get('choice') == option_id for h in story['history'] if isinstance(h, dict)):
+    choice = next((o for o in data['scenes'][story['scene']]['options'] if o['id'] == option_id), None)
+    if choice is None or any((h.get('choice') == option_id for h in story['history'] if isinstance(h, dict))):
         return None
-    if requirement_reason(story, choice, cash):
+    if requirement_reason(story, choice, cash, data=data):
         return None
     effects = choice['effects']
     story['items'] = list(dict.fromkeys(story['items'] + effects['items']))
@@ -123,22 +113,21 @@ def choose_option(story, night, index, cash):
     story['scene'] = choice['next']
     story['finished'] = choice['next'] == 'finished'
     if not story['finished']:
-        story['location'] = STORY['scenes'][choice['next']]['location']
+        story['location'] = data['scenes'][choice['next']]['location']
     if story['location'] not in story['visited_locations']:
         story['visited_locations'].append(story['location'])
     story['last_result'] = choice['result']
-    night.update(claimed=True, stage='result', result_text=choice['result'], cash_change=effects['cash'],
-                 fan_change=effects['fans'], earned_items=effects['items'], earned_cosmetics=effects['cosmetics'])
+    night.update(claimed=True, stage='result', result_text=choice['result'], cash_change=effects['cash'], fan_change=effects['fans'], earned_items=effects['items'], earned_cosmetics=effects['cosmetics'])
     return copy.deepcopy(effects)
 
-
-def add_story_catalogs(backgrounds, felts, titles):
+def add_story_catalogs(backgrounds, felts, titles, *, data=None):
+    data = STORY if data is None else data
     catalogs = {'backgrounds': backgrounds, 'felts': felts, 'titles': titles}
-    for key, data in STORY['cosmetics'].items():
+    for key, data in data['cosmetics'].items():
         catalogs[data['kind']][key] = copy.deepcopy(data)
 
-
-def reconcile_story_cosmetics(story, backgrounds, felts, titles):
+def reconcile_story_cosmetics(story, backgrounds, felts, titles, *, data=None):
+    data = STORY if data is None else data
     sets = {'backgrounds': backgrounds, 'felts': felts, 'titles': titles}
     for key in story['cosmetics']:
-        sets[STORY['cosmetics'][key]['kind']].add(key)
+        sets[data['cosmetics'][key]['kind']].add(key)

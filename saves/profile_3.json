@@ -6186,8 +6186,8 @@
         "selected_card_back": "back_default",
         "selected_cursor": "cursor",
         "unlocked_menu_backgrounds": [
-            "bg_default",
-            "bg_the_reverent"
+            "bg_the_reverent",
+            "bg_default"
         ],
         "unlocked_felts": [
             "f_wendigo",

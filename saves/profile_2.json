@@ -8108,22 +8108,7 @@
                 "career_day": 91
             }
         ],
-        "interview_recent_ids": [],
-        "bigfoot_story": {
-            "schema": 2,
-            "visits": 0,
-            "scene": "hq_start",
-            "location": "Headquarters",
-            "items": [],
-            "flags": {},
-            "cosmetics": [],
-            "history": [],
-            "visited_locations": [
-                "Headquarters"
-            ],
-            "last_result": "",
-            "finished": false
-        }
+        "interview_recent_ids": []
     },
     "cosmetics": {
         "selected_menu_background": "bg_default",
@@ -8132,54 +8117,54 @@
         "selected_card_back": "back_default",
         "selected_cursor": "cursor",
         "unlocked_menu_backgrounds": [
-            "bg_default",
-            "bg_noodle",
-            "bg_petra",
-            "bg_brazil",
-            "bg_wall",
-            "bg_et",
-            "bg_blue_doodle",
-            "bg_chichen",
-            "bg_microscope",
             "bg_giza",
+            "bg_default",
+            "bg_et",
+            "bg_petra",
+            "bg_chichen",
+            "bg_noodle",
+            "bg_rating_strategy_1400",
+            "bg_microscope",
+            "bg_wall",
+            "bg_brazil",
             "bg_gardens",
-            "bg_rating_strategy_1400"
+            "bg_blue_doodle"
         ],
         "unlocked_felts": [
-            "f_rating_strategy_1600",
             "f_crystalized_grain",
-            "f_game_night",
             "f_rating_global_1300",
-            "f_crystalized",
-            "f_gordon",
-            "f_fun_felt",
-            "f_rock_candy",
-            "f_blanky",
-            "f_rating_strategy_1150",
+            "f_grain",
             "f_wheel_winner",
+            "f_gordon",
             "f_light_touch",
+            "f_game_night",
+            "f_rock_candy",
+            "f_rating_strategy_1150",
+            "f_rating_strategy_1600",
+            "f_blanky",
+            "f_crystalized",
             "f_default",
-            "f_high_society",
-            "f_grain"
+            "f_fun_felt",
+            "f_high_society"
         ],
         "unlocked_titles": [
-            "title_top_dog",
-            "title_soli_tare_red",
+            "title_cardshark",
             "title_patience_creep",
             "title_patience_dare",
+            "title_soli_tare_blue",
             "title_neon",
             "title_isolation",
             "title_solitaire_pixel",
+            "title_high_roller",
+            "title_top_dog",
             "title_cards",
-            "title_tacit",
-            "title_shatter_1",
             "t_rating_strategy_1500",
             "title_penciled",
-            "title_high_roller",
+            "title_shatter_1",
             "title_solitary",
-            "title_cardshark",
             "title_default",
-            "title_soli_tare_blue"
+            "title_tacit",
+            "title_soli_tare_red"
         ],
         "unlocked_card_backs": [
             "back_default"

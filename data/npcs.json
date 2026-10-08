@@ -660,6 +660,28 @@
     }
   },
   {
+    "id": "asseel_bat",
+    "name": "Asseel Bat",
+    "bio": "Has been spotted flying past dark without a permit.",
+    "country": "MUN",
+    "age": 23,
+    "hometown": "Dark Side, The Moon",
+    "favorite_suit": "Diamonds",
+    "skill_tier": "strong",
+    "portrait": "assets/npcs/asseel_bat.png",
+    "game_personality": "aggressive",
+    "personality_traits": {
+      "caution": 7,
+      "aggressiveness": 3,
+      "unpredictability": 4,
+      "escalation": 7,
+      "selectivity": 2,
+      "tenacity": 4,
+      "pessimism": 6,
+      "bitterness": 3
+    }
+  },
+  {
     "id": "chiara_sammartano",
     "name": "Chiara Sammy",
     "bio": "Learned Chinese to infiltrate the Sino Solitaire Society",

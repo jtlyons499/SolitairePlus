@@ -1,3 +1,6 @@
+from alien_night import STORY as ALIEN_STORY, new_alien_story, refresh_adventure_schedule
+from solitaire_restart import RestartPrompt
+solitaire_restart_prompt = RestartPrompt()
 from profile_avatar_assets import load_avatar_bank, avatar_options
 from career_asset_images import (get_jobfinder_image, get_realestate_image,
                                  get_career_hub_image, get_country_flag_surface)
@@ -2365,8 +2368,11 @@ def advance_career_day(
 def start_career_activity(work=False):
     global current_state
     entry = career_current_schedule[career_day_of_month - 1]
-    if entry.get("career_activity", {}).get("kind") != "bigfoot" or (entry["career_activity"].get("version") != 2 and not entry["career_activity"].get("claimed")):
-        entry["career_activity"] = start_night(career_bigfoot_story)
+    alien = entry.get("event_id") == "alien_night"
+    kind = "alien" if alien else "bigfoot"
+    story = career_alien_story if alien else career_bigfoot_story
+    if entry.get("career_activity", {}).get("kind") != kind or (entry["career_activity"].get("version") != 2 and not entry["career_activity"].get("claimed")):
+        entry["career_activity"] = start_night(story, data=ALIEN_STORY if alien else None)
     current_state = STATE_CAREER_ACTIVITY
     auto_save_career()
 
@@ -2380,11 +2386,14 @@ def handle_career_activity(action):
             current_state = STATE_CAREER_HUB
         return
     if isinstance(action, tuple) and action[0] == "choice":
-        receipt = choose_option(career_bigfoot_story, state, action[1], career_cash)
+        alien = state.get("kind") == "alien"
+        story = career_alien_story if alien else career_bigfoot_story
+        receipt = choose_option(story, state, action[1], career_cash, data=ALIEN_STORY if alien else None)
         if receipt is not None:
             career_cash += receipt["cash"]
-            state["fan_change"] = award_career_fans(receipt["fans"], "Bigfoot Night") if receipt["fans"] else 0
-            reconcile_story_cosmetics(career_bigfoot_story, unlocked_menu_backgrounds, unlocked_felts, unlocked_titles)
+            state["fan_change"] = award_career_fans(receipt["fans"], "Alien Night" if alien else "Bigfoot Night") if receipt["fans"] else 0
+            reconcile_story_cosmetics(story, unlocked_menu_backgrounds, unlocked_felts, unlocked_titles, data=ALIEN_STORY if alien else None)
+            refresh_adventure_schedule(career_current_schedule, career_bigfoot_story, career_alien_story, career_day_of_month)
             auto_save_career()
 
 
@@ -2783,6 +2792,7 @@ def build_default_career_schedule():
 
             schedule.append(entry)
 
+    refresh_adventure_schedule(schedule, career_bigfoot_story, career_alien_story)
     return schedule
 
 def ensure_career_schedule():
@@ -3321,6 +3331,7 @@ free_play_achievement_fans_earned = 0
 # Press interview event runtime
 career_interview_recent_ids = []
 career_bigfoot_story = new_story()
+career_alien_story = new_alien_story()
 career_interview_questions = []
 career_interview_index = 0
 career_interview_media_heat = 0
@@ -9498,6 +9509,7 @@ def build_profile_save_data():
 
     career_data["interview_recent_ids"] = list(career_interview_recent_ids)
     career_data["bigfoot_story"] = copy.deepcopy(career_bigfoot_story)
+    career_data["alien_story"] = copy.deepcopy(career_alien_story)
 
     career_data[
         "completed_days"
@@ -9605,6 +9617,10 @@ def build_profile_save_data():
 def apply_profile_save_data(
         data
 ):
+    global career_bigfoot_story, career_alien_story
+    from alien_night import STORY as ALIEN_STORY, refresh_adventure_schedule
+    career_bigfoot_story = normalize_story(data.get("career", {}).get("bigfoot_story"))
+    career_alien_story = normalize_story(data.get("career", {}).get("alien_story"), data=ALIEN_STORY)
     global career_poker_learning
     from poker_learning import normalize_learning
     career_poker_learning = normalize_learning(data.get("poker_learning"))
@@ -10070,14 +10086,15 @@ def apply_profile_save_data(
         requested_deal_mode = "random"
     game.set_deal_mode(requested_deal_mode)
 
-    global career_interview_recent_ids, career_bigfoot_story
-    career_bigfoot_story = normalize_story(data.get("career", {}).get("bigfoot_story"))
+    global career_interview_recent_ids
     for entry in career_current_schedule:
         if entry.get("event_id") == "career_encounter" and not entry.get("completed"):
             entry.update(title="Bigfoot Night", event_id="bigfoot_night")
     history = data.get("career", {}).get("interview_recent_ids", [])
     career_interview_recent_ids = [value for value in history if isinstance(value, str)][-12:] if isinstance(history, list) else []
     reconcile_story_cosmetics(career_bigfoot_story, unlocked_menu_backgrounds, unlocked_felts, unlocked_titles)
+    reconcile_story_cosmetics(career_alien_story, unlocked_menu_backgrounds, unlocked_felts, unlocked_titles, data=ALIEN_STORY)
+    refresh_adventure_schedule(career_current_schedule, career_bigfoot_story, career_alien_story, career_day_of_month)
     sync_achievement_cosmetic_rewards()
     grant_rating_cosmetics(force=True)
     sync_career_npc_runtime_state()
@@ -19151,7 +19168,7 @@ def draw_game_pause_menu():
         443,
         210,
         480,
-        330
+        405
     )
 
     pygame.draw.rect(
@@ -19221,6 +19238,9 @@ def draw_game_pause_menu():
         pause_menu_rect,
         return_label
     )
+
+    if solitaire_restart_prompt.allowed(game, current_game_mode):
+        draw_button(solitaire_restart_prompt.button, "Restart Hand")
 
 def draw_delete_profile_confirmation():
     overlay = pygame.Surface(
@@ -22788,7 +22808,7 @@ while running:
                             elif event_id == "head_to_head_01":
                                 start_head_to_head_event()
 
-                            if event_id in ("career_encounter", "bigfoot_night"):
+                            if event_id in ("career_encounter", "bigfoot_night", "alien_night"):
                                 start_career_activity(work=False)
                             else:
                                 current_state = STATE_CAREER_EVENT
@@ -27423,6 +27443,18 @@ while running:
 
         elif current_state == STATE_PLAYING:
 
+            if solitaire_restart_prompt.open:
+                solitaire_restart_prompt.event(event, game_mouse_pos, game, audio)
+                continue
+            if (game_pause_menu_open and event.type == pygame.MOUSEBUTTONDOWN
+                    and event.button == 1 and game_mouse_pos is not None
+                    and solitaire_restart_prompt.button.collidepoint(game_mouse_pos)
+                    and solitaire_restart_prompt.allowed(game, current_game_mode)):
+                solitaire_restart_prompt.open = True
+                game_pause_menu_open = False
+                audio.play_sound("button_click")
+                continue
+
             # H = Hint. This mirrors the on-screen Hint button and respects
             # difficulty/challenge hint limits.
             if (
@@ -27936,7 +27968,7 @@ while running:
         draw_submenu_background(overlay_alpha=100)
         career_activity_screen.draw(game_surface,
             career_current_schedule[career_day_of_month - 1]["career_activity"],
-            game_mouse_pos, career_cash, career_bigfoot_story)
+            game_mouse_pos, career_cash, career_alien_story if career_current_schedule[career_day_of_month - 1]["career_activity"].get("kind") == "alien" else career_bigfoot_story)
 
     elif current_state == STATE_CAREER_HUB:
 
@@ -29045,6 +29077,8 @@ while running:
 
         elif confirm_return_to_menu:
             draw_return_confirmation()
+        if solitaire_restart_prompt.open:
+            solitaire_restart_prompt.draw(game_surface, game_mouse_pos)
 
     update_achievement_popup()
     if achievement_popup_current is not None:
