@@ -1,0 +1,467 @@
+{
+  "version": 2,
+  "kind": "alien",
+  "name": "Alien Night",
+  "start": "leaving_home",
+  "finish_location": "Military Base",
+  "items": {
+    "tracking_chip": "Tracking Chip"
+  },
+  "locations": {
+    "Home": [
+      0.16,
+      0.83
+    ],
+    "ASS Towers": [
+      0.72,
+      0.7
+    ],
+    "Board Room": [
+      0.28,
+      0.5
+    ],
+    "Desert Flight": [
+      0.7,
+      0.31
+    ],
+    "Military Base": [
+      0.27,
+      0.1
+    ]
+  },
+  "cosmetics": {
+    "bg_jester": {
+      "name": "Jester",
+      "kind": "backgrounds",
+      "path": "assets/ui/menu_ui/backgrounds/bg_jester.png",
+      "unlock_description": "Dance aboard the Alien Security Service jet",
+      "order": 4100
+    },
+    "bg_pure_evil": {
+      "name": "Pure Evil",
+      "kind": "backgrounds",
+      "path": "assets/ui/menu_ui/backgrounds/bg_pure_evil.png",
+      "unlock_description": "Complete Alien Night with the Pure Evil ending",
+      "order": 4101
+    },
+    "bg_too_late": {
+      "name": "Too Late",
+      "kind": "backgrounds",
+      "path": "assets/ui/menu_ui/backgrounds/bg_too_late.png",
+      "unlock_description": "Complete Alien Night with the Too Late ending",
+      "order": 4102
+    },
+    "bg_little_green_men": {
+      "name": "Little Green Men",
+      "kind": "backgrounds",
+      "path": "assets/ui/menu_ui/backgrounds/bg_little_green_men.png",
+      "unlock_description": "Free Mr. Goobles in Alien Night",
+      "order": 4103
+    }
+  },
+  "scenes": {
+    "leaving_home": {
+      "title": "CHAPTER 1 — LEAVING HOME",
+      "location": "Home",
+      "intro": "After word spread of your bigfoot adventure, top intelligence agencies took notice and before you knew it, the Alien Security Service was at your door. An elite branch of special forces operatives, genius scientists, and top politicians, the agency handles supernatural matters that may endanger the state’s interests. Three agents in suits and shades quickly escort you into a dark SUV with the license plate “AL13N5.” They stare at you in silence, prompting you to speak first.",
+      "options": [
+        {
+          "id": "leaving_home_1",
+          "text": "Ask if you’re being detained and recite the Constitution",
+          "requires": {},
+          "effects": {
+            "cash": 0,
+            "fans": 0,
+            "items": [],
+            "flags": {
+              "agents": "untrusted"
+            },
+            "cosmetics": []
+          },
+          "result": "The stoic and intimidating federal agents continue to stare at you, but now seem irritated. You continue riding in silence until the vehicle stops…",
+          "next": "tower_untrusted"
+        },
+        {
+          "id": "leaving_home_2",
+          "text": "Stay silent and scroll on your phone",
+          "requires": {},
+          "effects": {
+            "cash": 0,
+            "fans": 0,
+            "items": [],
+            "flags": {
+              "agents": "trusted"
+            },
+            "cosmetics": []
+          },
+          "result": "The agents see a bit of themselves in you with your stone cold demeanor, even as Gardenscapes sound effects play from your phone. The vehicle stops and they get out to hold the door open for you…",
+          "next": "tower_other"
+        },
+        {
+          "id": "leaving_home_3",
+          "text": "Ask if this is linked to the Bigfoot Incident",
+          "requires": {},
+          "effects": {
+            "cash": 0,
+            "fans": 0,
+            "items": [],
+            "flags": {
+              "agents": "sympathetic"
+            },
+            "cosmetics": []
+          },
+          "result": "The agents seem to feel guilty for troubling you. They shrug their shoulders and stay silent, but then smile and hand you a small bag of pretzels. When the vehicle stops, they gently guide you out to the front of a tower…",
+          "next": "tower_other"
+        }
+      ]
+    },
+    "tower_untrusted": {
+      "title": "ASS TOWERS, WHILE UNTRUSTWORTHY",
+      "location": "ASS Towers",
+      "intro": "You awkwardly climb over the legs of one of the agents to get out of the SUV. Their refusal to move out of the way is a clear sign they don’t respect you. Regardless, you follow them into a mysterious tower. The four of you step into an elevator, and after two agents tap their badges simultaneously on a digital panel, the third presses the button for floor 13.",
+      "options": [
+        {
+          "id": "tower_untrusted_1",
+          "text": "Loudly ask who farted in the elevator",
+          "requires": {},
+          "effects": {
+            "cash": 500,
+            "fans": 0,
+            "items": [],
+            "flags": {},
+            "cosmetics": []
+          },
+          "result": "The agents instantly tase you, but out of fear that you’ll tell their bosses, they give you a bribe of $500 to stay quiet. While you’re still feeling fairly…tased…the elevator doors open and you find yourself in a board room. It looks like it hasn’t been remodeled since the 1950s…",
+          "next": "brass_other"
+        },
+        {
+          "id": "tower_untrusted_2",
+          "text": "Try pressing all of the elevator buttons",
+          "requires": {},
+          "effects": {
+            "cash": 0,
+            "fans": 0,
+            "items": [
+              "tracking_chip"
+            ],
+            "flags": {},
+            "cosmetics": []
+          },
+          "result": "You manage to add a solid four minutes to the elevator ride. Out of frustration and panic, one agent grabs your hand and shoots a tracking chip into your palm. They clearly consider you unpredictable and dangerous. While you’re shaking off the pain of the chip gun, the elevator doors open and you find yourself in a board room. It looks like it hasn’t been remodeled since the 1950s…",
+          "next": "brass_chip"
+        }
+      ]
+    },
+    "tower_other": {
+      "title": "ASS TOWERS, OTHER CASES",
+      "location": "ASS Towers",
+      "intro": "You and the mysterious agents walk swiftly through the lobby, past several armed guards, and into a futuristic elevator. The elevator begins heading to floor 13. You stand uncomfortably with your hands in your pockets.",
+      "options": [
+        {
+          "id": "tower_other_1",
+          "text": "Whistle Gershwin’s *Rhapsody in Blue*",
+          "requires": {},
+          "effects": {
+            "cash": 0,
+            "fans": 0,
+            "items": [],
+            "flags": {},
+            "cosmetics": []
+          },
+          "result": "You begin to softly whistle the orchestral jazz of George Gershwin to ease your mind. Unfortunately, it turns out that both Anthony Fantano and Rick Beato have been talking about Gershwin the past month, so the agents call your taste in music surface level and ‘classic TikTok core.’ The elevator dings and you exit into a crusty, antiquated board room…",
+          "next": "brass_other"
+        },
+        {
+          "id": "tower_other_2",
+          "text": "Try making eye contact with one of the agents",
+          "requires": {},
+          "effects": {
+            "cash": 0,
+            "fans": 0,
+            "items": [],
+            "flags": {},
+            "cosmetics": []
+          },
+          "result": "You feel that one of the agents is definitely staring at you, so you match their stare in an attempt to elicit some interaction. The agent lowers their sunglasses and says: “I know this seems crazy, but don’t worry, it’ll be okay. We just need your help.” The elevator dings and you exit into a crusty, antiquated board room…",
+          "next": "brass_other"
+        }
+      ]
+    },
+    "brass_chip": {
+      "title": "CHAPTER 2 — EARTH IN NEED, WITH TRACKING CHIP",
+      "location": "Board Room",
+      "intro": "You follow the agents into the meeting room. There are nearly a dozen old people who seem concerned or anxious, but you can’t tell if it’s just from your nontraditional haircut. You are motioned to sit in a big office chair. An old fellow wearing lots of military medals sighs and then speaks. “Listen, buster, we know you’ve seen the supernatural, the paranormal, the foots most big…Well, we need your insight with something much bigger, and more than your insight…we need your strength. Only your supernatural connection can stop the danger.",
+      "options": [
+        {
+          "id": "brass_chip_1",
+          "text": "Ask what the old fellow means by his obviously ominous comment",
+          "requires": {},
+          "effects": {
+            "cash": 500,
+            "fans": 0,
+            "items": [],
+            "flags": {},
+            "cosmetics": []
+          },
+          "result": "The old fellow chuckles before his face turns sour. He throws a $500 bill at you and calls you a ‘regular Harry Langdon,’ to your confusion. He leans in closer and tells you that a choice must be made between two options, and only one will save the planet…",
+          "next": "decision_chip"
+        },
+        {
+          "id": "brass_chip_2",
+          "text": "Complain about the tracking chip in your hand",
+          "requires": {},
+          "effects": {
+            "cash": 0,
+            "fans": 0,
+            "items": [],
+            "flags": {},
+            "cosmetics": []
+          },
+          "result": "The old fellow glares at the agents, but tells you that it must’ve been your fault and you’re probably lying anyway. Moving past your complaint, he tells you that you must make a tough decision, but that he knows you’ll do the right thing, and trade one life for billions…",
+          "next": "decision_chip"
+        }
+      ]
+    },
+    "brass_other": {
+      "title": "CHAPTER 2 — EARTH IN NEED, ALL OTHER CASES",
+      "location": "Board Room",
+      "intro": "You follow the agents into the meeting room. There are nearly a dozen old people who seem concerned or anxious, either sitting and fidgeting, or pacing back and forth. You are motioned to sit in a big office chair. An old fellow wearing lots of military medals sighs and then speaks. “Listen, buster, we know you’ve seen the supernatural, the paranormal, the foots most big…Well, we need your insight with something much bigger, and more than your insight…we need your strength.",
+      "options": [
+        {
+          "id": "brass_other_1",
+          "text": "Ask what you can do to help",
+          "requires": {},
+          "effects": {
+            "cash": 2000,
+            "fans": 0,
+            "items": [],
+            "flags": {},
+            "cosmetics": []
+          },
+          "result": "Some of the old folk clap and cheer, calling you a ‘lovely and loyal Lafayette,’ and give you cash. They insist that as long as you follow your duty to the planet faithfully, you will see that the tough decision to come is actually an easy one. The room quiets down and they slide you a dossier. You open it and see a creature…",
+          "next": "decision_other"
+        },
+        {
+          "id": "brass_other_2",
+          "text": "Stay quiet",
+          "requires": {},
+          "effects": {
+            "cash": 2000,
+            "fans": 0,
+            "items": [],
+            "flags": {},
+            "cosmetics": []
+          },
+          "result": "The old and much-decorated fellow continues to explain that there is a grave threat to the planet, while throwing cash at you in what seems to be a weird attempt at influencing you. You apparently happen to possess a link to otherworldly beings, and part of that link involves special powers. These powers enable you to give and take life from otherwise invincible creatures. The old fellow tells you that you must use that power to delete a staggering hazard…",
+          "next": "decision_other"
+        }
+      ]
+    },
+    "decision_chip": {
+      "title": "CHAPTER 3 — THE DECISION, WITH TRACKING CHIP",
+      "location": "Board Room",
+      "intro": "The time has come for the powerful people at the Alien Security Service to force your hand. They explain in the simplest way possible: there is an alien in a military base, three hours away by private jet. A green, wiggly, curious being, this alien named Mr. Goobles has been kept prisoner at the base for the past three months. At first he was friendly, but as the government tortured him for answers, he revealed his ability to destroy Earth with his mind. And it turns out…only you have the power to kill him.",
+      "options": [
+        {
+          "id": "decision_chip_1",
+          "text": "Activate cool psychic powers",
+          "requires": {
+            "items": [
+              "tracking_chip"
+            ]
+          },
+          "effects": {
+            "cash": 0,
+            "fans": 0,
+            "items": [],
+            "flags": {
+              "path": "good"
+            },
+            "cosmetics": []
+          },
+          "result": "You tap into your supernatural, paranormal, ethereal, interphantom-locular mental wavelengths and take control of the tracking chip in your hand. You reverse engineer it to send a particular wave of explosive atomic electrons through the quantum field and into the forehead of the old fellow, who undergoes near instant genomic decomposition and vanishes forever to realms unknown. You escape the hail of gunfire and make it to the airplane hangar underneath the tower. You commandeer a jet and take to the skies…",
+          "next": "flight_good"
+        }
+      ]
+    },
+    "decision_other": {
+      "title": "CHAPTER 3 — THE DECISION, ALL OTHER CASES",
+      "location": "Board Room",
+      "intro": "The time has come for the powerful people at the Alien Security Service to force your hand. They explain in the simplest way possible: there is an alien in a military base, three hours away by private jet. A green, wiggly, curious being, this alien named Mr. Goobles has been kept prisoner at the base for the past three months. At first he was friendly, but as the government tortured him for answers, he revealed his ability to destroy Earth with his mind. And it turns out…only you have the power to kill him. They will compensate you handsomely.",
+      "options": [
+        {
+          "id": "decision_other_1",
+          "text": "Tell them it’s their own fault and they need to fix it",
+          "requires": {},
+          "effects": {
+            "cash": 0,
+            "fans": 0,
+            "items": [],
+            "flags": {
+              "path": "good"
+            },
+            "cosmetics": []
+          },
+          "result": "An argument breaks out and the old fellow with medals stands up in a rage. His body is so shocked, however, by the speed at which he launched himself out of his chair, that his mustache disintegrates into the air. In the ensuing chaos, you flee the room and head to the airplane hangar. You set out to save Mr. Goobles…",
+          "next": "flight_good"
+        },
+        {
+          "id": "decision_other_2",
+          "text": "Tell them you’re totally down to kill Mr. Goobles for money",
+          "requires": {},
+          "effects": {
+            "cash": 20000,
+            "fans": 0,
+            "items": [],
+            "flags": {
+              "path": "evil"
+            },
+            "cosmetics": []
+          },
+          "result": "The old fellow seems a bit taken aback, but is ultimately over the moon with your choice. Another old fellow cackles capitalistically and slides you a silver briefcase, Howie Mandel style. You take the contract payout and the lot of you take the elevator to the basement airplane hangar. As the private jet takes off into the clear skies, the old fellow gives you a fist bump.",
+          "next": "flight_evil"
+        }
+      ]
+    },
+    "flight_evil": {
+      "title": "CHAPTER 4 — FLYING HIGH, EVIL PATH",
+      "location": "Desert Flight",
+      "intro": "After having decided to kill the alien Mr. Goobles for a nice payout, you find yourself relaxing on the flight to the military base where he’s being held. You, the three agents, and the old folks, all enjoy some Cuban champagne and French cigars. When you start to truly feel like part of the gang, they ask you if you’ll do a funny, embarrassing dance for an additional $20,000…",
+      "options": [
+        {
+          "id": "flight_evil_1",
+          "text": "You feel dejected and quietly go to sleep",
+          "requires": {},
+          "effects": {
+            "cash": 0,
+            "fans": 0,
+            "items": [],
+            "flags": {},
+            "cosmetics": []
+          },
+          "result": "While you did not sell out the last of your dignity for money, you feel like you maybe should have, because you still need to kill Mr. Goobles AND you passed up $20,000. You mutter contritions to yourself as the plane touches down at the base. You are slowly led to Mr. Goobles’ jail cell, and you stare ahead coldly as you summon your psychic powers…",
+          "next": "goobles_evil"
+        },
+        {
+          "id": "flight_evil_2",
+          "text": "You go full Olympic breakdancing",
+          "requires": {},
+          "effects": {
+            "cash": 20000,
+            "fans": 0,
+            "items": [],
+            "flags": {},
+            "cosmetics": [
+              "bg_jester"
+            ]
+          },
+          "result": "Without a scruple in the universe, you bust out some moves on the plane as you are showered in bills of all denominations. You shrug off the creeping feeling of rotting guilt and keep dancing amongst strobe lights and fine spirits. The plane finally touches down and the vibe is sobered. You are slowly led to Mr. Goobles’ jail cell, and you stare ahead coldly as you summon your psychic powers…",
+          "next": "goobles_evil"
+        }
+      ]
+    },
+    "flight_good": {
+      "title": "CHAPTER 4 — FLYING HIGH, GOOD PATH",
+      "location": "Desert Flight",
+      "intro": "You have decided to do the right and noble thing and give your all to rescue the tortured alien Mr. Goobles. You are flying the super secret and next-generation fighter plane, the successor to the F-16, the all-powerful G-32. You have time for a little music as you approach the military base where Mr. Goobles is being held.",
+      "options": [
+        {
+          "id": "flight_good_1",
+          "text": "Blast some jazz",
+          "requires": {},
+          "effects": {
+            "cash": 0,
+            "fans": 5000,
+            "items": [],
+            "flags": {},
+            "cosmetics": []
+          },
+          "result": "You jam out to some jubilant jazz. You feel relaxed and ready for the final step to come: Gifting Goobles Grace. You acquire 5,000 fans right away because of how certain you are that future generations will hear this story and love you. You land the jet with a handbrake drift slide, do some donuts, then hop out and run through the military base, dodging bullets like they were wrenches. Suddenly, there you are…face to face with Mr. Goobles…",
+          "next": "goobles_good"
+        },
+        {
+          "id": "flight_good_2",
+          "text": "Blast some opera",
+          "requires": {},
+          "effects": {
+            "cash": 0,
+            "fans": 5000,
+            "items": [],
+            "flags": {},
+            "cosmetics": []
+          },
+          "result": "You sing along to a particularly animating aria. You feel relaxed and ready for the final step to come: Gifting Goobles Grace. You acquire 5,000 fans right away because of how certain you are that future generations will hear this story and love you. You land the jet with a handbrake drift slide, do some donuts, then hop out and run through the military base, dodging bullets like they were wrenches. Suddenly, there you are…face to face with Mr. Goobles…",
+          "next": "goobles_good"
+        }
+      ]
+    },
+    "goobles_evil": {
+      "title": "CHAPTER 5 — GOOBLE DAY, EVIL PATH",
+      "location": "Military Base",
+      "intro": "Here you are, face to face with Mr. Goobles. He looks rather sad and helpless, but you believe it to be a ploy. The old fellow with the many medals tells you that it’s time to save the planet.",
+      "options": [
+        {
+          "id": "goobles_evil_1",
+          "text": "Execute Mr. Goobles with your psychic powers",
+          "requires": {},
+          "effects": {
+            "cash": 0,
+            "fans": 0,
+            "items": [],
+            "flags": {
+              "ending": "pure_evil"
+            },
+            "cosmetics": [
+              "bg_pure_evil"
+            ]
+          },
+          "result": "You take no time to think, and with all eyes on you, including Mr. Goobles’ sad little saucer eyes, you summon your psychic powers. Lightning flies from your fingertips and cooks Mr. Goobles like a microwavable waffle. The story is swept under the rug by the Alien Security Service. Three-hundred years later, it surfaces, and your grave is routinely vandalized by the many teenagers who now sport Mr. Goobles tattoos.",
+          "next": "finished"
+        },
+        {
+          "id": "goobles_evil_2",
+          "text": "Channel psychic powers against the military",
+          "requires": {},
+          "effects": {
+            "cash": 5000,
+            "fans": 0,
+            "items": [],
+            "flags": {
+              "ending": "too_late"
+            },
+            "cosmetics": [
+              "bg_too_late"
+            ]
+          },
+          "result": "You stun everyone by activating your psychic powers only to launch them against the military and the old fellows. You destroy the many evil people, but the military base’s automated defenses manage to redirect some of your powers back at you, blasting you right up to Bigfoot Heaven, where you are judged by bigfoots for eternity. Even worse, turns out Mr. Goobles was kinda evil, and he did in fact use his mind to blow up Earth right after you died.",
+          "next": "finished"
+        }
+      ]
+    },
+    "goobles_good": {
+      "title": "CHAPTER 5 — GOOBLE DAY, GOOD PATH",
+      "location": "Military Base",
+      "intro": "Mr. Goobles waits in his jail cell. You have reached him, and the choice is yours.",
+      "options": [
+        {
+          "id": "goobles_good_1",
+          "text": "Free Mr. Goobles",
+          "requires": {},
+          "effects": {
+            "cash": 20000,
+            "fans": 0,
+            "items": [],
+            "flags": {
+              "ending": "little_green_men"
+            },
+            "cosmetics": [
+              "bg_little_green_men"
+            ]
+          },
+          "result": "You use your psychic powers to shoot lightning bolts that open Mr Goobles’ jail cell. He thanks you in Alienese and the two of you steal jetpacks and flee the military base. In the distance, you see the old fellow with medals giving chase, but he falls into quicksand and is swallowed whole by the earth. The three original agents salute you, for which later they were sentenced to 320 years in jail. Twenty years after the incident, you and Goobles sit on the beach drinking chocolate milk out of coconuts. Mr. Goobles’ leans over, hands you $20,000, and says ‘you’ve done a lot for green people, so here’s some of them on paper.’",
+          "next": "finished"
+        }
+      ]
+    }
+  }
+}
