@@ -1,6 +1,7 @@
 """Calculator-inspired Score-Four screens at the game's 1366×768 canvas."""
 from pathlib import Path
 import time
+import math
 import pygame
 from score_four_difficulty import DIFFICULTIES
 
@@ -12,6 +13,7 @@ BACK_RECT = pygame.Rect(583, 660, 200, 48)
 LAYOUT_RECT = pygame.Rect(1070, 22, 270, 46)
 _LOGOS = {}
 _BACKGROUND = {}
+ROUND_CONTINUE_RECT = pygame.Rect(563, 535, 240, 54)
 RATING_INFO_RECT = pygame.Rect(28, 22, 216, 46)
 RATING_CLOSE_RECT = pygame.Rect(563, 550, 240, 50)
 
@@ -265,11 +267,16 @@ def draw_score_four_table(surface, game, mouse, namespace):
                     change = namespace['preview_competitive_rating']('score_four', namespace.get('score_four_opponent_npc'), won)
                 else: change = game.competitive_reward if won else -10
             text(surface, f'{round(change):+d} Strategy', (683, 502), 32, CYAN if change >= 0 else (255, 150, 150), True)
-        namespace['score_four_complete_rect'] = pygame.Rect(563, 550, 240, 54)
+        if game.mode == 'competitive' and game.round_result == 'npc':
+            draw_round_solution(surface, game, (683, 542))
+        namespace['score_four_complete_rect'] = pygame.Rect(563, 580 if game.mode == 'competitive' and game.round_result == 'npc' else 550, 240, 54)
         namespace['score_four_match_continue_rect'] = namespace['score_four_complete_rect'].copy()
         button(surface, namespace['score_four_complete_rect'], 'Continue', mouse)
     elif game.round_complete:
-        text(surface, 'SOLVED!' if game.mode == 'solo' or game.round_result == 'player' else 'Opponent solved it', (683, 685), 40, CYAN, True)
+        if game.mode == 'competitive':
+            draw_round_result(surface, game, mouse)
+        else:
+            text(surface, 'SOLVED!', (683, 685), 40, CYAN, True)
     if game.round_complete and not getattr(game, '_solved_sound_played', False):
         if namespace.get('audio') and (game.mode == 'solo' or game.round_result == 'player'):
             play_control_sound(namespace['audio'], 'solved')
@@ -289,3 +296,25 @@ def hint_meter_surface(size, progress):
         pygame.draw.rect(fill, (73, 157, 191, 110), inset, border_radius=12)
         fill.set_clip(None)
     return fill
+
+
+def draw_round_solution(surface, game, center):
+    expression = str(game.solution) + ' = 24'
+    size = 34
+    while size > 22 and pygame.font.Font(None, size).size(expression)[0] > 580:
+        size -= 1
+    text(surface, expression, center, size, WHITE, True)
+
+
+def draw_round_result(surface, game, mouse):
+    panel(surface, (363, 370, 640, 285), (8, 17, 29, 250), CYAN)
+    won = game.round_result == 'player'
+    text(surface, 'ROUND WON' if won else 'OPPONENT SOLVED IT', (683, 407), 40, CYAN, True)
+    if not won:
+        text(surface, 'One solution to this puzzle:', (683, 450), 27, MUTED, True)
+        draw_round_solution(surface, game, (683, 487))
+    else:
+        text(surface, 'You solved the puzzle!', (683, 467), 32, WHITE, True)
+    button(surface, ROUND_CONTINUE_RECT, 'Continue', mouse)
+    seconds = math.ceil(game.round_countdown_remaining())
+    text(surface, f'Next round in {seconds}s — or continue now', (683, 620), 27, MUTED, True)

@@ -63,7 +63,7 @@ class ScoreFourGame:
 
         self.round_result = None
         self.round_result_time = 0.0
-        self.round_result_delay = 3.5
+        self.round_result_delay = 8.0
 
         self.npc_solve_time_seconds = 0.0
         self.round_start_time = 0.0
@@ -119,11 +119,7 @@ class ScoreFourGame:
                     elapsed_result
                     >= self.round_result_delay
             ):
-                self.round_number += 1
-
-                self.new_puzzle()
-
-                self.start_npc_timer()
+                self.continue_competitive_round()
 
             return
 
@@ -144,6 +140,19 @@ class ScoreFourGame:
 
         if elapsed >= 0.8:
             self.new_puzzle()
+
+    def round_countdown_remaining(self):
+        if self.mode != "competitive" or not self.round_complete or self.match_complete:
+            return 0.0
+        return max(0.0, self.round_result_delay - (time.monotonic() - self.round_result_time))
+
+    def continue_competitive_round(self):
+        if self.mode != "competitive" or not self.round_complete or self.match_complete:
+            return False
+        self.round_number += 1
+        self.new_puzzle()
+        self.start_npc_timer()
+        return True
 
     def get_hint_step(self):
 

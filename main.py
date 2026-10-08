@@ -1,3 +1,6 @@
+from profile_avatar_assets import load_avatar_bank, avatar_options
+from career_asset_images import (get_jobfinder_image, get_realestate_image,
+                                 get_career_hub_image, get_country_flag_surface)
 from career_activities import new_story, normalize_story, start_night, choose_option, reconcile_story_cosmetics
 from career_activities_ui import CareerActivityScreen
 from cosmetic_assets import CosmeticCatalog, SingleDriftCache
@@ -1775,6 +1778,9 @@ TRAINING_GAMES = {
     },
 }
 
+from npc_portrait_ui import (draw_portrait as draw_framed_npc_portrait,
+                            get_npc_initials)
+
 def _build_career_event_summary():
 
     global career_event_summary_title
@@ -3347,11 +3353,8 @@ career_web_image_cache = {}
 
 career_job_image_cache = {}
 
-career_hub_image_cache = {}
 
-realestate_image_cache = {}
 
-jobfinder_image_cache = {}
 
 # ==================================================
 # SCORE-FOUR RECTS
@@ -3417,304 +3420,13 @@ score_four_hint_rect = pygame.Rect(
     46
 )
 
-def get_npc_initials(
-        npc
-):
 
-    name_parts = (
-        npc.get(
-            "name",
-            "NPC"
-        ).split()
+
+def draw_npc_portrait(npc, rect, style_id):
+    draw_framed_npc_portrait(
+        game_surface, npc, rect, style_id, NPC_PORTRAIT_STYLES,
+        get_npc_portrait_surface, score_four_score_font
     )
-
-    initials = "".join(
-        part[0]
-        for part in name_parts[:2]
-        if part
-    )
-
-    return initials.upper()
-
-
-def draw_npc_portrait(
-        npc,
-        rect,
-        style_id
-):
-
-    style = (
-        NPC_PORTRAIT_STYLES.get(
-            style_id,
-            NPC_PORTRAIT_STYLES[
-                "score_four"
-            ]
-        )
-    )
-
-    shape = style.get(
-        "shape",
-        "rect"
-    )
-
-    border_width = style.get(
-        "border_width",
-        2
-    )
-
-    padding = style.get(
-        "padding",
-        5
-    )
-
-    inner_rect = rect.inflate(
-        -padding * 2,
-        -padding * 2
-    )
-
-    portrait_size = max(
-        inner_rect.width,
-        inner_rect.height
-    )
-
-    portrait = (
-        get_npc_portrait_surface(
-            npc,
-            portrait_size
-        )
-    )
-
-    # ==================================================
-    # Rectangular portrait
-    # ==================================================
-
-    if shape == "rect":
-
-        pygame.draw.rect(
-            game_surface,
-            (
-                55,
-                70,
-                60
-            ),
-            rect
-        )
-
-        if portrait is not None:
-
-            scaled_portrait = (
-                pygame.transform.smoothscale(
-                    portrait,
-                    (
-                        inner_rect.width,
-                        inner_rect.height
-                    )
-                )
-            )
-
-            game_surface.blit(
-                scaled_portrait,
-                inner_rect.topleft
-            )
-
-        else:
-
-            initials = (
-                get_npc_initials(
-                    npc
-                )
-            )
-
-            initials_surface = (
-                score_four_score_font.render(
-                    initials,
-                    True,
-                    (
-                        255,
-                        255,
-                        255
-                    )
-                )
-            )
-
-            initials_rect = (
-                initials_surface.get_rect(
-                    center=rect.center
-                )
-            )
-
-            game_surface.blit(
-                initials_surface,
-                initials_rect
-            )
-
-        pygame.draw.rect(
-            game_surface,
-            (
-                255,
-                255,
-                255
-            ),
-            rect,
-            border_width
-        )
-
-        return
-
-    # ==================================================
-    # Oval portrait
-    # ==================================================
-
-    if shape == "oval":
-
-        oval_surface = pygame.Surface(
-            (
-                rect.width,
-                rect.height
-            ),
-            pygame.SRCALPHA
-        )
-
-        # ------------------------------------------
-        # Background
-        # ------------------------------------------
-
-        pygame.draw.ellipse(
-            oval_surface,
-            (
-                55,
-                70,
-                60,
-                255
-            ),
-            oval_surface.get_rect()
-        )
-
-        # ------------------------------------------
-        # Portrait image
-        # ------------------------------------------
-
-        if portrait is not None:
-
-            scaled_portrait = (
-                pygame.transform.smoothscale(
-                    portrait,
-                    (
-                        inner_rect.width,
-                        inner_rect.height
-                    )
-                )
-            )
-
-            portrait_surface = (
-                pygame.Surface(
-                    (
-                        rect.width,
-                        rect.height
-                    ),
-                    pygame.SRCALPHA
-                )
-            )
-
-            portrait_surface.blit(
-                scaled_portrait,
-                (
-                    padding,
-                    padding
-                )
-            )
-
-            mask_surface = (
-                pygame.Surface(
-                    (
-                        rect.width,
-                        rect.height
-                    ),
-                    pygame.SRCALPHA
-                )
-            )
-
-            pygame.draw.ellipse(
-                mask_surface,
-                (
-                    255,
-                    255,
-                    255,
-                    255
-                ),
-                mask_surface.get_rect()
-            )
-
-            portrait_surface.blit(
-                mask_surface,
-                (
-                    0,
-                    0
-                ),
-                special_flags=pygame.BLEND_RGBA_MULT
-            )
-
-            oval_surface.blit(
-                portrait_surface,
-                (
-                    0,
-                    0
-                )
-            )
-
-        else:
-
-            initials = (
-                get_npc_initials(
-                    npc
-                )
-            )
-
-            initials_surface = (
-                score_four_score_font.render(
-                    initials,
-                    True,
-                    (
-                        255,
-                        255,
-                        255
-                    )
-                )
-            )
-
-            initials_rect = (
-                initials_surface.get_rect(
-                    center=(
-                        rect.width // 2,
-                        rect.height // 2
-                    )
-                )
-            )
-
-            oval_surface.blit(
-                initials_surface,
-                initials_rect
-            )
-
-        # ------------------------------------------
-        # Border
-        # ------------------------------------------
-
-        pygame.draw.ellipse(
-            oval_surface,
-            (
-                255,
-                255,
-                255
-            ),
-            oval_surface.get_rect(),
-            border_width
-        )
-
-        game_surface.blit(
-            oval_surface,
-            rect.topleft
-        )
 
 def get_npc_portrait_surface(npc, size):
     portrait_path = npc.get("portrait")
@@ -3732,183 +3444,16 @@ def get_npc_portrait_surface(npc, size):
     return draw_layered_portrait(npc, size)
 
 
-_country_flag_cache = {}
-
-COUNTRY_FLAG_ALIASES = {
-    "US": "USA",
-    "UK": "GBR",
-    "DEU": "GER",
-    "NLD": "NED",
-}
-
-
-def get_country_flag_surface(country_code, box_size=(30, 20)):
-    code = str(country_code or "").strip().upper()
-    if not code:
-        return None
-
-    code = COUNTRY_FLAG_ALIASES.get(code, code)
-    cache_key = (code, tuple(box_size))
-    if cache_key in _country_flag_cache:
-        return _country_flag_cache[cache_key]
-
-    path = f"assets/ui/flags/{code}.png"
-    try:
-        image = pygame.image.load(path).convert_alpha()
-    except (pygame.error, FileNotFoundError):
-        _country_flag_cache[cache_key] = None
-        return None
-
-    max_w, max_h = box_size
-    width, height = image.get_size()
-    scale = min(max_w / max(1, width), max_h / max(1, height))
-    size = (max(1, int(round(width * scale))), max(1, int(round(height * scale))))
-    image = pygame.transform.smoothscale(image, size)
-    _country_flag_cache[cache_key] = image
-    return image
-
-
-def get_jobfinder_image(
-        filename,
-        size=None
-):
-    cache_key = (
-        filename,
-        size
-    )
-
-    if cache_key in jobfinder_image_cache:
-        return jobfinder_image_cache[cache_key]
-
-    path = (
-        "assets/career/jobfinder/"
-        + filename
-    )
-
-    try:
-        image = pygame.image.load(
-            path
-        ).convert_alpha()
-
-        if size is not None:
-            image = pygame.transform.smoothscale(
-                image,
-                size
-            )
-
-        jobfinder_image_cache[
-            cache_key
-        ] = image
-
-        return image
-
-    except (
-        pygame.error,
-        FileNotFoundError
-    ):
-        return None
 
 
 
-def get_realestate_image(
-        filename,
-        size=None
-):
-
-    cache_key = (
-        filename,
-        size
-    )
-
-    if cache_key in realestate_image_cache:
-        return realestate_image_cache[
-            cache_key
-        ]
-
-    path = (
-        "assets/career/realestate/"
-        + filename
-    )
-
-    try:
-
-        image = pygame.image.load(
-            path
-        ).convert_alpha()
-
-        if size is not None:
-
-            image = pygame.transform.smoothscale(
-                image,
-                size
-            )
-
-        realestate_image_cache[
-            cache_key
-        ] = image
-
-        return image
-
-    except (
-        pygame.error,
-        FileNotFoundError
-    ):
-
-        return None
 
 
-def get_career_hub_image(
-        filename,
-        size=None
-):
 
-    cache_key = (
-        filename,
-        size
-    )
 
-    if (
-        cache_key
-        in career_hub_image_cache
-    ):
-        return (
-            career_hub_image_cache[
-                cache_key
-            ]
-        )
 
-    path = (
-        "assets/career/hub/"
-        + filename
-    )
 
-    try:
 
-        image = pygame.image.load(
-            path
-        ).convert_alpha()
-
-        if size is not None:
-
-            image = (
-                pygame.transform.smoothscale(
-                    image,
-                    size
-                )
-            )
-
-        career_hub_image_cache[
-            cache_key
-        ] = image
-
-        return image
-
-    except (
-        pygame.error,
-        FileNotFoundError
-    ):
-
-        return None
 
 career_leaderboard_state = {}
 career_npc_world = {}
@@ -4029,55 +3574,11 @@ selected_avatar_top = "top_01"
 # LAYERED AVATAR ASSETS
 # ==================================================
 
-avatar_bases = {}
-avatar_eyes = {}
-avatar_hair = {}
-avatar_glasses = {}
-avatar_tops = {}
-
-for i in range(1, 8):
-
-    asset_id = f"base_{i:02d}"
-
-    avatar_bases[asset_id] = pygame.image.load(
-        f"assets/ui/profile/avatar/bases/{asset_id}.png"
-    ).convert_alpha()
-
-
-for i in range(1, 10):
-
-    asset_id = f"eyes_{i:02d}"
-
-    avatar_eyes[asset_id] = pygame.image.load(
-        f"assets/ui/profile/avatar/eyes/{asset_id}.png"
-    ).convert_alpha()
-
-
-for i in range(1, 13):
-
-    asset_id = f"hair_{i:02d}"
-
-    avatar_hair[asset_id] = pygame.image.load(
-        f"assets/ui/profile/avatar/hair/{asset_id}.png"
-    ).convert_alpha()
-
-
-for i in range(1, 7):
-
-    asset_id = f"glasses_{i:02d}"
-
-    avatar_glasses[asset_id] = pygame.image.load(
-        f"assets/ui/profile/avatar/glasses/{asset_id}.png"
-    ).convert_alpha()
-
-
-for i in range(1, 7):
-
-    asset_id = f"top_{i:02d}"
-
-    avatar_tops[asset_id] = pygame.image.load(
-        f"assets/ui/profile/avatar/tops/{asset_id}.png"
-    ).convert_alpha()
+avatar_bases = load_avatar_bank("bases")
+avatar_eyes = load_avatar_bank("eyes")
+avatar_hair = load_avatar_bank("hair")
+avatar_glasses = load_avatar_bank("glasses")
+avatar_tops = load_avatar_bank("tops")
 
 # ==================================================
 # MINI MENU BUTTON ASSETS
@@ -4196,61 +3697,15 @@ floating_logo = pygame.image.load(
 background_catalog = CosmeticCatalog(MENU_BACKGROUNDS, "bg_default")
 menu_background_surfaces = background_catalog.surfaces
 
-avatar_base_options = [
-    "base_01",
-    "base_02",
-    "base_03",
-    "base_04",
-    "base_05",
-    "base_06",
-    "base_07"
-]
+avatar_base_options = avatar_options(avatar_bases, allow_none=False)
 
-avatar_eye_options = [
-    "eyes_01",
-    "eyes_02",
-    "eyes_03",
-    "eyes_04",
-    "eyes_05",
-    "eyes_06",
-    "eyes_07",
-    "eyes_08",
-    "eyes_09"
-]
+avatar_eye_options = avatar_options(avatar_eyes, allow_none=False)
 
-avatar_hair_options = [
-    "hair_01",
-    "hair_02",
-    "hair_03",
-    "hair_04",
-    "hair_05",
-    "hair_06",
-    "hair_07",
-    "hair_08",
-    "hair_09",
-    "hair_10",
-    "hair_11",
-    "hair_12"
-]
+avatar_hair_options = avatar_options(avatar_hair, allow_none=False)
 
-avatar_glasses_options = [
-    None,
-    "glasses_01",
-    "glasses_02",
-    "glasses_03",
-    "glasses_04",
-    "glasses_05",
-    "glasses_06"
-]
+avatar_glasses_options = avatar_options(avatar_glasses, allow_none=True)
 
-avatar_top_options = [
-    "top_01",
-    "top_02",
-    "top_03",
-    "top_04",
-    "top_05",
-    "top_06"
-]
+avatar_top_options = avatar_options(avatar_tops, allow_none=False)
 
 # ==================================================
 # MORE UI ASSETS
@@ -25992,6 +25447,10 @@ while running:
                         score_four_game.mode == "competitive"
                         and score_four_game.round_complete
                 ):
+                    from score_four_ui import ROUND_CONTINUE_RECT
+                    if game_mouse_pos is not None and ROUND_CONTINUE_RECT.collidepoint(game_mouse_pos):
+                        if score_four_game.continue_competitive_round():
+                            audio.play_sound("button_click")
                     continue
 
                 # ------------------------------------------

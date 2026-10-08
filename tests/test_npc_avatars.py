@@ -135,6 +135,31 @@ class ArtistRendererTests(unittest.TestCase):
         self.addCleanup(self.folder.cleanup)
         self.renderer = NpcAvatarRenderer(self.folder.name)
 
+    def test_shared_outline_covers_seam_but_facial_features_stay_above_it(self):
+        core_art(self.folder.name)
+        outline = pygame.Surface((512, 512), pygame.SRCALPHA)
+        outline.fill((20, 20, 20, 255))
+        pygame.image.save(outline, str(Path(self.folder.name) / "outline.png"))
+        image = self.renderer.render(character(), 512)
+        self.assertEqual(tuple(image.get_at((256, 450)))[:3], (20, 20, 20))
+        self.assertEqual(tuple(image.get_at((200, 210)))[:3], (25, 35, 45))
+
+    def test_outline_hot_reload_removal_and_invalid_file_fallback(self):
+        core_art(self.folder.name)
+        path = Path(self.folder.name) / "outline.png"
+        before = self.renderer.render(character(), 512)
+        outline = pygame.Surface((512, 512), pygame.SRCALPHA)
+        outline.fill((20, 20, 20, 255))
+        pygame.image.save(outline, str(path))
+        self.renderer.refresh(force=True)
+        self.assertEqual(tuple(self.renderer.render(character(), 512).get_at((256, 450)))[:3], (20, 20, 20))
+        path.write_bytes(b"invalid png")
+        self.renderer.refresh(force=True)
+        self.assertEqual(pygame.image.tobytes(self.renderer.render(character(), 512), "RGBA"), pygame.image.tobytes(before, "RGBA"))
+        path.unlink()
+        self.renderer.refresh(force=True)
+        self.assertEqual(pygame.image.tobytes(self.renderer.render(character(), 512), "RGBA"), pygame.image.tobytes(before, "RGBA"))
+
     def test_layers_align_and_remain_transparent_without_recolouring(self):
         core_art(self.folder.name)
         npc = character()

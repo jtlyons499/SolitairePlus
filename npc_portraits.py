@@ -42,6 +42,7 @@ class NpcAvatarRenderer:
         self.refresh_interval = max(0.0, float(refresh_interval))
         self.player_layers = {}
         self._banks = {}
+        self._outlines = {}
         self._inventory = None
         self._revision = 0
         self._next_scan = 0.0
@@ -62,9 +63,17 @@ class NpcAvatarRenderer:
         if not force and now < self._next_scan:
             return
         self._next_scan = now + self.refresh_interval
-        inventory, banks = [], {}
+        inventory, banks, outlines = [], {}, {}
         for band in ("", *AGE_BANDS):
             root = self.art_root if not band else self.art_root / "ages" / band
+            outline_path = root / "outline.png"
+            try:
+                stat = outline_path.stat()
+                signature = (str(outline_path), stat.st_size, stat.st_mtime_ns)
+                inventory.append(signature)
+                outlines[band] = (outline_path, signature)
+            except OSError:
+                pass
             for part, (folder, _prefix) in AVATAR_PARTS.items():
                 bank = {}
                 try:
@@ -84,6 +93,7 @@ class NpcAvatarRenderer:
         if inventory != self._inventory:
             self._inventory = inventory
             self._banks = banks
+            self._outlines = outlines
             self._revision += 1
             self._images.clear()
             self._portraits.clear()
@@ -119,6 +129,16 @@ class NpcAvatarRenderer:
                 candidates.append(common[identity])
             for path, signature in candidates:
                 image = self._read_image(path, signature)
+                if image is not None:
+                    return image
+        return None
+
+    def _outline(self, band):
+        """Use one common outline, optionally overridden by age-specific art."""
+        for candidate in (band, ""):
+            entry = self._outlines.get(candidate)
+            if entry is not None:
+                image = self._read_image(*entry)
                 if image is not None:
                     return image
         return None
@@ -166,6 +186,12 @@ class NpcAvatarRenderer:
                     if image.get_size() != AVATAR_CANVAS:
                         image = pygame.transform.smoothscale(image, AVATAR_CANVAS)
                     canvas.blit(image, (0, 0))
+                if part == "shirt":
+                    outline = self._outline(band)
+                    if outline is not None:
+                        if outline.get_size() != AVATAR_CANVAS:
+                            outline = pygame.transform.smoothscale(outline, AVATAR_CANVAS)
+                        canvas.blit(outline, (0, 0))
         else:
             canvas = self._player_avatar(choices)
         portrait = _square_image(canvas, size) if canvas is not None else None
