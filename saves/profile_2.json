@@ -5172,6 +5172,73 @@
                     "last_birthday_year": 2026,
                     "news_flags": []
                 }
+            },
+            "asseel_bat": {
+                "rating": 1942.8000000000002,
+                "age": 23,
+                "birthday_month": 12,
+                "ratings": {
+                    "strategy": 1918.0,
+                    "poker": 1978.0,
+                    "casino": 1956.0,
+                    "solitaire": 1918.0,
+                    "score_four": 1918.0,
+                    "texas_holdem": 1978.0,
+                    "five_card_draw": 1978.0,
+                    "seven_card_stud": 1978.0,
+                    "five_o_poker": 1978.0,
+                    "blackjack": 1956.0,
+                    "roulette": 1956.0,
+                    "faro": 1956.0,
+                    "overall": 1942.8000000000002
+                },
+                "rating_schema_version": 3,
+                "last_change": 0,
+                "last_changes": {
+                    "overall": 0,
+                    "strategy": 0,
+                    "poker": 0,
+                    "casino": 0
+                },
+                "rating_results": {},
+                "public_appeal": "reserved",
+                "fans": 112056,
+                "development": {
+                    "version": 1,
+                    "seed": 13721591891223774477,
+                    "band": "established",
+                    "prodigy": false,
+                    "anchor_age": 23.916666666666668,
+                    "anchor_ratings": {
+                        "strategy": 1918.0,
+                        "poker": 1978.0,
+                        "casino": 1956.0
+                    },
+                    "peak_age": 36,
+                    "peak_ratings": {
+                        "strategy": 2084.0,
+                        "poker": 2163.0,
+                        "casino": 2141.0
+                    },
+                    "decline_start": 44,
+                    "decline_per_year": 4.091,
+                    "decline_fraction_cap": 0.126,
+                    "adult_bonus": 0,
+                    "timeless": false,
+                    "last_targets": {
+                        "strategy": 1918.0,
+                        "poker": 1978.0,
+                        "casino": 1956.0
+                    },
+                    "carry": {
+                        "strategy": 0.0,
+                        "poker": 0.0,
+                        "casino": 0.0
+                    },
+                    "last_simulated_month": 24322,
+                    "last_birthday_year": 2025,
+                    "news_flags": []
+                }
             }
         },
         "npc_world": {
@@ -8108,7 +8175,37 @@
                 "career_day": 91
             }
         ],
-        "interview_recent_ids": []
+        "interview_recent_ids": [],
+        "bigfoot_story": {
+            "schema": 2,
+            "visits": 0,
+            "scene": "hq_start",
+            "location": "Headquarters",
+            "items": [],
+            "flags": {},
+            "cosmetics": [],
+            "history": [],
+            "visited_locations": [
+                "Headquarters"
+            ],
+            "last_result": "",
+            "finished": false
+        },
+        "alien_story": {
+            "schema": 2,
+            "visits": 0,
+            "scene": "leaving_home",
+            "location": "Home",
+            "items": [],
+            "flags": {},
+            "cosmetics": [],
+            "history": [],
+            "visited_locations": [
+                "Home"
+            ],
+            "last_result": "",
+            "finished": false
+        }
     },
     "cosmetics": {
         "selected_menu_background": "bg_default",
@@ -8117,54 +8214,54 @@
         "selected_card_back": "back_default",
         "selected_cursor": "cursor",
         "unlocked_menu_backgrounds": [
-            "bg_giza",
-            "bg_default",
             "bg_et",
             "bg_petra",
             "bg_chichen",
+            "bg_gardens",
+            "bg_default",
+            "bg_microscope",
+            "bg_blue_doodle",
             "bg_noodle",
             "bg_rating_strategy_1400",
-            "bg_microscope",
             "bg_wall",
             "bg_brazil",
-            "bg_gardens",
-            "bg_blue_doodle"
+            "bg_giza"
         ],
         "unlocked_felts": [
-            "f_crystalized_grain",
-            "f_rating_global_1300",
-            "f_grain",
-            "f_wheel_winner",
-            "f_gordon",
-            "f_light_touch",
-            "f_game_night",
-            "f_rock_candy",
+            "f_high_society",
             "f_rating_strategy_1150",
-            "f_rating_strategy_1600",
-            "f_blanky",
             "f_crystalized",
+            "f_crystalized_grain",
+            "f_gordon",
+            "f_game_night",
+            "f_light_touch",
+            "f_grain",
             "f_default",
             "f_fun_felt",
-            "f_high_society"
+            "f_wheel_winner",
+            "f_blanky",
+            "f_rock_candy",
+            "f_rating_strategy_1600",
+            "f_rating_global_1300"
         ],
         "unlocked_titles": [
-            "title_cardshark",
-            "title_patience_creep",
-            "title_patience_dare",
-            "title_soli_tare_blue",
-            "title_neon",
-            "title_isolation",
-            "title_solitaire_pixel",
-            "title_high_roller",
             "title_top_dog",
+            "title_solitary",
+            "title_shatter_1",
+            "title_solitaire_pixel",
+            "title_soli_tare_blue",
+            "title_cardshark",
+            "title_isolation",
+            "title_high_roller",
             "title_cards",
             "t_rating_strategy_1500",
             "title_penciled",
-            "title_shatter_1",
-            "title_solitary",
-            "title_default",
+            "title_soli_tare_red",
             "title_tacit",
-            "title_soli_tare_red"
+            "title_default",
+            "title_patience_creep",
+            "title_neon",
+            "title_patience_dare"
         ],
         "unlocked_card_backs": [
             "back_default"

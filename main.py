@@ -1,3 +1,13 @@
+from runtime_support import bootstrap
+bootstrap()
+
+# Dispatch before importing single-player modules or initializing its window.
+import sys as _launch_sys
+if "--multiplayer" in _launch_sys.argv:
+    from multiplayer_launcher import run_multiplayer
+    run_multiplayer()
+    raise SystemExit(0)
+
 from alien_night import STORY as ALIEN_STORY, new_alien_story, refresh_adventure_schedule
 from solitaire_restart import RestartPrompt
 solitaire_restart_prompt = RestartPrompt()
@@ -10,13 +20,6 @@ from cosmetic_assets import CosmeticCatalog, SingleDriftCache
 from press_interview import PRESS_INTERVIEW_QUESTION_POOL, select_interview, answer_outcome
 from career_session_summary import poker_session_status, night_game_net, track_night_cash, night_cash_total
 from rating_unlocks import unlock_ratings, lock_reason, rating_lock_progress
-# Dispatch before importing single-player modules or initializing its window.
-import sys as _launch_sys
-if "--multiplayer" in _launch_sys.argv:
-    from multiplayer_launcher import run_multiplayer
-    run_multiplayer()
-    raise SystemExit(0)
-
 from multiplayer_launcher import MultiplayerLauncher
 multiplayer_launcher = MultiplayerLauncher()
 
@@ -443,20 +446,7 @@ from settings import (
 # Working directory
 # ==================================================
 
-if getattr(sys, "frozen", False):
-    # Running as packaged EXE
-    os.chdir(
-        os.path.dirname(
-            sys.executable
-        )
-    )
-else:
-    # Running from Python / PyCharm
-    os.chdir(
-        os.path.dirname(
-            os.path.abspath(__file__)
-        )
-    )
+# Resource paths were set before imports by runtime_support.bootstrap().
 
 register_optional_cosmetics(
     MENU_BACKGROUNDS,

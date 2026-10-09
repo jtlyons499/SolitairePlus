@@ -1,6 +1,9 @@
 """Solitaire Multiplayer foundation: standalone local Hold'em, LAN and room-code relay."""
 import os
 from pathlib import Path
+from multiplayer_paths import ROOT
+from runtime_support import bootstrap
+bootstrap()
 import pygame
 from mp_widgets import wooden_button,TextInput
 from texas_holdem_ui import draw_holdem_glossy_button

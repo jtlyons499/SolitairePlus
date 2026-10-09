@@ -150,7 +150,7 @@ class ProspectTests(unittest.TestCase):
 
     def test_arrivals_are_gradual_and_stay_saved(self):
         data, states = world()
-        self.assertEqual(len(career_roster(npc_manager.BASE_NPCS, states)), 50)
+        self.assertEqual(len(career_roster(npc_manager.BASE_NPCS, states)), len(npc_manager.BASE_NPCS))
         _, stories = advance_career_world(data, states, npc_manager.BASE_NPCS,
                                           npc_manager.PROSPECT_POOL, 2027, 1)
         arrivals = [story for story in stories if story["headline"].startswith("NEW ")]
@@ -159,7 +159,7 @@ class ProspectTests(unittest.TestCase):
             state = states[story["npc_id"]]
             self.assertTrue(5 <= state["prospect_record"]["age"] <= 10)
             self.assertEqual(month_index(story["year"], story["month"]), state["joined_month"])
-        self.assertEqual(len(career_roster(npc_manager.BASE_NPCS, states)), 50 + len(arrivals))
+        self.assertEqual(len(career_roster(npc_manager.BASE_NPCS, states)), len(npc_manager.BASE_NPCS) + len(arrivals))
         saved = json.loads(json.dumps((data, states)))
         self.assertEqual(saved[0]["used_prospect_ids"], data["used_prospect_ids"])
         self.assertEqual(career_roster(npc_manager.BASE_NPCS, saved[1]), career_roster(npc_manager.BASE_NPCS, states))
@@ -177,7 +177,7 @@ class ProspectTests(unittest.TestCase):
         self.assertEqual(live_first["age"], 99)
         self.assertTrue(any(npc["id"] == story["npc_id"] for npc in live_list))
         npc_manager.sync_npc_runtime_state({})
-        self.assertEqual(len(live_list), 50)
+        self.assertEqual(len(live_list), len(npc_manager.BASE_NPCS))
         self.assertEqual(live_first["age"], npc_manager.BASE_NPCS[0]["age"])
         self.assertFalse(any(npc["id"] == story["npc_id"] for npc in live_list))
 
@@ -196,7 +196,7 @@ class ProspectTests(unittest.TestCase):
             self.assertIsNotNone(add_prospect(data, states, npc_manager.PROSPECT_POOL, 2026, 1))
         self.assertIsNone(add_prospect(data, states, npc_manager.PROSPECT_POOL, 2026, 1))
         advance_career_world(data, states, npc_manager.BASE_NPCS, npc_manager.PROSPECT_POOL, 2027, 1)
-        self.assertEqual(len(states), 210)
+        self.assertEqual(len(states), len(npc_manager.BASE_NPCS) + len(npc_manager.PROSPECT_POOL))
         self.assertEqual(len(set(data["used_prospect_ids"])), 160)
         self.assertTrue(all(npc["id"] in states for npc in npc_manager.BASE_NPCS))
 

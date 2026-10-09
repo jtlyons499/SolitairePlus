@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import uuid
+import tempfile
 
 from multiplayer_paths import ROOT
 
@@ -72,9 +73,19 @@ class MultiplayerProfile:
     def save(self):
         try:
             self.directory.mkdir(parents=True, exist_ok=True)
-            temp = self.path.with_suffix('.tmp')
-            temp.write_text(json.dumps(self.data, ensure_ascii=False, indent=2), encoding='utf-8')
-            temp.replace(self.path)
+            temp = None
+            try:
+                with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=self.directory,
+                                                 suffix='.tmp', delete=False) as stream:
+                    temp=Path(stream.name)
+                    json.dump(self.data,stream,ensure_ascii=False,indent=2)
+                    stream.flush()
+                    os.fsync(stream.fileno())
+                temp.replace(self.path)
+                temp=None
+            finally:
+                if temp is not None:
+                    temp.unlink(missing_ok=True)
             return True
         except OSError:
             self.notice = 'Could not save profile. Check the profile folder permissions.'

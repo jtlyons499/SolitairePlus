@@ -1,11 +1,16 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+from pathlib import Path
+project = Path(SPECPATH)
+mp_files = [(str(p), str(p.parent.relative_to(project)))
+            for p in (project/'multiplayer').rglob('*.py')
+            if not any(part in {'tests', '__pycache__', '.venv'} for part in p.relative_to(project).parts)]
 
 a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('assets', 'assets'), ('data', 'data'), ('multiplayer', 'multiplayer')],
+    datas=[(str(project/'assets'), 'assets'), (str(project/'data'), 'data')] + mp_files,
     hiddenimports=['asyncio', 'socket', 'ssl', 'queue', 'threading', 'secrets', 'argparse', 'uuid', 'base64', 'io'],
     hookspath=[],
     hooksconfig={},

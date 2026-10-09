@@ -14,7 +14,8 @@ from cryptid_collection import new_collection, normalize_collection
 # SAVE CONFIG
 # ==================================================
 
-SAVE_FOLDER = "saves"
+from runtime_support import save_directory
+SAVE_FOLDER = str(save_directory())
 
 PROFILE_VERSION = 9
 
