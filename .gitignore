@@ -8,3 +8,10 @@ build/
 dist/
 dist.zip
 *.zip
+# Personal data and generated files
+saves/
+*.psd
+*.lnk
+*.log
+*.tmp
+release_preflight.json
