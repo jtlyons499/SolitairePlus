@@ -770,15 +770,15 @@
     }
   },
   {
-    "id": "max_goblet",
-    "name": "Max Goblet",
-    "bio": "Claims to have drunk from the Holy Grail.",
-    "country": "UKR",
-    "age": 82,
-    "hometown": "Kyiv, Ukraine",
+    "id": "lewis_nixon",
+    "name": "Lewis Nixon",
+    "bio": "Drinks nothing but Vat 69.",
+    "country": "USA",
+    "age": 30,
+    "hometown": "Los Angeles, California",
     "favorite_suit": "Diamonds",
-    "skill_tier": "mid",
-    "portrait": "assets/npcs/max_goblet.png",
+    "skill_tier": "elite",
+    "portrait": "assets/npcs/lewis_nixon.png",
     "game_personality": "aggressive",
     "personality_traits": {
       "caution": 2,
@@ -788,7 +788,7 @@
       "selectivity": 4,
       "tenacity": 1,
       "pessimism": 10,
-      "bitterness": 6
+      "bitterness": 10
     }
   },
   {
@@ -1118,6 +1118,28 @@
       "selectivity": 6,
       "tenacity": 4,
       "pessimism": 2,
+      "bitterness": 6
+    }
+  },
+    {
+    "id": "max_goblet",
+    "name": "Max Goblet",
+    "bio": "Enjoys drinking from the Holy Grail.",
+    "country": "USA",
+    "age": 25,
+    "hometown": "Chino, California",
+    "favorite_suit": "Diamonds",
+    "skill_tier": "mid",
+    "portrait": "assets/npcs/max_goblet.png",
+    "game_personality": "aggressive",
+    "personality_traits": {
+      "caution": 2,
+      "aggressiveness": 9,
+      "unpredictability": 5,
+      "escalation": 6,
+      "selectivity": 4,
+      "tenacity": 1,
+      "pessimism": 10,
       "bitterness": 6
     }
   }
