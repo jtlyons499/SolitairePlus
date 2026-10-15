@@ -5,8 +5,10 @@ FIELDS=('career_event_has_activity','career_event_result_log','career_event_news
         'blackjack_session_net','blackjack_session_rating_change','roulette_session_net',
         'horse_races_session_net','horse_races_last_rewarded_races','faro_session_net',
         'five_o_poker_session_net','blind_mans_bluff_session_net',
+        'arcade_night_tokens_spent','arcade_night_tickets_won',
         'career_event_start_strategy','career_event_start_poker','career_event_start_casino',
-        'career_event_start_global','career_event_start_fans','career_event_start_cash','career_event_start_xp','career_event_money_totals')
+        'career_event_start_global','career_event_start_fans','career_event_start_cash','career_event_start_xp',
+        'career_event_start_arcade_tokens','career_event_start_arcade_tickets','career_event_money_totals')
 
 def store_event_progress(entry,namespace):
     if not isinstance(entry,dict) or entry.get('debug') or namespace.get('current_game_mode')!='career':return
@@ -22,6 +24,9 @@ def restore_event_progress(entry,namespace):
         namespace['career_event_money_totals'] = {}
         namespace['career_event_start_cash'] = namespace.get('career_cash',0)
         namespace['career_event_start_xp'] = namespace.get('player_xp',0)
+        arcade_state = namespace.get('arcade_state', {}) if isinstance(namespace.get('arcade_state', {}), dict) else {}
+        namespace['career_event_start_arcade_tokens'] = int(arcade_state.get('tokens', 0) or 0)
+        namespace['career_event_start_arcade_tickets'] = int(arcade_state.get('tickets', 0) or 0)
         return False
     for key in FIELDS:
         default = namespace.get('career_ratings',{}).get(key.removeprefix('career_event_start_'),1000) if key.startswith('career_event_start_') else None
@@ -29,6 +34,8 @@ def restore_event_progress(entry,namespace):
         if key == 'career_event_start_fans': default = namespace.get('career_fans',0)
         if key == 'career_event_start_cash': default = namespace.get('career_cash',0)
         if key == 'career_event_start_xp': default = namespace.get('player_xp',0)
+        if key == 'career_event_start_arcade_tokens': default = int(namespace.get('arcade_state', {}).get('tokens', 0) or 0)
+        if key == 'career_event_start_arcade_tickets': default = int(namespace.get('arcade_state', {}).get('tickets', 0) or 0)
         value=progress.get(key, default)
         if key=='career_event_money_totals':
             if isinstance(value, dict):

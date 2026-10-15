@@ -726,16 +726,20 @@ GAME_UNLOCK_LEVELS = {
     "texas_holdem": 1,
     "faro": 1,
     "blackjack": 1,
+    "king_pong": 1,
 
     "bango": 3,
+    "battle_bosses": 3,
     "crazy_eights": 3,
     "roulette": 3,
 
     "five_o_poker": 6,
     "horse_races": 6,
     "seven_card_stud": 6,
+    "ace_invaders": 6,
 
     "blind_mans_bluff": 10,
+    "suit_snake": 10,
     "five_card_draw": 10,
 }
 

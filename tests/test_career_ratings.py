@@ -21,6 +21,7 @@ from career_session_summary import track_night_cash
 from texas_holdem import TexasHoldemGame
 from five_card_draw import FiveCardDrawGame
 from seven_card_stud import SevenCardStudGame
+from five_o_poker import FiveOPokerGame
 from score_four import ScoreFourGame
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -170,12 +171,130 @@ class RatingTests(unittest.TestCase):
             game.hand_complete = False
             delta = settle_poker_session(ratings, stats, states, key, game)
             self.assertGreater(delta, 0)
-            self.assertEqual(ratings[key], 1000 + delta)
+            self.assertEqual(int(round(ratings[key])), 1000 + delta)
             self.assertTrue(all(ratings[other] == 1000 for other in GAME_RATING_KEYS if GAME_CATEGORIES[other] != GAME_CATEGORIES[key]))
             after = copy.deepcopy((ratings, stats, states))
             self.assertEqual(settle_poker_session(ratings, stats, states, key, game), 0)
             self.assertEqual((ratings, stats, states), after)
             self.assertEqual(sum(state["ratings"][key] - 1000 for state in states.values()) + delta, 0)
+
+    def test_poker_roi_guardrails_cover_break_even_profit_loss_and_bust(self):
+        def run_session(player_stack, npc_stacks, hands, player_rating=1000):
+            ratings = make_player_rating_bundle()
+            if player_rating != 1000:
+                apply_rating_change(
+                    ratings,
+                    "poker",
+                    player_rating - 1000,
+                    scale_rewards=False,
+                )
+            opponents = [npc(f"seat_{index}") for index in range(len(npc_stacks))]
+            states = {
+                opponent["id"]: {
+                    "rating": 1000,
+                    "ratings": make_player_rating_bundle(),
+                }
+                for opponent in opponents
+            }
+            game = SimpleNamespace(
+                npcs=opponents,
+                starting_stack=1000,
+                rating_seen_hands=set(range(1, hands + 1)),
+                rating_final_stacks=[player_stack, *npc_stacks],
+                session_rating_rewarded=False,
+            )
+            stats = {}
+            delta = settle_poker_session(
+                ratings,
+                stats,
+                states,
+                "texas_holdem",
+                game,
+            )
+            return delta, states, opponents, game
+
+        # A long session at exactly the starting bankroll can no longer take a
+        # huge hit merely because a high-rated player finished behind rivals.
+        break_even, _, _, break_even_game = run_session(
+            1000,
+            [1400, 1200, 1000, 800, 600],
+            hands=100,
+            player_rating=2200,
+        )
+        self.assertGreaterEqual(break_even, -5)
+        self.assertLessEqual(break_even, 5)
+        self.assertEqual(break_even_game.session_rating_net, 0)
+
+        modest_profit, profit_states, profit_npcs, profit_game = run_session(
+            1100,
+            [1300, 1100, 1000, 800, 700],
+            hands=50,
+        )
+        self.assertGreaterEqual(modest_profit, 1)
+        self.assertLessEqual(modest_profit, 14)
+        self.assertEqual(profit_game.session_rating_net, 100)
+        self.assertAlmostEqual(profit_game.session_rating_roi, 0.10)
+        self.assertGreater(
+            profit_states[profit_npcs[0]["id"]]["ratings"]["poker"],
+            profit_states[profit_npcs[-1]["id"]]["ratings"]["poker"],
+        )
+
+        small_loss, _, _, _ = run_session(
+            950,
+            [1300, 1100, 1000, 900, 750],
+            hands=50,
+        )
+        self.assertGreaterEqual(small_loss, -10)
+        self.assertLessEqual(small_loss, 0)
+
+        bust, _, _, _ = run_session(
+            0,
+            [1600, 1400, 1200, 1000, 800],
+            hands=50,
+        )
+        self.assertGreaterEqual(bust, -60)
+        self.assertLessEqual(bust, -40)
+
+    def test_five_o_uses_completed_hand_snapshot_and_shared_poker_settlement(self):
+        opponent = npc("five_o_rival")
+        game = FiveOPokerGame()
+        self.assertTrue(game.start_session(opponent, 1000))
+
+        # Bank a profitable completed hand, then begin another one.  The chips
+        # committed to the unfinished hand must not affect rating settlement.
+        game.player_stack = 1100
+        game.npc_stack = 900
+        game._finish_hand()
+        self.assertEqual(game.rating_final_stacks, [1100, 900])
+        self.assertEqual(game.rating_seen_hands, {1})
+        self.assertTrue(game.start_hand())
+        self.assertLess(game.player_stack, 1100)
+
+        ratings, stats = make_player_rating_bundle(), {}
+        states = {
+            opponent["id"]: {
+                "rating": 1000,
+                "ratings": make_player_rating_bundle(),
+            }
+        }
+        delta = settle_poker_session(
+            ratings,
+            stats,
+            states,
+            "five_o_poker",
+            game,
+        )
+        self.assertGreater(delta, 0)
+        self.assertEqual(game.session_rating_change, delta)
+        self.assertEqual(game.session_rating_net, 100)
+        self.assertEqual(stats["five_o_poker"]["played"], 1)
+
+        after = copy.deepcopy((ratings, stats, states))
+        self.assertEqual(
+            settle_poker_session(ratings, stats, states, "five_o_poker", game),
+            0,
+        )
+        self.assertEqual((ratings, stats, states), after)
 
     def test_orchestration_free_play_cannot_change_player_or_npc_ratings(self):
         env = main_functions("award_career_rating", "rate_competitive_game", "rate_house_game", "rate_poker_cash_out")
@@ -271,6 +390,48 @@ class RatingTests(unittest.TestCase):
             after = copy.deepcopy((env["career_cash"], env["career_ratings"], env["career_leaderboard_state"]))
             env["finish_" + key + "_session"]()
             self.assertEqual((env["career_cash"], env["career_ratings"], env["career_leaderboard_state"]), after)
+
+        five_o = FiveOPokerGame()
+        five_o_opponent = npc("five_o")
+        five_o.start_session(five_o_opponent, 1000)
+        five_o.player_stack, five_o.npc_stack = 1100, 900
+        five_o._finish_hand()
+        recorded = []
+        values = dict(
+            five_o_poker_game=five_o,
+            five_o_poker_buy_in_active=True,
+            five_o_poker_starting_stack=1000,
+            five_o_poker_session_net=0,
+            career_cash=500,
+            career_event_has_activity=False,
+            award_game_xp=no_op,
+            award_fans_for_rating_win=no_op,
+            record_career_event_result=lambda game_id, **details: recorded.append((game_id, details)),
+            finish_free_play_sandbox=no_op,
+            STATE_CAREER_EVENT_SELECT="select",
+            STATE_FREE_PLAY_SELECT="free",
+        )
+        env = main_functions(
+            "rate_poker_cash_out",
+            "finish_five_o_poker_session",
+            **values,
+        )
+        env["finish_five_o_poker_session"]()
+        self.assertEqual(env["career_cash"], 1600)
+        self.assertEqual(env["career_rating_results"]["five_o_poker"]["played"], 1)
+        self.assertEqual(recorded[0][0], "five_o_poker")
+        self.assertEqual(
+            recorded[0][1]["rating_reward"],
+            five_o.session_rating_change,
+        )
+        after = copy.deepcopy(
+            (env["career_cash"], env["career_ratings"], env["career_leaderboard_state"])
+        )
+        env["finish_five_o_poker_session"]()
+        self.assertEqual(
+            (env["career_cash"], env["career_ratings"], env["career_leaderboard_state"]),
+            after,
+        )
 
     def test_rated_format_controls_npc_skill_without_leaking_other_ratings(self):
         entry = npc()

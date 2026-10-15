@@ -299,6 +299,63 @@ def build_niche_story(player_name, result_log):
     )
 
 
+def build_arcade_story(player_name, result_log):
+    """Build a Career news item for Arcade Night."""
+    result_log = list(result_log or [])
+    arcade_entries = [
+        entry for entry in result_log
+        if entry.get("game_id") in {"king_pong", "battle_bosses", "prize_counter"}
+    ]
+
+    if not arcade_entries:
+        return (
+            f"{player_name.upper()} VISITS ARCADE NIGHT",
+            f"{player_name} spent the evening feeding tokens into the local arcade machines.",
+            "arcade",
+        )
+
+    battle_entries = [entry for entry in arcade_entries if entry.get("game_id") == "battle_bosses"]
+    if battle_entries:
+        entry = battle_entries[-1]
+        tickets = int(entry.get("tickets", 0) or 0)
+        rivals = int(entry.get("rivals_eliminated", 0) or 0)
+        if entry.get("won"):
+            return (
+                f"{player_name.upper()} CLEARS THE BATTLE BOSSES ARENA",
+                f"{player_name} knocked out all three rival forts in Battle Bosses and collected {tickets:,} arcade tickets.",
+                "arcade",
+            )
+        return (
+            f"BATTLE BOSSES HOLD OFF {player_name.upper()}",
+            f"{player_name} eliminated {rivals} rival fort{'s' if rivals != 1 else ''} before falling in Battle Bosses, earning {tickets:,} tickets.",
+            "arcade",
+        )
+
+    king_pong_entries = [entry for entry in arcade_entries if entry.get("game_id") == "king_pong"]
+    if king_pong_entries:
+        entry = king_pong_entries[-1]
+        tickets = int(entry.get("tickets", 0) or 0)
+        player_score = int(entry.get("player_score", 0) or 0)
+        opponent_score = int(entry.get("opponent_score", 0) or 0)
+        if entry.get("won"):
+            return (
+                f"{player_name.upper()} RULES THE KING PONG CABINET",
+                f"{player_name} beat an arcade rival {player_score}-{opponent_score} in King Pong and walked away with {tickets:,} tickets.",
+                "arcade",
+            )
+        return (
+            f"KING PONG STALLS {player_name.upper()} AT THE ARCADE",
+            f"{player_name} dropped a King Pong match {player_score}-{opponent_score}, but still claimed {tickets:,} tickets at Arcade Night.",
+            "arcade",
+        )
+
+    return (
+        f"{player_name.upper()} CASHES IN TICKETS AT THE PRIZE COUNTER",
+        f"Arcade Night ended with {player_name} cashing tickets in at the prize counter after a long run on the machines.",
+        "arcade",
+    )
+
+
 
 def build_head_to_head_story(player_name, opponent_name, won, elapsed_text=None):
     """Build a Career news item for the timed Klondike head-to-head event."""

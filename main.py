@@ -27,6 +27,23 @@ from career_event_progress import store_event_progress, restore_event_progress
 from career_time_warp import advance_months
 from case_opening import new_case_state, normalize_case_state, purchase as purchase_loot_case, award_earned_trophies
 from case_opening_ui import CaseOpeningScreen
+from arcade_support import (
+    ARCADE_COMING_SOON_GAME_IDS,
+    ARCADE_MACHINE_NAMES,
+    ARCADE_PRIZE_CATALOG,
+    ARCADE_TOKEN_PACKAGES,
+    award_battle_bosses_tickets,
+    award_king_pong_tickets,
+    buy_token_package,
+    clone_arcade_state,
+    get_machine_cost,
+    make_default_arcade_state,
+    normalize_arcade_state,
+    redeem_prize,
+    register_battle_bosses_result,
+    register_king_pong_result,
+    spend_tokens,
+)
 from bluff_presentation import update_bluff_presentation
 from poker_recap import handle_recap_action
 from poker_learning import new_learning, normalize_learning
@@ -34,6 +51,7 @@ import os
 import sys
 import time
 import copy
+import ctypes
 
 from career_hub_controls import CareerHubControls
 from npc_personality import personality_summary
@@ -71,6 +89,12 @@ from bango_ui import (
     ACTION_CONTINUE as BANGO_ACTION_CONTINUE,
 )
 from blackjack import BlackjackGame
+from king_pong import KingPongGame, KING_PONG_DIFFICULTIES
+from battle_bosses import (
+    BATTLE_BOSSES_DIFFICULTIES,
+    build_battle_bosses_choices,
+)
+from battle_bosses_game import BattleBossesGame
 
 from texas_holdem import (
     TexasHoldemGame,
@@ -413,6 +437,7 @@ from career_news import (
     build_poker_story,
     build_casino_story,
     build_niche_story,
+    build_arcade_story,
     build_monthly_flavor_story,
     build_head_to_head_story,
 )
@@ -552,6 +577,34 @@ audio.load_sound(
     "assets/sounds/hand_win.wav"
 )
 
+# Reused by both Five-O presentation and King Pong point scoring.
+audio.load_sound(
+    "five_o_column_win",
+    "assets/sounds/five_o_column_win.wav"
+)
+
+audio.load_sound(
+    "five_o_column_loss",
+    "assets/sounds/five_o_column_loss.wav"
+)
+
+# Battle Bosses SFX are optional while the custom audio is being created.
+# Dropping any of these WAVs into assets/sounds automatically activates the
+# corresponding gameplay event without making missing work-in-progress audio
+# a startup error.
+for battle_sound_name, battle_sound_path in (
+        ("battle_bosses_ricochet", "assets/sounds/battle_bosses_ricochet.wav"),
+        ("battle_bosses_fort_hit", "assets/sounds/battle_bosses_fort_hit.wav"),
+        ("battle_bosses_eliminate", "assets/sounds/battle_bosses_eliminate.wav"),
+        ("battle_bosses_win", "assets/sounds/battle_bosses_win.wav"),
+        ("battle_bosses_loss", "assets/sounds/battle_bosses_loss.wav"),
+):
+    if os.path.isfile(battle_sound_path):
+        try:
+            audio.load_sound(battle_sound_name, battle_sound_path)
+        except pygame.error:
+            pass
+
 audio.load_sound(
     "card_move",
     "assets/sounds/card_move.wav"
@@ -686,6 +739,13 @@ STATE_HORSE_RACES = "horse_races"
 STATE_FARO = "faro"
 STATE_FIVE_O_POKER = "five_o_poker"
 STATE_BLIND_MANS_BLUFF = "blind_mans_bluff"
+STATE_KING_PONG = "king_pong"
+STATE_KING_PONG_OPPONENT_SELECT = "king_pong_opponent_select"
+STATE_BATTLE_BOSSES_OPPONENT_SELECT = "battle_bosses_opponent_select"
+STATE_BATTLE_BOSSES = "battle_bosses"
+STATE_ARCADE_TOKEN_EXCHANGE = "arcade_token_exchange"
+STATE_ARCADE_PRIZE_COUNTER = "arcade_prize_counter"
+STATE_ARCADE_TROPHY_ROOM = "arcade_trophy_room"
 
 STATE_CAREER_EVENT_SUMMARY = (
     "career_event_summary"
@@ -1691,6 +1751,10 @@ CAREER_ACTIVITY_NICHE_NIGHT = (
     "niche_night"
 )
 
+CAREER_ACTIVITY_ARCADE_NIGHT = (
+    "arcade_night"
+)
+
 # ==================================================
 # CAREER CARD EVENT GAME POOLS
 # ==================================================
@@ -1719,6 +1783,14 @@ CAREER_EVENT_GAMES = {
         "five_o_poker",
         "blind_mans_bluff",
     ],
+
+    CAREER_ACTIVITY_ARCADE_NIGHT: [
+        "king_pong",
+        "battle_bosses",
+        "ace_invaders",
+        "suit_snake",
+        "prize_counter",
+    ],
 }
 
 CAREER_EVENT_NAMES = {
@@ -1733,6 +1805,9 @@ CAREER_EVENT_NAMES = {
 
     CAREER_ACTIVITY_NICHE_NIGHT:
         "Niche Game Night",
+
+    CAREER_ACTIVITY_ARCADE_NIGHT:
+        "Arcade Night",
 }
 
 CAREER_CHALLENGES = [
@@ -1960,6 +2035,36 @@ def _build_career_event_summary():
         return
 
     # ==================================================
+    # Arcade Night
+    # ==================================================
+
+    if (
+            activity_type
+            == CAREER_ACTIVITY_ARCADE_NIGHT
+    ):
+
+        starting_tokens = int(globals().get("career_event_start_arcade_tokens", arcade_state.get("tokens", 0)))
+        starting_tickets = int(globals().get("career_event_start_arcade_tickets", arcade_state.get("tickets", 0)))
+        token_delta = int(arcade_state.get("tokens", 0)) - starting_tokens
+        ticket_delta = int(arcade_state.get("tickets", 0)) - starting_tickets
+
+        def _format_signed(value, prefix=""):
+            sign = "+" if value >= 0 else "-"
+            return f"{sign}{prefix}{abs(int(value)):,}"
+
+        career_event_summary_lines = [
+            "Arcade Night completed.",
+            f"Tokens: {int(arcade_state.get('tokens', 0)):,} ({_format_signed(token_delta)})",
+            f"Tickets: {int(arcade_state.get('tickets', 0)):,} ({_format_signed(ticket_delta)})",
+            f"Tokens spent tonight: {int(globals().get('arcade_night_tokens_spent', 0)):,}",
+            f"Tickets won tonight: +{int(globals().get('arcade_night_tickets_won', 0)):,}",
+            f"Current Cash: ${career_cash:,}",
+            f"Current Fans: {career_fans:,}",
+        ]
+
+        return
+
+    # ==================================================
     # Generic fallback
     # ==================================================
 
@@ -1982,7 +2087,8 @@ def build_career_event_summary():
     lines.append(f"Fans: {career_fans:,} ({fans:+d})")
     if globals().get("career_event_entry") and career_event_entry.get("activity_type") in (
             CAREER_ACTIVITY_CASUAL_CARDS, CAREER_ACTIVITY_POKER_NIGHT,
-            CAREER_ACTIVITY_CASINO_NIGHT, CAREER_ACTIVITY_NICHE_NIGHT):
+            CAREER_ACTIVITY_CASINO_NIGHT, CAREER_ACTIVITY_NICHE_NIGHT,
+            globals().get("CAREER_ACTIVITY_ARCADE_NIGHT", "arcade_night")):
         cash_change = int(career_cash - globals().get("career_event_start_cash", career_cash))
         xp_change = max(0, int(player_xp - globals().get("career_event_start_xp", player_xp)))
         sign = "+" if cash_change >= 0 else "-"
@@ -2674,26 +2780,15 @@ def build_default_career_schedule():
 
     monthly_card_events = []
     for _half in range(2):
-        # Every 15-day half now contains one Niche Game Night. With Faro,
-        # Five-O Poker, and Blind Man's Bluff all playable, the event should
-        # be part of normal Career rhythm rather than a rare random roll.
+        # Each half-month now features one of every themed night: Casual
+        # Cards, Poker Night, Casino Night, Niche Game Night, and Arcade Night.
         half_events = [
             CAREER_ACTIVITY_CASUAL_CARDS,
             CAREER_ACTIVITY_POKER_NIGHT,
             CAREER_ACTIVITY_CASINO_NIGHT,
             CAREER_ACTIVITY_NICHE_NIGHT,
+            CAREER_ACTIVITY_ARCADE_NIGHT,
         ]
-        half_events.append(
-            random.choices(
-                [
-                    CAREER_ACTIVITY_CASUAL_CARDS,
-                    CAREER_ACTIVITY_POKER_NIGHT,
-                    CAREER_ACTIVITY_CASINO_NIGHT,
-                ],
-                weights=[4, 3, 3],
-                k=1,
-            )[0]
-        )
         random.shuffle(half_events)
         monthly_card_events.extend(half_events)
 
@@ -2770,7 +2865,8 @@ def build_default_career_schedule():
                     CAREER_ACTIVITY_CASUAL_CARDS,
                     CAREER_ACTIVITY_POKER_NIGHT,
                     CAREER_ACTIVITY_CASINO_NIGHT,
-                    CAREER_ACTIVITY_NICHE_NIGHT
+                    CAREER_ACTIVITY_NICHE_NIGHT,
+                    CAREER_ACTIVITY_ARCADE_NIGHT
             ):
                 entry["title"] = CAREER_EVENT_NAMES[activity_type]
                 entry["game_ids"] = CAREER_EVENT_GAMES[activity_type].copy()
@@ -2911,6 +3007,7 @@ def reset_career_event_result_log():
 
 
 def record_career_event_result(game_id, won=None, **details):
+    fan_impact = details.pop("fan_impact", True)
     entry = {
         "game_id": game_id,
         "won": won,
@@ -2918,10 +3015,9 @@ def record_career_event_result(game_id, won=None, **details):
     entry.update(details)
     career_event_result_log.append(entry)
 
-    # Career popularity can move in both directions now. A single loss only
-    # costs a modest number of fans, while a genuinely bad money session has
-    # a somewhat larger effect.
-    if current_game_mode == "career" and won is False:
+    # Career popularity can move in both directions now. Arcade machines use
+    # their own ticket economy, so their results can explicitly opt out.
+    if current_game_mode == "career" and won is False and fan_impact:
         net_value = details.get("net", 0)
         try:
             net_loss = max(0, -int(net_value))
@@ -2946,6 +3042,8 @@ def reset_career_event_session_totals(activity_type):
     global faro_session_net
     global five_o_poker_session_net
     global blind_mans_bluff_session_net
+    global arcade_night_tokens_spent
+    global arcade_night_tickets_won
 
     if activity_type == CAREER_ACTIVITY_POKER_NIGHT:
         texas_holdem_session_net = 0
@@ -2963,6 +3061,10 @@ def reset_career_event_session_totals(activity_type):
         faro_session_net = 0
         five_o_poker_session_net = 0
         blind_mans_bluff_session_net = 0
+
+    elif activity_type == CAREER_ACTIVITY_ARCADE_NIGHT:
+        arcade_night_tokens_spent = 0
+        arcade_night_tickets_won = 0
 
 
 def publish_career_event_news():
@@ -3003,6 +3105,12 @@ def publish_career_event_news():
 
     elif activity_type == CAREER_ACTIVITY_NICHE_NIGHT:
         story = build_niche_story(
+            player_name,
+            career_event_result_log,
+        )
+
+    elif activity_type == CAREER_ACTIVITY_ARCADE_NIGHT:
+        story = build_arcade_story(
             player_name,
             career_event_result_log,
         )
@@ -3252,6 +3360,19 @@ career_poker_learning = new_learning()
 faro_game = FaroGame()
 five_o_poker_game = FiveOPokerGame()
 blind_mans_bluff_game = BlindMansBluffGame()
+king_pong_game = KingPongGame()
+battle_bosses_game = BattleBossesGame()
+arcade_state = make_default_arcade_state()
+arcade_night_tokens_spent = 0
+arcade_night_tickets_won = 0
+arcade_pending_launch_game_id = None
+arcade_selected_prize_index = 0
+king_pong_opponent_choices = []
+king_pong_selected_opponent_index = None
+battle_bosses_opponent_choices = []
+battle_bosses_selected_choice_index = None
+arcade_status_message = ""
+arcade_status_message_expires = 0
 
 roulette_session_net = 0
 roulette_chip_value = 10
@@ -3289,6 +3410,8 @@ career_event_summary_title = ""
 career_event_summary_lines = []
 career_event_result_log = []
 career_event_news_posted = False
+career_event_start_arcade_tokens = 0
+career_event_start_arcade_tickets = 0
 
 career_news_page = 0
 
@@ -3901,24 +4024,84 @@ if selected_cursor not in cursor_runtime_surfaces:
     elif cursor_files:
         selected_cursor = os.path.splitext(cursor_files[0])[0]
 
-cursor_image = (
-    cursor_runtime_surfaces.get(selected_cursor)
-)
+cursor_image = cursor_runtime_surfaces.get(selected_cursor)
 
-# Modern pygame/SDL can use an RGBA Surface as a true OS
-# cursor. That cursor is updated independently from the
-# game's 60 FPS loop, which removes the sluggish feel the
-# old software-drawn cursor could have. A software fallback
-# remains for platforms that reject color cursors.
+# Modern pygame/SDL can use an RGBA Surface as a true OS cursor. That keeps
+# the default path snappy. However, some Windows systems use accessibility
+# cursor sizes that are much larger than the standard arrow. In that case the
+# tiny native replacement is hard to see, so we intentionally fall back to a
+# software cursor that is scaled to the user's OS cursor metrics.
 software_cursor_fallback = False
+software_cursor_force_accessible = False
+system_cursor_metrics = CURSOR_RUNTIME_SIZE
+_cursor_scaled_cache = {}
+
+
+def detect_accessible_cursor_mode():
+    global software_cursor_force_accessible
+    global system_cursor_metrics
+
+    software_cursor_force_accessible = False
+    system_cursor_metrics = CURSOR_RUNTIME_SIZE
+
+    if not sys.platform.startswith("win"):
+        return
+
+    try:
+        user32 = ctypes.windll.user32
+        width = int(user32.GetSystemMetrics(13))
+        height = int(user32.GetSystemMetrics(14))
+    except Exception:
+        return
+
+    if width > 0 and height > 0:
+        system_cursor_metrics = (width, height)
+        software_cursor_force_accessible = (
+            max(width, height) >= 48
+            or width * height >= 2304
+        )
+
+
+def get_selected_cursor_surface(use_accessible_size=False):
+    source = cursor_surfaces.get(selected_cursor)
+    if source is None:
+        return None
+
+    if not use_accessible_size:
+        return cursor_runtime_surfaces.get(selected_cursor)
+
+    target_w, target_h = system_cursor_metrics
+    target_w = max(target_w, CURSOR_RUNTIME_SIZE[0])
+    target_h = max(target_h, CURSOR_RUNTIME_SIZE[1])
+    cache_key = (selected_cursor, target_w, target_h)
+    if cache_key in _cursor_scaled_cache:
+        return _cursor_scaled_cache[cache_key]
+
+    scale = min(target_w / max(1, source.get_width()), target_h / max(1, source.get_height()))
+    scaled = pygame.transform.smoothscale(
+        source,
+        (
+            max(1, int(round(source.get_width() * scale))),
+            max(1, int(round(source.get_height() * scale))),
+        )
+    )
+    _cursor_scaled_cache[cache_key] = scaled
+    return scaled
+
 
 def apply_selected_cursor():
     global cursor_image
     global software_cursor_fallback
 
-    cursor_image = cursor_runtime_surfaces.get(
-        selected_cursor
-    )
+    detect_accessible_cursor_mode()
+
+    if software_cursor_force_accessible:
+        cursor_image = get_selected_cursor_surface(use_accessible_size=True)
+        pygame.mouse.set_visible(False)
+        software_cursor_fallback = True
+        return
+
+    cursor_image = get_selected_cursor_surface(use_accessible_size=False)
 
     if cursor_image is None:
         pygame.mouse.set_visible(True)
@@ -3926,16 +4109,12 @@ def apply_selected_cursor():
         return
 
     try:
-        native_cursor = pygame.cursors.Cursor(
-            (0, 0),
-            cursor_image
-        )
-
+        native_cursor = pygame.cursors.Cursor((0, 0), cursor_image)
         pygame.mouse.set_cursor(native_cursor)
         pygame.mouse.set_visible(True)
         software_cursor_fallback = False
-
     except (pygame.error, TypeError, ValueError):
+        cursor_image = get_selected_cursor_surface(use_accessible_size=False)
         pygame.mouse.set_visible(False)
         software_cursor_fallback = True
 
@@ -4429,6 +4608,8 @@ FREE_PLAY_GAME_NAMES = {
     "faro": "Faro",
     "five_o_poker": "Five-O Poker",
     "blind_mans_bluff": "Blind Man's Bluff",
+    "king_pong": "King Pong",
+    "battle_bosses": "Battle Bosses",
     "cryptid_creatures": "Cryptid Creatures",
 }
 
@@ -4621,6 +4802,51 @@ career_event_end_rect = pygame.Rect(
     220,
     59
 )
+
+arcade_machine_buy_tokens_rect = pygame.Rect(328, 535, 330, 92)
+arcade_machine_prize_counter_rect = pygame.Rect(708, 535, 330, 92)
+
+arcade_token_package_rects = {}
+for package_index in range(len(ARCADE_TOKEN_PACKAGES)):
+    row = package_index // 2
+    column = package_index % 2
+    arcade_token_package_rects[package_index] = pygame.Rect(
+        248 + column * 475,
+        270 + row * 172,
+        395,
+        132,
+    )
+
+arcade_token_exchange_back_rect = pygame.Rect(128, 658, 240, 54)
+arcade_token_exchange_continue_rect = pygame.Rect(998, 658, 240, 54)
+
+arcade_prize_card_rects = {}
+for prize_index in range(len(ARCADE_PRIZE_CATALOG)):
+    arcade_prize_card_rects[prize_index] = pygame.Rect(116 + prize_index * 388, 212, 350, 248)
+
+arcade_prize_back_rect = pygame.Rect(106, 658, 220, 54)
+arcade_prize_trophy_room_rect = pygame.Rect(573, 658, 220, 54)
+arcade_prize_buy_rect = pygame.Rect(1040, 658, 220, 54)
+arcade_trophy_room_back_rect = pygame.Rect(543, 658, 280, 54)
+
+king_pong_return_rect = pygame.Rect(1132, 652, 198, 54)
+
+king_pong_opponent_rects = [
+    pygame.Rect(103 + index * 292, 205, 266, 340)
+    for index in range(4)
+]
+king_pong_opponent_back_rect = pygame.Rect(103, 657, 220, 54)
+king_pong_opponent_tokens_rect = pygame.Rect(573, 657, 220, 54)
+king_pong_opponent_play_rect = pygame.Rect(1043, 657, 220, 54)
+
+battle_bosses_choice_rects = [
+    pygame.Rect(108 + (index % 2) * 590, 205 + (index // 2) * 210, 552, 185)
+    for index in range(4)
+]
+battle_bosses_back_rect = pygame.Rect(108, 651, 240, 54)
+battle_bosses_refresh_rect = pygame.Rect(563, 651, 240, 54)
+battle_bosses_future_play_rect = pygame.Rect(1018, 651, 240, 54)
+battle_bosses_quit_rect = pygame.Rect(1090, 675, 220, 50)
 
 career_interview_answer_rects = [
     pygame.Rect(348, 410, 670, 54),
@@ -7916,6 +8142,306 @@ def debug_open_casino_night():
     )
 
 
+def set_arcade_status_message(message, duration_ms=2600):
+    global arcade_status_message
+    global arcade_status_message_expires
+
+    arcade_status_message = str(message or "")
+    arcade_status_message_expires = pygame.time.get_ticks() + max(600, int(duration_ms or 0))
+
+
+def open_arcade_token_exchange(pending_game_id=None):
+    global current_state
+    global arcade_pending_launch_game_id
+
+    arcade_pending_launch_game_id = pending_game_id
+    current_state = STATE_ARCADE_TOKEN_EXCHANGE
+
+
+def build_king_pong_opponent_choices():
+    """Pick one current Career NPC for each arcade difficulty tier."""
+    choices = []
+    used_ids = set()
+    fallback_pool = [
+        npc for npc in NPCS
+        if isinstance(npc, dict) and npc.get("name")
+    ]
+
+    for difficulty_id, config in KING_PONG_DIFFICULTIES.items():
+        tier = config.get("npc_tier", "mid")
+        tier_pool = [
+            npc for npc in fallback_pool
+            if npc.get("skill_tier", "mid") == tier
+            and npc.get("id") not in used_ids
+        ]
+
+        if not tier_pool:
+            tier_pool = [
+                npc for npc in fallback_pool
+                if npc.get("id") not in used_ids
+            ]
+
+        if tier_pool:
+            npc = random.choice(tier_pool)
+            npc_id = npc.get("id")
+            if npc_id is not None:
+                used_ids.add(npc_id)
+        else:
+            npc = {
+                "id": f"arcade_{difficulty_id}",
+                "name": f"{config.get('label', difficulty_id.title())} Arcade Bot",
+                "skill_tier": tier,
+            }
+
+        choices.append({
+            "difficulty_id": difficulty_id,
+            "npc": npc,
+        })
+
+    return choices
+
+
+def open_king_pong_opponent_select(refresh=True):
+    global current_state
+    global king_pong_opponent_choices
+    global king_pong_selected_opponent_index
+    global arcade_pending_launch_game_id
+
+    if refresh or len(king_pong_opponent_choices) != len(KING_PONG_DIFFICULTIES):
+        king_pong_opponent_choices = build_king_pong_opponent_choices()
+        king_pong_selected_opponent_index = None
+
+    arcade_pending_launch_game_id = None
+    current_state = STATE_KING_PONG_OPPONENT_SELECT
+
+
+def build_battle_bosses_opponent_choices():
+    return build_battle_bosses_choices(NPCS)
+
+
+def open_battle_bosses_opponent_select(refresh=True):
+    global current_state
+    global battle_bosses_opponent_choices
+    global battle_bosses_selected_choice_index
+
+    if refresh or len(battle_bosses_opponent_choices) != len(BATTLE_BOSSES_DIFFICULTIES):
+        battle_bosses_opponent_choices = build_battle_bosses_opponent_choices()
+        battle_bosses_selected_choice_index = None
+
+    current_state = STATE_BATTLE_BOSSES_OPPONENT_SELECT
+
+
+def get_selected_battle_bosses_choice():
+    if (
+            battle_bosses_selected_choice_index is None
+            or battle_bosses_selected_choice_index < 0
+            or battle_bosses_selected_choice_index >= len(battle_bosses_opponent_choices)
+    ):
+        return None
+    return battle_bosses_opponent_choices[battle_bosses_selected_choice_index]
+
+
+def get_selected_king_pong_choice():
+    if (
+            king_pong_selected_opponent_index is None
+            or king_pong_selected_opponent_index < 0
+            or king_pong_selected_opponent_index >= len(king_pong_opponent_choices)
+    ):
+        return None
+    return king_pong_opponent_choices[king_pong_selected_opponent_index]
+
+
+def start_king_pong_session():
+    global current_state
+    global career_event_has_activity
+    global arcade_state
+    global arcade_night_tokens_spent
+    global arcade_pending_launch_game_id
+
+    selected = get_selected_king_pong_choice()
+    if selected is None:
+        open_king_pong_opponent_select(refresh=True)
+        set_arcade_status_message("Choose a King Pong rival first.")
+        return False
+
+    token_cost = get_machine_cost("king_pong")
+    success, updated_state = spend_tokens(arcade_state, token_cost)
+    if not success:
+        set_arcade_status_message("Not enough tokens. Buy more to play King Pong.")
+        open_arcade_token_exchange("king_pong")
+        return False
+
+    arcade_state = updated_state
+    arcade_night_tokens_spent += token_cost
+    arcade_pending_launch_game_id = None
+    career_event_has_activity = True
+
+    difficulty_id = selected.get("difficulty_id", "medium")
+    opponent = selected.get("npc") or {"name": "Arcade Rival", "skill_tier": "mid"}
+    king_pong_game.start_match(
+        opponent,
+        difficulty_id=difficulty_id,
+        target_score=5,
+        player_name=player_name,
+    )
+    auto_save_career()
+    current_state = STATE_KING_PONG
+    return True
+
+
+def claim_king_pong_result():
+    global career_event_has_activity
+    global arcade_state
+    global arcade_night_tickets_won
+
+    if king_pong_game.reward_claimed or not king_pong_game.finished:
+        return False
+
+    if king_pong_game.forfeited:
+        base_tickets = 0
+        tickets = 0
+    else:
+        base_tickets = award_king_pong_tickets(
+            king_pong_game.player_score,
+            king_pong_game.opponent_score,
+        )
+        tickets = max(
+            0,
+            int(round(base_tickets * king_pong_game.ticket_multiplier)),
+        )
+
+    arcade_state = register_king_pong_result(
+        arcade_state,
+        king_pong_game.player_won,
+        tickets,
+    )
+    arcade_night_tickets_won += tickets
+    career_event_has_activity = True
+
+    record_career_event_result(
+        "king_pong",
+        won=king_pong_game.player_won,
+        tickets=tickets,
+        base_tickets=base_tickets,
+        ticket_multiplier=king_pong_game.ticket_multiplier,
+        difficulty=king_pong_game.difficulty_id,
+        tokens_spent=get_machine_cost("king_pong"),
+        player_score=king_pong_game.player_score,
+        opponent_score=king_pong_game.opponent_score,
+        opponent_name=king_pong_game.opponent_name,
+        forfeited=bool(king_pong_game.forfeited),
+        fan_impact=False,
+    )
+
+    king_pong_game.reward_claimed = True
+    auto_save_career()
+    return True
+
+
+def finish_king_pong_session():
+    global current_state
+
+    claim_king_pong_result()
+    current_state = STATE_CAREER_EVENT_SELECT
+
+
+def start_battle_bosses_session():
+    global current_state
+    global career_event_has_activity
+    global arcade_state
+    global arcade_night_tokens_spent
+    global arcade_pending_launch_game_id
+
+    selected = get_selected_battle_bosses_choice()
+    if selected is None:
+        open_battle_bosses_opponent_select(refresh=True)
+        set_arcade_status_message("Choose a Battle Bosses squad first.")
+        return False
+
+    token_cost = get_machine_cost("battle_bosses")
+    success, updated_state = spend_tokens(arcade_state, token_cost)
+    if not success:
+        set_arcade_status_message("Not enough tokens. Buy more to enter Battle Bosses.")
+        open_arcade_token_exchange("battle_bosses")
+        return False
+
+    arcade_state = updated_state
+    arcade_night_tokens_spent += token_cost
+    arcade_pending_launch_game_id = None
+    career_event_has_activity = True
+
+    difficulty_id = selected.get("difficulty_id", "standard")
+    config = selected.get("config") or BATTLE_BOSSES_DIFFICULTIES.get(
+        difficulty_id, BATTLE_BOSSES_DIFFICULTIES["standard"]
+    )
+    battle_bosses_game.start_match(
+        selected.get("npcs") or [],
+        difficulty_id=difficulty_id,
+        difficulty_config=config,
+        player_name=player_name,
+    )
+    auto_save_career()
+    current_state = STATE_BATTLE_BOSSES
+    return True
+
+
+def claim_battle_bosses_result():
+    global career_event_has_activity
+    global arcade_state
+    global arcade_night_tickets_won
+
+    if battle_bosses_game.reward_claimed or not battle_bosses_game.finished:
+        return False
+
+    if battle_bosses_game.forfeited:
+        base_tickets = 0
+        tickets = 0
+    else:
+        base_tickets = award_battle_bosses_tickets(
+            battle_bosses_game.rivals_eliminated,
+            battle_bosses_game.player_won,
+            battle_bosses_game.player_hp,
+        )
+        tickets = max(
+            0,
+            int(round(base_tickets * battle_bosses_game.ticket_multiplier)),
+        )
+
+    arcade_state = register_battle_bosses_result(
+        arcade_state,
+        battle_bosses_game.player_won,
+        tickets,
+        rivals_eliminated=battle_bosses_game.rivals_eliminated,
+    )
+    arcade_night_tickets_won += tickets
+    career_event_has_activity = True
+
+    record_career_event_result(
+        "battle_bosses",
+        won=battle_bosses_game.player_won,
+        tickets=tickets,
+        base_tickets=base_tickets,
+        ticket_multiplier=battle_bosses_game.ticket_multiplier,
+        difficulty=battle_bosses_game.difficulty_id,
+        tokens_spent=get_machine_cost("battle_bosses"),
+        rivals_eliminated=battle_bosses_game.rivals_eliminated,
+        player_hp=battle_bosses_game.player_hp,
+        forfeited=bool(battle_bosses_game.forfeited),
+        fan_impact=False,
+    )
+
+    battle_bosses_game.reward_claimed = True
+    auto_save_career()
+    return True
+
+
+def finish_battle_bosses_session():
+    global current_state
+
+    claim_battle_bosses_result()
+    current_state = STATE_CAREER_EVENT_SELECT
+
+
 def start_crazy_eights_session():
 
     global current_state
@@ -8504,19 +9030,11 @@ def finish_five_o_poker_session():
             and five_o_poker_game.hands_played > 0
             and not five_o_poker_game.reward_claimed
     ):
-        if five_o_poker_game.five_o_wins > 0:
-            reward_key = "five_o"
-        elif five_o_poker_session_net > 0:
-            reward_key = "profit"
-        elif five_o_poker_session_net == 0:
-            reward_key = "break_even"
-        else:
-            reward_key = "loss"
+        rating_gain = rate_poker_cash_out(
+            "five_o_poker",
+            five_o_poker_game,
+        )
 
-        requested = 12 * five_o_poker_game.hands_won - 5 * five_o_poker_game.hands_lost + 8 * five_o_poker_game.five_o_wins
-        rating_gain = award_career_rating("five_o_poker", requested)
-        record_result(career_rating_results, "five_o_poker", 1 if won_five_o_session else 0 if five_o_poker_session_net < 0 else .5, rating_gain)
-    
         won_session = won_five_o_session
         if won_session:
             award_fans_for_rating_win(
@@ -8531,6 +9049,7 @@ def finish_five_o_poker_session():
             hands=five_o_poker_game.hands_played,
             hands_won=five_o_poker_game.hands_won,
             five_o_wins=five_o_poker_game.five_o_wins,
+            rating_reward=rating_gain,
         )
         track_night_cash(globals(), "five_o_poker", five_o_poker_session_net)
         five_o_poker_game.reward_claimed = True
@@ -9304,6 +9823,7 @@ def get_profile_avatar():
     return avatar_surface
 
 def build_profile_save_data():
+    from arcade_support import clone_arcade_state as clone_arcade_save_state
     store_event_progress(globals().get("career_event_entry"), globals())
 
     profile_data = (
@@ -9523,6 +10043,12 @@ def build_profile_save_data():
         career_news_items
     )
 
+    career_data[
+        "arcade"
+    ] = clone_arcade_save_state(
+        arcade_state
+    )
+
     # Solitaire Points are not
     # implemented yet, so keep
     # the default value for now.
@@ -9607,6 +10133,7 @@ def build_profile_save_data():
 def apply_profile_save_data(
         data
 ):
+    from arcade_support import normalize_arcade_state as normalize_arcade_save_state
     global career_bigfoot_story, career_alien_story
     from alien_night import STORY as ALIEN_STORY, refresh_adventure_schedule
     career_bigfoot_story = normalize_story(data.get("career", {}).get("bigfoot_story"))
@@ -9627,6 +10154,7 @@ def apply_profile_save_data(
     global profile_favorite_suit
     global career_owned_residences
     global career_news_items
+    global arcade_state
 
     global player_solitaire_points
 
@@ -9864,6 +10392,13 @@ def apply_profile_save_data(
             []
         )
         if str(value).isdigit()
+    )
+
+    arcade_state = normalize_arcade_save_state(
+        career_data.get(
+            "arcade",
+            {}
+        )
     )
 
     # ----------------------------
@@ -14665,7 +15200,8 @@ def draw_career_hub():
                     CAREER_ACTIVITY_CASUAL_CARDS,
                     CAREER_ACTIVITY_POKER_NIGHT,
                     CAREER_ACTIVITY_CASINO_NIGHT,
-                    CAREER_ACTIVITY_NICHE_NIGHT
+                    CAREER_ACTIVITY_NICHE_NIGHT,
+                    CAREER_ACTIVITY_ARCADE_NIGHT
 
             ):
 
@@ -17722,6 +18258,11 @@ EVENT_SELECTION_IMAGE_PATHS = {
     "faro": "assets/events/niche_night/faro.png",
     "five_o_poker": "assets/events/niche_night/five_o_poker.png",
     "blind_mans_bluff": "assets/events/niche_night/blind_mans_bluff.png",
+    "king_pong": "assets/arcade/king_pong/select.png",
+    "battle_bosses": "assets/arcade/battle_bosses/select.png",
+    "ace_invaders": "assets/arcade/ace_invaders/select.png",
+    "suit_snake": "assets/arcade/suit_snake/select.png",
+    "prize_counter": "assets/arcade/ui/prize_counter.png",
 }
 
 _event_selection_image_cache = {}
@@ -17738,6 +18279,7 @@ EVENT_BACKGROUND_ASSET_PATHS = {
     CAREER_ACTIVITY_POKER_NIGHT: "assets/events/poker_night/background.png",
     CAREER_ACTIVITY_CASINO_NIGHT: "assets/events/casino_night/background.png",
     CAREER_ACTIVITY_NICHE_NIGHT: "assets/events/niche_night/background.png",
+    CAREER_ACTIVITY_ARCADE_NIGHT: "assets/arcade/bg.png",
 }
 
 EVENT_BUTTON_ASSET_PATHS = {
@@ -17809,66 +18351,53 @@ def draw_event_image_button(rect, activity_type, button_kind, fallback_text, ena
     game_surface.blit(button, rect.topleft)
 
 
-def get_event_selection_image(game_id):
+def get_event_selection_image(game_id, size=None):
     path = EVENT_SELECTION_IMAGE_PATHS.get(game_id)
     if not path:
         return None
 
-    if game_id in _event_selection_image_cache:
-        return _event_selection_image_cache[game_id]
+    requested_size = tuple(size or EVENT_SELECTION_IMAGE_SIZE)
+    cache_key = (game_id, requested_size)
+    if cache_key in _event_selection_image_cache:
+        return _event_selection_image_cache[cache_key]
 
     try:
         image = pygame.image.load(path).convert_alpha()
-        image = pygame.transform.smoothscale(
-            image, EVENT_SELECTION_IMAGE_SIZE
-        )
-        _event_selection_image_cache[game_id] = image
+        image = pygame.transform.smoothscale(image, requested_size)
+        _event_selection_image_cache[cache_key] = image
         return image
     except (pygame.error, FileNotFoundError):
         return None
 
 
-def get_poker_night_selection_image(
-        game_id
-):
-    path = POKER_NIGHT_SELECTION_IMAGE_PATHS.get(
-        game_id
-    )
+def get_poker_night_selection_image(game_id, size=None):
+    path = POKER_NIGHT_SELECTION_IMAGE_PATHS.get(game_id)
 
     if not path:
         return None
 
-    cache_key = (
-        game_id,
-        POKER_NIGHT_SELECTION_IMAGE_SIZE
-    )
+    requested_size = tuple(size or POKER_NIGHT_SELECTION_IMAGE_SIZE)
+    cache_key = (game_id, requested_size)
 
     if cache_key in _poker_night_selection_image_cache:
-        return _poker_night_selection_image_cache[
-            cache_key
-        ]
+        return _poker_night_selection_image_cache[cache_key]
 
     try:
-        image = pygame.image.load(
-            path
-        ).convert_alpha()
-
-        image = pygame.transform.smoothscale(
-            image,
-            POKER_NIGHT_SELECTION_IMAGE_SIZE
-        )
-
-        _poker_night_selection_image_cache[
-            cache_key
-        ] = image
-
+        image = pygame.image.load(path).convert_alpha()
+        image = pygame.transform.smoothscale(image, requested_size)
+        _poker_night_selection_image_cache[cache_key] = image
         return image
 
-    except (
-            pygame.error,
-            FileNotFoundError
-    ):
+    except (pygame.error, FileNotFoundError):
         return None
+
+
+def get_career_event_card_layout(activity_type, game_count):
+    if activity_type == CAREER_ACTIVITY_ARCADE_NIGHT or game_count >= 5:
+        return 232, 312, 14, 184
+    if game_count == 4:
+        return 246, 320, 18, 180
+    return 300, 330, 30, 178
 
 
 def draw_poker_night_high_stakes_label(
@@ -17932,37 +18461,218 @@ def draw_poker_night_high_stakes_label(
     )
 
 
-def _draw_career_event_select():
-    game_surface.fill(
-        (
-            20,
-            120,
-            35
+def draw_arcade_night_select():
+    background = get_event_ui_asset("assets/arcade/bg.png", (BASE_WIDTH, BASE_HEIGHT))
+    if background is not None:
+        game_surface.blit(background, (0, 0))
+    else:
+        game_surface.fill((13, 18, 28))
+
+    shade = pygame.Surface((BASE_WIDTH, BASE_HEIGHT), pygame.SRCALPHA)
+    shade.fill((0, 0, 0, 42))
+    game_surface.blit(shade, (0, 0))
+
+    title = options_title_font.render("ARCADE NIGHT", True, (255, 255, 255))
+    subtitle = difficulty_detail_font.render(
+        "Choose a machine, buy tokens, and turn your wins into tickets.",
+        True,
+        (221, 226, 232),
+    )
+    game_surface.blit(title, title.get_rect(center=(BASE_WIDTH // 2, 48)))
+    game_surface.blit(subtitle, subtitle.get_rect(center=(BASE_WIDTH // 2, 88)))
+
+    counter_data = (
+        ("CASH", f"${career_cash:,}"),
+        ("TOKENS", f"{int(arcade_state.get('tokens', 0)):,}"),
+        ("TICKETS", f"{int(arcade_state.get('tickets', 0)):,}"),
+    )
+    counter_width = 220
+    counter_gap = 22
+    total_counter_width = counter_width * 3 + counter_gap * 2
+    counter_x = (BASE_WIDTH - total_counter_width) // 2
+    for index, (label, value) in enumerate(counter_data):
+        rect = pygame.Rect(counter_x + index * (counter_width + counter_gap), 112, counter_width, 54)
+        panel = pygame.Surface(rect.size, pygame.SRCALPHA)
+        panel.fill((7, 14, 24, 222))
+        game_surface.blit(panel, rect.topleft)
+        pygame.draw.rect(game_surface, (92, 184, 218), rect, 2, border_radius=9)
+        label_surface = difficulty_detail_font.render(label, True, (179, 191, 203))
+        value_surface = option_label_font.render(value, True, (255, 237, 151))
+        game_surface.blit(label_surface, label_surface.get_rect(midleft=(rect.x + 14, rect.centery)))
+        game_surface.blit(value_surface, value_surface.get_rect(midright=(rect.right - 14, rect.centery)))
+
+    machine_ids = [
+        game_id
+        for game_id in career_event_entry.get("game_ids", [])
+        if game_id != "prize_counter"
+    ]
+    machine_names = {
+        "king_pong": "King Pong",
+        "battle_bosses": "Battle Bosses",
+        "ace_invaders": "Ace Invaders",
+        "suit_snake": "Suit Snake",
+    }
+    descriptions = {
+        "king_pong": ("King vs. King paddle action.", "First to five wins."),
+        "battle_bosses": ("Deflect the Joker projectile", "and break the rival strongholds."),
+        "ace_invaders": ("Blast waves of incoming", "Aces before they reach you."),
+        "suit_snake": ("Build a card-chain snake", "through the deck in sequence."),
+    }
+
+    card_width = 276
+    card_height = 326
+    card_gap = 18
+    card_y = 188
+    total_width = card_width * len(machine_ids) + card_gap * max(0, len(machine_ids) - 1)
+    start_x = (BASE_WIDTH - total_width) // 2
+
+    for index, game_id in enumerate(machine_ids):
+        rect = pygame.Rect(start_x + index * (card_width + card_gap), card_y, card_width, card_height)
+        unlocked = is_game_unlocked(game_id)
+        coming_soon = game_id in ARCADE_COMING_SOON_GAME_IDS
+        hovered = (
+            unlocked
+            and not coming_soon
+            and game_mouse_pos is not None
+            and rect.collidepoint(game_mouse_pos)
         )
+
+        fill = (22, 31, 44, 238) if not hovered else (31, 57, 68, 242)
+        card_surface = pygame.Surface(rect.size, pygame.SRCALPHA)
+        card_surface.fill(fill)
+        game_surface.blit(card_surface, rect.topleft)
+        border = (247, 213, 115) if hovered else (198, 207, 219)
+        pygame.draw.rect(game_surface, border, rect, 3 if hovered else 2, border_radius=12)
+
+        image_rect = pygame.Rect(rect.x + 8, rect.y + 8, rect.width - 16, 146)
+        image = get_event_selection_image(game_id, image_rect.size)
+        if image is not None:
+            game_surface.blit(image, image_rect)
+        else:
+            pygame.draw.rect(game_surface, (7, 10, 16), image_rect, border_radius=7)
+            placeholder = difficulty_detail_font.render("SELECT ART", True, (114, 123, 136))
+            game_surface.blit(placeholder, placeholder.get_rect(center=image_rect.center))
+
+        if coming_soon or not unlocked:
+            overlay = pygame.Surface(image_rect.size, pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 145))
+            game_surface.blit(overlay, image_rect.topleft)
+            if coming_soon:
+                state_text = "COMING SOON"
+            else:
+                state_text = f"LOCKED — LEVEL {get_game_unlock_level(game_id)}"
+            state_surface = option_label_font.render(state_text, True, (245, 245, 245))
+            game_surface.blit(state_surface, state_surface.get_rect(center=image_rect.center))
+
+        name = option_label_font.render(machine_names.get(game_id, game_id.replace("_", " ").title()), True, (248, 249, 250))
+        game_surface.blit(name, name.get_rect(center=(rect.centerx, rect.y + 181)))
+
+        for line_index, line in enumerate(descriptions.get(game_id, ("Arcade machine.", ""))):
+            line_surface = difficulty_detail_font.render(line, True, (204, 212, 221))
+            game_surface.blit(line_surface, line_surface.get_rect(center=(rect.centerx, rect.y + 220 + line_index * 25)))
+
+        token_cost = get_machine_cost(game_id)
+        cost_text = "COMING SOON" if coming_soon else f"{token_cost} TOKEN{'S' if token_cost != 1 else ''} PER PLAY"
+        cost_color = (155, 163, 176) if coming_soon else (255, 235, 145)
+        cost_surface = difficulty_detail_font.render(cost_text, True, cost_color)
+        game_surface.blit(cost_surface, cost_surface.get_rect(center=(rect.centerx, rect.bottom - 28)))
+
+        career_event_card_rects.append((rect, game_id))
+
+    draw_menu_button(
+        arcade_machine_buy_tokens_rect,
+        "Buy Tokens",
+        game_mouse_pos,
+        font=option_label_font,
     )
 
+    # Prize Counter uses its authored 640x360 select art rather than appearing
+    # as another generic text button. Keep the art at 16:9 on the left and the
+    # service label on the right so it remains readable at this compact size.
+    prize_rect = arcade_machine_prize_counter_rect
+    prize_hovered = game_mouse_pos is not None and prize_rect.collidepoint(game_mouse_pos)
+    prize_panel = pygame.Surface(prize_rect.size, pygame.SRCALPHA)
+    prize_panel.fill((28, 42, 55, 244) if prize_hovered else (18, 29, 42, 238))
+    game_surface.blit(prize_panel, prize_rect.topleft)
+    pygame.draw.rect(
+        game_surface,
+        (247, 213, 115) if prize_hovered else (178, 190, 204),
+        prize_rect,
+        3 if prize_hovered else 2,
+        border_radius=10,
+    )
+    prize_art_rect = pygame.Rect(prize_rect.x + 4, prize_rect.y + 4, 149, 84)
+    prize_art = get_event_selection_image("prize_counter", prize_art_rect.size)
+    if prize_art is not None:
+        game_surface.blit(prize_art, prize_art_rect)
+    else:
+        pygame.draw.rect(game_surface, (7, 12, 19), prize_art_rect, border_radius=6)
+        missing = ui_small_font.render("PRIZE ART", True, (120, 132, 146))
+        game_surface.blit(missing, missing.get_rect(center=prize_art_rect.center))
+    prize_title = option_label_font.render("Prize Counter", True, (248, 249, 250))
+    prize_note = ui_small_font.render("Tickets + Trophies", True, (255, 235, 145))
+    label_center_x = prize_art_rect.right + (prize_rect.right - prize_art_rect.right) // 2
+    game_surface.blit(prize_title, prize_title.get_rect(center=(label_center_x, prize_rect.y + 34)))
+    game_surface.blit(prize_note, prize_note.get_rect(center=(label_center_x, prize_rect.y + 61)))
+
+    career_event_card_rects.append((arcade_machine_buy_tokens_rect, "token_exchange"))
+    career_event_card_rects.append((arcade_machine_prize_counter_rect, "prize_counter"))
+
+    draw_event_image_button(
+        career_event_return_rect,
+        CAREER_ACTIVITY_ARCADE_NIGHT,
+        "return",
+        "Return",
+        enabled=True,
+    )
+    draw_event_image_button(
+        career_event_end_rect,
+        CAREER_ACTIVITY_ARCADE_NIGHT,
+        "end",
+        "End Arcade Night",
+        enabled=career_event_has_activity,
+    )
+
+    if not career_event_has_activity and game_mouse_pos is not None and career_event_end_rect.collidepoint(game_mouse_pos):
+        tooltip_surface = difficulty_detail_font.render(
+            "Play at least one arcade game before ending the night.",
+            True,
+            (245, 245, 245),
+        )
+        tooltip_rect = tooltip_surface.get_rect(
+            midbottom=(career_event_end_rect.centerx, career_event_end_rect.y - 8)
+        ).inflate(20, 12)
+        panel = pygame.Surface(tooltip_rect.size, pygame.SRCALPHA)
+        panel.fill((8, 14, 23, 235))
+        game_surface.blit(panel, tooltip_rect.topleft)
+        pygame.draw.rect(game_surface, (228, 198, 108), tooltip_rect, 2, border_radius=8)
+        game_surface.blit(tooltip_surface, tooltip_surface.get_rect(center=tooltip_rect.center))
+
+    if arcade_status_message and pygame.time.get_ticks() <= arcade_status_message_expires:
+        message_surface = difficulty_detail_font.render(arcade_status_message, True, (251, 244, 217))
+        backdrop = message_surface.get_rect(center=(BASE_WIDTH // 2, 540)).inflate(24, 12)
+        pane = pygame.Surface(backdrop.size, pygame.SRCALPHA)
+        pane.fill((8, 14, 24, 230))
+        game_surface.blit(pane, backdrop.topleft)
+        pygame.draw.rect(game_surface, (226, 194, 104), backdrop, 2, border_radius=8)
+        game_surface.blit(message_surface, message_surface.get_rect(center=backdrop.center))
+
+
+def _draw_career_event_select():
+    game_surface.fill((20, 28, 35))
     career_event_card_rects.clear()
 
     if career_event_entry is None:
         return
 
-    activity_type = (
-        career_event_entry.get(
-            "activity_type"
-        )
-    )
+    activity_type = career_event_entry.get("activity_type")
+    if activity_type == CAREER_ACTIVITY_ARCADE_NIGHT:
+        draw_arcade_night_select()
+        return
 
-    is_poker_night = (
-        activity_type
-        == CAREER_ACTIVITY_POKER_NIGHT
-    )
-
-    event_title = (
-        CAREER_EVENT_NAMES.get(
-            activity_type,
-            "Card Event"
-        )
-    )
+    is_poker_night = activity_type == CAREER_ACTIVITY_POKER_NIGHT
+    is_arcade_night = activity_type == CAREER_ACTIVITY_ARCADE_NIGHT
+    event_title = CAREER_EVENT_NAMES.get(activity_type, "Card Event")
 
     background_path = EVENT_BACKGROUND_ASSET_PATHS.get(activity_type)
     background = get_event_ui_asset(background_path, (BASE_WIDTH, BASE_HEIGHT))
@@ -17972,94 +18682,49 @@ def _draw_career_event_select():
         shade.fill((0, 0, 0, 45))
         game_surface.blit(shade, (0, 0))
 
-    title_asset = get_event_ui_asset(
-        EVENT_TITLE_ASSET_PATHS.get(activity_type),
-        (360, 96)
-    )
+    title_asset = get_event_ui_asset(EVENT_TITLE_ASSET_PATHS.get(activity_type), (360, 96))
     if title_asset is not None:
-        game_surface.blit(
-            title_asset,
-            title_asset.get_rect(center=(BASE_WIDTH // 2, 66))
-        )
+        game_surface.blit(title_asset, title_asset.get_rect(center=(BASE_WIDTH // 2, 66)))
     else:
-        title_surface = options_title_font.render(
-            event_title,
-            True,
-            (255, 255, 255)
-        )
-        game_surface.blit(
-            title_surface,
-            title_surface.get_rect(center=(BASE_WIDTH // 2, 78))
-        )
+        title_surface = options_title_font.render(event_title, True, (255, 255, 255))
+        game_surface.blit(title_surface, title_surface.get_rect(center=(BASE_WIDTH // 2, 78)))
 
-    subtitle_surface = (
-        difficulty_detail_font.render(
-            (
-                "Choose your table"
-                if is_poker_night
-                else "Choose a game"
-            ),
-            True,
-            (
-                230,
-                230,
-                230
-            )
+    subtitle_text = "Choose your machine" if is_arcade_night else ("Choose your table" if is_poker_night else "Choose a game")
+    subtitle_surface = difficulty_detail_font.render(subtitle_text, True, (230, 230, 230))
+    subtitle_y = 126
+    game_surface.blit(subtitle_surface, subtitle_surface.get_rect(center=(BASE_WIDTH // 2, subtitle_y)))
+
+    if is_arcade_night:
+        counters = (
+            ("Cash", f"${career_cash:,}"),
+            ("Tokens", f"{int(arcade_state.get('tokens', 0)):,}"),
+            ("Tickets", f"{int(arcade_state.get('tickets', 0)):,}"),
         )
-    )
+        for index, (label, value) in enumerate(counters):
+            rect = pygame.Rect(392 + index * 198, 144, 182, 44)
+            pygame.draw.rect(game_surface, (12, 20, 30), rect, border_radius=10)
+            pygame.draw.rect(game_surface, (226, 195, 104), rect, 2, border_radius=10)
+            label_surface = difficulty_detail_font.render(label, True, (212, 219, 225))
+            value_surface = difficulty_detail_font.render(value, True, (255, 237, 156))
+            game_surface.blit(label_surface, label_surface.get_rect(midleft=(rect.x + 14, rect.centery)))
+            game_surface.blit(value_surface, value_surface.get_rect(midright=(rect.right - 14, rect.centery)))
 
-    subtitle_rect = (
-        subtitle_surface.get_rect(
-            center=(
-                BASE_WIDTH // 2,
-                126
-            )
-        )
-    )
-
-    game_surface.blit(
-        subtitle_surface,
-        subtitle_rect
-    )
-
-    game_ids = (
-        career_event_entry.get(
-            "game_ids",
-            []
-        )
-    )
-
+    game_ids = career_event_entry.get("game_ids", [])
     uses_image_cards = activity_type in (
         CAREER_ACTIVITY_CASUAL_CARDS,
         CAREER_ACTIVITY_POKER_NIGHT,
         CAREER_ACTIVITY_CASINO_NIGHT,
         CAREER_ACTIVITY_NICHE_NIGHT,
+        CAREER_ACTIVITY_ARCADE_NIGHT,
     )
 
     if uses_image_cards:
-        card_width = 300
-        card_height = 330
-        card_gap = 30
-        card_y = 166
+        card_width, card_height, card_gap, card_y = get_career_event_card_layout(activity_type, len(game_ids))
     else:
-        card_width = 270
-        card_height = 250
-        card_gap = 35
-        card_y = 220
+        card_width, card_height, card_gap, card_y = 270, 250, 35, 220
 
-    total_width = (
-        card_width * len(game_ids)
-        + card_gap
-        * max(
-            0,
-            len(game_ids) - 1
-        )
-    )
-
-    start_x = (
-        BASE_WIDTH // 2
-        - total_width // 2
-    )
+    total_width = card_width * len(game_ids) + card_gap * max(0, len(game_ids) - 1)
+    start_x = BASE_WIDTH // 2 - total_width // 2
 
     game_names = {
         "score_four": "Score-Four",
@@ -18073,26 +18738,15 @@ def _draw_career_event_select():
         "horse_races": "Horse Races",
         "faro": "Faro",
         "five_o_poker": "Five-O Poker",
-        "blind_mans_bluff": (
-            "Blind Man's Bluff"
-        ),
+        "blind_mans_bluff": "Blind Man's Bluff",
+        **ARCADE_MACHINE_NAMES,
     }
 
     poker_descriptions = {
-        "texas_holdem": (
-            "Community cards, blinds,",
-            "and no-limit betting."
-        ),
-        "seven_card_stud": (
-            "Seven cards, exposed streets,",
-            "and fixed-limit betting."
-        ),
-        "five_card_draw": (
-            "Classic draw poker with",
-            "one discard-and-draw round."
-        ),
+        "texas_holdem": ("Community cards, blinds,", "and no-limit betting."),
+        "seven_card_stud": ("Seven cards, exposed streets,", "and fixed-limit betting."),
+        "five_card_draw": ("Classic draw poker with", "one discard-and-draw round."),
     }
-
 
     event_descriptions = {
         "score_four": ("Use all four numbers", "to make exactly 24."),
@@ -18104,401 +18758,669 @@ def _draw_career_event_select():
         "faro": ("Back ranks against", "the banker deck."),
         "five_o_poker": ("Build five poker hands", "at the same time."),
         "blind_mans_bluff": ("See every card", "except your own."),
+        "king_pong": ("Arcade paddle duel", "for tickets and bragging rights."),
+        "battle_bosses": ("Card battlers and", "boss fights are on deck."),
+        "ace_invaders": ("A retro shooter with", "card-flavored waves."),
+        "suit_snake": ("Chase a longer chain", "of hearts, clubs, and spades."),
+        "prize_counter": ("Redeem tickets and", "check your trophy shelf."),
     }
 
-    for index, game_id in enumerate(
-            game_ids
-    ):
-        x = (
-            start_x
-            + index
-            * (
-                card_width
-                + card_gap
-            )
-        )
-
-        rect = pygame.Rect(
-            x,
-            card_y,
-            card_width,
-            card_height
-        )
-
-        unlocked = (
-            is_game_unlocked(
-                game_id
-            )
-        )
-
-        hovered = (
-            unlocked
-            and game_mouse_pos is not None
-            and rect.collidepoint(
-                game_mouse_pos
-            )
-        )
+    for index, game_id in enumerate(game_ids):
+        rect = pygame.Rect(start_x + index * (card_width + card_gap), card_y, card_width, card_height)
+        unlocked = is_game_unlocked(game_id)
+        coming_soon = is_arcade_night and game_id in ARCADE_COMING_SOON_GAME_IDS
+        clickable = unlocked and not coming_soon
+        hovered = clickable and game_mouse_pos is not None and rect.collidepoint(game_mouse_pos)
 
         if not unlocked:
-            fill_color = (
-                55,
-                55,
-                58
-            )
-
-            border_color = (
-                125,
-                125,
-                130
-            )
-
-            border_width = 3
-
+            fill_color, border_color, border_width = (55, 55, 58), (125, 125, 130), 3
+        elif coming_soon:
+            fill_color, border_color, border_width = (48, 53, 70), (158, 166, 188), 3
         elif hovered:
-            fill_color = (
-                48,
-                112,
-                66
-            )
-
-            border_color = (
-                255,
-                225,
-                120
-            )
-
-            border_width = 5
-
+            fill_color, border_color, border_width = (48, 112, 66), (255, 225, 120), 5
         else:
-            fill_color = (
-                38,
-                92,
-                53
-            )
+            fill_color, border_color, border_width = (38, 92, 53), (235, 235, 235), 3
 
-            border_color = (
-                235,
-                235,
-                235
-            )
+        pygame.draw.rect(game_surface, fill_color, rect, border_radius=10)
+        pygame.draw.rect(game_surface, border_color, rect, border_width, border_radius=10)
 
-            border_width = 3
+        game_name = game_names.get(game_id, game_id.replace("_", " ").title())
+        is_high_stakes = is_poker_night and game_id == career_event_entry.get("high_stakes_game_id")
 
-        pygame.draw.rect(
-            game_surface,
-            fill_color,
-            rect,
-            border_radius=10
-        )
+        image_width = max(120, card_width - 12)
+        image_height = max(90, int(round(image_width * 9 / 16)))
+        image_rect = pygame.Rect(rect.x + (card_width - image_width) // 2, rect.y + 17, image_width, image_height)
+        image = get_poker_night_selection_image(game_id, image_rect.size) if is_poker_night else get_event_selection_image(game_id, image_rect.size)
 
-        pygame.draw.rect(
-            game_surface,
-            border_color,
-            rect,
-            border_width,
-            border_radius=10
-        )
-
-        game_name = (
-            game_names.get(
-                game_id,
-                game_id
-            )
-        )
-
-        is_high_stakes = (
-                is_poker_night
-                and game_id
-                == career_event_entry.get(
-                    "high_stakes_game_id"
-                )
-        )
-
-        if is_poker_night:
-            image_rect = pygame.Rect(
-                rect.x + 6,
-                rect.y + 17,
-                *POKER_NIGHT_SELECTION_IMAGE_SIZE
-            )
-
-            image = (
-                get_poker_night_selection_image(
-                    game_id
-                )
-            )
-
-            if image is not None:
-                game_surface.blit(
-                    image,
-                    image_rect
-                )
-
-            else:
-                pygame.draw.rect(
-                    game_surface,
-                    (
-                        24,
-                        28,
-                        31
-                    ),
-                    image_rect,
-                    border_radius=6
-                )
-
-                pygame.draw.rect(
-                    game_surface,
-                    (
-                        115,
-                        125,
-                        130
-                    ),
-                    image_rect,
-                    2,
-                    border_radius=6
-                )
-
-                missing_surface = (
-                    difficulty_detail_font.render(
-                        "POKER NIGHT ART",
-                        True,
-                        (
-                            185,
-                            190,
-                            195
-                        )
-                    )
-                )
-
-                game_surface.blit(
-                    missing_surface,
-                    missing_surface.get_rect(
-                        center=image_rect.center
-                    )
-                )
-
-            if not unlocked:
-                lock_overlay = pygame.Surface(
-                    image_rect.size,
-                    pygame.SRCALPHA
-                )
-                lock_overlay.fill(
-                    (
-                        0,
-                        0,
-                        0,
-                        145
-                    )
-                )
-                game_surface.blit(
-                    lock_overlay,
-                    image_rect.topleft
-                )
-
-                required_level = (
-                    get_game_unlock_level(
-                        game_id
-                    )
-                )
-
-                lock_surface = (
-                    difficulty_detail_font.render(
-                        f"LOCKED - LEVEL {required_level}",
-                        True,
-                        (
-                            240,
-                            240,
-                            240
-                        )
-                    )
-                )
-
-                game_surface.blit(
-                    lock_surface,
-                    lock_surface.get_rect(
-                        center=image_rect.center
-                    )
-                )
-
-            if is_high_stakes:
-                draw_poker_night_high_stakes_label(
-                    game_surface,
-                    (
-                        rect.centerx,
-                        rect.y + 230
-                    )
-                )
-
-            description_lines = (
-                poker_descriptions.get(
-                    game_id,
-                    (
-                        "Poker Night game.",
-                        ""
-                    )
-                )
-            )
-
-            description_y = (
-                rect.y + 264
-                if is_high_stakes
-                else rect.y + 245
-            )
-
-            for line_index, line in enumerate(
-                    description_lines
-            ):
-                if not line:
-                    continue
-
-                line_surface = (
-                    difficulty_detail_font.render(
-                        line,
-                        True,
-                        (
-                            220,
-                            223,
-                            225
-                        )
-                    )
-                )
-
-                game_surface.blit(
-                    line_surface,
-                    line_surface.get_rect(
-                        center=(
-                            rect.centerx,
-                            description_y
-                            + line_index * 25
-                        )
-                    )
-                )
-
+        if image is not None:
+            game_surface.blit(image, image_rect)
         else:
-            image_rect = pygame.Rect(
-                rect.x + 6,
-                rect.y + 17,
-                *EVENT_SELECTION_IMAGE_SIZE
-            )
-            image = get_event_selection_image(game_id)
+            pygame.draw.rect(game_surface, (24, 28, 31), image_rect, border_radius=6)
+            pygame.draw.rect(game_surface, (115, 125, 130), image_rect, 2, border_radius=6)
+            missing_name = option_label_font.render(game_name, True, (220, 222, 224))
+            missing_note = difficulty_detail_font.render("EVENT ART", True, (150, 155, 160))
+            game_surface.blit(missing_name, missing_name.get_rect(center=(image_rect.centerx, image_rect.centery - 12)))
+            game_surface.blit(missing_note, missing_note.get_rect(center=(image_rect.centerx, image_rect.centery + 18)))
 
-            if image is not None:
-                game_surface.blit(image, image_rect)
-            else:
-                pygame.draw.rect(
-                    game_surface, (24, 28, 31), image_rect, border_radius=6
-                )
-                pygame.draw.rect(
-                    game_surface, (115, 125, 130), image_rect, 2, border_radius=6
-                )
-                missing_name = option_label_font.render(
-                    game_name, True, (220, 222, 224)
-                )
-                missing_note = difficulty_detail_font.render(
-                    "EVENT ART", True, (150, 155, 160)
-                )
-                game_surface.blit(
-                    missing_name,
-                    missing_name.get_rect(center=(image_rect.centerx, image_rect.centery - 12))
-                )
-                game_surface.blit(
-                    missing_note,
-                    missing_note.get_rect(center=(image_rect.centerx, image_rect.centery + 18))
-                )
-
+        if not unlocked or coming_soon:
+            overlay = pygame.Surface(image_rect.size, pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 145 if not unlocked else 120))
+            game_surface.blit(overlay, image_rect.topleft)
             if not unlocked:
-                lock_overlay = pygame.Surface(image_rect.size, pygame.SRCALPHA)
-                lock_overlay.fill((0, 0, 0, 145))
-                game_surface.blit(lock_overlay, image_rect.topleft)
                 required_level = get_game_unlock_level(game_id)
-                lock_surface = difficulty_detail_font.render(
-                    f"LOCKED - LEVEL {required_level}",
-                    True, (240, 240, 240)
-                )
-                game_surface.blit(
-                    lock_surface, lock_surface.get_rect(center=image_rect.center)
-                )
+                text_line = f"LOCKED - LEVEL {required_level}"
+            else:
+                text_line = "COMING SOON"
+            lock_surface = difficulty_detail_font.render(text_line, True, (240, 240, 240))
+            game_surface.blit(lock_surface, lock_surface.get_rect(center=image_rect.center))
 
-            description_lines = event_descriptions.get(
-                game_id, ("Card game.", "")
-            )
-            for line_index, line in enumerate(description_lines):
-                if not line:
-                    continue
-                line_surface = difficulty_detail_font.render(
-                    line, True, (220, 223, 225)
-                )
-                game_surface.blit(
-                    line_surface,
-                    line_surface.get_rect(
-                        center=(rect.centerx, rect.y + 255 + line_index * 25)
-                    )
-                )
+        description_lines = poker_descriptions.get(game_id, ("Poker Night game.", "")) if is_poker_night else event_descriptions.get(game_id, ("Card game.", ""))
+        description_y = image_rect.bottom + 18
+        if is_high_stakes:
+            draw_poker_night_high_stakes_label(game_surface, (rect.centerx, image_rect.bottom + 8))
+            description_y += 18
 
-        career_event_card_rects.append(
-            (
-                rect,
-                game_id
-            )
-        )
+        for line_index, line in enumerate(description_lines):
+            if not line:
+                continue
+            line_surface = difficulty_detail_font.render(line, True, (220, 223, 225))
+            game_surface.blit(line_surface, line_surface.get_rect(center=(rect.centerx, description_y + line_index * 25)))
 
-    draw_event_image_button(
-        career_event_return_rect,
-        activity_type,
-        "return",
-        "Return",
-        enabled=True
-    )
+        career_event_card_rects.append((rect, game_id))
+
+    draw_event_image_button(career_event_return_rect, activity_type, "return", "Return", enabled=True)
 
     if career_event_entry is not None:
         event_name = CAREER_EVENT_NAMES.get(activity_type, "Event")
-        draw_event_image_button(
-            career_event_end_rect,
-            activity_type,
-            "end",
-            f"End {event_name}",
-            enabled=career_event_has_activity
-        )
+        draw_event_image_button(career_event_end_rect, activity_type, "end", f"End {event_name}", enabled=career_event_has_activity)
 
-    if (
-            not career_event_has_activity
-            and game_mouse_pos is not None
-            and career_event_end_rect.collidepoint(game_mouse_pos)
-    ):
+    if (not career_event_has_activity and game_mouse_pos is not None and career_event_end_rect.collidepoint(game_mouse_pos)):
         tooltip_text = "Play at least one game before ending the event."
-        tooltip_surface = difficulty_detail_font.render(
-            tooltip_text,
-            True,
-            (245, 245, 245)
-        )
-        tooltip_rect = tooltip_surface.get_rect(
-            midbottom=(career_event_end_rect.centerx, career_event_end_rect.y - 10)
-        ).inflate(22, 14)
+        tooltip_surface = difficulty_detail_font.render(tooltip_text, True, (245, 245, 245))
+        tooltip_rect = tooltip_surface.get_rect(midbottom=(career_event_end_rect.centerx, career_event_end_rect.y - 10)).inflate(22, 14)
         panel = pygame.Surface(tooltip_rect.size, pygame.SRCALPHA)
         panel.fill((12, 18, 16, 235))
         game_surface.blit(panel, tooltip_rect.topleft)
         pygame.draw.rect(game_surface, (228, 200, 115), tooltip_rect, 2, border_radius=7)
-        game_surface.blit(
-            tooltip_surface,
-            tooltip_surface.get_rect(center=tooltip_rect.center)
-        )
+        game_surface.blit(tooltip_surface, tooltip_surface.get_rect(center=tooltip_rect.center))
+
+    if is_arcade_night and arcade_status_message and pygame.time.get_ticks() <= arcade_status_message_expires:
+        message_surface = difficulty_detail_font.render(arcade_status_message, True, (251, 244, 217))
+        backdrop = message_surface.get_rect(center=(BASE_WIDTH // 2, 714)).inflate(28, 16)
+        pane = pygame.Surface(backdrop.size, pygame.SRCALPHA)
+        pane.fill((14, 19, 32, 228))
+        game_surface.blit(pane, backdrop.topleft)
+        pygame.draw.rect(game_surface, (226, 194, 104), backdrop, 2, border_radius=9)
+        game_surface.blit(message_surface, message_surface.get_rect(center=backdrop.center))
+
 
 def draw_career_event_select():
     _draw_career_event_select()
-    if not career_event_entry: return
+    if not career_event_entry:
+        return
+    if career_event_entry.get("activity_type") == CAREER_ACTIVITY_ARCADE_NIGHT:
+        return
     from career_ratings import GAME_CATEGORIES
     games = career_event_entry.get("game_ids", [])
     count = len(games)
-    if not count: return
-    width, gap = 300, 30
-    start = (BASE_WIDTH - (width*count + gap*(count-1)))//2
+    if not count:
+        return
+    width, _height, gap, card_y = get_career_event_card_layout(career_event_entry.get("activity_type"), count)
+    start = (BASE_WIDTH - (width * count + gap * (count - 1))) // 2
+    label_y = max(150, card_y - 14)
+    tag_font = pygame.font.Font(None, 24)
     for index, key in enumerate(games):
         category = GAME_CATEGORIES.get(key)
-        label = ("RATED • " + category.upper()) if category else "UNRATED"
-        font = pygame.font.Font(None, 25)
-        text = font.render(label, True, (255, 239, 165) if category else (225, 225, 225))
-        rect = text.get_rect(center=(start + index*(width+gap) + width//2, 155))
+        if career_event_entry.get("activity_type") == CAREER_ACTIVITY_ARCADE_NIGHT and key == "prize_counter":
+            label = "ARCADE SERVICE"
+            color = (225, 225, 225)
+        else:
+            label = ("RATED • " + category.upper()) if category else "UNRATED"
+            color = (255, 239, 165) if category else (225, 225, 225)
+        text = tag_font.render(label, True, color)
+        rect = text.get_rect(center=(start + index * (width + gap) + width // 2, label_y))
         pygame.draw.rect(game_surface, (10, 18, 25), rect.inflate(20, 6), border_radius=7)
         game_surface.blit(text, rect)
+
+
+def draw_arcade_page_background(shade_alpha=72):
+    background = get_event_ui_asset("assets/arcade/bg.png", (BASE_WIDTH, BASE_HEIGHT))
+    if background is not None:
+        game_surface.blit(background, (0, 0))
+    else:
+        game_surface.fill((12, 18, 28))
+    shade = pygame.Surface((BASE_WIDTH, BASE_HEIGHT), pygame.SRCALPHA)
+    shade.fill((0, 0, 0, max(0, min(255, int(shade_alpha)))))
+    game_surface.blit(shade, (0, 0))
+
+
+def draw_arcade_token_exchange():
+    draw_arcade_page_background(62)
+
+    panel = pygame.Rect(90, 58, 1186, 662)
+    panel_surface = pygame.Surface(panel.size, pygame.SRCALPHA)
+    panel_surface.fill((10, 17, 28, 235))
+    game_surface.blit(panel_surface, panel.topleft)
+    pygame.draw.rect(game_surface, (229, 197, 102), panel, 3, border_radius=16)
+
+    title = options_title_font.render("ARCADE TOKEN EXCHANGE", True, (255, 255, 255))
+    subtitle = difficulty_detail_font.render(
+        "Trade Career cash for tokens. Tickets are earned by playing the machines.",
+        True,
+        (214, 220, 226),
+    )
+    game_surface.blit(title, title.get_rect(center=(BASE_WIDTH // 2, 102)))
+    game_surface.blit(subtitle, subtitle.get_rect(center=(BASE_WIDTH // 2, 140)))
+
+    status = (
+        ("CASH", f"${career_cash:,}"),
+        ("TOKENS", f"{int(arcade_state.get('tokens', 0)):,}"),
+        ("TICKETS", f"{int(arcade_state.get('tickets', 0)):,}"),
+    )
+    for index, (label, value) in enumerate(status):
+        rect = pygame.Rect(226 + index * 310, 166, 270, 58)
+        pygame.draw.rect(game_surface, (7, 14, 24), rect, border_radius=10)
+        pygame.draw.rect(game_surface, (95, 176, 205), rect, 2, border_radius=10)
+        label_surface = difficulty_detail_font.render(label, True, (179, 191, 203))
+        value_surface = option_label_font.render(value, True, (255, 237, 156))
+        game_surface.blit(label_surface, label_surface.get_rect(midleft=(rect.x + 16, rect.centery)))
+        game_surface.blit(value_surface, value_surface.get_rect(midright=(rect.right - 16, rect.centery)))
+
+    for index, package in enumerate(ARCADE_TOKEN_PACKAGES):
+        rect = arcade_token_package_rects[index]
+        hovered = game_mouse_pos is not None and rect.collidepoint(game_mouse_pos)
+        fill = (28, 38, 52) if not hovered else (37, 52, 68)
+        pygame.draw.rect(game_surface, fill, rect, border_radius=14)
+        pygame.draw.rect(
+            game_surface,
+            (230, 199, 108) if hovered else (119, 132, 148),
+            rect,
+            3 if hovered else 2,
+            border_radius=14,
+        )
+
+        name = option_label_font.render(package["name"], True, (247, 248, 249))
+        token_count = options_title_font.render(str(package["tokens"]), True, (255, 236, 142))
+        token_label = difficulty_detail_font.render("TOKENS", True, (255, 240, 180))
+        cash_label = difficulty_detail_font.render(
+            f"${package['cash_cost']} CASH",
+            True,
+            (202, 210, 220),
+        )
+
+        game_surface.blit(name, name.get_rect(center=(rect.centerx, rect.y + 25)))
+        game_surface.blit(token_count, token_count.get_rect(center=(rect.centerx, rect.y + 65)))
+        game_surface.blit(token_label, token_label.get_rect(center=(rect.centerx, rect.y + 94)))
+        game_surface.blit(cash_label, cash_label.get_rect(center=(rect.centerx, rect.bottom - 18)))
+
+    if arcade_status_message and pygame.time.get_ticks() <= arcade_status_message_expires:
+        info = difficulty_detail_font.render(arcade_status_message, True, (248, 242, 216))
+        info_rect = info.get_rect(center=(BASE_WIDTH // 2, 619)).inflate(26, 12)
+        info_panel = pygame.Surface(info_rect.size, pygame.SRCALPHA)
+        info_panel.fill((5, 11, 20, 225))
+        game_surface.blit(info_panel, info_rect.topleft)
+        pygame.draw.rect(game_surface, (226, 194, 104), info_rect, 2, border_radius=8)
+        game_surface.blit(info, info.get_rect(center=info_rect.center))
+
+    draw_menu_button(arcade_token_exchange_back_rect, "Back", game_mouse_pos, font=option_label_font)
+    if (
+            arcade_pending_launch_game_id == "king_pong"
+            and int(arcade_state.get("tokens", 0)) >= get_machine_cost("king_pong")
+    ):
+        continue_label = "Play King Pong"
+    elif (
+            arcade_pending_launch_game_id == "battle_bosses"
+            and int(arcade_state.get("tokens", 0)) >= get_machine_cost("battle_bosses")
+    ):
+        continue_label = "Play Battle Bosses"
+    else:
+        continue_label = "Continue"
+    draw_menu_button(
+        arcade_token_exchange_continue_rect,
+        continue_label,
+        game_mouse_pos,
+        font=option_label_font,
+    )
+
+
+def draw_arcade_prize_counter():
+    draw_arcade_page_background(70)
+    panel = pygame.Rect(70, 70, 1226, 620)
+    pygame.draw.rect(game_surface, (16, 23, 34), panel, border_radius=18)
+    pygame.draw.rect(game_surface, (226, 194, 104), panel, 3, border_radius=18)
+    title = options_title_font.render("PRIZE COUNTER", True, (255, 255, 255))
+    subtitle = difficulty_detail_font.render("Redeem tickets for arcade trophies. Cosmetic rewards can plug into this screen later.", True, (210, 217, 224))
+    game_surface.blit(title, title.get_rect(center=(BASE_WIDTH // 2, 118)))
+    game_surface.blit(subtitle, subtitle.get_rect(center=(BASE_WIDTH // 2, 152)))
+
+    ticket_surface = option_label_font.render(f"Tickets: {int(arcade_state.get('tickets', 0)):,}", True, (255, 238, 154))
+    game_surface.blit(ticket_surface, ticket_surface.get_rect(center=(BASE_WIDTH // 2, 182)))
+
+    for index, prize in enumerate(ARCADE_PRIZE_CATALOG):
+        rect = arcade_prize_card_rects[index]
+        hovered = game_mouse_pos is not None and rect.collidepoint(game_mouse_pos)
+        selected = index == arcade_selected_prize_index
+        owned = prize['id'] in arcade_state.get('trophies', [])
+        pygame.draw.rect(game_surface, (25, 34, 48) if not hovered and not selected else (34, 46, 64), rect, border_radius=14)
+        pygame.draw.rect(game_surface, (220, 191, 103) if hovered or selected else (109, 121, 138), rect, 2, border_radius=14)
+        name = option_label_font.render(prize['name'], True, (248, 249, 250))
+        game_surface.blit(name, name.get_rect(center=(rect.centerx, rect.y + 30)))
+        cost = options_title_font.render(f"{prize['cost']}", True, (255, 236, 142))
+        game_surface.blit(cost, cost.get_rect(center=(rect.centerx, rect.y + 100)))
+        tickets_word = difficulty_detail_font.render("TICKETS", True, (255, 240, 180))
+        game_surface.blit(tickets_word, tickets_word.get_rect(center=(rect.centerx, rect.y + 134)))
+        draw_wrapped_text_limited(prize['description'], difficulty_detail_font, (208, 216, 224), pygame.Rect(rect.x + 18, rect.y + 160, rect.width - 36, 60), 3, line_spacing=4)
+        footer = "OWNED" if owned else "Click to select"
+        footer_color = (135, 222, 173) if owned else (173, 182, 194)
+        footer_surface = difficulty_detail_font.render(footer, True, footer_color)
+        game_surface.blit(footer_surface, footer_surface.get_rect(center=(rect.centerx, rect.bottom - 24)))
+
+    draw_menu_button(arcade_prize_back_rect, "Back", game_mouse_pos, font=option_label_font)
+    draw_menu_button(arcade_prize_trophy_room_rect, "Trophy Room", game_mouse_pos, font=option_label_font)
+    selected_prize = ARCADE_PRIZE_CATALOG[arcade_selected_prize_index]
+    button_text = f"Redeem {selected_prize['cost']} Tickets"
+    draw_menu_button(arcade_prize_buy_rect, button_text, game_mouse_pos, font=difficulty_detail_font)
+
+    if arcade_status_message and pygame.time.get_ticks() <= arcade_status_message_expires:
+        info = difficulty_detail_font.render(arcade_status_message, True, (246, 241, 217))
+        bg = info.get_rect(center=(BASE_WIDTH // 2, 614)).inflate(28, 16)
+        overlay = pygame.Surface(bg.size, pygame.SRCALPHA)
+        overlay.fill((8, 14, 24, 225))
+        game_surface.blit(overlay, bg.topleft)
+        pygame.draw.rect(game_surface, (228, 197, 107), bg, 2, border_radius=9)
+        game_surface.blit(info, info.get_rect(center=bg.center))
+
+
+def draw_arcade_trophy_room():
+    draw_arcade_page_background(66)
+    panel = pygame.Rect(104, 92, 1158, 576)
+    pygame.draw.rect(game_surface, (15, 21, 31), panel, border_radius=18)
+    pygame.draw.rect(game_surface, (225, 193, 103), panel, 3, border_radius=18)
+    title = options_title_font.render("ARCADE TROPHY ROOM", True, (255, 255, 255))
+    subtitle = difficulty_detail_font.render("A running shelf of ticket prizes earned from Arcade Night.", True, (210, 217, 224))
+    game_surface.blit(title, title.get_rect(center=(BASE_WIDTH // 2, 132)))
+    game_surface.blit(subtitle, subtitle.get_rect(center=(BASE_WIDTH // 2, 166)))
+
+    trophies = [prize for prize in ARCADE_PRIZE_CATALOG if prize['id'] in arcade_state.get('trophies', [])]
+    if not trophies:
+        empty = option_label_font.render("No trophies redeemed yet.", True, (232, 236, 240))
+        hint = difficulty_detail_font.render("Visit the Prize Counter after stacking up some tickets.", True, (165, 175, 188))
+        game_surface.blit(empty, empty.get_rect(center=(BASE_WIDTH // 2, 350)))
+        game_surface.blit(hint, hint.get_rect(center=(BASE_WIDTH // 2, 388)))
+    else:
+        for index, prize in enumerate(trophies):
+            rect = pygame.Rect(164 + (index % 3) * 330, 232 + (index // 3) * 180, 270, 132)
+            pygame.draw.rect(game_surface, (29, 38, 52), rect, border_radius=14)
+            pygame.draw.rect(game_surface, (222, 191, 102), rect, 2, border_radius=14)
+            icon_rect = pygame.Rect(rect.x + 22, rect.y + 22, 58, 58)
+            pygame.draw.ellipse(game_surface, (229, 192, 105), icon_rect)
+            pygame.draw.ellipse(game_surface, (250, 243, 220), icon_rect.inflate(-18, -18))
+            name = option_label_font.render(prize['name'], True, (248, 249, 250))
+            cost = difficulty_detail_font.render(f"Redeemed for {prize['cost']} tickets", True, (189, 198, 208))
+            game_surface.blit(name, name.get_rect(midleft=(rect.x + 96, rect.y + 42)))
+            draw_wrapped_text_limited(prize['description'], difficulty_detail_font, (210, 217, 224), pygame.Rect(rect.x + 96, rect.y + 56, rect.width - 114, 46), 2, line_spacing=4)
+            game_surface.blit(cost, cost.get_rect(midleft=(rect.x + 96, rect.bottom - 22)))
+
+    draw_menu_button(arcade_trophy_room_back_rect, "Back to Prize Counter", game_mouse_pos, font=option_label_font)
+
+
+def draw_king_pong_opponent_select():
+    draw_arcade_page_background(62)
+
+    panel = pygame.Rect(72, 44, 1222, 688)
+    panel_surface = pygame.Surface(panel.size, pygame.SRCALPHA)
+    panel_surface.fill((8, 15, 25, 238))
+    game_surface.blit(panel_surface, panel.topleft)
+    pygame.draw.rect(game_surface, (229, 197, 102), panel, 3, border_radius=16)
+
+    logo = get_event_ui_asset(
+        "assets/arcade/king_pong/logo.png",
+        (330, 94),
+    )
+    if logo is not None:
+        game_surface.blit(logo, logo.get_rect(center=(BASE_WIDTH // 2, 100)))
+    else:
+        title = options_title_font.render("KING PONG", True, (250, 249, 244))
+        game_surface.blit(title, title.get_rect(center=(BASE_WIDTH // 2, 92)))
+
+    subtitle = difficulty_detail_font.render(
+        "Choose a rival. Harder opponents move faster and pay more tickets.",
+        True,
+        (213, 220, 228),
+    )
+    game_surface.blit(subtitle, subtitle.get_rect(center=(BASE_WIDTH // 2, 154)))
+
+    wallet = difficulty_detail_font.render(
+        f"TOKENS: {int(arcade_state.get('tokens', 0)):,}    |    "
+        f"TICKETS: {int(arcade_state.get('tickets', 0)):,}",
+        True,
+        (255, 235, 145),
+    )
+    game_surface.blit(wallet, wallet.get_rect(center=(BASE_WIDTH // 2, 181)))
+
+    difficulty_descriptions = {
+        "low": "Slow reactions / wide tracking error",
+        "medium": "Balanced arcade opponent",
+        "high": "Fast reactions / accurate tracking",
+        "expert": "Very fast / very small tracking error",
+    }
+
+    for index, choice in enumerate(king_pong_opponent_choices[:4]):
+        rect = king_pong_opponent_rects[index]
+        difficulty_id = choice.get("difficulty_id", "medium")
+        config = KING_PONG_DIFFICULTIES.get(
+            difficulty_id,
+            KING_PONG_DIFFICULTIES["medium"],
+        )
+        npc = choice.get("npc") or {}
+        selected = index == king_pong_selected_opponent_index
+        hovered = game_mouse_pos is not None and rect.collidepoint(game_mouse_pos)
+
+        fill = (34, 48, 64) if selected or hovered else (22, 31, 44)
+        border = (255, 217, 108) if selected else ((102, 196, 225) if hovered else (111, 126, 145))
+        pygame.draw.rect(game_surface, fill, rect, border_radius=14)
+        pygame.draw.rect(game_surface, border, rect, 4 if selected else 2, border_radius=14)
+
+        difficulty_surface = option_label_font.render(
+            config.get("label", difficulty_id.upper()),
+            True,
+            (255, 234, 141),
+        )
+        game_surface.blit(
+            difficulty_surface,
+            difficulty_surface.get_rect(center=(rect.centerx, rect.y + 32)),
+        )
+
+        portrait_rect = pygame.Rect(rect.centerx - 55, rect.y + 62, 110, 110)
+        pygame.draw.ellipse(game_surface, (14, 23, 34), portrait_rect)
+        try:
+            portrait = get_npc_portrait_surface(npc, 110)
+        except Exception:
+            portrait = None
+        if portrait is not None:
+            portrait = pygame.transform.smoothscale(portrait, portrait_rect.size)
+            mask = pygame.Surface(portrait_rect.size, pygame.SRCALPHA)
+            pygame.draw.ellipse(mask, (255, 255, 255, 255), mask.get_rect())
+            clipped = portrait.copy()
+            clipped.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+            game_surface.blit(clipped, portrait_rect.topleft)
+        pygame.draw.ellipse(game_surface, (229, 197, 102), portrait_rect, 3)
+
+        npc_name = str(npc.get("name") or "Arcade Rival")
+        name_surface = option_label_font.render(npc_name, True, (242, 245, 248))
+        if name_surface.get_width() > rect.width - 24:
+            name_surface = difficulty_detail_font.render(npc_name, True, (242, 245, 248))
+        game_surface.blit(
+            name_surface,
+            name_surface.get_rect(center=(rect.centerx, rect.y + 198)),
+        )
+
+        multiplier = float(config.get("ticket_multiplier", 1.0))
+        reward_surface = option_label_font.render(
+            f"x{multiplier:.2f} TICKETS",
+            True,
+            (132, 222, 169) if multiplier >= 1.0 else (214, 201, 150),
+        )
+        game_surface.blit(
+            reward_surface,
+            reward_surface.get_rect(center=(rect.centerx, rect.y + 238)),
+        )
+
+        description = difficulty_detail_font.render(
+            difficulty_descriptions.get(difficulty_id, "Arcade opponent"),
+            True,
+            (185, 195, 207),
+        )
+        game_surface.blit(
+            description,
+            description.get_rect(center=(rect.centerx, rect.y + 274)),
+        )
+
+        select_note = difficulty_detail_font.render(
+            "SELECTED" if selected else "Click to select",
+            True,
+            (255, 231, 143) if selected else (148, 161, 176),
+        )
+        game_surface.blit(
+            select_note,
+            select_note.get_rect(center=(rect.centerx, rect.bottom - 30)),
+        )
+
+    draw_menu_button(
+        king_pong_opponent_back_rect,
+        "Back",
+        game_mouse_pos,
+        font=option_label_font,
+    )
+    draw_menu_button(
+        king_pong_opponent_tokens_rect,
+        "Buy Tokens",
+        game_mouse_pos,
+        font=option_label_font,
+    )
+
+    token_cost = get_machine_cost("king_pong")
+    can_play = (
+        get_selected_king_pong_choice() is not None
+        and int(arcade_state.get("tokens", 0)) >= token_cost
+    )
+    draw_menu_button(
+        king_pong_opponent_play_rect,
+        f"Play - {token_cost} Tokens",
+        game_mouse_pos if can_play else None,
+        font=option_label_font,
+    )
+    if not can_play:
+        overlay = pygame.Surface(king_pong_opponent_play_rect.size, pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 125))
+        game_surface.blit(overlay, king_pong_opponent_play_rect.topleft)
+
+    if arcade_status_message and pygame.time.get_ticks() <= arcade_status_message_expires:
+        info = difficulty_detail_font.render(
+            arcade_status_message,
+            True,
+            (248, 242, 216),
+        )
+        game_surface.blit(info, info.get_rect(center=(BASE_WIDTH // 2, 620)))
+
+
+def draw_battle_bosses_opponent_select():
+    draw_arcade_page_background(62)
+
+    panel = pygame.Rect(72, 42, 1222, 690)
+    panel_surface = pygame.Surface(panel.size, pygame.SRCALPHA)
+    panel_surface.fill((8, 15, 25, 238))
+    game_surface.blit(panel_surface, panel.topleft)
+    pygame.draw.rect(game_surface, (229, 197, 102), panel, 3, border_radius=16)
+
+    logo = get_event_ui_asset(
+        "assets/arcade/battle_bosses/logo.png",
+        (390, 92),
+    )
+    if logo is not None:
+        game_surface.blit(logo, logo.get_rect(center=(BASE_WIDTH // 2, 92)))
+    else:
+        title = options_title_font.render("BATTLE BOSSES", True, (250, 249, 244))
+        game_surface.blit(title, title.get_rect(center=(BASE_WIDTH // 2, 86)))
+
+    subtitle = difficulty_detail_font.render(
+        "Choose a three-rival squad. Harder squads move faster and pay more tickets.",
+        True,
+        (213, 220, 228),
+    )
+    game_surface.blit(subtitle, subtitle.get_rect(center=(BASE_WIDTH // 2, 139)))
+
+    wallet = difficulty_detail_font.render(
+        f"TOKENS: {int(arcade_state.get('tokens', 0)):,}    |    "
+        f"TICKETS: {int(arcade_state.get('tickets', 0)):,}    |    "
+        f"ENTRY: {get_machine_cost('battle_bosses')} TOKENS",
+        True,
+        (255, 235, 145),
+    )
+    game_surface.blit(wallet, wallet.get_rect(center=(BASE_WIDTH // 2, 170)))
+
+    battle_name_font = pygame.font.Font(None, 19)
+
+    for index, choice in enumerate(battle_bosses_opponent_choices[:4]):
+        rect = battle_bosses_choice_rects[index]
+        difficulty_id = choice.get("difficulty_id", "standard")
+        config = choice.get("config") or BATTLE_BOSSES_DIFFICULTIES.get(
+            difficulty_id,
+            BATTLE_BOSSES_DIFFICULTIES["standard"],
+        )
+        selected = index == battle_bosses_selected_choice_index
+        hovered = game_mouse_pos is not None and rect.collidepoint(game_mouse_pos)
+
+        fill = (34, 48, 64) if selected or hovered else (22, 31, 44)
+        border = (255, 217, 108) if selected else ((102, 196, 225) if hovered else (111, 126, 145))
+        pygame.draw.rect(game_surface, fill, rect, border_radius=14)
+        pygame.draw.rect(game_surface, border, rect, 4 if selected else 2, border_radius=14)
+
+        difficulty_surface = option_label_font.render(
+            config.get("label", difficulty_id.upper()),
+            True,
+            (255, 234, 141),
+        )
+        game_surface.blit(
+            difficulty_surface,
+            difficulty_surface.get_rect(midleft=(rect.x + 18, rect.y + 27)),
+        )
+
+        multiplier = float(config.get("ticket_multiplier", 1.0))
+        reward_surface = difficulty_detail_font.render(
+            f"x{multiplier:.2f} tickets",
+            True,
+            (132, 222, 169) if multiplier >= 1.0 else (214, 201, 150),
+        )
+        game_surface.blit(
+            reward_surface,
+            reward_surface.get_rect(midright=(rect.right - 18, rect.y + 28)),
+        )
+
+        npcs = list(choice.get("npcs") or [])[:3]
+        portrait_y = rect.y + 54
+        portrait_size = 76
+        portrait_gap = 28
+        group_width = portrait_size * 3 + portrait_gap * 2
+        group_x = rect.centerx - group_width // 2
+
+        for npc_index, npc in enumerate(npcs):
+            portrait_rect = pygame.Rect(
+                group_x + npc_index * (portrait_size + portrait_gap),
+                portrait_y,
+                portrait_size,
+                portrait_size,
+            )
+            pygame.draw.ellipse(game_surface, (14, 23, 34), portrait_rect)
+            try:
+                portrait = get_npc_portrait_surface(npc, portrait_size)
+            except Exception:
+                portrait = None
+            if portrait is not None:
+                portrait = pygame.transform.smoothscale(portrait, portrait_rect.size)
+                mask = pygame.Surface(portrait_rect.size, pygame.SRCALPHA)
+                pygame.draw.ellipse(mask, (255, 255, 255, 255), mask.get_rect())
+                clipped = portrait.copy()
+                clipped.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+                game_surface.blit(clipped, portrait_rect.topleft)
+            pygame.draw.ellipse(game_surface, (229, 197, 102), portrait_rect, 2)
+
+            npc_name = str(npc.get("name") or f"Rival {npc_index + 1}")
+            name_surface = battle_name_font.render(npc_name, True, (232, 236, 240))
+            max_name_width = 92
+            if name_surface.get_width() > max_name_width:
+                scale = max_name_width / max(1, name_surface.get_width())
+                name_surface = pygame.transform.smoothscale(
+                    name_surface,
+                    (max_name_width, max(1, int(name_surface.get_height() * scale))),
+                )
+            game_surface.blit(
+                name_surface,
+                name_surface.get_rect(center=(portrait_rect.centerx, portrait_rect.bottom + 15)),
+            )
+
+        description = difficulty_detail_font.render(
+            config.get("description", "Three-rival arcade squad."),
+            True,
+            (185, 195, 207),
+        )
+        game_surface.blit(
+            description,
+            description.get_rect(center=(rect.centerx, rect.bottom - 20)),
+        )
+
+    draw_menu_button(
+        battle_bosses_back_rect,
+        "Back",
+        game_mouse_pos,
+        font=option_label_font,
+    )
+    draw_menu_button(
+        battle_bosses_refresh_rect,
+        "Reroll Rivals",
+        game_mouse_pos,
+        font=option_label_font,
+    )
+    battle_cost = get_machine_cost("battle_bosses")
+    can_play = get_selected_battle_bosses_choice() is not None
+    draw_menu_button(
+        battle_bosses_future_play_rect,
+        f"Play - {battle_cost} Tokens",
+        game_mouse_pos if can_play else None,
+        font=difficulty_detail_font,
+    )
+    if not can_play:
+        disabled = pygame.Surface(battle_bosses_future_play_rect.size, pygame.SRCALPHA)
+        disabled.fill((0, 0, 0, 125))
+        game_surface.blit(disabled, battle_bosses_future_play_rect.topleft)
+
+    if arcade_status_message and pygame.time.get_ticks() <= arcade_status_message_expires:
+        info = difficulty_detail_font.render(arcade_status_message, True, (248, 242, 216))
+        game_surface.blit(info, info.get_rect(center=(BASE_WIDTH // 2, 625)))
+
+
+def draw_king_pong_screen():
+    king_pong_game.draw(
+        game_surface,
+        {
+            'title': options_title_font,
+            'label': option_label_font,
+            'detail': difficulty_detail_font,
+            'small': ui_small_font,
+        },
+        portrait_loader=get_npc_portrait_surface,
+    )
+    draw_menu_button(
+        king_pong_return_rect,
+        "Quit",
+        game_mouse_pos,
+        font=option_label_font,
+    )
+
+
+def draw_battle_bosses_screen():
+    try:
+        player_portrait = get_profile_avatar()
+    except Exception:
+        player_portrait = None
+
+    battle_bosses_game.draw(
+        game_surface,
+        {
+            'title': options_title_font,
+            'label': option_label_font,
+            'detail': difficulty_detail_font,
+            'small': ui_small_font,
+        },
+        portrait_loader=get_npc_portrait_surface,
+        player_portrait=player_portrait,
+    )
+    draw_menu_button(
+        battle_bosses_quit_rect,
+        "Quit",
+        game_mouse_pos,
+        font=option_label_font,
+    )
 
 
 def draw_gameplay_ui():
@@ -22748,7 +23670,8 @@ while running:
                                 CAREER_ACTIVITY_CASUAL_CARDS,
                                 CAREER_ACTIVITY_POKER_NIGHT,
                                 CAREER_ACTIVITY_CASINO_NIGHT,
-                                CAREER_ACTIVITY_NICHE_NIGHT
+                                CAREER_ACTIVITY_NICHE_NIGHT,
+                                CAREER_ACTIVITY_ARCADE_NIGHT
                         ):
 
                             career_event_entry = career_current_schedule[
@@ -26107,222 +27030,290 @@ while running:
 
                 game_clicked = False
 
-                for (
-                        rect,
-                        game_id
-                ) in career_event_card_rects:
+                for (rect, game_id) in career_event_card_rects:
 
-                    if rect.collidepoint(
-                            menu_mouse_pos
-                    ):
-
+                    if rect.collidepoint(menu_mouse_pos):
                         game_clicked = True
 
-                        # ======================================
-                        # Locked game
-                        # ======================================
-
-                        if not is_game_unlocked(
-                                game_id
-                        ):
+                        if not is_game_unlocked(game_id):
                             break
 
-                        audio.play_sound(
-                            "button_click"
-                        )
+                        if (
+                                career_event_entry is not None
+                                and career_event_entry.get("activity_type") == CAREER_ACTIVITY_ARCADE_NIGHT
+                                and game_id in ARCADE_COMING_SOON_GAME_IDS
+                        ):
+                            audio.play_sound("button_click")
+                            set_arcade_status_message(f"{ARCADE_MACHINE_NAMES.get(game_id, game_id)} is coming soon.")
+                            break
 
-                        # ======================================
-                        # SCORE-FOUR
-                        # ======================================
+                        audio.play_sound("button_click")
 
                         if game_id == "score_four":
-
-                            current_state = (
-                                STATE_SCORE_FOUR_MODE_SELECT
-                            )
-
-                        # ======================================
-                        # CRAZY EIGHTS
-                        # ======================================
+                            current_state = STATE_SCORE_FOUR_MODE_SELECT
 
                         elif game_id == "crazy_eights":
-
                             start_crazy_eights_session()
 
-                        # ======================================
-                        # BANGO
-                        # ======================================
-
                         elif game_id == "bango":
-
                             start_bango_session()
 
-                        # ======================================
-                        # BLACKJACK
-                        # ======================================
-
                         elif game_id == "blackjack":
-
-                            blackjack_selected_bet_percentage = (
-                                None
-                            )
-
+                            blackjack_selected_bet_percentage = None
                             blackjack_bet_dropdown_open = False
-
                             blackjack_session_net = 0
                             blackjack_session_rating_change = 0
-
-                            blackjack_dealer_npc = (
-                                get_random_blackjack_dealer()
-                            )
-
-                            current_state = (
-                                STATE_BLACKJACK_BET
-                            )
-
-                        # ======================================
-                        # ROULETTE
-                        # ======================================
+                            blackjack_dealer_npc = get_random_blackjack_dealer()
+                            current_state = STATE_BLACKJACK_BET
 
                         elif game_id == "roulette":
-
                             roulette_session_net = 0
-
                             roulette_game.reset_round()
-
-                            current_state = (
-                                STATE_ROULETTE
-                            )
-
-                        # ======================================
-                        # HORSE RACES
-                        # ======================================
+                            current_state = STATE_ROULETTE
 
                         elif game_id == "horse_races":
-
                             start_horse_races_session()
 
-                        # ======================================
-                        # FARO
-                        # ======================================
-
                         elif game_id == "faro":
-
                             start_faro_session()
 
-                        # ======================================
-                        # FIVE-O POKER
-                        # ======================================
-
                         elif game_id == "five_o_poker":
-
                             if not start_five_o_poker_session():
                                 print("Not enough cash to enter Five-O Poker.")
 
-                        # ======================================
-                        # BLIND MAN'S BLUFF
-                        # ======================================
-
                         elif game_id == "blind_mans_bluff":
-
                             if not start_blind_mans_bluff_session():
                                 print("Not enough cash to enter Blind Man's Bluff.")
 
-                        # ======================================
-                        # TEXAS HOLD'EM
-                        # ======================================
-
                         elif game_id == "texas_holdem":
-
-                            current_state = (
-
-                                STATE_TEXAS_HOLDEM_BUY_IN
-
-                            )
-
-                        # ======================================
-                        # SEVEN-CARD STUD
-                        # ======================================
+                            current_state = STATE_TEXAS_HOLDEM_BUY_IN
 
                         elif game_id == "seven_card_stud":
-
-                            current_state = (
-
-                                STATE_SEVEN_CARD_STUD_BUY_IN
-
-                            )
-
-                        # ======================================
-                        # FIVE-CARD DRAW
-                        # ======================================
+                            current_state = STATE_SEVEN_CARD_STUD_BUY_IN
 
                         elif game_id == "five_card_draw":
+                            current_state = STATE_FIVE_CARD_DRAW_BUY_IN
 
-                            current_state = (
+                        elif game_id == "king_pong":
+                            open_king_pong_opponent_select(refresh=True)
 
-                                STATE_FIVE_CARD_DRAW_BUY_IN
+                        elif game_id == "battle_bosses":
+                            open_battle_bosses_opponent_select(refresh=True)
 
-                            )
+                        elif game_id == "token_exchange":
+                            open_arcade_token_exchange()
 
-                        # ======================================
-                        # NOT IMPLEMENTED
-                        # ======================================
+                        elif game_id == "prize_counter":
+                            arcade_selected_prize_index = 0
+                            current_state = STATE_ARCADE_PRIZE_COUNTER
 
                         else:
-
-                            print(
-                                "Career game not implemented yet:",
-                                game_id
-                            )
+                            print("Career game not implemented yet:", game_id)
 
                         break
 
-                # ==============================================
-                # EVENT MENU BUTTONS
-                # ==============================================
-
                 if not game_clicked:
 
-                    # ==========================================
-                    # Return
-                    # ==========================================
-
-                    if career_event_return_rect.collidepoint(
-                            menu_mouse_pos
-                    ):
-
-                        audio.play_sound(
-                            "button_click"
-                        )
-
+                    if career_event_return_rect.collidepoint(menu_mouse_pos):
+                        audio.play_sound("button_click")
                         store_event_progress(career_event_entry, globals())
                         auto_save_career()
-                        current_state = (
-                            STATE_CAREER_HUB
-                        )
-
-                    # ==========================================
-                    # End event
-                    # ==========================================
+                        current_state = STATE_CAREER_HUB
 
                     elif (
-                            career_event_end_rect.collidepoint(
-                                menu_mouse_pos
-                            )
+                            career_event_end_rect.collidepoint(menu_mouse_pos)
                             and career_event_has_activity
                     ):
-
-                        audio.play_sound(
-                            "button_click"
-                        )
-
+                        audio.play_sound("button_click")
                         publish_career_event_news()
                         build_career_event_summary()
+                        current_state = STATE_CAREER_EVENT_SUMMARY
 
-                        current_state = (
-                            STATE_CAREER_EVENT_SUMMARY
-                        )
+        elif current_state == STATE_KING_PONG_OPPONENT_SELECT:
 
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                audio.play_sound("button_click")
+                current_state = STATE_CAREER_EVENT_SELECT
+
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and menu_mouse_pos is not None:
+                opponent_clicked = False
+
+                for opponent_index, rect in enumerate(king_pong_opponent_rects):
+                    if (
+                            opponent_index < len(king_pong_opponent_choices)
+                            and rect.collidepoint(menu_mouse_pos)
+                    ):
+                        king_pong_selected_opponent_index = opponent_index
+                        audio.play_sound("button_click")
+                        opponent_clicked = True
+                        break
+
+                if not opponent_clicked:
+                    if king_pong_opponent_back_rect.collidepoint(menu_mouse_pos):
+                        audio.play_sound("button_click")
+                        current_state = STATE_CAREER_EVENT_SELECT
+
+                    elif king_pong_opponent_tokens_rect.collidepoint(menu_mouse_pos):
+                        audio.play_sound("button_click")
+                        open_arcade_token_exchange("king_pong")
+
+                    elif king_pong_opponent_play_rect.collidepoint(menu_mouse_pos):
+                        if get_selected_king_pong_choice() is None:
+                            set_arcade_status_message("Choose a rival first.")
+                        elif int(arcade_state.get("tokens", 0)) < get_machine_cost("king_pong"):
+                            set_arcade_status_message("Not enough tokens. Buy more to play.")
+                            open_arcade_token_exchange("king_pong")
+                        else:
+                            audio.play_sound("button_click")
+                            start_king_pong_session()
+
+        elif current_state == STATE_BATTLE_BOSSES_OPPONENT_SELECT:
+
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                audio.play_sound("button_click")
+                current_state = STATE_CAREER_EVENT_SELECT
+
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and menu_mouse_pos is not None:
+                choice_clicked = False
+                for choice_index, rect in enumerate(battle_bosses_choice_rects):
+                    if (
+                            choice_index < len(battle_bosses_opponent_choices)
+                            and rect.collidepoint(menu_mouse_pos)
+                    ):
+                        battle_bosses_selected_choice_index = choice_index
+                        audio.play_sound("button_click")
+                        choice_clicked = True
+                        break
+
+                if not choice_clicked:
+                    if battle_bosses_back_rect.collidepoint(menu_mouse_pos):
+                        audio.play_sound("button_click")
+                        current_state = STATE_CAREER_EVENT_SELECT
+                    elif battle_bosses_refresh_rect.collidepoint(menu_mouse_pos):
+                        audio.play_sound("button_click")
+                        open_battle_bosses_opponent_select(refresh=True)
+                        set_arcade_status_message("Battle Bosses rival squads rerolled.")
+                    elif battle_bosses_future_play_rect.collidepoint(menu_mouse_pos):
+                        if get_selected_battle_bosses_choice() is None:
+                            set_arcade_status_message("Choose a rival squad first.")
+                        elif int(arcade_state.get("tokens", 0)) < get_machine_cost("battle_bosses"):
+                            set_arcade_status_message("Not enough tokens. Buy more to enter the arena.")
+                            open_arcade_token_exchange("battle_bosses")
+                        else:
+                            audio.play_sound("button_click")
+                            start_battle_bosses_session()
+
+        elif current_state == STATE_ARCADE_TOKEN_EXCHANGE:
+
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and menu_mouse_pos is not None:
+                if arcade_token_exchange_back_rect.collidepoint(menu_mouse_pos):
+                    audio.play_sound("button_click")
+                    if arcade_pending_launch_game_id == "king_pong":
+                        arcade_pending_launch_game_id = None
+                        current_state = STATE_KING_PONG_OPPONENT_SELECT
+                    elif arcade_pending_launch_game_id == "battle_bosses":
+                        arcade_pending_launch_game_id = None
+                        current_state = STATE_BATTLE_BOSSES_OPPONENT_SELECT
+                    else:
+                        current_state = STATE_CAREER_EVENT_SELECT
+                elif arcade_token_exchange_continue_rect.collidepoint(menu_mouse_pos):
+                    audio.play_sound("button_click")
+                    if arcade_pending_launch_game_id == "king_pong":
+                        if int(arcade_state.get("tokens", 0)) >= get_machine_cost("king_pong"):
+                            start_king_pong_session()
+                        else:
+                            set_arcade_status_message("Buy enough tokens to play King Pong.")
+                    elif arcade_pending_launch_game_id == "battle_bosses":
+                        if int(arcade_state.get("tokens", 0)) >= get_machine_cost("battle_bosses"):
+                            start_battle_bosses_session()
+                        else:
+                            set_arcade_status_message("Buy enough tokens to play Battle Bosses.")
+                    else:
+                        current_state = STATE_CAREER_EVENT_SELECT
+                else:
+                    for package_index, rect in arcade_token_package_rects.items():
+                        if rect.collidepoint(menu_mouse_pos):
+                            package = ARCADE_TOKEN_PACKAGES[package_index]
+                            success, new_state, new_cash, message = buy_token_package(arcade_state, career_cash, package['id'])
+                            arcade_state = new_state
+                            if success:
+                                career_cash = new_cash
+                                auto_save_career()
+                            set_arcade_status_message(message)
+                            audio.play_sound("button_click")
+                            break
+
+        elif current_state == STATE_ARCADE_PRIZE_COUNTER:
+
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and menu_mouse_pos is not None:
+                if arcade_prize_back_rect.collidepoint(menu_mouse_pos):
+                    audio.play_sound("button_click")
+                    current_state = STATE_CAREER_EVENT_SELECT
+                elif arcade_prize_trophy_room_rect.collidepoint(menu_mouse_pos):
+                    audio.play_sound("button_click")
+                    current_state = STATE_ARCADE_TROPHY_ROOM
+                elif arcade_prize_buy_rect.collidepoint(menu_mouse_pos):
+                    prize = ARCADE_PRIZE_CATALOG[arcade_selected_prize_index]
+                    success, new_state, message, _prize = redeem_prize(arcade_state, prize['id'])
+                    arcade_state = new_state
+                    if success:
+                        auto_save_career()
+                    set_arcade_status_message(message)
+                    audio.play_sound("button_click")
+                else:
+                    for prize_index, rect in arcade_prize_card_rects.items():
+                        if rect.collidepoint(menu_mouse_pos):
+                            arcade_selected_prize_index = prize_index
+                            audio.play_sound("button_click")
+                            break
+
+        elif current_state == STATE_ARCADE_TROPHY_ROOM:
+
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and menu_mouse_pos is not None:
+                if arcade_trophy_room_back_rect.collidepoint(menu_mouse_pos):
+                    audio.play_sound("button_click")
+                    current_state = STATE_ARCADE_PRIZE_COUNTER
+
+        elif current_state == STATE_KING_PONG:
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    if not king_pong_game.finished:
+                        king_pong_game.forfeit()
+                    finish_king_pong_session()
+                elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                    if not king_pong_game.finished:
+                        king_pong_game.forfeit()
+                    finish_king_pong_session()
+                elif event.key == pygame.K_SPACE and king_pong_game.finished:
+                    start_king_pong_session()
+
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and menu_mouse_pos is not None:
+                if king_pong_return_rect.collidepoint(menu_mouse_pos):
+                    audio.play_sound("button_click")
+                    if not king_pong_game.finished:
+                        king_pong_game.forfeit()
+                    finish_king_pong_session()
+
+        elif current_state == STATE_BATTLE_BOSSES:
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    if not battle_bosses_game.finished:
+                        battle_bosses_game.forfeit()
+                    finish_battle_bosses_session()
+                elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                    if battle_bosses_game.finished:
+                        finish_battle_bosses_session()
+                elif event.key == pygame.K_SPACE and battle_bosses_game.finished:
+                    start_battle_bosses_session()
+
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and menu_mouse_pos is not None:
+                if battle_bosses_quit_rect.collidepoint(menu_mouse_pos):
+                    audio.play_sound("button_click")
+                    if not battle_bosses_game.finished:
+                        battle_bosses_game.forfeit()
+                    finish_battle_bosses_session()
 
         elif current_state == STATE_CAREER_REAL_ESTATE:
 
@@ -28000,6 +28991,25 @@ while running:
 
         draw_career_event_select()
 
+    elif current_state == STATE_KING_PONG_OPPONENT_SELECT:
+
+        draw_king_pong_opponent_select()
+
+    elif current_state == STATE_BATTLE_BOSSES_OPPONENT_SELECT:
+
+        draw_battle_bosses_opponent_select()
+
+    elif current_state == STATE_ARCADE_TOKEN_EXCHANGE:
+
+        draw_arcade_token_exchange()
+
+    elif current_state == STATE_ARCADE_PRIZE_COUNTER:
+
+        draw_arcade_prize_counter()
+
+    elif current_state == STATE_ARCADE_TROPHY_ROOM:
+
+        draw_arcade_trophy_room()
 
     elif current_state == STATE_CAREER_EVENT:
 
@@ -28117,6 +29127,31 @@ while running:
             game_mouse_pos,
             horse_races_game,
         )
+
+    elif current_state == STATE_KING_PONG:
+
+        king_pong_game.update(1.0 / 60.0, pygame.key.get_pressed())
+        while True:
+            point_event = king_pong_game.pop_point_event()
+            if point_event is None:
+                break
+            audio.play_sound(
+                "five_o_column_win"
+                if point_event.get("player_scored")
+                else "five_o_column_loss"
+            )
+        if king_pong_game.finished:
+            claim_king_pong_result()
+        draw_king_pong_screen()
+
+    elif current_state == STATE_BATTLE_BOSSES:
+
+        battle_bosses_game.update(1.0 / 60.0, pygame.key.get_pressed())
+        for battle_sound_event in battle_bosses_game.pop_sound_events():
+            audio.play_sound(battle_sound_event)
+        if battle_bosses_game.finished:
+            claim_battle_bosses_result()
+        draw_battle_bosses_screen()
 
     elif current_state == STATE_FARO:
 

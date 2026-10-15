@@ -1,4 +1,5 @@
 from case_opening import new_case_state, normalize_case_state
+from arcade_support import make_default_arcade_state, normalize_arcade_state
 from poker_learning import new_learning, normalize_learning
 import json
 import os
@@ -17,7 +18,7 @@ from cryptid_collection import new_collection, normalize_collection
 from runtime_support import save_directory
 SAVE_FOLDER = str(save_directory())
 
-PROFILE_VERSION = 9
+PROFILE_VERSION = 10
 
 PROFILE_SLOT_COUNT = 3
 
@@ -151,6 +152,8 @@ def make_default_profile():
             # ----------------------------
 
             "news_items": [],
+
+            "arcade": make_default_arcade_state(),
         },
 
         "cosmetics": {
@@ -211,6 +214,8 @@ def save_profile(
 ):
     migrate_profile_ratings(profile_data)
     profile_data.setdefault("career", {}).setdefault("npc_world", {})
+    profile_data.setdefault("career", {}).setdefault("arcade", make_default_arcade_state())
+    profile_data["career"]["arcade"] = normalize_arcade_state(profile_data["career"].get("arcade"))
     profile_data["cryptid_creatures"]=normalize_collection(profile_data.get("cryptid_creatures"),profile_data.get("progression",{}).get("level",1))
     profile_data["poker_learning"] = normalize_learning(profile_data.get("poker_learning"))
     profile_data["case_opening"] = normalize_case_state(profile_data.get("case_opening"))

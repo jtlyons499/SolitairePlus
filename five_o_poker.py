@@ -68,6 +68,12 @@ class FiveOPokerGame:
         self.hands_tied = 0
         self.five_o_wins = 0
         self.reward_claimed = False
+        self.rating_seen_hands = set()
+        self.rating_final_stacks = None
+        self.session_rating_rewarded = False
+        self.session_rating_change = 0
+        self.session_rating_net = 0
+        self.session_rating_roi = 0.0
         self.last_winner = None
         self.last_npc_action = ""
         self.last_player_action = ""
@@ -110,6 +116,12 @@ class FiveOPokerGame:
         self.hands_tied = 0
         self.five_o_wins = 0
         self.reward_claimed = False
+        self.rating_seen_hands = set()
+        self.rating_final_stacks = None
+        self.session_rating_rewarded = False
+        self.session_rating_change = 0
+        self.session_rating_net = 0
+        self.session_rating_roi = 0.0
         self.session_complete = False
         return self.start_hand()
 
@@ -651,6 +663,17 @@ class FiveOPokerGame:
         self.hand_complete = True
         self.phase = "showdown"
         self.hands_played += 1
+
+        # Five-O uses its own game class rather than the shared Hold'em table,
+        # so keep the same completed-hand rating snapshot here.  This prevents
+        # chips committed to a new unfinished hand from affecting cash-out.
+        if self.hand_number not in self.rating_seen_hands:
+            self.rating_seen_hands.add(self.hand_number)
+            self.rating_final_stacks = [
+                int(self.player_stack),
+                int(self.npc_stack),
+            ]
+
         if self.player_stack < self.ante or self.npc_stack < self.ante:
             self.session_complete = True
 
