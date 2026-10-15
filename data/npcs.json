@@ -880,15 +880,15 @@
     }
   },
   {
-    "id": "mimi_roquanda",
-    "name": "Mimi Roquanda",
+    "id": "desmond_doss",
+    "name": "Desmond Doss",
     "bio": "Has never been seen after sunset.",
     "country": "WAL",
     "age": 73,
     "hometown": "Swansea, Wales",
     "favorite_suit": "Diamonds",
     "skill_tier": "low",
-    "portrait": "assets/npcs/mimi_roquanda.png",
+    "portrait": "assets/npcs/desmond_doss.png",
     "game_personality": "aggressive",
     "personality_traits": {
       "caution": 3,
@@ -990,15 +990,15 @@
     }
   },
   {
-    "id": "bubbles_romney",
-    "name": "Bubbles Rom",
+    "id": "captain_winters",
+    "name": "Captain Winters",
     "bio": "Stays up past bedtime to play Peggle 2.",
     "country": "SWE",
     "age": 14,
     "hometown": "Stockholm, Sweden",
     "favorite_suit": "Clubs",
     "skill_tier": "elite",
-    "portrait": "assets/npcs/bubbles_romney.png",
+    "portrait": "assets/npcs/captain_winters.png",
     "game_personality": "timid",
     "personality_traits": {
       "caution": 9,
