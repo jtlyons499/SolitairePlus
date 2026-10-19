@@ -18,10 +18,7 @@ ARCADE_MACHINE_NAMES = {
     "prize_counter": "Prize Counter",
 }
 
-ARCADE_COMING_SOON_GAME_IDS = {
-    "ace_invaders",
-    "suit_snake",
-}
+ARCADE_COMING_SOON_GAME_IDS = set()
 
 ARCADE_TOKEN_PACKAGES = [
     {
@@ -46,8 +43,8 @@ ARCADE_TOKEN_PACKAGES = [
         "description": "$25 for 120 tokens",
     },
     {
-        "id": "weekend_haul",
-        "name": "Weekend Haul",
+        "id": "machine_mania_pass",
+        "name": "Machine Mania Pass",
         "cash_cost": 50,
         "tokens": 260,
         "description": "$50 for 260 tokens",
@@ -98,6 +95,21 @@ def make_default_arcade_state():
             "battle_bosses_wins": 0,
             "battle_bosses_losses": 0,
             "battle_bosses_rivals_eliminated": 0,
+            # Ace Invaders is an endless score-attack cabinet. The older
+            # wins/losses keys stay in the save schema for compatibility with
+            # profiles created by the original four-wave version.
+            "ace_invaders_wins": 0,
+            "ace_invaders_losses": 0,
+            "ace_invaders_runs": 0,
+            "ace_invaders_enemies_destroyed": 0,
+            "ace_invaders_waves_cleared": 0,
+            "ace_invaders_high_wave": 0,
+            "ace_invaders_high_score": 0,
+            "suit_snake_runs": 0,
+            "suit_snake_cards_collected": 0,
+            "suit_snake_decks_completed": 0,
+            "suit_snake_longest_chain": 0,
+            "suit_snake_high_score": 0,
             "prizes_redeemed": 0,
         },
     }
@@ -238,6 +250,99 @@ def register_battle_bosses_result(state, won, tickets, rivals_eliminated=0):
     key = "battle_bosses_wins" if won else "battle_bosses_losses"
     state["stats"][key] += 1
     state["stats"]["battle_bosses_rivals_eliminated"] += max(0, _as_int(rivals_eliminated, 0))
+    return state
+
+
+
+def award_ace_invaders_tickets(score, waves_cleared, won=None, lives=0):
+    """Return the base ticket payout for one endless Ace Invaders run.
+
+    ``won`` and ``lives`` remain accepted for save/test compatibility with the
+    original finite four-wave version, but endless mode is scored entirely by
+    how far the player gets. Difficulty is applied by main.py afterwards.
+    """
+    score = max(0, _as_int(score, 0))
+    waves_cleared = max(0, _as_int(waves_cleared, 0))
+
+    # Score is the main reward signal while wave depth gives a meaningful
+    # survival bonus. This grows steadily without producing enormous payouts
+    # on long high-score attempts.
+    tickets = 18 + (score // 25) * 3 + waves_cleared * 18
+    return max(18, int(tickets))
+
+
+def register_ace_invaders_result(
+        state,
+        won,
+        tickets,
+        *,
+        score=0,
+        enemies_destroyed=0,
+        waves_cleared=0
+):
+    state = add_tickets(state, tickets)
+    state["stats"]["ace_invaders_runs"] += 1
+
+    # Preserve the old counters if an older caller still supplies a decisive
+    # result. Endless runs use won=None and therefore do not masquerade as a
+    # loss simply because every score attack eventually ends.
+    if won is True:
+        state["stats"]["ace_invaders_wins"] += 1
+    elif won is False:
+        state["stats"]["ace_invaders_losses"] += 1
+
+    state["stats"]["ace_invaders_enemies_destroyed"] += max(
+        0, _as_int(enemies_destroyed, 0)
+    )
+    state["stats"]["ace_invaders_waves_cleared"] += max(
+        0, _as_int(waves_cleared, 0)
+    )
+    state["stats"]["ace_invaders_high_wave"] = max(
+        state["stats"].get("ace_invaders_high_wave", 0),
+        max(1, _as_int(waves_cleared, 0) + 1),
+    )
+    state["stats"]["ace_invaders_high_score"] = max(
+        state["stats"]["ace_invaders_high_score"],
+        max(0, _as_int(score, 0)),
+    )
+    return state
+
+
+
+def award_suit_snake_tickets(score, cards_collected, decks_completed=0):
+    """Return the base ticket payout for one Suit Snake run."""
+    score = max(0, _as_int(score, 0))
+    cards_collected = max(0, _as_int(cards_collected, 0))
+    decks_completed = max(0, _as_int(decks_completed, 0))
+
+    # Collection depth is the main reward signal. Score contributes a smaller
+    # milestone bonus so rank/deck completion bonuses still matter.
+    tickets = 12 + cards_collected * 4 + (score // 500) * 6 + decks_completed * 65
+    return max(12, int(tickets))
+
+
+def register_suit_snake_result(
+        state,
+        tickets,
+        *,
+        score=0,
+        cards_collected=0,
+        decks_completed=0,
+        chain_length=1,
+):
+    state = add_tickets(state, tickets)
+    stats = state["stats"]
+    stats["suit_snake_runs"] += 1
+    stats["suit_snake_cards_collected"] += max(0, _as_int(cards_collected, 0))
+    stats["suit_snake_decks_completed"] += max(0, _as_int(decks_completed, 0))
+    stats["suit_snake_longest_chain"] = max(
+        stats["suit_snake_longest_chain"],
+        max(1, _as_int(chain_length, 1)),
+    )
+    stats["suit_snake_high_score"] = max(
+        stats["suit_snake_high_score"],
+        max(0, _as_int(score, 0)),
+    )
     return state
 
 

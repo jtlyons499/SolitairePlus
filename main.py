@@ -32,16 +32,20 @@ from arcade_support import (
     ARCADE_MACHINE_NAMES,
     ARCADE_PRIZE_CATALOG,
     ARCADE_TOKEN_PACKAGES,
+    award_ace_invaders_tickets,
     award_battle_bosses_tickets,
     award_king_pong_tickets,
+    award_suit_snake_tickets,
     buy_token_package,
     clone_arcade_state,
     get_machine_cost,
     make_default_arcade_state,
     normalize_arcade_state,
     redeem_prize,
+    register_ace_invaders_result,
     register_battle_bosses_result,
     register_king_pong_result,
+    register_suit_snake_result,
     spend_tokens,
 )
 from bluff_presentation import update_bluff_presentation
@@ -95,6 +99,10 @@ from battle_bosses import (
     build_battle_bosses_choices,
 )
 from battle_bosses_game import BattleBossesGame
+from ace_invaders import ACE_INVADERS_DIFFICULTIES
+from ace_invaders_game import AceInvadersGame
+from suit_snake import SUIT_SNAKE_MODES, SUIT_SNAKE_MOVEMENT_STYLES
+from suit_snake_game import SuitSnakeGame
 
 from texas_holdem import (
     TexasHoldemGame,
@@ -321,6 +329,8 @@ from debug_menu import (
     draw_debug_menu,
     get_debug_action,
     show_debug_message,
+    is_minigame_category_action,
+    toggle_minigame_category,
     ACTION_CAREER_HUB,
     ACTION_CASUAL_CARDS,
     ACTION_POKER_NIGHT,
@@ -348,6 +358,11 @@ from debug_menu import (
     ACTION_TEXAS_HOLDEM,
     ACTION_FIVE_CARD_DRAW,
     ACTION_SEVEN_CARD_STUD,
+    ACTION_ARCADE_NIGHT,
+    ACTION_KING_PONG,
+    ACTION_BATTLE_BOSSES,
+    ACTION_ACE_INVADERS,
+    ACTION_SUIT_SNAKE,
     ACTION_ADD_CASH,
     ACTION_ZERO_CASH,
     ACTION_ADD_RATING,
@@ -493,6 +508,61 @@ pygame.font.init()
 audio = AudioManager()
 
 
+SUPPORTED_MUSIC_EXTENSIONS = (".ogg", ".mp3", ".wav")
+
+
+def discover_music_files(directory, prefix):
+    """Return sorted drop-in music files whose names start with prefix."""
+    if not os.path.isdir(directory):
+        return []
+
+    tracks = []
+    for filename in os.listdir(directory):
+        lower_name = filename.lower()
+        if not lower_name.startswith(prefix.lower()):
+            continue
+        if not lower_name.endswith(SUPPORTED_MUSIC_EXTENSIONS):
+            continue
+
+        full_path = os.path.join(directory, filename)
+        if os.path.isfile(full_path):
+            tracks.append(full_path.replace("\\", "/"))
+
+    return sorted(tracks, key=lambda path: os.path.basename(path).lower())
+
+
+def discover_named_music_track(directory, stem):
+    """Find one optional cabinet track, preferring OGG, then MP3, then WAV."""
+    if not os.path.isdir(directory):
+        return None
+
+    files_by_lower_name = {
+        filename.lower(): filename
+        for filename in os.listdir(directory)
+    }
+
+    for extension in SUPPORTED_MUSIC_EXTENSIONS:
+        lookup_name = f"{stem}{extension}".lower()
+        actual_name = files_by_lower_name.get(lookup_name)
+        if actual_name:
+            full_path = os.path.join(directory, actual_name)
+            if os.path.isfile(full_path):
+                return full_path.replace("\\", "/")
+
+    return None
+
+
+ARCADE_MACHINE_MUSIC_TRACKS = {
+    game_id: discover_named_music_track("assets/music/arcade", game_id)
+    for game_id in (
+        "king_pong",
+        "battle_bosses",
+        "ace_invaders",
+        "suit_snake",
+    )
+}
+
+
 # ----------------------------
 # Instrumental soundtrack
 # ----------------------------
@@ -519,17 +589,26 @@ audio.add_playlist(
 # Ambient soundtrack
 # ----------------------------
 
-ambient_tracks = [
-    "assets/music/ambient_01.mp3",
-    "assets/music/ambient_02.mp3",
-    "assets/music/ambient_03.mp3",
-    "assets/music/ambient_04.mp3",
-]
+# Any supported file named ambient_* inside assets/music joins the rotation
+# automatically. Adding ambient_05, ambient_06, etc. no longer requires code.
+ambient_tracks = discover_music_files(
+    "assets/music",
+    "ambient_",
+)
+
+ambient_startup_track = next(
+    (
+        track
+        for track in ambient_tracks
+        if os.path.splitext(os.path.basename(track))[0].lower() == "ambient_01"
+    ),
+    ambient_tracks[0] if ambient_tracks else None,
+)
 
 audio.add_playlist(
     "ambient",
     ambient_tracks,
-    startup_track="assets/music/ambient_01.mp3"
+    startup_track=ambient_startup_track,
 )
 
 
@@ -602,6 +681,35 @@ for battle_sound_name, battle_sound_path in (
     if os.path.isfile(battle_sound_path):
         try:
             audio.load_sound(battle_sound_name, battle_sound_path)
+        except pygame.error:
+            pass
+
+# Ace Invaders uses the same drop-in audio contract. The cabinet remains fully
+# playable while these work-in-progress sounds are absent.
+for ace_sound_name, ace_sound_path in (
+        ("ace_invaders_shoot", "assets/sounds/ace_invaders_shoot.wav"),
+        ("ace_invaders_enemy_shoot", "assets/sounds/ace_invaders_enemy_shoot.wav"),
+        ("ace_invaders_enemy_hit", "assets/sounds/ace_invaders_enemy_hit.wav"),
+        ("ace_invaders_player_hit", "assets/sounds/ace_invaders_player_hit.wav"),
+        ("ace_invaders_shield_hit", "assets/sounds/ace_invaders_shield_hit.wav"),
+        ("ace_invaders_wave_clear", "assets/sounds/ace_invaders_wave_clear.wav"),
+        ("ace_invaders_loss", "assets/sounds/ace_invaders_loss.wav"),
+):
+    if os.path.isfile(ace_sound_path):
+        try:
+            audio.load_sound(ace_sound_name, ace_sound_path)
+        except pygame.error:
+            pass
+
+# Suit Snake audio follows the same optional drop-in pattern.
+for suit_snake_sound_name, suit_snake_sound_path in (
+        ("suit_snake_collect", "assets/sounds/suit_snake_collect.wav"),
+        ("suit_snake_deck", "assets/sounds/suit_snake_deck.wav"),
+        ("suit_snake_loss", "assets/sounds/suit_snake_loss.wav"),
+):
+    if os.path.isfile(suit_snake_sound_path):
+        try:
+            audio.load_sound(suit_snake_sound_name, suit_snake_sound_path)
         except pygame.error:
             pass
 
@@ -743,9 +851,20 @@ STATE_KING_PONG = "king_pong"
 STATE_KING_PONG_OPPONENT_SELECT = "king_pong_opponent_select"
 STATE_BATTLE_BOSSES_OPPONENT_SELECT = "battle_bosses_opponent_select"
 STATE_BATTLE_BOSSES = "battle_bosses"
+STATE_ACE_INVADERS_DIFFICULTY_SELECT = "ace_invaders_difficulty_select"
+STATE_ACE_INVADERS = "ace_invaders"
+STATE_SUIT_SNAKE_DIFFICULTY_SELECT = "suit_snake_difficulty_select"
+STATE_SUIT_SNAKE = "suit_snake"
 STATE_ARCADE_TOKEN_EXCHANGE = "arcade_token_exchange"
 STATE_ARCADE_PRIZE_COUNTER = "arcade_prize_counter"
 STATE_ARCADE_TROPHY_ROOM = "arcade_trophy_room"
+
+ARCADE_MACHINE_MUSIC_BY_STATE = {
+    STATE_KING_PONG: ARCADE_MACHINE_MUSIC_TRACKS.get("king_pong"),
+    STATE_BATTLE_BOSSES: ARCADE_MACHINE_MUSIC_TRACKS.get("battle_bosses"),
+    STATE_ACE_INVADERS: ARCADE_MACHINE_MUSIC_TRACKS.get("ace_invaders"),
+    STATE_SUIT_SNAKE: ARCADE_MACHINE_MUSIC_TRACKS.get("suit_snake"),
+}
 
 STATE_CAREER_EVENT_SUMMARY = (
     "career_event_summary"
@@ -3362,6 +3481,8 @@ five_o_poker_game = FiveOPokerGame()
 blind_mans_bluff_game = BlindMansBluffGame()
 king_pong_game = KingPongGame()
 battle_bosses_game = BattleBossesGame()
+ace_invaders_game = AceInvadersGame()
+suit_snake_game = SuitSnakeGame()
 arcade_state = make_default_arcade_state()
 arcade_night_tokens_spent = 0
 arcade_night_tickets_won = 0
@@ -3371,8 +3492,15 @@ king_pong_opponent_choices = []
 king_pong_selected_opponent_index = None
 battle_bosses_opponent_choices = []
 battle_bosses_selected_choice_index = None
+ace_invaders_selected_difficulty_index = None
+suit_snake_selected_mode_index = None
+suit_snake_selected_movement_style = "step"
 arcade_status_message = ""
 arcade_status_message_expires = 0
+# Per-cabinet Arcade music is an optional placeholder layer.  Keep it OFF by
+# default so machine SFX remain clear until the user explicitly enables it
+# from the Arcade Night screen.  This is intentionally session-local.
+arcade_placeholder_music_enabled = False
 
 roulette_session_net = 0
 roulette_chip_value = 10
@@ -4213,6 +4341,12 @@ difficulty_detail_font = pygame.font.SysFont(
     24
 )
 
+arcade_button_badge_font = pygame.font.SysFont(
+    None,
+    20,
+    bold=True,
+)
+
 tooltip_font = pygame.font.SysFont(
     None,
     22
@@ -4805,6 +4939,7 @@ career_event_end_rect = pygame.Rect(
 
 arcade_machine_buy_tokens_rect = pygame.Rect(328, 535, 330, 92)
 arcade_machine_prize_counter_rect = pygame.Rect(708, 535, 330, 92)
+arcade_placeholder_music_toggle_rect = pygame.Rect(BASE_WIDTH - 276, 18, 246, 34)
 
 arcade_token_package_rects = {}
 for package_index in range(len(ARCADE_TOKEN_PACKAGES)):
@@ -4847,6 +4982,28 @@ battle_bosses_back_rect = pygame.Rect(108, 651, 240, 54)
 battle_bosses_refresh_rect = pygame.Rect(563, 651, 240, 54)
 battle_bosses_future_play_rect = pygame.Rect(1018, 651, 240, 54)
 battle_bosses_quit_rect = pygame.Rect(1090, 675, 220, 50)
+
+ace_invaders_difficulty_rects = [
+    pygame.Rect(103 + index * 292, 220, 266, 320)
+    for index in range(4)
+]
+ace_invaders_back_rect = pygame.Rect(103, 657, 220, 54)
+ace_invaders_tokens_rect = pygame.Rect(573, 657, 220, 54)
+ace_invaders_play_rect = pygame.Rect(1043, 657, 220, 54)
+ace_invaders_quit_rect = pygame.Rect(1120, 676, 190, 50)
+
+suit_snake_mode_rects = [
+    pygame.Rect(103 + index * 292, 212, 266, 300)
+    for index in range(4)
+]
+suit_snake_step_movement_rect = pygame.Rect(438, 548, 230, 52)
+suit_snake_smooth_movement_rect = pygame.Rect(698, 548, 230, 52)
+suit_snake_back_rect = pygame.Rect(103, 657, 220, 54)
+suit_snake_tokens_rect = pygame.Rect(573, 657, 220, 54)
+suit_snake_play_rect = pygame.Rect(1043, 657, 220, 54)
+# Keep the gameplay Quit control completely outside Suit Snake's playfield
+# and footer, including the larger 30x16 board.
+suit_snake_quit_rect = pygame.Rect(1155, 660, 190, 50)
 
 career_interview_answer_rects = [
     pygame.Rect(348, 410, 670, 54),
@@ -8142,6 +8299,50 @@ def debug_open_casino_night():
     )
 
 
+def debug_prepare_arcade_night():
+    """Create a standalone Arcade Night context for F10 testing."""
+    global career_event_entry
+    global career_event_has_activity
+    global current_game_mode
+
+    current_game_mode = "debug"
+    career_event_entry = {
+        "activity_type": CAREER_ACTIVITY_ARCADE_NIGHT,
+        "title": "Arcade Night",
+        "game_ids": CAREER_EVENT_GAMES[CAREER_ACTIVITY_ARCADE_NIGHT].copy(),
+        "debug": True,
+    }
+    career_event_has_activity = False
+    reset_career_event_result_log()
+    reset_career_event_session_totals(CAREER_ACTIVITY_ARCADE_NIGHT)
+
+
+def debug_open_arcade_night():
+    global current_state
+    debug_prepare_arcade_night()
+    current_state = STATE_CAREER_EVENT_SELECT
+
+
+def debug_open_king_pong():
+    debug_prepare_arcade_night()
+    open_king_pong_opponent_select(refresh=True)
+
+
+def debug_open_battle_bosses():
+    debug_prepare_arcade_night()
+    open_battle_bosses_opponent_select(refresh=True)
+
+
+def debug_open_ace_invaders():
+    debug_prepare_arcade_night()
+    open_ace_invaders_difficulty_select(reset_selection=True)
+
+
+def debug_open_suit_snake():
+    debug_prepare_arcade_night()
+    open_suit_snake_difficulty_select(reset_selection=True)
+
+
 def set_arcade_status_message(message, duration_ms=2600):
     global arcade_status_message
     global arcade_status_message_expires
@@ -8230,6 +8431,63 @@ def open_battle_bosses_opponent_select(refresh=True):
 
     current_state = STATE_BATTLE_BOSSES_OPPONENT_SELECT
 
+
+def open_ace_invaders_difficulty_select(reset_selection=False):
+    global current_state
+    global ace_invaders_selected_difficulty_index
+    global arcade_pending_launch_game_id
+
+    if reset_selection:
+        ace_invaders_selected_difficulty_index = None
+
+    arcade_pending_launch_game_id = None
+    current_state = STATE_ACE_INVADERS_DIFFICULTY_SELECT
+
+
+def get_selected_ace_invaders_difficulty():
+    difficulty_ids = list(ACE_INVADERS_DIFFICULTIES)
+    if (
+            ace_invaders_selected_difficulty_index is None
+            or ace_invaders_selected_difficulty_index < 0
+            or ace_invaders_selected_difficulty_index >= len(difficulty_ids)
+    ):
+        return None
+    return difficulty_ids[ace_invaders_selected_difficulty_index]
+
+
+def open_suit_snake_difficulty_select(reset_selection=False):
+    """Open Suit Snake's mode/movement setup screen.
+
+    The state name is retained for debug/navigation compatibility even though
+    Suit Snake now selects cabinet modes instead of speed difficulties.
+    """
+    global current_state
+    global suit_snake_selected_mode_index
+    global suit_snake_selected_movement_style
+    global arcade_pending_launch_game_id
+
+    if reset_selection:
+        suit_snake_selected_mode_index = None
+        suit_snake_selected_movement_style = "step"
+
+    arcade_pending_launch_game_id = None
+    current_state = STATE_SUIT_SNAKE_DIFFICULTY_SELECT
+
+
+def get_selected_suit_snake_mode():
+    mode_ids = list(SUIT_SNAKE_MODES)
+    if (
+            suit_snake_selected_mode_index is None
+            or suit_snake_selected_mode_index < 0
+            or suit_snake_selected_mode_index >= len(mode_ids)
+    ):
+        return None
+    return mode_ids[suit_snake_selected_mode_index]
+
+
+def get_selected_suit_snake_difficulty():
+    """Backward-compatible alias for older integration paths/tests."""
+    return get_selected_suit_snake_mode()
 
 def get_selected_battle_bosses_choice():
     if (
@@ -8439,6 +8697,212 @@ def finish_battle_bosses_session():
     global current_state
 
     claim_battle_bosses_result()
+    current_state = STATE_CAREER_EVENT_SELECT
+
+
+def start_ace_invaders_session():
+    global current_state
+    global career_event_has_activity
+    global arcade_state
+    global arcade_night_tokens_spent
+    global arcade_pending_launch_game_id
+
+    difficulty_id = get_selected_ace_invaders_difficulty()
+    if difficulty_id is None:
+        open_ace_invaders_difficulty_select(reset_selection=False)
+        set_arcade_status_message("Choose an Ace Invaders difficulty first.")
+        return False
+
+    token_cost = get_machine_cost("ace_invaders")
+    success, updated_state = spend_tokens(arcade_state, token_cost)
+    if not success:
+        set_arcade_status_message("Not enough tokens. Buy more to play Ace Invaders.")
+        open_arcade_token_exchange("ace_invaders")
+        return False
+
+    arcade_state = updated_state
+    arcade_night_tokens_spent += token_cost
+    arcade_pending_launch_game_id = None
+    career_event_has_activity = True
+
+    saved_high_score = int(
+        arcade_state.get("stats", {}).get("ace_invaders_high_score", 0) or 0
+    )
+    ace_invaders_game.start_session(
+        difficulty_id,
+        high_score=saved_high_score,
+    )
+    auto_save_career()
+    current_state = STATE_ACE_INVADERS
+    return True
+
+
+def claim_ace_invaders_result():
+    global career_event_has_activity
+    global arcade_state
+    global arcade_night_tickets_won
+
+    if ace_invaders_game.reward_claimed or not ace_invaders_game.finished:
+        return False
+
+    if ace_invaders_game.forfeited:
+        base_tickets = 0
+        tickets = 0
+    else:
+        base_tickets = award_ace_invaders_tickets(
+            ace_invaders_game.score,
+            ace_invaders_game.waves_cleared,
+        )
+        tickets = max(
+            0,
+            int(round(base_tickets * ace_invaders_game.ticket_multiplier)),
+        )
+
+    arcade_state = register_ace_invaders_result(
+        arcade_state,
+        None,
+        tickets,
+        score=ace_invaders_game.score,
+        enemies_destroyed=ace_invaders_game.enemies_destroyed,
+        waves_cleared=ace_invaders_game.waves_cleared,
+    )
+    arcade_night_tickets_won += tickets
+    career_event_has_activity = True
+
+    record_career_event_result(
+        "ace_invaders",
+        won=None,
+        tickets=tickets,
+        base_tickets=base_tickets,
+        ticket_multiplier=ace_invaders_game.ticket_multiplier,
+        difficulty=ace_invaders_game.difficulty_id,
+        tokens_spent=get_machine_cost("ace_invaders"),
+        score=ace_invaders_game.score,
+        high_score=ace_invaders_game.high_score,
+        waves_cleared=ace_invaders_game.waves_cleared,
+        enemies_destroyed=ace_invaders_game.enemies_destroyed,
+        lives=ace_invaders_game.lives,
+        accuracy=ace_invaders_game.accuracy_percent,
+        forfeited=bool(ace_invaders_game.forfeited),
+        fan_impact=False,
+    )
+
+    ace_invaders_game.reward_claimed = True
+    auto_save_career()
+    return True
+
+
+def finish_ace_invaders_session():
+    global current_state
+
+    claim_ace_invaders_result()
+    current_state = STATE_CAREER_EVENT_SELECT
+
+
+def start_suit_snake_session():
+    global current_state
+    global career_event_has_activity
+    global arcade_state
+    global arcade_night_tokens_spent
+    global arcade_pending_launch_game_id
+
+    mode_id = get_selected_suit_snake_mode()
+    if mode_id is None:
+        open_suit_snake_difficulty_select(reset_selection=False)
+        set_arcade_status_message("Choose a Suit Snake mode first.")
+        return False
+
+    movement_style = (
+        suit_snake_selected_movement_style
+        if suit_snake_selected_movement_style in SUIT_SNAKE_MOVEMENT_STYLES
+        else "step"
+    )
+
+    token_cost = get_machine_cost("suit_snake")
+    success, updated_state = spend_tokens(arcade_state, token_cost)
+    if not success:
+        set_arcade_status_message("Not enough tokens. Buy more to play Suit Snake.")
+        open_arcade_token_exchange("suit_snake")
+        return False
+
+    arcade_state = updated_state
+    arcade_night_tokens_spent += token_cost
+    arcade_pending_launch_game_id = None
+    career_event_has_activity = True
+
+    saved_high_score = int(
+        arcade_state.get("stats", {}).get("suit_snake_high_score", 0) or 0
+    )
+    suit_snake_game.start_session(
+        mode_id,
+        movement_style=movement_style,
+        high_score=saved_high_score,
+    )
+    auto_save_career()
+    current_state = STATE_SUIT_SNAKE
+    return True
+
+def claim_suit_snake_result():
+    global career_event_has_activity
+    global arcade_state
+    global arcade_night_tickets_won
+
+    if suit_snake_game.reward_claimed or not suit_snake_game.finished:
+        return False
+
+    if suit_snake_game.forfeited:
+        base_tickets = 0
+        tickets = 0
+    else:
+        base_tickets = award_suit_snake_tickets(
+            suit_snake_game.score,
+            suit_snake_game.cards_collected,
+            suit_snake_game.decks_completed,
+        )
+        tickets = max(
+            0,
+            int(round(base_tickets * suit_snake_game.ticket_multiplier)),
+        )
+
+    arcade_state = register_suit_snake_result(
+        arcade_state,
+        tickets,
+        score=suit_snake_game.score,
+        cards_collected=suit_snake_game.cards_collected,
+        decks_completed=suit_snake_game.decks_completed,
+        chain_length=suit_snake_game.chain_length,
+    )
+    arcade_night_tickets_won += tickets
+    career_event_has_activity = True
+
+    record_career_event_result(
+        "suit_snake",
+        won=None,
+        tickets=tickets,
+        base_tickets=base_tickets,
+        ticket_multiplier=suit_snake_game.ticket_multiplier,
+        difficulty=suit_snake_game.mode_id,
+        mode=suit_snake_game.mode_id,
+        movement=suit_snake_game.movement_style,
+        tokens_spent=get_machine_cost("suit_snake"),
+        score=suit_snake_game.score,
+        high_score=suit_snake_game.high_score,
+        cards_collected=suit_snake_game.cards_collected,
+        decks_completed=suit_snake_game.decks_completed,
+        chain_length=suit_snake_game.chain_length,
+        forfeited=bool(suit_snake_game.forfeited),
+        fan_impact=False,
+    )
+
+    suit_snake_game.reward_claimed = True
+    auto_save_career()
+    return True
+
+
+def finish_suit_snake_session():
+    global current_state
+
+    claim_suit_snake_result()
     current_state = STATE_CAREER_EVENT_SELECT
 
 
@@ -18279,7 +18743,7 @@ EVENT_BACKGROUND_ASSET_PATHS = {
     CAREER_ACTIVITY_POKER_NIGHT: "assets/events/poker_night/background.png",
     CAREER_ACTIVITY_CASINO_NIGHT: "assets/events/casino_night/background.png",
     CAREER_ACTIVITY_NICHE_NIGHT: "assets/events/niche_night/background.png",
-    CAREER_ACTIVITY_ARCADE_NIGHT: "assets/arcade/bg.png",
+    CAREER_ACTIVITY_ARCADE_NIGHT: "assets/arcade/ui/background.png",
 }
 
 EVENT_BUTTON_ASSET_PATHS = {
@@ -18301,6 +18765,24 @@ EVENT_BUTTON_ASSET_PATHS = {
     },
 }
 
+
+# Arcade Night uses authored image buttons instead of the generic wood/menu
+# controls. Missing art falls back to the normal button renderer so a code
+# update never makes the event unusable while artwork is being prepared.
+ARCADE_ACTION_BUTTON_ASSET_PATHS = {
+    "buy_tokens": "assets/arcade/ui/buy_tokens.png",
+    "prize_counter": "assets/arcade/ui/prize_counter.png",
+    "return": "assets/arcade/ui/return.png",
+    "end": "assets/arcade/ui/end_night.png",
+    # Shared small controls used by the individual Arcade game setup screens.
+    # play_tokens.png should include the PLAY artwork/label; the changing token
+    # price is drawn by code just above the button so one asset works for every game.
+    "back": "assets/arcade/ui/back.png",
+    "play_tokens": "assets/arcade/ui/play_tokens.png",
+    "reroll_rivals": "assets/arcade/ui/reroll_rivals.png",
+    "quit": "assets/arcade/ui/quit.png",
+}
+
 _event_ui_asset_cache = {}
 
 
@@ -18318,6 +18800,121 @@ def get_event_ui_asset(path, size=None):
         image = None
     _event_ui_asset_cache[cache_key] = image
     return image
+
+
+def get_cover_scaled_ui_asset(path, size):
+    """Scale an authored image to fill a button without distorting its aspect ratio."""
+    if not path or not size:
+        return None
+
+    target_w, target_h = int(size[0]), int(size[1])
+    if target_w <= 0 or target_h <= 0:
+        return None
+
+    cache_key = ("cover", path, target_w, target_h)
+    if cache_key in _event_ui_asset_cache:
+        return _event_ui_asset_cache[cache_key]
+
+    source = get_event_ui_asset(path)
+    if source is None:
+        _event_ui_asset_cache[cache_key] = None
+        return None
+
+    source_w, source_h = source.get_size()
+    target_ratio = target_w / target_h
+    source_ratio = source_w / max(1, source_h)
+
+    if source_ratio > target_ratio:
+        crop_w = max(1, int(round(source_h * target_ratio)))
+        crop_x = max(0, (source_w - crop_w) // 2)
+        crop_rect = pygame.Rect(crop_x, 0, crop_w, source_h)
+    else:
+        crop_h = max(1, int(round(source_w / target_ratio)))
+        crop_y = max(0, (source_h - crop_h) // 2)
+        crop_rect = pygame.Rect(0, crop_y, source_w, crop_h)
+
+    cropped = source.subsurface(crop_rect).copy()
+    image = pygame.transform.smoothscale(cropped, (target_w, target_h))
+    _event_ui_asset_cache[cache_key] = image
+    return image
+
+
+def draw_arcade_action_image_button(
+        rect,
+        button_kind,
+        fallback_text,
+        enabled=True,
+        badge_text=None,
+):
+    """Draw an Arcade control with authored PNG art and a safe generic fallback.
+
+    ``badge_text`` is intended for values that change in code (currently the
+    machine entry price). The authored play_tokens.png can therefore say PLAY
+    while the live ``2 TOKENS`` / ``3 TOKENS`` value remains accurate without
+    covering any part of the button artwork.
+    """
+    path = ARCADE_ACTION_BUTTON_ASSET_PATHS.get(button_kind)
+    image = get_cover_scaled_ui_asset(path, rect.size)
+    hovered = (
+        enabled
+        and game_mouse_pos is not None
+        and rect.collidepoint(game_mouse_pos)
+    )
+
+    if image is None:
+        draw_menu_button(
+            rect,
+            fallback_text,
+            game_mouse_pos if enabled else None,
+            font=difficulty_detail_font,
+        )
+        if not enabled:
+            overlay = pygame.Surface(rect.size, pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 125))
+            game_surface.blit(overlay, rect.topleft)
+        return
+
+    button = image.copy()
+    if hovered:
+        button.fill((24, 24, 24, 0), special_flags=pygame.BLEND_RGBA_ADD)
+    if not enabled:
+        button.fill((105, 105, 105, 255), special_flags=pygame.BLEND_RGBA_MULT)
+        button.set_alpha(145)
+
+    game_surface.blit(button, rect.topleft)
+
+    border_color = (247, 213, 115) if hovered else (177, 190, 205)
+    pygame.draw.rect(
+        game_surface,
+        border_color,
+        rect,
+        3 if hovered else 2,
+        border_radius=9,
+    )
+
+    if badge_text:
+        # Keep the changing entry price completely outside the authored PLAY
+        # art. This preserves custom transparent button designs instead of
+        # covering the right side with a live-value badge.
+        badge = arcade_button_badge_font.render(
+            badge_text,
+            True,
+            (246, 239, 214),
+        )
+        shadow = arcade_button_badge_font.render(
+            badge_text,
+            True,
+            (6, 9, 13),
+        )
+        badge_center = (rect.centerx, rect.top - 11)
+        game_surface.blit(
+            shadow,
+            shadow.get_rect(center=(badge_center[0] + 1, badge_center[1] + 1)),
+        )
+        game_surface.blit(
+            badge,
+            badge.get_rect(center=badge_center),
+        )
 
 
 def draw_event_image_button(rect, activity_type, button_kind, fallback_text, enabled=True):
@@ -18462,7 +19059,7 @@ def draw_poker_night_high_stakes_label(
 
 
 def draw_arcade_night_select():
-    background = get_event_ui_asset("assets/arcade/bg.png", (BASE_WIDTH, BASE_HEIGHT))
+    background = get_event_ui_asset("assets/arcade/ui/background.png", (BASE_WIDTH, BASE_HEIGHT))
     if background is not None:
         game_surface.blit(background, (0, 0))
     else:
@@ -18472,14 +19069,59 @@ def draw_arcade_night_select():
     shade.fill((0, 0, 0, 42))
     game_surface.blit(shade, (0, 0))
 
-    title = options_title_font.render("ARCADE NIGHT", True, (255, 255, 255))
+    title_asset = get_event_ui_asset("assets/arcade/ui/title.png", (350, 84))
+    if title_asset is not None:
+        game_surface.blit(
+            title_asset,
+            title_asset.get_rect(center=(BASE_WIDTH // 2, 47)),
+        )
+    else:
+        title = options_title_font.render("ARCADE NIGHT", True, (255, 255, 255))
+        game_surface.blit(title, title.get_rect(center=(BASE_WIDTH // 2, 48)))
+
     subtitle = difficulty_detail_font.render(
         "Choose a machine, buy tokens, and turn your wins into tickets.",
         True,
         (221, 226, 232),
     )
-    game_surface.blit(title, title.get_rect(center=(BASE_WIDTH // 2, 48)))
-    game_surface.blit(subtitle, subtitle.get_rect(center=(BASE_WIDTH // 2, 88)))
+    game_surface.blit(subtitle, subtitle.get_rect(center=(BASE_WIDTH // 2, 92)))
+
+    # Optional cabinet soundtrack toggle.  Machine music is intentionally OFF
+    # on every fresh launch because the temporary tracks can compete with the
+    # machine SFX.  The normal Instrumental/Ambient soundtrack is unaffected.
+    music_toggle_hovered = (
+        game_mouse_pos is not None
+        and arcade_placeholder_music_toggle_rect.collidepoint(game_mouse_pos)
+    )
+    toggle_panel = pygame.Surface(
+        arcade_placeholder_music_toggle_rect.size,
+        pygame.SRCALPHA,
+    )
+    toggle_panel.fill((8, 14, 24, 232 if music_toggle_hovered else 214))
+    game_surface.blit(toggle_panel, arcade_placeholder_music_toggle_rect.topleft)
+    toggle_border = (
+        (247, 213, 115)
+        if arcade_placeholder_music_enabled
+        else ((130, 194, 218) if music_toggle_hovered else (111, 126, 145))
+    )
+    pygame.draw.rect(
+        game_surface,
+        toggle_border,
+        arcade_placeholder_music_toggle_rect,
+        2,
+        border_radius=8,
+    )
+    toggle_text = render_text_fit(
+        f"Placeholder Music: {'On' if arcade_placeholder_music_enabled else 'Off'}",
+        difficulty_detail_font,
+        arcade_placeholder_music_toggle_rect.width - 18,
+        color=(255, 235, 145) if arcade_placeholder_music_enabled else (218, 225, 232),
+        minimum_size=14,
+    )
+    game_surface.blit(
+        toggle_text,
+        toggle_text.get_rect(center=arcade_placeholder_music_toggle_rect.center),
+    )
 
     counter_data = (
         ("CASH", f"${career_cash:,}"),
@@ -18513,9 +19155,9 @@ def draw_arcade_night_select():
         "suit_snake": "Suit Snake",
     }
     descriptions = {
-        "king_pong": ("King vs. King paddle action.", "First to five wins."),
-        "battle_bosses": ("Deflect the Joker projectile", "and break the rival strongholds."),
-        "ace_invaders": ("Blast waves of incoming", "Aces before they reach you."),
+        "king_pong": ("Classic Pong.", "First to five wins."),
+        "battle_bosses": ("Deflect a projectile", "and break the rival strongholds."),
+        "ace_invaders": ("Defeat waves of incoming", "Ace suits before they reach you."),
         "suit_snake": ("Build a card-chain snake", "through the deck in sequence."),
     }
 
@@ -18579,55 +19221,33 @@ def draw_arcade_night_select():
 
         career_event_card_rects.append((rect, game_id))
 
-    draw_menu_button(
+    # Arcade Night action controls are all authored PNG buttons. The loader
+    # preserves aspect ratio with a center crop and falls back to the generic
+    # renderer until the corresponding artwork exists.
+    draw_arcade_action_image_button(
         arcade_machine_buy_tokens_rect,
+        "buy_tokens",
         "Buy Tokens",
-        game_mouse_pos,
-        font=option_label_font,
+        enabled=True,
     )
-
-    # Prize Counter uses its authored 640x360 select art rather than appearing
-    # as another generic text button. Keep the art at 16:9 on the left and the
-    # service label on the right so it remains readable at this compact size.
-    prize_rect = arcade_machine_prize_counter_rect
-    prize_hovered = game_mouse_pos is not None and prize_rect.collidepoint(game_mouse_pos)
-    prize_panel = pygame.Surface(prize_rect.size, pygame.SRCALPHA)
-    prize_panel.fill((28, 42, 55, 244) if prize_hovered else (18, 29, 42, 238))
-    game_surface.blit(prize_panel, prize_rect.topleft)
-    pygame.draw.rect(
-        game_surface,
-        (247, 213, 115) if prize_hovered else (178, 190, 204),
-        prize_rect,
-        3 if prize_hovered else 2,
-        border_radius=10,
+    draw_arcade_action_image_button(
+        arcade_machine_prize_counter_rect,
+        "prize_counter",
+        "Prize Counter",
+        enabled=True,
     )
-    prize_art_rect = pygame.Rect(prize_rect.x + 4, prize_rect.y + 4, 149, 84)
-    prize_art = get_event_selection_image("prize_counter", prize_art_rect.size)
-    if prize_art is not None:
-        game_surface.blit(prize_art, prize_art_rect)
-    else:
-        pygame.draw.rect(game_surface, (7, 12, 19), prize_art_rect, border_radius=6)
-        missing = ui_small_font.render("PRIZE ART", True, (120, 132, 146))
-        game_surface.blit(missing, missing.get_rect(center=prize_art_rect.center))
-    prize_title = option_label_font.render("Prize Counter", True, (248, 249, 250))
-    prize_note = ui_small_font.render("Tickets + Trophies", True, (255, 235, 145))
-    label_center_x = prize_art_rect.right + (prize_rect.right - prize_art_rect.right) // 2
-    game_surface.blit(prize_title, prize_title.get_rect(center=(label_center_x, prize_rect.y + 34)))
-    game_surface.blit(prize_note, prize_note.get_rect(center=(label_center_x, prize_rect.y + 61)))
 
     career_event_card_rects.append((arcade_machine_buy_tokens_rect, "token_exchange"))
     career_event_card_rects.append((arcade_machine_prize_counter_rect, "prize_counter"))
 
-    draw_event_image_button(
+    draw_arcade_action_image_button(
         career_event_return_rect,
-        CAREER_ACTIVITY_ARCADE_NIGHT,
         "return",
         "Return",
         enabled=True,
     )
-    draw_event_image_button(
+    draw_arcade_action_image_button(
         career_event_end_rect,
-        CAREER_ACTIVITY_ARCADE_NIGHT,
         "end",
         "End Arcade Night",
         enabled=career_event_has_activity,
@@ -18962,7 +19582,11 @@ def draw_arcade_token_exchange():
         pygame.draw.rect(game_surface, (226, 194, 104), info_rect, 2, border_radius=8)
         game_surface.blit(info, info.get_rect(center=info_rect.center))
 
-    draw_menu_button(arcade_token_exchange_back_rect, "Back", game_mouse_pos, font=option_label_font)
+    draw_arcade_action_image_button(
+        arcade_token_exchange_back_rect,
+        "back",
+        "Back",
+    )
     if (
             arcade_pending_launch_game_id == "king_pong"
             and int(arcade_state.get("tokens", 0)) >= get_machine_cost("king_pong")
@@ -18989,7 +19613,7 @@ def draw_arcade_prize_counter():
     pygame.draw.rect(game_surface, (16, 23, 34), panel, border_radius=18)
     pygame.draw.rect(game_surface, (226, 194, 104), panel, 3, border_radius=18)
     title = options_title_font.render("PRIZE COUNTER", True, (255, 255, 255))
-    subtitle = difficulty_detail_font.render("Redeem tickets for arcade trophies. Cosmetic rewards can plug into this screen later.", True, (210, 217, 224))
+    subtitle = difficulty_detail_font.render("Redeem tickets for arcade trophies. Cosmetic rewards coming later.", True, (210, 217, 224))
     game_surface.blit(title, title.get_rect(center=(BASE_WIDTH // 2, 118)))
     game_surface.blit(subtitle, subtitle.get_rect(center=(BASE_WIDTH // 2, 152)))
 
@@ -19015,7 +19639,11 @@ def draw_arcade_prize_counter():
         footer_surface = difficulty_detail_font.render(footer, True, footer_color)
         game_surface.blit(footer_surface, footer_surface.get_rect(center=(rect.centerx, rect.bottom - 24)))
 
-    draw_menu_button(arcade_prize_back_rect, "Back", game_mouse_pos, font=option_label_font)
+    draw_arcade_action_image_button(
+        arcade_prize_back_rect,
+        "back",
+        "Back",
+    )
     draw_menu_button(arcade_prize_trophy_room_rect, "Trophy Room", game_mouse_pos, font=option_label_font)
     selected_prize = ARCADE_PRIZE_CATALOG[arcade_selected_prize_index]
     button_text = f"Redeem {selected_prize['cost']} Tickets"
@@ -19166,14 +19794,19 @@ def draw_king_pong_opponent_select():
             reward_surface.get_rect(center=(rect.centerx, rect.y + 238)),
         )
 
-        description = difficulty_detail_font.render(
-            difficulty_descriptions.get(difficulty_id, "Arcade opponent"),
-            True,
-            (185, 195, 207),
+        description_rect = pygame.Rect(
+            rect.x + 16,
+            rect.y + 258,
+            rect.width - 32,
+            50,
         )
-        game_surface.blit(
-            description,
-            description.get_rect(center=(rect.centerx, rect.y + 274)),
+        draw_wrapped_text_limited(
+            difficulty_descriptions.get(difficulty_id, "Arcade opponent"),
+            difficulty_detail_font,
+            (185, 195, 207),
+            description_rect,
+            2,
+            line_spacing=1,
         )
 
         select_note = difficulty_detail_font.render(
@@ -19186,17 +19819,15 @@ def draw_king_pong_opponent_select():
             select_note.get_rect(center=(rect.centerx, rect.bottom - 30)),
         )
 
-    draw_menu_button(
+    draw_arcade_action_image_button(
         king_pong_opponent_back_rect,
+        "back",
         "Back",
-        game_mouse_pos,
-        font=option_label_font,
     )
-    draw_menu_button(
+    draw_arcade_action_image_button(
         king_pong_opponent_tokens_rect,
+        "buy_tokens",
         "Buy Tokens",
-        game_mouse_pos,
-        font=option_label_font,
     )
 
     token_cost = get_machine_cost("king_pong")
@@ -19204,16 +19835,13 @@ def draw_king_pong_opponent_select():
         get_selected_king_pong_choice() is not None
         and int(arcade_state.get("tokens", 0)) >= token_cost
     )
-    draw_menu_button(
+    draw_arcade_action_image_button(
         king_pong_opponent_play_rect,
+        "play_tokens",
         f"Play - {token_cost} Tokens",
-        game_mouse_pos if can_play else None,
-        font=option_label_font,
+        enabled=can_play,
+        badge_text=f"{token_cost} TOKENS",
     )
-    if not can_play:
-        overlay = pygame.Surface(king_pong_opponent_play_rect.size, pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 125))
-        game_surface.blit(overlay, king_pong_opponent_play_rect.topleft)
 
     if arcade_status_message and pygame.time.get_ticks() <= arcade_status_message_expires:
         info = difficulty_detail_font.render(
@@ -19349,34 +19977,197 @@ def draw_battle_bosses_opponent_select():
             description.get_rect(center=(rect.centerx, rect.bottom - 20)),
         )
 
-    draw_menu_button(
+    draw_arcade_action_image_button(
         battle_bosses_back_rect,
+        "back",
         "Back",
-        game_mouse_pos,
-        font=option_label_font,
     )
-    draw_menu_button(
+    draw_arcade_action_image_button(
         battle_bosses_refresh_rect,
+        "reroll_rivals",
         "Reroll Rivals",
-        game_mouse_pos,
-        font=option_label_font,
     )
     battle_cost = get_machine_cost("battle_bosses")
     can_play = get_selected_battle_bosses_choice() is not None
-    draw_menu_button(
+    draw_arcade_action_image_button(
         battle_bosses_future_play_rect,
+        "play_tokens",
         f"Play - {battle_cost} Tokens",
-        game_mouse_pos if can_play else None,
-        font=difficulty_detail_font,
+        enabled=can_play,
+        badge_text=f"{battle_cost} TOKENS",
     )
-    if not can_play:
-        disabled = pygame.Surface(battle_bosses_future_play_rect.size, pygame.SRCALPHA)
-        disabled.fill((0, 0, 0, 125))
-        game_surface.blit(disabled, battle_bosses_future_play_rect.topleft)
 
     if arcade_status_message and pygame.time.get_ticks() <= arcade_status_message_expires:
         info = difficulty_detail_font.render(arcade_status_message, True, (248, 242, 216))
         game_surface.blit(info, info.get_rect(center=(BASE_WIDTH // 2, 625)))
+
+
+def draw_ace_invaders_difficulty_select():
+    draw_arcade_page_background(62)
+
+    panel = pygame.Rect(72, 44, 1222, 688)
+    panel_surface = pygame.Surface(panel.size, pygame.SRCALPHA)
+    panel_surface.fill((8, 15, 25, 238))
+    game_surface.blit(panel_surface, panel.topleft)
+    pygame.draw.rect(game_surface, (229, 197, 102), panel, 3, border_radius=16)
+
+    logo = get_event_ui_asset(
+        "assets/arcade/ace_invaders/logo.png",
+        (360, 96),
+    )
+    if logo is not None:
+        game_surface.blit(logo, logo.get_rect(center=(BASE_WIDTH // 2, 96)))
+    else:
+        title = options_title_font.render("ACE INVADERS", True, (250, 249, 244))
+        game_surface.blit(title, title.get_rect(center=(BASE_WIDTH // 2, 90)))
+
+    subtitle = difficulty_detail_font.render(
+        "Choose a difficulty. Ace Invaders runs forever - survive waves and chase the high score.",
+        True,
+        (213, 220, 228),
+    )
+    game_surface.blit(subtitle, subtitle.get_rect(center=(BASE_WIDTH // 2, 157)))
+
+    wallet = difficulty_detail_font.render(
+        f"TOKENS {int(arcade_state.get('tokens', 0)):,}    |    "
+        f"TICKETS {int(arcade_state.get('tickets', 0)):,}    |    "
+        f"ENTRY {get_machine_cost('ace_invaders')}    |    "
+        f"HIGH {int(arcade_state.get('stats', {}).get('ace_invaders_high_score', 0) or 0):,}",
+        True,
+        (255, 235, 145),
+    )
+    game_surface.blit(wallet, wallet.get_rect(center=(BASE_WIDTH // 2, 185)))
+
+    difficulty_ids = list(ACE_INVADERS_DIFFICULTIES)
+    for index, difficulty_id in enumerate(difficulty_ids[:4]):
+        rect = ace_invaders_difficulty_rects[index]
+        config = ACE_INVADERS_DIFFICULTIES[difficulty_id]
+        selected = index == ace_invaders_selected_difficulty_index
+        hovered = game_mouse_pos is not None and rect.collidepoint(game_mouse_pos)
+
+        fill = (34, 48, 64) if selected or hovered else (22, 31, 44)
+        border = (
+            (255, 217, 108)
+            if selected
+            else ((102, 196, 225) if hovered else (111, 126, 145))
+        )
+        pygame.draw.rect(game_surface, fill, rect, border_radius=14)
+        pygame.draw.rect(
+            game_surface,
+            border,
+            rect,
+            4 if selected else 2,
+            border_radius=14,
+        )
+
+        label = option_label_font.render(
+            config.get("label", difficulty_id.upper()),
+            True,
+            (255, 234, 141),
+        )
+        game_surface.blit(label, label.get_rect(center=(rect.centerx, rect.y + 35)))
+
+        multiplier = float(config.get("ticket_multiplier", 1.0))
+        reward = option_label_font.render(
+            f"x{multiplier:.2f} TICKETS",
+            True,
+            (132, 222, 169) if multiplier >= 1.0 else (214, 201, 150),
+        )
+        game_surface.blit(reward, reward.get_rect(center=(rect.centerx, rect.y + 78)))
+
+        rows = int(config.get("rows", 3))
+        columns = int(config.get("columns", 8))
+        enemy_count = rows * columns
+        stat_lines = (
+            f"Starts at {enemy_count} Aces",
+            f"Formation speed: {int(config.get('formation_speed', 68))}",
+            f"Enemy fire: {int(config.get('enemy_fire_ms', 1125))} ms",
+            f"Shot speed: {int(config.get('enemy_bullet_speed', 220))}",
+        )
+        for line_index, line in enumerate(stat_lines):
+            rendered = difficulty_detail_font.render(
+                line,
+                True,
+                (219, 224, 230),
+            )
+            game_surface.blit(
+                rendered,
+                rendered.get_rect(center=(rect.centerx, rect.y + 126 + line_index * 30)),
+            )
+
+        description_rect = pygame.Rect(
+            rect.x + 18,
+            rect.y + 235,
+            rect.width - 36,
+            48,
+        )
+        draw_wrapped_text_limited(
+            config.get("description", "Arcade shooter difficulty."),
+            difficulty_detail_font,
+            (178, 190, 204),
+            description_rect,
+            2,
+            line_spacing=3,
+        )
+
+        select_note = difficulty_detail_font.render(
+            "SELECTED" if selected else "Click to select",
+            True,
+            (255, 231, 143) if selected else (148, 161, 176),
+        )
+        game_surface.blit(
+            select_note,
+            select_note.get_rect(center=(rect.centerx, rect.bottom - 24)),
+        )
+
+    draw_arcade_action_image_button(
+        ace_invaders_back_rect,
+        "back",
+        "Back",
+    )
+    draw_arcade_action_image_button(
+        ace_invaders_tokens_rect,
+        "buy_tokens",
+        "Buy Tokens",
+    )
+
+    token_cost = get_machine_cost("ace_invaders")
+    can_play = (
+        get_selected_ace_invaders_difficulty() is not None
+        and int(arcade_state.get("tokens", 0)) >= token_cost
+    )
+    draw_arcade_action_image_button(
+        ace_invaders_play_rect,
+        "play_tokens",
+        f"Play - {token_cost} Tokens",
+        enabled=can_play,
+        badge_text=f"{token_cost} TOKENS",
+    )
+
+    if arcade_status_message and pygame.time.get_ticks() <= arcade_status_message_expires:
+        info = difficulty_detail_font.render(
+            arcade_status_message,
+            True,
+            (248, 242, 216),
+        )
+        game_surface.blit(info, info.get_rect(center=(BASE_WIDTH // 2, 620)))
+
+
+def draw_ace_invaders_screen():
+    ace_invaders_game.draw(
+        game_surface,
+        {
+            "title": options_title_font,
+            "label": option_label_font,
+            "detail": difficulty_detail_font,
+            "small": ui_small_font,
+        },
+    )
+    draw_arcade_action_image_button(
+        ace_invaders_quit_rect,
+        "quit",
+        "Quit",
+    )
 
 
 def draw_king_pong_screen():
@@ -19390,11 +20181,10 @@ def draw_king_pong_screen():
         },
         portrait_loader=get_npc_portrait_surface,
     )
-    draw_menu_button(
+    draw_arcade_action_image_button(
         king_pong_return_rect,
+        "quit",
         "Quit",
-        game_mouse_pos,
-        font=option_label_font,
     )
 
 
@@ -19415,11 +20205,231 @@ def draw_battle_bosses_screen():
         portrait_loader=get_npc_portrait_surface,
         player_portrait=player_portrait,
     )
-    draw_menu_button(
+    draw_arcade_action_image_button(
         battle_bosses_quit_rect,
+        "quit",
         "Quit",
-        game_mouse_pos,
-        font=option_label_font,
+    )
+
+
+
+def draw_suit_snake_difficulty_select():
+    draw_arcade_page_background(62)
+
+    panel = pygame.Rect(72, 44, 1222, 688)
+    panel_surface = pygame.Surface(panel.size, pygame.SRCALPHA)
+    panel_surface.fill((8, 15, 25, 238))
+    game_surface.blit(panel_surface, panel.topleft)
+    pygame.draw.rect(game_surface, (229, 197, 102), panel, 3, border_radius=16)
+
+    logo = get_event_ui_asset(
+        "assets/arcade/suit_snake/logo.png",
+        (360, 96),
+    )
+    if logo is not None:
+        game_surface.blit(logo, logo.get_rect(center=(BASE_WIDTH // 2, 96)))
+    else:
+        title = options_title_font.render("SUIT SNAKE", True, (250, 249, 244))
+        game_surface.blit(title, title.get_rect(center=(BASE_WIDTH // 2, 90)))
+
+    subtitle = difficulty_detail_font.render(
+        "Choose a mode, then choose Step or Smooth Movement.",
+        True,
+        (213, 220, 228),
+    )
+    game_surface.blit(subtitle, subtitle.get_rect(center=(BASE_WIDTH // 2, 157)))
+
+    wallet = difficulty_detail_font.render(
+        f"TOKENS {int(arcade_state.get('tokens', 0)):,}    |    "
+        f"TICKETS {int(arcade_state.get('tickets', 0)):,}    |    "
+        f"ENTRY {get_machine_cost('suit_snake')}    |    "
+        f"HIGH {int(arcade_state.get('stats', {}).get('suit_snake_high_score', 0) or 0):,}",
+        True,
+        (255, 235, 145),
+    )
+    game_surface.blit(wallet, wallet.get_rect(center=(BASE_WIDTH // 2, 184)))
+
+    mode_ids = list(SUIT_SNAKE_MODES)
+    for index, mode_id in enumerate(mode_ids[:4]):
+        rect = suit_snake_mode_rects[index]
+        config = SUIT_SNAKE_MODES[mode_id]
+        selected = index == suit_snake_selected_mode_index
+        hovered = game_mouse_pos is not None and rect.collidepoint(game_mouse_pos)
+
+        fill = (34, 48, 64) if selected or hovered else (22, 31, 44)
+        border = (
+            (255, 217, 108)
+            if selected
+            else ((102, 196, 225) if hovered else (111, 126, 145))
+        )
+        pygame.draw.rect(game_surface, fill, rect, border_radius=14)
+        pygame.draw.rect(
+            game_surface,
+            border,
+            rect,
+            4 if selected else 2,
+            border_radius=14,
+        )
+
+        label_lines = config.get("label_lines", (config.get("label", mode_id.upper()),))
+        label_start_y = rect.y + 30
+        for line_index, label_text in enumerate(label_lines[:2]):
+            label = render_text_fit(
+                str(label_text),
+                option_label_font,
+                rect.width - 28,
+                color=(255, 234, 141),
+                minimum_size=16,
+            )
+            game_surface.blit(
+                label,
+                label.get_rect(center=(rect.centerx, label_start_y + line_index * 27)),
+            )
+
+        columns = int(config.get("grid_columns", 24))
+        rows = int(config.get("grid_rows", 13))
+        wraparound = bool(config.get("wraparound", False))
+        stat_lines = (
+            f"Grid: {columns} x {rows}",
+            "Borders: WRAPAROUND" if wraparound else "Borders: DEADLY",
+            "Self collision: Game Over",
+        )
+        for line_index, line in enumerate(stat_lines):
+            rendered = difficulty_detail_font.render(
+                line,
+                True,
+                (132, 222, 169) if wraparound and line_index == 1 else (219, 224, 230),
+            )
+            game_surface.blit(
+                rendered,
+                rendered.get_rect(center=(rect.centerx, rect.y + 105 + line_index * 30)),
+            )
+
+        description_rect = pygame.Rect(
+            rect.x + 18,
+            rect.y + 198,
+            rect.width - 36,
+            54,
+        )
+        draw_wrapped_text_limited(
+            config.get("description", "Suit Snake cabinet mode."),
+            difficulty_detail_font,
+            (178, 190, 204),
+            description_rect,
+            2,
+            line_spacing=3,
+        )
+
+        select_note = difficulty_detail_font.render(
+            "SELECTED" if selected else "Click to select",
+            True,
+            (255, 231, 143) if selected else (148, 161, 176),
+        )
+        game_surface.blit(
+            select_note,
+            select_note.get_rect(center=(rect.centerx, rect.bottom - 22)),
+        )
+
+    movement_label = difficulty_detail_font.render(
+        "MOVEMENT STYLE",
+        True,
+        (213, 220, 228),
+    )
+    game_surface.blit(
+        movement_label,
+        movement_label.get_rect(center=(BASE_WIDTH // 2, 530)),
+    )
+
+    movement_options = (
+        ("step", suit_snake_step_movement_rect),
+        ("smooth", suit_snake_smooth_movement_rect),
+    )
+    for movement_id, rect in movement_options:
+        selected = suit_snake_selected_movement_style == movement_id
+        hovered = game_mouse_pos is not None and rect.collidepoint(game_mouse_pos)
+        fill = (34, 48, 64) if selected or hovered else (20, 29, 41)
+        border = (
+            (255, 217, 108)
+            if selected
+            else ((102, 196, 225) if hovered else (111, 126, 145))
+        )
+        pygame.draw.rect(game_surface, fill, rect, border_radius=10)
+        pygame.draw.rect(
+            game_surface,
+            border,
+            rect,
+            3 if selected else 2,
+            border_radius=10,
+        )
+        movement_text = SUIT_SNAKE_MOVEMENT_STYLES[movement_id]["label"]
+        rendered = render_text_fit(
+            movement_text,
+            difficulty_detail_font,
+            rect.width - 24,
+            color=(255, 234, 141) if selected else (218, 225, 232),
+            minimum_size=14,
+        )
+        game_surface.blit(rendered, rendered.get_rect(center=rect.center))
+
+    movement_description = SUIT_SNAKE_MOVEMENT_STYLES[
+        suit_snake_selected_movement_style
+    ]["description"]
+    description = ui_small_font.render(
+        movement_description,
+        True,
+        (168, 181, 194),
+    )
+    game_surface.blit(
+        description,
+        description.get_rect(center=(BASE_WIDTH // 2, 614)),
+    )
+
+    draw_arcade_action_image_button(
+        suit_snake_back_rect,
+        "back",
+        "Back",
+    )
+    draw_arcade_action_image_button(
+        suit_snake_tokens_rect,
+        "buy_tokens",
+        "Buy Tokens",
+    )
+
+    token_cost = get_machine_cost("suit_snake")
+    can_play = (
+        get_selected_suit_snake_mode() is not None
+        and int(arcade_state.get("tokens", 0)) >= token_cost
+    )
+    draw_arcade_action_image_button(
+        suit_snake_play_rect,
+        "play_tokens",
+        f"Play - {token_cost} Token",
+        enabled=can_play,
+        badge_text=f"{token_cost} TOKEN" if token_cost == 1 else f"{token_cost} TOKENS",
+    )
+
+    if arcade_status_message and pygame.time.get_ticks() <= arcade_status_message_expires:
+        info = ui_small_font.render(
+            arcade_status_message,
+            True,
+            (248, 242, 216),
+        )
+        game_surface.blit(info, info.get_rect(center=(BASE_WIDTH // 2, 638)))
+
+def draw_suit_snake_screen():
+    suit_snake_game.draw(
+        game_surface,
+        {
+            "title": options_title_font,
+            "label": option_label_font,
+            "detail": difficulty_detail_font,
+            "small": ui_small_font,
+        },
+    )
+    draw_arcade_action_image_button(
+        suit_snake_quit_rect,
+        "quit",
+        "Quit",
     )
 
 
@@ -22680,6 +23690,21 @@ running = True
 
 while running:
 
+    # Keep the soundtrack aligned with the active arcade cabinet. Selection,
+    # token exchange, prize counter, and the rest of Career use the player's
+    # normal Instrumental/Ambient choice; only live machine gameplay overrides
+    # it when that cabinet has a custom track installed.
+    active_machine_track = (
+        ARCADE_MACHINE_MUSIC_BY_STATE.get(current_state)
+        if arcade_placeholder_music_enabled
+        else None
+    )
+    audio.sync_machine_music(
+        current_state if active_machine_track else None,
+        active_machine_track,
+    )
+    audio.update()
+
     # ----------------------------------------------
     # Events
     # ----------------------------------------------
@@ -22818,10 +23843,18 @@ while running:
                 )
 
                 # ==========================================
+                # Expandable Minigames navigation
+                # ==========================================
+
+                if is_minigame_category_action(debug_action):
+                    audio.play_sound("button_click")
+                    toggle_minigame_category(debug_action)
+
+                # ==========================================
                 # Career / event navigation
                 # ==========================================
 
-                if debug_action == ACTION_CAREER_HUB:
+                elif debug_action == ACTION_CAREER_HUB:
                     audio.play_sound("button_click")
                     current_state = STATE_CAREER_HUB
 
@@ -22893,6 +23926,26 @@ while running:
                 # ==========================================
                 # Minigames
                 # ==========================================
+
+                elif debug_action == ACTION_ARCADE_NIGHT:
+                    audio.play_sound("button_click")
+                    debug_open_arcade_night()
+
+                elif debug_action == ACTION_KING_PONG:
+                    audio.play_sound("button_click")
+                    debug_open_king_pong()
+
+                elif debug_action == ACTION_BATTLE_BOSSES:
+                    audio.play_sound("button_click")
+                    debug_open_battle_bosses()
+
+                elif debug_action == ACTION_ACE_INVADERS:
+                    audio.play_sound("button_click")
+                    debug_open_ace_invaders()
+
+                elif debug_action == ACTION_SUIT_SNAKE:
+                    audio.play_sound("button_click")
+                    debug_open_suit_snake()
 
                 elif debug_action == ACTION_SCORE_FOUR_SOLO:
                     audio.play_sound("button_click")
@@ -27030,9 +28083,26 @@ while running:
 
                 game_clicked = False
 
+                is_arcade_night_select = (
+                    career_event_entry is not None
+                    and career_event_entry.get("activity_type") == CAREER_ACTIVITY_ARCADE_NIGHT
+                )
+                if (
+                        is_arcade_night_select
+                        and arcade_placeholder_music_toggle_rect.collidepoint(menu_mouse_pos)
+                ):
+                    arcade_placeholder_music_enabled = not arcade_placeholder_music_enabled
+                    audio.play_sound("button_click")
+                    game_clicked = True
+                    set_arcade_status_message(
+                        "Placeholder arcade music enabled."
+                        if arcade_placeholder_music_enabled
+                        else "Placeholder arcade music disabled."
+                    )
+
                 for (rect, game_id) in career_event_card_rects:
 
-                    if rect.collidepoint(menu_mouse_pos):
+                    if not game_clicked and rect.collidepoint(menu_mouse_pos):
                         game_clicked = True
 
                         if not is_game_unlocked(game_id):
@@ -27099,6 +28169,12 @@ while running:
 
                         elif game_id == "battle_bosses":
                             open_battle_bosses_opponent_select(refresh=True)
+
+                        elif game_id == "ace_invaders":
+                            open_ace_invaders_difficulty_select(reset_selection=True)
+
+                        elif game_id == "suit_snake":
+                            open_suit_snake_difficulty_select(reset_selection=True)
 
                         elif game_id == "token_exchange":
                             open_arcade_token_exchange()
@@ -27203,6 +28279,94 @@ while running:
                             audio.play_sound("button_click")
                             start_battle_bosses_session()
 
+        elif current_state == STATE_ACE_INVADERS_DIFFICULTY_SELECT:
+
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                audio.play_sound("button_click")
+                current_state = STATE_CAREER_EVENT_SELECT
+
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and menu_mouse_pos is not None:
+                difficulty_clicked = False
+                difficulty_ids = list(ACE_INVADERS_DIFFICULTIES)
+
+                for difficulty_index, rect in enumerate(ace_invaders_difficulty_rects):
+                    if (
+                            difficulty_index < len(difficulty_ids)
+                            and rect.collidepoint(menu_mouse_pos)
+                    ):
+                        ace_invaders_selected_difficulty_index = difficulty_index
+                        audio.play_sound("button_click")
+                        difficulty_clicked = True
+                        break
+
+                if not difficulty_clicked:
+                    if ace_invaders_back_rect.collidepoint(menu_mouse_pos):
+                        audio.play_sound("button_click")
+                        current_state = STATE_CAREER_EVENT_SELECT
+
+                    elif ace_invaders_tokens_rect.collidepoint(menu_mouse_pos):
+                        audio.play_sound("button_click")
+                        open_arcade_token_exchange("ace_invaders")
+
+                    elif ace_invaders_play_rect.collidepoint(menu_mouse_pos):
+                        if get_selected_ace_invaders_difficulty() is None:
+                            set_arcade_status_message("Choose an Ace Invaders difficulty first.")
+                        elif int(arcade_state.get("tokens", 0)) < get_machine_cost("ace_invaders"):
+                            set_arcade_status_message("Not enough tokens. Buy more to play.")
+                            open_arcade_token_exchange("ace_invaders")
+                        else:
+                            audio.play_sound("button_click")
+                            start_ace_invaders_session()
+
+        elif current_state == STATE_SUIT_SNAKE_DIFFICULTY_SELECT:
+
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                audio.play_sound("button_click")
+                current_state = STATE_CAREER_EVENT_SELECT
+
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and menu_mouse_pos is not None:
+                setup_clicked = False
+                mode_ids = list(SUIT_SNAKE_MODES)
+
+                for mode_index, rect in enumerate(suit_snake_mode_rects):
+                    if (
+                            mode_index < len(mode_ids)
+                            and rect.collidepoint(menu_mouse_pos)
+                    ):
+                        suit_snake_selected_mode_index = mode_index
+                        audio.play_sound("button_click")
+                        setup_clicked = True
+                        break
+
+                if not setup_clicked and suit_snake_step_movement_rect.collidepoint(menu_mouse_pos):
+                    suit_snake_selected_movement_style = "step"
+                    audio.play_sound("button_click")
+                    setup_clicked = True
+
+                if not setup_clicked and suit_snake_smooth_movement_rect.collidepoint(menu_mouse_pos):
+                    suit_snake_selected_movement_style = "smooth"
+                    audio.play_sound("button_click")
+                    setup_clicked = True
+
+                if not setup_clicked:
+                    if suit_snake_back_rect.collidepoint(menu_mouse_pos):
+                        audio.play_sound("button_click")
+                        current_state = STATE_CAREER_EVENT_SELECT
+
+                    elif suit_snake_tokens_rect.collidepoint(menu_mouse_pos):
+                        audio.play_sound("button_click")
+                        open_arcade_token_exchange("suit_snake")
+
+                    elif suit_snake_play_rect.collidepoint(menu_mouse_pos):
+                        if get_selected_suit_snake_mode() is None:
+                            set_arcade_status_message("Choose a Suit Snake mode first.")
+                        elif int(arcade_state.get("tokens", 0)) < get_machine_cost("suit_snake"):
+                            set_arcade_status_message("Not enough tokens. Buy more to play.")
+                            open_arcade_token_exchange("suit_snake")
+                        else:
+                            audio.play_sound("button_click")
+                            start_suit_snake_session()
+
         elif current_state == STATE_ARCADE_TOKEN_EXCHANGE:
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and menu_mouse_pos is not None:
@@ -27214,6 +28378,12 @@ while running:
                     elif arcade_pending_launch_game_id == "battle_bosses":
                         arcade_pending_launch_game_id = None
                         current_state = STATE_BATTLE_BOSSES_OPPONENT_SELECT
+                    elif arcade_pending_launch_game_id == "ace_invaders":
+                        arcade_pending_launch_game_id = None
+                        current_state = STATE_ACE_INVADERS_DIFFICULTY_SELECT
+                    elif arcade_pending_launch_game_id == "suit_snake":
+                        arcade_pending_launch_game_id = None
+                        current_state = STATE_SUIT_SNAKE_DIFFICULTY_SELECT
                     else:
                         current_state = STATE_CAREER_EVENT_SELECT
                 elif arcade_token_exchange_continue_rect.collidepoint(menu_mouse_pos):
@@ -27228,6 +28398,16 @@ while running:
                             start_battle_bosses_session()
                         else:
                             set_arcade_status_message("Buy enough tokens to play Battle Bosses.")
+                    elif arcade_pending_launch_game_id == "ace_invaders":
+                        if int(arcade_state.get("tokens", 0)) >= get_machine_cost("ace_invaders"):
+                            start_ace_invaders_session()
+                        else:
+                            set_arcade_status_message("Buy enough tokens to play Ace Invaders.")
+                    elif arcade_pending_launch_game_id == "suit_snake":
+                        if int(arcade_state.get("tokens", 0)) >= get_machine_cost("suit_snake"):
+                            start_suit_snake_session()
+                        else:
+                            set_arcade_status_message("Buy enough tokens to play Suit Snake.")
                     else:
                         current_state = STATE_CAREER_EVENT_SELECT
                 else:
@@ -27314,6 +28494,54 @@ while running:
                     if not battle_bosses_game.finished:
                         battle_bosses_game.forfeit()
                     finish_battle_bosses_session()
+
+        elif current_state == STATE_ACE_INVADERS:
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    if not ace_invaders_game.finished:
+                        ace_invaders_game.forfeit()
+                    finish_ace_invaders_session()
+                elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                    if ace_invaders_game.finished:
+                        finish_ace_invaders_session()
+                elif event.key == pygame.K_r and ace_invaders_game.finished:
+                    start_ace_invaders_session()
+
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and menu_mouse_pos is not None:
+                if ace_invaders_quit_rect.collidepoint(menu_mouse_pos):
+                    audio.play_sound("button_click")
+                    if not ace_invaders_game.finished:
+                        ace_invaders_game.forfeit()
+                    finish_ace_invaders_session()
+
+        elif current_state == STATE_SUIT_SNAKE:
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    if not suit_snake_game.finished:
+                        suit_snake_game.forfeit()
+                    finish_suit_snake_session()
+                elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                    if suit_snake_game.finished:
+                        finish_suit_snake_session()
+                elif event.key == pygame.K_r and suit_snake_game.finished:
+                    start_suit_snake_session()
+                elif event.key in (pygame.K_w, pygame.K_UP):
+                    suit_snake_game.queue_direction("up")
+                elif event.key in (pygame.K_s, pygame.K_DOWN):
+                    suit_snake_game.queue_direction("down")
+                elif event.key in (pygame.K_a, pygame.K_LEFT):
+                    suit_snake_game.queue_direction("left")
+                elif event.key in (pygame.K_d, pygame.K_RIGHT):
+                    suit_snake_game.queue_direction("right")
+
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and menu_mouse_pos is not None:
+                if suit_snake_quit_rect.collidepoint(menu_mouse_pos):
+                    audio.play_sound("button_click")
+                    if not suit_snake_game.finished:
+                        suit_snake_game.forfeit()
+                    finish_suit_snake_session()
 
         elif current_state == STATE_CAREER_REAL_ESTATE:
 
@@ -28999,6 +30227,14 @@ while running:
 
         draw_battle_bosses_opponent_select()
 
+    elif current_state == STATE_ACE_INVADERS_DIFFICULTY_SELECT:
+
+        draw_ace_invaders_difficulty_select()
+
+    elif current_state == STATE_SUIT_SNAKE_DIFFICULTY_SELECT:
+
+        draw_suit_snake_difficulty_select()
+
     elif current_state == STATE_ARCADE_TOKEN_EXCHANGE:
 
         draw_arcade_token_exchange()
@@ -29152,6 +30388,24 @@ while running:
         if battle_bosses_game.finished:
             claim_battle_bosses_result()
         draw_battle_bosses_screen()
+
+    elif current_state == STATE_ACE_INVADERS:
+
+        ace_invaders_game.update(1.0 / 60.0, pygame.key.get_pressed())
+        for ace_sound_event in ace_invaders_game.pop_sound_events():
+            audio.play_sound(ace_sound_event)
+        if ace_invaders_game.finished:
+            claim_ace_invaders_result()
+        draw_ace_invaders_screen()
+
+    elif current_state == STATE_SUIT_SNAKE:
+
+        suit_snake_game.update(1.0 / 60.0, pygame.key.get_pressed())
+        for suit_snake_sound_event in suit_snake_game.pop_sound_events():
+            audio.play_sound(suit_snake_sound_event)
+        if suit_snake_game.finished:
+            claim_suit_snake_result()
+        draw_suit_snake_screen()
 
     elif current_state == STATE_FARO:
 

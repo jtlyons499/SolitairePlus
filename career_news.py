@@ -304,13 +304,52 @@ def build_arcade_story(player_name, result_log):
     result_log = list(result_log or [])
     arcade_entries = [
         entry for entry in result_log
-        if entry.get("game_id") in {"king_pong", "battle_bosses", "prize_counter"}
+        if entry.get("game_id") in {"king_pong", "battle_bosses", "ace_invaders", "suit_snake", "prize_counter"}
     ]
 
     if not arcade_entries:
         return (
             f"{player_name.upper()} VISITS ARCADE NIGHT",
             f"{player_name} spent the evening feeding tokens into the local arcade machines.",
+            "arcade",
+        )
+
+    suit_entries = [entry for entry in arcade_entries if entry.get("game_id") == "suit_snake"]
+    if suit_entries:
+        entry = suit_entries[-1]
+        tickets = int(entry.get("tickets", 0) or 0)
+        score = int(entry.get("score", 0) or 0)
+        cards = int(entry.get("cards_collected", 0) or 0)
+        decks = int(entry.get("decks_completed", 0) or 0)
+        if decks > 0:
+            return (
+                f"{player_name.upper()} RUNS THE DECK IN SUIT SNAKE",
+                f"{player_name} completed {decks} full deck{'s' if decks != 1 else ''}, scored {score:,} points, and cashed out {tickets:,} arcade tickets.",
+                "arcade",
+            )
+        return (
+            f"{player_name.upper()} BUILDS A {cards}-CARD SUIT SNAKE",
+            f"A Suit Snake run reached {cards} collected cards and {score:,} points, earning {player_name} {tickets:,} arcade tickets.",
+            "arcade",
+        )
+
+    ace_entries = [entry for entry in arcade_entries if entry.get("game_id") == "ace_invaders"]
+    if ace_entries:
+        entry = ace_entries[-1]
+        tickets = int(entry.get("tickets", 0) or 0)
+        score = int(entry.get("score", 0) or 0)
+        high_score = int(entry.get("high_score", score) or score)
+        waves = int(entry.get("waves_cleared", 0) or 0)
+        reached_wave = max(1, waves + 1)
+        if score >= high_score and score > 0:
+            return (
+                f"{player_name.upper()} POSTS ACE INVADERS HIGH SCORE",
+                f"An endless Ace Invaders run carried {player_name} to wave {reached_wave} and {score:,} points, good for {tickets:,} arcade tickets.",
+                "arcade",
+            )
+        return (
+            f"ACE INVADERS END {player_name.upper()}'S RUN",
+            f"{player_name} reached wave {reached_wave} and scored {score:,} points before the Aces broke through, earning {tickets:,} tickets.",
             "arcade",
         )
 

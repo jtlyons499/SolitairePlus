@@ -19,10 +19,17 @@ ARCADE_BACKGROUND_PATH = os.path.join("assets", "arcade", "bg.png")
 
 
 class BattleBossesGame:
-    ARENA_RECT = pygame.Rect(206, 180, 954, 430)
+    # Keep the four stations visually gathered around one shared arena.
+    # The first playable draft used almost the full 1366-wide screen, which
+    # made opposite rivals feel miles apart while each shield hugged its own
+    # fort.  A more compact, taller arena plus a larger shield orbit produces
+    # the classic four-corner spacing without copying any legacy game's art.
+    ARENA_RECT = pygame.Rect(320, 170, 726, 450)
     FORT_RADIUS = 50
-    SHIELD_RADIUS = 92
+    SHIELD_RADIUS = 126
     SHIELD_LENGTH = 82
+    MIN_SHIELD_LENGTH = 46
+    SHIELD_WEAR_PER_BLOCK = 3.0
     SHIELD_THICKNESS = 15
     BALL_SIZE = (30, 38)
     PLAYER_SHIELD_SPEED = 105.0  # degrees / second
@@ -31,6 +38,10 @@ class BattleBossesGame:
     MAX_HP = 5
     HIT_COOLDOWN_MS = 95
     COLLISION_STEP_PX = 5.0
+    LOOP_CONTACT_WINDOW_MS = 1600
+    LOOP_ESCAPE_COOLDOWN_MS = 850
+    LOOP_CONTACT_LIMIT = 6
+    LOOP_CLUSTER_RADIUS = 125.0
 
     CORNERS = (
         "bottom_left",
@@ -39,11 +50,14 @@ class BattleBossesGame:
         "bottom_right",
     )
 
+    # Each shield travels on the inward-facing sixty-degree section of its
+    # fort's orbit.  This keeps every defender between its fort and the center
+    # rather than letting shields bunch against the outer arena walls.
     CORNER_ANGLE_RANGES = {
-        "bottom_left": (-90.0, 0.0),
-        "top_left": (0.0, 90.0),
-        "top_right": (90.0, 180.0),
-        "bottom_right": (180.0, 270.0),
+        "bottom_left": (-65.0, -5.0),
+        "top_left": (5.0, 65.0),
+        "top_right": (115.0, 175.0),
+        "bottom_right": (185.0, 245.0),
     }
 
     def __init__(self):
@@ -63,8 +77,14 @@ class BattleBossesGame:
         self._last_hit_text = ""
         self._hit_text_until = 0
         self._sound_events = []
+        self._contact_history = []
+        self._last_loop_escape_at = -10000
         self._asset_cache = {}
         self._scaled_cache = {}
+        # Rotate the human through all four corners from match to match.
+        # This prevents any small geometric advantage from becoming a permanent
+        # player advantage while keeping the four-corner identity intact.
+        self._player_corner_rotation = -1
 
     @property
     def player_fort(self):
@@ -112,13 +132,18 @@ class BattleBossesGame:
         self._last_hit_text = ""
         self._hit_text_until = 0
         self._sound_events = []
+        self._contact_history = []
+        self._last_loop_escape_at = -10000
 
         centers = self._fort_centers()
+        self._player_corner_rotation = (self._player_corner_rotation + 1) % len(self.CORNERS)
+        player_corner = self.CORNERS[self._player_corner_rotation]
+        rival_corners = [corner for corner in self.CORNERS if corner != player_corner]
         entries = [
-            (self.player_name, None, self.CORNERS[0]),
-            (str(self.opponents[0].get("name") or "Rival 1"), self.opponents[0], self.CORNERS[1]),
-            (str(self.opponents[1].get("name") or "Rival 2"), self.opponents[1], self.CORNERS[2]),
-            (str(self.opponents[2].get("name") or "Rival 3"), self.opponents[2], self.CORNERS[3]),
+            (self.player_name, None, player_corner),
+            (str(self.opponents[0].get("name") or "Rival 1"), self.opponents[0], rival_corners[0]),
+            (str(self.opponents[1].get("name") or "Rival 2"), self.opponents[1], rival_corners[1]),
+            (str(self.opponents[2].get("name") or "Rival 3"), self.opponents[2], rival_corners[2]),
         ]
         self.forts = []
         for index, (name, npc, corner) in enumerate(entries):
@@ -135,6 +160,7 @@ class BattleBossesGame:
                 "angle_min": angle_min,
                 "angle_max": angle_max,
                 "angular_velocity": 0.0,
+                "shield_blocks": 0,
             })
 
         self._serve_ball()
@@ -158,8 +184,10 @@ class BattleBossesGame:
         self.winner_text = "You left the Battle Bosses arena."
 
     def _fort_centers(self):
-        inset_x = 88
-        inset_y = 86
+        # Forts sit near the true corners, while their shields orbit farther
+        # inward.  The equal insets keep all four stations symmetric.
+        inset_x = 70
+        inset_y = 70
         arena = self.ARENA_RECT
         return {
             "top_left": (arena.left + inset_x, arena.top + inset_y),
@@ -192,18 +220,46 @@ class BattleBossesGame:
             key=lambda candidate: 0.0 if low <= candidate <= high else min(abs(candidate - low), abs(candidate - high)),
         )
 
+    def _active_fort_count(self):
+        return sum(1 for fort in self.forts if fort.get("hp", 0) > 0)
+
+    def _late_game_speed_floor(self):
+        active = self._active_fort_count()
+        base = float(self.difficulty.get("ball_speed", self.BALL_START_SPEED))
+        if active <= 2:
+            return max(base, 485.0)
+        if active == 3:
+            return max(base, 410.0)
+        return max(base, self.BALL_START_SPEED)
+
+    def _apply_late_game_pace(self):
+        if self.finished or self.ball_velocity.length_squared() <= 0.0001:
+            return
+        floor = self._late_game_speed_floor()
+        speed = self.ball_velocity.length()
+        if speed < floor:
+            self.ball_velocity.scale_to_length(floor)
+
     def _serve_ball(self):
         self.ball_rect.center = self.ARENA_RECT.center
         angle = random.choice((28, 38, 52, 128, 142, 218, 232, 308, 322))
         direction = self._vector_from_angle(angle)
         speed = float(self.difficulty.get("ball_speed", self.BALL_START_SPEED))
         self.ball_velocity = direction * speed
+        self._apply_late_game_pace()
+
+    def _shield_length(self, fort):
+        blocks = max(0, int(fort.get("shield_blocks", 0)))
+        return max(
+            self.MIN_SHIELD_LENGTH,
+            self.SHIELD_LENGTH - blocks * self.SHIELD_WEAR_PER_BLOCK,
+        )
 
     def _shield_geometry(self, fort):
         radial = self._vector_from_angle(fort["angle"])
         center = fort["center"] + radial * self.SHIELD_RADIUS
         tangent = pygame.Vector2(-radial.y, radial.x)
-        half = tangent * (self.SHIELD_LENGTH / 2.0)
+        half = tangent * (self._shield_length(fort) / 2.0)
         return center, center - half, center + half, radial
 
     @staticmethod
@@ -269,21 +325,104 @@ class BattleBossesGame:
                 fort["angle"] += max_step if delta > 0 else -max_step
             fort["angular_velocity"] = (fort["angle"] - previous_angle) / max(dt, 0.0001)
 
-    def _bounce_from_boundaries(self):
+    def _record_contact(self, now, kind, key=None):
+        """Remember recent collision positions so stable pinball loops can escape.
+
+        Normal rallies are untouched.  The watchdog only acts after several
+        contacts repeat inside a small part of the arena in a short window.
+        """
+        center = pygame.Vector2(self.ball_rect.center)
+        self._contact_history.append((int(now), str(kind), key, center.x, center.y))
+        cutoff = int(now) - self.LOOP_CONTACT_WINDOW_MS
+        self._contact_history = [entry for entry in self._contact_history if entry[0] >= cutoff]
+
+    def _break_ricochet_loop_if_needed(self, now):
+        if int(now) < self._last_loop_escape_at + self.LOOP_ESCAPE_COOLDOWN_MS:
+            return False
+
+        history = self._contact_history
+        if len(history) < self.LOOP_CONTACT_LIMIT:
+            return False
+
+        recent = history[-self.LOOP_CONTACT_LIMIT:]
+        xs = [entry[3] for entry in recent]
+        ys = [entry[4] for entry in recent]
+        clustered = (
+            max(xs) - min(xs) <= self.LOOP_CLUSTER_RADIUS
+            and max(ys) - min(ys) <= self.LOOP_CLUSTER_RADIUS
+        )
+
+        # A same-shield pocket can cover slightly more space than the generic
+        # cluster threshold, so also recognize repeated contacts with one
+        # defender during the watchdog window.
+        shield_keys = [entry[2] for entry in recent if entry[1] == "shield"]
+        repeated_shield = bool(shield_keys) and max(shield_keys.count(key) for key in set(shield_keys)) >= 4
+
+        if not clustered and not repeated_shield:
+            return False
+
+        ball_center = pygame.Vector2(self.ball_rect.center)
+        toward_center = pygame.Vector2(self.ARENA_RECT.center) - ball_center
+        if toward_center.length_squared() <= 64.0:
+            # In the unlikely event a loop forms around center court, rotate
+            # the current path instead of inventing a preferred corner.
+            if self.ball_velocity.length_squared() > 0.0001:
+                toward_center = self.ball_velocity.rotate(random.choice((-31.0, 31.0)))
+            else:
+                toward_center = self._vector_from_angle(random.choice((31, 149, 211, 329)))
+
+        direction = toward_center.normalize()
+        perpendicular = pygame.Vector2(-direction.y, direction.x)
+        direction = direction + perpendicular * random.uniform(-0.20, 0.20)
+        if direction.length_squared() <= 0.0001:
+            direction = toward_center.normalize()
+        direction = direction.normalize()
+
+        speed = max(
+            self._late_game_speed_floor(),
+            self.ball_velocity.length() if self.ball_velocity.length_squared() > 0.0001 else 0.0,
+            430.0,
+        )
+        self.ball_velocity = direction * min(self.BALL_MAX_SPEED, speed)
+
+        # Move a few pixels down the escape path so the next substep cannot
+        # immediately rediscover the exact same contact point.
+        escaped = ball_center + direction * 14.0
+        half_w = self.ball_rect.width / 2.0
+        half_h = self.ball_rect.height / 2.0
+        escaped.x = self._clamp(escaped.x, self.ARENA_RECT.left + half_w + 2, self.ARENA_RECT.right - half_w - 2)
+        escaped.y = self._clamp(escaped.y, self.ARENA_RECT.top + half_h + 2, self.ARENA_RECT.bottom - half_h - 2)
+        self.ball_rect.center = (int(round(escaped.x)), int(round(escaped.y)))
+
+        self._last_loop_escape_at = int(now)
+        self._last_collision_at = int(now)
+        self._contact_history.clear()
+        return True
+
+    def _bounce_from_boundaries(self, now):
         arena = self.ARENA_RECT
+        bounced = None
         if self.ball_rect.left <= arena.left:
             self.ball_rect.left = arena.left
             self.ball_velocity.x = abs(self.ball_velocity.x)
+            bounced = "left"
         elif self.ball_rect.right >= arena.right:
             self.ball_rect.right = arena.right
             self.ball_velocity.x = -abs(self.ball_velocity.x)
+            bounced = "right"
 
         if self.ball_rect.top <= arena.top:
             self.ball_rect.top = arena.top
             self.ball_velocity.y = abs(self.ball_velocity.y)
+            bounced = "top" if bounced is None else bounced + "+top"
         elif self.ball_rect.bottom >= arena.bottom:
             self.ball_rect.bottom = arena.bottom
             self.ball_velocity.y = -abs(self.ball_velocity.y)
+            bounced = "bottom" if bounced is None else bounced + "+bottom"
+
+        if bounced is not None:
+            self._record_contact(now, "wall", bounced)
+            self._break_ricochet_loop_if_needed(now)
 
     def _reflect_velocity(self, normal, speed_boost=1.025, tangent_impulse=None):
         if normal.length_squared() <= 0.0001:
@@ -295,7 +434,10 @@ class BattleBossesGame:
             reflected += tangent_impulse
         if reflected.length_squared() <= 0.0001:
             reflected = -velocity
-        speed = min(self.BALL_MAX_SPEED, max(self.BALL_START_SPEED, reflected.length() * speed_boost))
+        speed = min(
+            self.BALL_MAX_SPEED,
+            max(self._late_game_speed_floor(), reflected.length() * speed_boost),
+        )
         self.ball_velocity = reflected.normalize() * speed
 
     def _check_shield_collisions(self, now):
@@ -310,11 +452,20 @@ class BattleBossesGame:
             if fort["hp"] <= 0:
                 continue
 
-            _shield_center, start, end, radial = self._shield_geometry(fort)
+            shield_center, start, end, radial = self._shield_geometry(fort)
             closest, segment_t = self._closest_point_on_segment(ball_center, start, end)
             separation = ball_center - closest
             distance = separation.length()
             if distance > contact_radius:
+                continue
+
+            # Shields are one-way defensive faces. Once the Joker has passed
+            # behind a shield toward its fort, let it continue to the fort
+            # instead of trapping it between the shield's back face and the
+            # corner. Small substeps ensure a genuine front-face impact is
+            # detected before this threshold is crossed.
+            front_side = (ball_center - shield_center).dot(radial)
+            if front_side < -2.0:
                 continue
 
             # Use the actual ball-to-shield contact normal instead of snapping
@@ -361,7 +512,10 @@ class BattleBossesGame:
                 int(round(safe_center.y)),
             )
             self._last_collision_at = now
+            fort["shield_blocks"] = int(fort.get("shield_blocks", 0)) + 1
             self._queue_sound("battle_bosses_ricochet")
+            self._record_contact(now, "shield", fort["index"])
+            self._break_ricochet_loop_if_needed(now)
             return True
 
         return False
@@ -389,6 +543,7 @@ class BattleBossesGame:
 
             fort["hp"] = max(0, fort["hp"] - 1)
             self._last_collision_at = now
+            self._record_contact(now, "fort", fort["index"])
             self._reflect_velocity(radial, speed_boost=1.035)
             self._queue_sound("battle_bosses_fort_hit")
             safe_center = fort["center"] + radial * (self.FORT_RADIUS + 18)
@@ -402,6 +557,7 @@ class BattleBossesGame:
                     self._queue_sound("battle_bosses_loss")
                 else:
                     self.rivals_eliminated += 1
+                    self._apply_late_game_pace()
                     self._last_hit_text = f"{fort['name']} eliminated!"
                     self._queue_sound("battle_bosses_eliminate")
                     if all(rival["hp"] <= 0 for rival in self.forts[1:]):
@@ -427,6 +583,7 @@ class BattleBossesGame:
 
         self._move_player_shield(dt, pressed_keys)
         self._move_npc_shields(dt)
+        self._apply_late_game_pace()
 
         travel = self.ball_velocity.length() * dt
         steps = max(1, min(10, int(math.ceil(travel / self.COLLISION_STEP_PX))))
@@ -437,9 +594,9 @@ class BattleBossesGame:
                 break
             self.ball_rect.x += int(round(self.ball_velocity.x * step_dt))
             self.ball_rect.y += int(round(self.ball_velocity.y * step_dt))
-            self._bounce_from_boundaries()
-
             now = pygame.time.get_ticks()
+            self._bounce_from_boundaries(now)
+
             if not self._check_shield_collisions(now):
                 self._check_fort_collisions(now)
 

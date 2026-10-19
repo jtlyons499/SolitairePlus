@@ -300,7 +300,7 @@ ACHIEVEMENT_DEFINITIONS = [
         "description": "Win a Hold'em showdown with a royal flush.",
         "difficulty": "legendary",
         "secret": True,
-        "locked_description": "Win with the rarest possible Hold'em hand.",
+        "locked_description": "Win a poker hand in a royal fashion *wink wink*.",
         "icon": "assets/achievements/icons/holdem_royal_flush.png",
         "condition": ("flag", "holdem_royal_flush"),
         "rewards": [
