@@ -42,11 +42,13 @@ ACTION_KING_PONG = "king_pong"
 ACTION_BATTLE_BOSSES = "battle_bosses"
 ACTION_ACE_INVADERS = "ace_invaders"
 ACTION_SUIT_SNAKE = "suit_snake"
+ACTION_DEAD_MANS_HAND = "dead_mans_hand"
 
 ACTION_MINIGAME_CATEGORY_ARCADE = "minigame_category_arcade"
 ACTION_MINIGAME_CATEGORY_CASUAL = "minigame_category_casual"
 ACTION_MINIGAME_CATEGORY_CASINO = "minigame_category_casino"
 ACTION_MINIGAME_CATEGORY_POKER = "minigame_category_poker"
+ACTION_MINIGAME_CATEGORY_STANDALONE = "minigame_category_standalone"
 
 ACTION_ADD_CASH = "add_cash"
 ACTION_ZERO_CASH = "zero_cash"
@@ -166,6 +168,14 @@ MINIGAME_CATEGORIES = (
             (ACTION_SEVEN_CARD_STUD, "Seven-Card Stud"),
             (ACTION_FIVE_O_POKER, "Five-O Poker"),
             (ACTION_BLIND_MANS_BLUFF, "Blind Man's Bluff"),
+        ),
+    ),
+    (
+        "standalone",
+        ACTION_MINIGAME_CATEGORY_STANDALONE,
+        "Standalone / Prototype",
+        (
+            (ACTION_DEAD_MANS_HAND, "Dead Man's Hand"),
         ),
     ),
 )

@@ -1142,5 +1142,27 @@
       "pessimism": 10,
       "bitterness": 6
     }
+  },
+  {
+    "id": "oussama_defendable",
+    "name": "Oussama Defendable",
+    "bio": "Has developed a renowned skill of testing boundaries.",
+    "country": "MAR",
+    "age": 23,
+    "hometown": "Casablanca, Morocco",
+    "favorite_suit": "Diamonds",
+    "skill_tier": "elite",
+    "portrait": "assets/npcs/oussama_defendable.png",
+    "game_personality": "escalator",
+    "personality_traits": {
+      "caution": 3,
+      "aggressiveness": 7,
+      "unpredictability": 4,
+      "escalation": 9,
+      "selectivity": 8,
+      "tenacity": 3,
+      "pessimism": 5,
+      "bitterness": 8
+    }
   }
 ]

@@ -453,7 +453,7 @@ def test_user_arcade_wording_and_machine_mania_package_are_preserved():
     main_source = Path("main.py").read_text(encoding="utf-8")
     arcade_source = Path("arcade_support.py").read_text(encoding="utf-8")
 
-    assert "Redeem tickets for arcade trophies. Cosmetic rewards coming later." in main_source
+    assert "Redeem tickets for trophies and exclusive arcade cosmetics." in main_source
     assert '"king_pong": ("Classic Pong.", "First to five wins.")' in main_source
     assert '"battle_bosses": ("Deflect a projectile", "and break the rival strongholds.")' in main_source
     assert '"ace_invaders": ("Defeat waves of incoming", "Ace suits before they reach you.")' in main_source

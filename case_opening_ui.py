@@ -141,8 +141,9 @@ class CaseOpeningScreen:
   elif self.phase=='result':
    receipt=self.receipt;self.item(out,receipt['item_id'],(503,159,360,360))
    item=ITEMS[receipt['item_id']];kind=receipt['kind'];amount=receipt['amount']
+   cosmetic_label = item.get('cosmetic_type', 'cosmetic').replace('_', ' ').title()
    detail={'cash':f'+${amount:,} cash','fans':f'+{amount:,} fans','rating':f'+{amount} {item.get("game","").replace("_"," ")} rating',
-           'cosmetic':'Exclusive felt unlocked in Customize','trophy':'Added to your trophy room','junk':'Added to your loot collection'}[kind]
+           'cosmetic':f'{cosmetic_label} unlocked in Customize','trophy':'Added to your trophy room','junk':'Added to your loot collection'}[kind]
    if self.temporary and kind in ('rating','fans','cosmetic'):detail += ' (practice loot only)'
    self.text(out,detail,290,558,35,COLORS[kind],width=800)
    self.text(out,f"Case cost ${receipt['cost']:,}  /  Cash now ${self.wallet:,}",360,604,29)

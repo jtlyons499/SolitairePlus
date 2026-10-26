@@ -2,7 +2,7 @@
 import copy
 import math
 import random
-from career_ratings import GAME_RATING_KEYS
+from career_ratings import CATEGORY_KEYS, GAME_RATING_KEYS
 
 COLORS={'junk':(104,192,231),'trophy':(244,194,70),'cash':(88,205,129),'rating':(225,89,97),'fans':(194,203,216),'cosmetic':(80,112,225)}
 # Artwork paths are relative to assets/case_opening; felt paths to the game folder.
@@ -21,10 +21,16 @@ def load_catalog(path=CONFIG_PATH):
  for key,item in items.items():
   if not isinstance(item,dict) or item.get('kind') not in COLORS or not isinstance(item.get('name'),str):raise ValueError('Invalid item: '+key)
   item['id']=key
-  if item['kind']=='rating' and item.get('game') not in GAME_RATING_KEYS:raise ValueError('Invalid rating game: '+key)
-  for field in ('cash_multiplier','cash_amount','fan_multiplier','fan_minimum','fan_amount','rating_points'):
+  if item['kind']=='rating' and item.get('game') not in (*GAME_RATING_KEYS,*CATEGORY_KEYS):raise ValueError('Invalid rating target: '+key)
+  for field in ('cash_multiplier','cash_amount','cash_fraction','cash_minimum','fan_multiplier','fan_fraction','fan_minimum','fan_amount','rating_points','weight'):
    if field in item:number(item[field],key+' '+field)
-  if item['kind']=='cosmetic' and not isinstance(item.get('felt_path'),str):raise ValueError('Cosmetic needs felt_path: '+key)
+  if item['kind']=='cosmetic':
+   if item.get('cosmetic_type') not in ('background','felt','title','cursor'):
+    raise ValueError('Invalid cosmetic type: '+key)
+   if not isinstance(item.get('asset_id'),str) or not item.get('asset_id'):
+    raise ValueError('Cosmetic needs asset_id: '+key)
+   if not isinstance(item.get('asset_path'),str) or not item.get('asset_path'):
+    raise ValueError('Cosmetic needs asset_path: '+key)
  for key,case in cases.items():
   if not isinstance(case,dict) or not isinstance(case.get('name'),str):raise ValueError('Invalid case: '+key)
   for field in ('minimum','fraction','rating_points'):number(case.get(field,0),key+' '+field)
@@ -67,19 +73,25 @@ def choose_item(case_id,rng):
  case=CASES[case_id];kinds=list(case['weights'])
  kind=rng.choices(kinds,weights=[case['weights'][k] for k in kinds],k=1)[0]
  pool=[ITEMS[key] for key in case.get('pool',list(ITEMS)) if ITEMS[key]['kind']==kind and not ITEMS[key].get('earned')]
- return rng.choice(pool)
+ return rng.choices(pool,weights=[max(0,float(item.get('weight',1))) for item in pool],k=1)[0]
 
 
-def purchase(state,case_id,cash,rng=None):
+def purchase(state,case_id,cash,rng=None,fans=0):
  """Commit one purchase and reward receipt. Caller saves atomically before reveal."""
  if case_id not in CASES:raise ValueError('Unknown case.')
  cost=case_price(case_id,cash)
  if cash<cost:raise ValueError('Not enough cash for this case.')
  rng=rng or random.SystemRandom();item=choose_item(case_id,rng)
  amount=0
- if item['kind']=='cash':amount=round(item.get('cash_amount',cost*item.get('cash_multiplier',1)))
+ if item['kind']=='cash':
+  if 'cash_amount' in item:amount=round(item['cash_amount'])
+  elif 'cash_fraction' in item:amount=max(round(item.get('cash_minimum',0)),round(max(0,cash)*item['cash_fraction']))
+  else:amount=round(cost*item.get('cash_multiplier',1))
  elif item['kind']=='rating':amount=round(item.get('rating_points',CASES[case_id].get('rating_points',8)))
- elif item['kind']=='fans':amount=round(item.get('fan_amount',max(item.get('fan_minimum',5),round(math.sqrt(cost)*item.get('fan_multiplier',1)))))
+ elif item['kind']=='fans':
+  if 'fan_amount' in item:amount=round(item['fan_amount'])
+  elif 'fan_fraction' in item:amount=max(round(item.get('fan_minimum',5)),round(max(0,fans)*item['fan_fraction']))
+  else:amount=round(max(item.get('fan_minimum',5),round(math.sqrt(cost)*item.get('fan_multiplier',1))))
  result={'number':state['opened']+1,'case':case_id,'cost':cost,'item_id':item['id'],'kind':item['kind'],'amount':amount}
  if 'game' in item:result['game']=item['game']
  state['opened']+=1;state['spent']+=cost

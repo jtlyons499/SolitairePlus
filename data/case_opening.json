@@ -34,13 +34,19 @@
         "standing_ovation",
         "midnight_felt",
         "copper_felt",
-        "rating_solitaire",
-        "rating_texas_holdem",
-        "rating_five_card_draw",
-        "rating_seven_card_stud",
-        "rating_blackjack",
-        "rating_roulette",
-        "rating_score_four"
+        "cash_jackpot",
+        "fan_jackpot",
+        "rating_strategy",
+        "rating_poker",
+        "rating_casino",
+        "case_garden_gnomes",
+        "case_ben_katz_cocoa",
+        "case_pigs_on_the_couch",
+        "case_dust_deux",
+        "case_joseph_camel",
+        "case_case_cracker",
+        "case_gamble_on_rose",
+        "case_pocket_watch"
       ]
     },
     "collector": {
@@ -77,13 +83,19 @@
         "standing_ovation",
         "midnight_felt",
         "copper_felt",
-        "rating_solitaire",
-        "rating_texas_holdem",
-        "rating_five_card_draw",
-        "rating_seven_card_stud",
-        "rating_blackjack",
-        "rating_roulette",
-        "rating_score_four"
+        "cash_jackpot",
+        "fan_jackpot",
+        "rating_strategy",
+        "rating_poker",
+        "rating_casino",
+        "case_garden_gnomes",
+        "case_ben_katz_cocoa",
+        "case_pigs_on_the_couch",
+        "case_dust_deux",
+        "case_joseph_camel",
+        "case_case_cracker",
+        "case_gamble_on_rose",
+        "case_pocket_watch"
       ]
     },
     "prestige": {
@@ -120,13 +132,19 @@
         "standing_ovation",
         "midnight_felt",
         "copper_felt",
-        "rating_solitaire",
-        "rating_texas_holdem",
-        "rating_five_card_draw",
-        "rating_seven_card_stud",
-        "rating_blackjack",
-        "rating_roulette",
-        "rating_score_four"
+        "cash_jackpot",
+        "fan_jackpot",
+        "rating_strategy",
+        "rating_poker",
+        "rating_casino",
+        "case_garden_gnomes",
+        "case_ben_katz_cocoa",
+        "case_pigs_on_the_couch",
+        "case_dust_deux",
+        "case_joseph_camel",
+        "case_case_cracker",
+        "case_gamble_on_rose",
+        "case_pocket_watch"
       ]
     }
   },
@@ -169,9 +187,9 @@
     },
     "golden_shuffler": {
       "id": "golden_shuffler",
-      "name": "Golden Shuffler",
+      "name": "Spelling Bee Champ",
       "kind": "trophy",
-      "image": "items/golden_shuffler.png"
+      "image": "items/spelling_bee_champ.png"
     },
     "card_monolith": {
       "id": "card_monolith",
@@ -181,21 +199,21 @@
     },
     "velvet_penguin": {
       "id": "velvet_penguin",
-      "name": "Velvet Penguin",
+      "name": "Twitter Blue Check",
       "kind": "trophy",
-      "image": "items/velvet_penguin.png"
+      "image": "items/twitter_blue_check.png"
     },
     "neon_ace": {
       "id": "neon_ace",
-      "name": "Neon Ace",
+      "name": "Meaningless Prem Title",
       "kind": "trophy",
-      "image": "items/neon_ace.png"
+      "image": "items/meaningless_prem_title.png"
     },
     "origami_dragon": {
       "id": "origami_dragon",
-      "name": "Origami Dragon",
+      "name": "Coolest Gambler Award",
       "kind": "trophy",
-      "image": "items/origami_dragon.png"
+      "image": "items/coolest_gambler_award.png"
     },
     "pizza_pedestal": {
       "id": "pizza_pedestal",
@@ -208,51 +226,58 @@
       "name": "Cash Pouch",
       "kind": "cash",
       "image": "items/cash_pouch.png",
-      "cash_multiplier": 2.8
+      "cash_fraction": 0.1,
+      "cash_minimum": 75
     },
     "cash_bundle": {
       "id": "cash_bundle",
       "name": "Cash Bundle",
       "kind": "cash",
       "image": "items/cash_bundle.png",
-      "cash_multiplier": 5.8
+      "cash_fraction": 0.18,
+      "cash_minimum": 250
     },
     "cash_vault": {
       "id": "cash_vault",
       "name": "Cash Vault",
       "kind": "cash",
       "image": "items/cash_vault.png",
-      "cash_multiplier": 10
+      "cash_fraction": 0.32,
+      "cash_minimum": 900
     },
     "fan_club": {
       "id": "fan_club",
       "name": "Fan Club",
       "kind": "fans",
       "image": "items/fan_club.png",
-      "fan_multiplier": 50,
-      "fan_minimum": 5
+      "fan_minimum": 100,
+      "fan_fraction": 0.015
     },
     "standing_ovation": {
       "id": "standing_ovation",
       "name": "Standing Ovation",
       "kind": "fans",
       "image": "items/standing_ovation.png",
-      "fan_multiplier": 100,
-      "fan_minimum": 5
+      "fan_minimum": 500,
+      "fan_fraction": 0.04
     },
     "midnight_felt": {
       "id": "midnight_felt",
       "name": "Midnight Constellations",
       "kind": "cosmetic",
       "image": "items/midnight_felt.png",
-      "felt_path": "assets/case_opening/cosmetics/midnight_felt.png"
+      "cosmetic_type": "felt",
+      "asset_id": "f_case_midnight_felt",
+      "asset_path": "assets/case_opening/cosmetics/midnight_felt.png"
     },
     "copper_felt": {
       "id": "copper_felt",
       "name": "Copper Circuit",
       "kind": "cosmetic",
       "image": "items/copper_felt.png",
-      "felt_path": "assets/case_opening/cosmetics/copper_felt.png"
+      "cosmetic_type": "felt",
+      "asset_id": "f_case_copper_felt",
+      "asset_path": "assets/case_opening/cosmetics/copper_felt.png"
     },
     "rating_solitaire": {
       "id": "rating_solitaire",
@@ -312,10 +337,121 @@
     },
     "table_champion": {
       "id": "table_champion",
-      "name": "Poker Table Champion",
+      "name": "3rd Grade Science Fair Runner-up",
       "kind": "trophy",
       "earned": true,
-      "image": "items/table_champion.png"
+      "image": "items/science_fair_runner_up.png"
+    },
+    "cash_jackpot": {
+      "id": "cash_jackpot",
+      "name": "Cash Super Jackpot",
+      "kind": "cash",
+      "image": "items/cash_jackpot.png",
+      "cash_amount": 200000,
+      "weight": 0.08,
+      "jackpot": true
+    },
+    "fan_jackpot": {
+      "id": "fan_jackpot",
+      "name": "Fan Super Jackpot",
+      "kind": "fans",
+      "image": "items/fan_jackpot.png",
+      "fan_amount": 200000,
+      "weight": 0.08,
+      "jackpot": true
+    },
+    "rating_strategy": {
+      "id": "rating_strategy",
+      "name": "Strategy Rating",
+      "kind": "rating",
+      "game": "strategy",
+      "image": "items/rating_strategy.png"
+    },
+    "rating_poker": {
+      "id": "rating_poker",
+      "name": "Poker Rating",
+      "kind": "rating",
+      "game": "poker",
+      "image": "items/rating_poker.png"
+    },
+    "rating_casino": {
+      "id": "rating_casino",
+      "name": "Casino Rating",
+      "kind": "rating",
+      "game": "casino",
+      "image": "items/rating_casino.png"
+    },
+    "case_garden_gnomes": {
+      "id": "case_garden_gnomes",
+      "name": "Garden Gnomes",
+      "kind": "cosmetic",
+      "cosmetic_type": "background",
+      "asset_id": "bg_case_garden_gnomes",
+      "asset_path": "assets/ui/menu_ui/backgrounds/bg_case_garden_gnomes.png",
+      "image": "items/case_garden_gnomes.png"
+    },
+    "case_ben_katz_cocoa": {
+      "id": "case_ben_katz_cocoa",
+      "name": "Ben Katz Cocoa",
+      "kind": "cosmetic",
+      "cosmetic_type": "background",
+      "asset_id": "bg_case_ben_katz_cocoa",
+      "asset_path": "assets/ui/menu_ui/backgrounds/bg_case_ben_katz_cocoa.png",
+      "image": "items/case_ben_katz_cocoa.png"
+    },
+    "case_pigs_on_the_couch": {
+      "id": "case_pigs_on_the_couch",
+      "name": "Pigs on the Couch",
+      "kind": "cosmetic",
+      "cosmetic_type": "background",
+      "asset_id": "bg_case_pigs_on_the_couch",
+      "asset_path": "assets/ui/menu_ui/backgrounds/bg_case_pigs_on_the_couch.png",
+      "image": "items/case_pigs_on_the_couch.png"
+    },
+    "case_dust_deux": {
+      "id": "case_dust_deux",
+      "name": "Dust Deux",
+      "kind": "cosmetic",
+      "cosmetic_type": "felt",
+      "asset_id": "f_case_dust_deux",
+      "asset_path": "assets/ui/menu_ui/felts/f_case_dust_deux.png",
+      "image": "items/case_dust_deux.png"
+    },
+    "case_joseph_camel": {
+      "id": "case_joseph_camel",
+      "name": "Joseph Camel",
+      "kind": "cosmetic",
+      "cosmetic_type": "felt",
+      "asset_id": "f_case_joseph_camel",
+      "asset_path": "assets/ui/menu_ui/felts/f_case_joseph_camel.png",
+      "image": "items/case_joseph_camel.png"
+    },
+    "case_case_cracker": {
+      "id": "case_case_cracker",
+      "name": "Case Cracker",
+      "kind": "cosmetic",
+      "cosmetic_type": "title",
+      "asset_id": "title_case_cracker",
+      "asset_path": "assets/ui/menu_ui/titles/title_case_cracker.png",
+      "image": "items/case_case_cracker.png"
+    },
+    "case_gamble_on_rose": {
+      "id": "case_gamble_on_rose",
+      "name": "Gamble on Rose",
+      "kind": "cosmetic",
+      "cosmetic_type": "title",
+      "asset_id": "title_gamble_on_rose",
+      "asset_path": "assets/ui/menu_ui/titles/title_gamble_on_rose.png",
+      "image": "items/case_gamble_on_rose.png"
+    },
+    "case_pocket_watch": {
+      "id": "case_pocket_watch",
+      "name": "Pocket Watch",
+      "kind": "cosmetic",
+      "cosmetic_type": "cursor",
+      "asset_id": "cursor_pocket_watch",
+      "asset_path": "assets/ui/cursors/cursor_pocket_watch.png",
+      "image": "items/case_pocket_watch.png"
     }
   }
 }

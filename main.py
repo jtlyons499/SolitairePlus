@@ -25,7 +25,13 @@ multiplayer_launcher = MultiplayerLauncher()
 
 from career_event_progress import store_event_progress, restore_event_progress
 from career_time_warp import advance_months
-from case_opening import new_case_state, normalize_case_state, purchase as purchase_loot_case, award_earned_trophies
+from case_opening import (
+    ITEMS as CASE_ITEMS,
+    new_case_state,
+    normalize_case_state,
+    purchase as purchase_loot_case,
+    award_earned_trophies,
+)
 from case_opening_ui import CaseOpeningScreen
 from arcade_support import (
     ARCADE_COMING_SOON_GAME_IDS,
@@ -103,6 +109,7 @@ from ace_invaders import ACE_INVADERS_DIFFICULTIES
 from ace_invaders_game import AceInvadersGame
 from suit_snake import SUIT_SNAKE_MODES, SUIT_SNAKE_MOVEMENT_STYLES
 from suit_snake_game import SuitSnakeGame
+from dead_mans_hand_game import DeadMansHandGame
 
 from texas_holdem import (
     TexasHoldemGame,
@@ -363,6 +370,7 @@ from debug_menu import (
     ACTION_BATTLE_BOSSES,
     ACTION_ACE_INVADERS,
     ACTION_SUIT_SNAKE,
+    ACTION_DEAD_MANS_HAND,
     ACTION_ADD_CASH,
     ACTION_ZERO_CASH,
     ACTION_ADD_RATING,
@@ -493,6 +501,35 @@ register_optional_cosmetics(
     FELTS,
     TITLES,
 )
+
+# Case-opening and Arcade Prize Counter cosmetics are real Customize rewards.
+# Register their metadata before the image catalogs are built. Missing PNGs are
+# intentionally allowed: ownership can be earned now and the art can be dropped
+# in later without changing code or losing the unlock.
+REWARD_CURSOR_IDS = set()
+_reward_cosmetic_order = 2000
+for _reward in [*CASE_ITEMS.values(), *ARCADE_PRIZE_CATALOG]:
+    if _reward.get("kind") != "cosmetic":
+        continue
+    _ctype = str(_reward.get("cosmetic_type", "")).lower()
+    _asset_id = str(_reward.get("asset_id", "")).strip()
+    _asset_path = str(_reward.get("asset_path", "")).strip()
+    if not _asset_id or not _asset_path:
+        continue
+    _entry = {
+        "name": _reward.get("name", _asset_id),
+        "path": _asset_path,
+        "order": _reward_cosmetic_order,
+    }
+    _reward_cosmetic_order += 10
+    if _ctype == "background":
+        MENU_BACKGROUNDS.setdefault(_asset_id, _entry)
+    elif _ctype == "felt":
+        FELTS.setdefault(_asset_id, _entry)
+    elif _ctype == "title":
+        TITLES.setdefault(_asset_id, _entry)
+    elif _ctype == "cursor":
+        REWARD_CURSOR_IDS.add(_asset_id)
 
 # ==================================================
 # PYGAME INITIALIZATION
@@ -713,6 +750,52 @@ for suit_snake_sound_name, suit_snake_sound_path in (
         except pygame.error:
             pass
 
+# Dead Man's Hand keeps its SFX in a dedicated folder so adding weapons/enemies
+# does not clutter assets/sounds. New names are preferred; Prototype 1's flat
+# filenames remain optional fallbacks so existing local builds do not go silent.
+for dmh_sound_name, dmh_sound_candidates in (
+        ("dead_mans_hand_pistol_shot", (
+            "assets/sounds/dead_mans_hand/pistol_shot.wav",
+            "assets/sounds/dead_mans_hand_gunshot.wav",
+        )),
+        ("dead_mans_hand_pistol_reload", (
+            "assets/sounds/dead_mans_hand/pistol_reload.wav",
+            "assets/sounds/dead_mans_hand_pistol_reload.wav",
+        )),
+        ("dead_mans_hand_kar98k_shot", ("assets/sounds/dead_mans_hand/kar98k_shot.wav",)),
+        ("dead_mans_hand_kar98k_bolt", ("assets/sounds/dead_mans_hand/kar98k_bolt.wav",)),
+        ("dead_mans_hand_kar98k_reload", ("assets/sounds/dead_mans_hand/kar98k_reload.wav",)),
+        ("dead_mans_hand_thompson_shot", ("assets/sounds/dead_mans_hand/thompson_shot.wav",)),
+        ("dead_mans_hand_thompson_reload", ("assets/sounds/dead_mans_hand/thompson_reload.wav",)),
+        ("dead_mans_hand_scar20_shot", ("assets/sounds/dead_mans_hand/scar20_shot.wav",)),
+        ("dead_mans_hand_scar20_reload", ("assets/sounds/dead_mans_hand/scar20_reload.wav",)),
+        ("dead_mans_hand_weapon_pickup", ("assets/sounds/dead_mans_hand/weapon_pickup.wav",)),
+        ("dead_mans_hand_enemy_hit", (
+            "assets/sounds/dead_mans_hand/enemy_hit.wav",
+            "assets/sounds/dead_mans_hand_enemy_hit.wav",
+        )),
+        ("dead_mans_hand_enemy_down", (
+            "assets/sounds/dead_mans_hand/enemy_down.wav",
+            "assets/sounds/dead_mans_hand_enemy_down.wav",
+        )),
+        ("dead_mans_hand_player_hit", (
+            "assets/sounds/dead_mans_hand/player_hit.wav",
+            "assets/sounds/dead_mans_hand_player_hit.wav",
+        )),
+        ("dead_mans_hand_player_down", (
+            "assets/sounds/dead_mans_hand/player_down.wav",
+            "assets/sounds/dead_mans_hand_player_down.wav",
+        )),
+):
+    for dmh_sound_path in dmh_sound_candidates:
+        if not os.path.isfile(dmh_sound_path):
+            continue
+        try:
+            audio.load_sound(dmh_sound_name, dmh_sound_path)
+            break
+        except pygame.error:
+            continue
+
 audio.load_sound(
     "card_move",
     "assets/sounds/card_move.wav"
@@ -855,6 +938,7 @@ STATE_ACE_INVADERS_DIFFICULTY_SELECT = "ace_invaders_difficulty_select"
 STATE_ACE_INVADERS = "ace_invaders"
 STATE_SUIT_SNAKE_DIFFICULTY_SELECT = "suit_snake_difficulty_select"
 STATE_SUIT_SNAKE = "suit_snake"
+STATE_DEAD_MANS_HAND = "dead_mans_hand"
 STATE_ARCADE_TOKEN_EXCHANGE = "arcade_token_exchange"
 STATE_ARCADE_PRIZE_COUNTER = "arcade_prize_counter"
 STATE_ARCADE_TROPHY_ROOM = "arcade_trophy_room"
@@ -2723,9 +2807,24 @@ def buy_case_for_screen(case_id):
     global career_cash, career_rating, career_fans
     if current_game_mode == "free":
         return purchase_loot_case(case_screen.state, case_id, case_screen.wallet)
-    previous = (copy.deepcopy(case_collection_state), career_cash, copy.deepcopy(career_ratings), career_rating, career_fans, set(unlocked_felts))
+    previous = (
+        copy.deepcopy(case_collection_state),
+        career_cash,
+        copy.deepcopy(career_ratings),
+        career_rating,
+        career_fans,
+        set(unlocked_menu_backgrounds),
+        set(unlocked_felts),
+        set(unlocked_titles),
+        set(unlocked_cursors),
+    )
     try:
-        receipt, career_cash = purchase_loot_case(case_collection_state, case_id, career_cash)
+        receipt, career_cash = purchase_loot_case(
+            case_collection_state,
+            case_id,
+            career_cash,
+            fans=career_fans,
+        )
         if receipt["kind"] == "rating":
             receipt["amount"] = apply_rating_change(career_ratings, receipt["game"], receipt["amount"])
             career_rating = career_ratings["overall"]
@@ -2734,14 +2833,36 @@ def buy_case_for_screen(case_id):
             receipt["amount"] = actual - career_fans
             career_fans = actual
         elif receipt["kind"] == "cosmetic":
-            unlocked_felts.add("f_case_" + receipt["item_id"])
+            from reward_cosmetics import unlock_reward
+            item = CASE_ITEMS[receipt["item_id"]]
+            unlock_reward(
+                item.get("cosmetic_type"),
+                item.get("asset_id"),
+                unlocked_menu_backgrounds,
+                unlocked_felts,
+                unlocked_titles,
+                unlocked_cursors,
+            )
         auto_save_career()
         return receipt, career_cash
     except Exception:
-        old_state, career_cash, old_ratings, career_rating, career_fans, old_felts = previous
+        (
+            old_state,
+            career_cash,
+            old_ratings,
+            career_rating,
+            career_fans,
+            old_backgrounds,
+            old_felts,
+            old_titles,
+            old_cursors,
+        ) = previous
         case_collection_state.clear(); case_collection_state.update(old_state)
         career_ratings.clear(); career_ratings.update(old_ratings)
+        unlocked_menu_backgrounds.clear(); unlocked_menu_backgrounds.update(old_backgrounds)
         unlocked_felts.clear(); unlocked_felts.update(old_felts)
+        unlocked_titles.clear(); unlocked_titles.update(old_titles)
+        unlocked_cursors.clear(); unlocked_cursors.update(old_cursors)
         raise
 
 
@@ -3483,11 +3604,14 @@ king_pong_game = KingPongGame()
 battle_bosses_game = BattleBossesGame()
 ace_invaders_game = AceInvadersGame()
 suit_snake_game = SuitSnakeGame()
+dead_mans_hand_game = DeadMansHandGame()
+dead_mans_hand_return_state = STATE_DEBUG_MENU
 arcade_state = make_default_arcade_state()
 arcade_night_tokens_spent = 0
 arcade_night_tickets_won = 0
 arcade_pending_launch_game_id = None
 arcade_selected_prize_index = 0
+arcade_prize_page = 0
 king_pong_opponent_choices = []
 king_pong_selected_opponent_index = None
 battle_bosses_opponent_choices = []
@@ -4013,11 +4137,6 @@ menu_drift_render_surface = pygame.Surface(
     )
 ).convert()
 
-from case_opening import ITEMS as CASE_ITEMS
-FELTS.update({
-    "f_case_" + key: {"name": item["name"], "path": item["felt_path"]}
-    for key, item in CASE_ITEMS.items() if item["kind"] == "cosmetic"
-})
 felt_catalog = CosmeticCatalog(FELTS, "f_default")
 felt_surfaces = felt_catalog.surfaces
 
@@ -4144,7 +4263,7 @@ for cursor_index, filename in enumerate(cursor_files):
         "order": (cursor_index + 1) * 10,
     }
 
-unlocked_cursors = set(cursor_cosmetics.keys())
+unlocked_cursors = set(cursor_cosmetics.keys()) - REWARD_CURSOR_IDS
 
 if selected_cursor not in cursor_runtime_surfaces:
     if "cursor" in cursor_runtime_surfaces:
@@ -4955,14 +5074,17 @@ for package_index in range(len(ARCADE_TOKEN_PACKAGES)):
 arcade_token_exchange_back_rect = pygame.Rect(128, 658, 240, 54)
 arcade_token_exchange_continue_rect = pygame.Rect(998, 658, 240, 54)
 
-arcade_prize_card_rects = {}
-for prize_index in range(len(ARCADE_PRIZE_CATALOG)):
-    arcade_prize_card_rects[prize_index] = pygame.Rect(116 + prize_index * 388, 212, 350, 248)
-
+ARCADE_PRIZES_PER_PAGE = 4
+arcade_prize_card_rects = {
+    slot: pygame.Rect(102 + slot * 292, 207, 270, 300)
+    for slot in range(ARCADE_PRIZES_PER_PAGE)
+}
+arcade_prize_prev_rect = pygame.Rect(474, 525, 118, 38)
+arcade_prize_next_rect = pygame.Rect(774, 525, 118, 38)
 arcade_prize_back_rect = pygame.Rect(106, 658, 220, 54)
 arcade_prize_trophy_room_rect = pygame.Rect(573, 658, 220, 54)
 arcade_prize_buy_rect = pygame.Rect(1040, 658, 220, 54)
-arcade_trophy_room_back_rect = pygame.Rect(543, 658, 280, 54)
+arcade_trophy_room_back_rect = pygame.Rect(503, 658, 360, 54)
 
 king_pong_return_rect = pygame.Rect(1132, 652, 198, 54)
 
@@ -8343,6 +8465,23 @@ def debug_open_suit_snake():
     open_suit_snake_difficulty_select(reset_selection=True)
 
 
+def start_dead_mans_hand(return_state=None):
+    """Launch the isolated raycaster prototype without attaching it to a Night."""
+    global current_state
+    global dead_mans_hand_return_state
+
+    dead_mans_hand_return_state = return_state or STATE_DEBUG_MENU
+    dead_mans_hand_game.start_run()
+    dead_mans_hand_game.capture_mouse()
+    current_state = STATE_DEAD_MANS_HAND
+
+
+def exit_dead_mans_hand():
+    global current_state
+    dead_mans_hand_game.release_mouse()
+    current_state = dead_mans_hand_return_state or STATE_DEBUG_MENU
+
+
 def set_arcade_status_message(message, duration_ms=2600):
     global arcade_status_message
     global arcade_status_message_expires
@@ -10226,6 +10365,7 @@ def apply_fresh_profile():
     global unlocked_menu_backgrounds
     global unlocked_felts
     global unlocked_titles
+    global unlocked_cursors
 
     default_data = (
         make_default_profile()
@@ -10561,6 +10701,12 @@ def build_profile_save_data():
         "unlocked_titles"
     ] = list(
         unlocked_titles
+    )
+
+    cosmetics[
+        "unlocked_cursors"
+    ] = list(
+        unlocked_cursors
     )
 
     # Card backs exist in the game
@@ -11059,6 +11205,39 @@ def apply_profile_save_data(
             ]
         )
     )
+
+    # Older profiles predate cursor ownership. Preserve all legacy cursors as
+    # owned while keeping new Case/Arcade reward cursors locked until earned.
+    legacy_cursor_ids = set(cursor_cosmetics.keys()) - REWARD_CURSOR_IDS
+    unlocked_cursors = set(
+        cosmetics.get(
+            "unlocked_cursors",
+            legacy_cursor_ids,
+        )
+    )
+    unlocked_cursors.add("cursor")
+    unlocked_cursors.intersection_update(set(cursor_cosmetics.keys()) | REWARD_CURSOR_IDS)
+
+    # Reconcile possession-backed cosmetics so an earned reward remains owned
+    # even if it was earned before its PNG existed or came from an older save.
+    from reward_cosmetics import unlock_reward
+    for item_id, count in case_collection_state.get("inventory", {}).items():
+        item = CASE_ITEMS.get(item_id, {})
+        if count and item.get("kind") == "cosmetic":
+            unlock_reward(
+                item.get("cosmetic_type"), item.get("asset_id"),
+                unlocked_menu_backgrounds, unlocked_felts, unlocked_titles, unlocked_cursors,
+            )
+    redeemed_arcade_ids = set(arcade_state.get("trophies", []))
+    for prize in ARCADE_PRIZE_CATALOG:
+        if prize.get("kind") == "cosmetic" and prize.get("id") in redeemed_arcade_ids:
+            unlock_reward(
+                prize.get("cosmetic_type"), prize.get("asset_id"),
+                unlocked_menu_backgrounds, unlocked_felts, unlocked_titles, unlocked_cursors,
+            )
+
+    if selected_cursor not in unlocked_cursors:
+        selected_cursor = "cursor" if "cursor" in cursor_runtime_surfaces else next(iter(unlocked_cursors), selected_cursor)
 
     gameplay_settings = data.get(
         "settings",
@@ -18781,6 +18960,10 @@ ARCADE_ACTION_BUTTON_ASSET_PATHS = {
     "play_tokens": "assets/arcade/ui/play_tokens.png",
     "reroll_rivals": "assets/arcade/ui/reroll_rivals.png",
     "quit": "assets/arcade/ui/quit.png",
+    "continue": "assets/arcade/ui/continue.png",
+    "redeem_tickets": "assets/arcade/ui/redeem_tickets.png",
+    "trophy_room": "assets/arcade/ui/trophy_room.png",
+    "back_to_prize_counter": "assets/arcade/ui/back_to_prize_counter.png",
 }
 
 _event_ui_asset_cache = {}
@@ -19599,12 +19782,80 @@ def draw_arcade_token_exchange():
         continue_label = "Play Battle Bosses"
     else:
         continue_label = "Continue"
-    draw_menu_button(
+    draw_arcade_action_image_button(
         arcade_token_exchange_continue_rect,
+        "continue",
         continue_label,
-        game_mouse_pos,
-        font=option_label_font,
+        enabled=True,
     )
+
+
+def redeem_arcade_prize_for_career(prize_id):
+    """Redeem one ticket prize and atomically unlock any attached cosmetic."""
+    global arcade_state
+    previous_state = clone_arcade_state(arcade_state)
+    previous_backgrounds = set(unlocked_menu_backgrounds)
+    previous_felts = set(unlocked_felts)
+    previous_titles = set(unlocked_titles)
+    previous_cursors = set(unlocked_cursors)
+
+    success, new_state, message, prize = redeem_prize(arcade_state, prize_id)
+    if not success:
+        return False, message, prize
+
+    arcade_state = new_state
+    if prize and prize.get("kind") == "cosmetic":
+        from reward_cosmetics import unlock_reward
+        unlock_reward(
+            prize.get("cosmetic_type"),
+            prize.get("asset_id"),
+            unlocked_menu_backgrounds,
+            unlocked_felts,
+            unlocked_titles,
+            unlocked_cursors,
+        )
+
+    try:
+        auto_save_career()
+    except Exception:
+        arcade_state = previous_state
+        unlocked_menu_backgrounds.clear(); unlocked_menu_backgrounds.update(previous_backgrounds)
+        unlocked_felts.clear(); unlocked_felts.update(previous_felts)
+        unlocked_titles.clear(); unlocked_titles.update(previous_titles)
+        unlocked_cursors.clear(); unlocked_cursors.update(previous_cursors)
+        raise
+    return True, message, prize
+
+
+def _draw_arcade_prize_page_button(rect, label, enabled):
+    hovered = enabled and game_mouse_pos is not None and rect.collidepoint(game_mouse_pos)
+    fill = (34, 48, 65) if hovered else (20, 29, 41)
+    border = (247, 213, 115) if hovered else (126, 141, 158)
+    pygame.draw.rect(game_surface, fill, rect, border_radius=8)
+    pygame.draw.rect(game_surface, border, rect, 2, border_radius=8)
+    color = (247, 241, 217) if enabled else (100, 111, 124)
+    text = difficulty_detail_font.render(label, True, color)
+    game_surface.blit(text, text.get_rect(center=rect.center))
+
+
+def _draw_arcade_prize_art(prize, art_rect):
+    art = get_event_ui_asset(prize.get("image"))
+    if art is not None:
+        scale = min(art_rect.width / art.get_width(), art_rect.height / art.get_height())
+        size = (
+            max(1, int(round(art.get_width() * scale))),
+            max(1, int(round(art.get_height() * scale))),
+        )
+        art = pygame.transform.smoothscale(art, size)
+        game_surface.blit(art, art.get_rect(center=art_rect.center))
+        return
+
+    # Safe placeholder while the authored prize PNG is being created.
+    kind = prize.get("cosmetic_type") or prize.get("kind", "prize")
+    pygame.draw.rect(game_surface, (12, 18, 27), art_rect, border_radius=10)
+    pygame.draw.rect(game_surface, (91, 109, 132), art_rect, 2, border_radius=10)
+    label = difficulty_detail_font.render(str(kind).replace("_", " ").upper(), True, (184, 196, 210))
+    game_surface.blit(label, label.get_rect(center=art_rect.center))
 
 
 def draw_arcade_prize_counter():
@@ -19613,51 +19864,97 @@ def draw_arcade_prize_counter():
     pygame.draw.rect(game_surface, (16, 23, 34), panel, border_radius=18)
     pygame.draw.rect(game_surface, (226, 194, 104), panel, 3, border_radius=18)
     title = options_title_font.render("PRIZE COUNTER", True, (255, 255, 255))
-    subtitle = difficulty_detail_font.render("Redeem tickets for arcade trophies. Cosmetic rewards coming later.", True, (210, 217, 224))
-    game_surface.blit(title, title.get_rect(center=(BASE_WIDTH // 2, 118)))
-    game_surface.blit(subtitle, subtitle.get_rect(center=(BASE_WIDTH // 2, 152)))
+    subtitle = difficulty_detail_font.render(
+        "Redeem tickets for trophies and exclusive arcade cosmetics.",
+        True,
+        (210, 217, 224),
+    )
+    game_surface.blit(title, title.get_rect(center=(BASE_WIDTH // 2, 112)))
+    game_surface.blit(subtitle, subtitle.get_rect(center=(BASE_WIDTH // 2, 145)))
 
-    ticket_surface = option_label_font.render(f"Tickets: {int(arcade_state.get('tickets', 0)):,}", True, (255, 238, 154))
-    game_surface.blit(ticket_surface, ticket_surface.get_rect(center=(BASE_WIDTH // 2, 182)))
+    ticket_surface = option_label_font.render(
+        f"Tickets: {int(arcade_state.get('tickets', 0)):,}",
+        True,
+        (255, 238, 154),
+    )
+    game_surface.blit(ticket_surface, ticket_surface.get_rect(center=(BASE_WIDTH // 2, 176)))
 
-    for index, prize in enumerate(ARCADE_PRIZE_CATALOG):
-        rect = arcade_prize_card_rects[index]
+    page_count = max(1, math.ceil(len(ARCADE_PRIZE_CATALOG) / ARCADE_PRIZES_PER_PAGE))
+    page = max(0, min(page_count - 1, int(arcade_prize_page)))
+    page_start = page * ARCADE_PRIZES_PER_PAGE
+
+    for slot, rect in arcade_prize_card_rects.items():
+        index = page_start + slot
+        if index >= len(ARCADE_PRIZE_CATALOG):
+            continue
+        prize = ARCADE_PRIZE_CATALOG[index]
         hovered = game_mouse_pos is not None and rect.collidepoint(game_mouse_pos)
         selected = index == arcade_selected_prize_index
         owned = prize['id'] in arcade_state.get('trophies', [])
-        pygame.draw.rect(game_surface, (25, 34, 48) if not hovered and not selected else (34, 46, 64), rect, border_radius=14)
-        pygame.draw.rect(game_surface, (220, 191, 103) if hovered or selected else (109, 121, 138), rect, 2, border_radius=14)
-        name = option_label_font.render(prize['name'], True, (248, 249, 250))
-        game_surface.blit(name, name.get_rect(center=(rect.centerx, rect.y + 30)))
+        pygame.draw.rect(
+            game_surface,
+            (25, 34, 48) if not hovered and not selected else (34, 46, 64),
+            rect,
+            border_radius=14,
+        )
+        pygame.draw.rect(
+            game_surface,
+            (220, 191, 103) if hovered or selected else (109, 121, 138),
+            rect,
+            2,
+            border_radius=14,
+        )
+
+        name_rect = pygame.Rect(rect.x + 12, rect.y + 12, rect.width - 24, 50)
+        draw_wrapped_text_limited(
+            prize['name'], option_label_font, (248, 249, 250), name_rect, 2, line_spacing=2
+        )
+        _draw_arcade_prize_art(prize, pygame.Rect(rect.x + 72, rect.y + 66, 126, 86))
+
         cost = options_title_font.render(f"{prize['cost']}", True, (255, 236, 142))
-        game_surface.blit(cost, cost.get_rect(center=(rect.centerx, rect.y + 100)))
+        game_surface.blit(cost, cost.get_rect(center=(rect.centerx, rect.y + 178)))
         tickets_word = difficulty_detail_font.render("TICKETS", True, (255, 240, 180))
-        game_surface.blit(tickets_word, tickets_word.get_rect(center=(rect.centerx, rect.y + 134)))
-        draw_wrapped_text_limited(prize['description'], difficulty_detail_font, (208, 216, 224), pygame.Rect(rect.x + 18, rect.y + 160, rect.width - 36, 60), 3, line_spacing=4)
-        footer = "OWNED" if owned else "Click to select"
+        game_surface.blit(tickets_word, tickets_word.get_rect(center=(rect.centerx, rect.y + 207)))
+        draw_wrapped_text_limited(
+            prize['description'],
+            difficulty_detail_font,
+            (208, 216, 224),
+            pygame.Rect(rect.x + 14, rect.y + 226, rect.width - 28, 46),
+            2,
+            line_spacing=3,
+        )
+        footer = "OWNED" if owned else prize.get("cosmetic_type", "Select").replace("_", " ").upper()
         footer_color = (135, 222, 173) if owned else (173, 182, 194)
         footer_surface = difficulty_detail_font.render(footer, True, footer_color)
-        game_surface.blit(footer_surface, footer_surface.get_rect(center=(rect.centerx, rect.bottom - 24)))
+        game_surface.blit(footer_surface, footer_surface.get_rect(center=(rect.centerx, rect.bottom - 16)))
 
+    _draw_arcade_prize_page_button(arcade_prize_prev_rect, "PREV", page > 0)
+    _draw_arcade_prize_page_button(arcade_prize_next_rect, "NEXT", page + 1 < page_count)
+    page_text = difficulty_detail_font.render(f"PAGE {page + 1} / {page_count}", True, (178, 190, 204))
+    game_surface.blit(page_text, page_text.get_rect(center=(BASE_WIDTH // 2, 544)))
+
+    draw_arcade_action_image_button(arcade_prize_back_rect, "back", "Back")
+    draw_arcade_action_image_button(arcade_prize_trophy_room_rect, "trophy_room", "Trophy Room")
+
+    selected_index = max(0, min(len(ARCADE_PRIZE_CATALOG) - 1, arcade_selected_prize_index))
+    selected_prize = ARCADE_PRIZE_CATALOG[selected_index]
+    owned = selected_prize['id'] in arcade_state.get('trophies', [])
     draw_arcade_action_image_button(
-        arcade_prize_back_rect,
-        "back",
-        "Back",
+        arcade_prize_buy_rect,
+        "redeem_tickets",
+        "Redeem Tickets",
+        enabled=not owned,
+        badge_text=f"{selected_prize['cost']} TICKETS" if not owned else "OWNED",
     )
-    draw_menu_button(arcade_prize_trophy_room_rect, "Trophy Room", game_mouse_pos, font=option_label_font)
-    selected_prize = ARCADE_PRIZE_CATALOG[arcade_selected_prize_index]
-    button_text = f"Redeem {selected_prize['cost']} Tickets"
-    draw_menu_button(arcade_prize_buy_rect, button_text, game_mouse_pos, font=difficulty_detail_font)
 
     if arcade_status_message and pygame.time.get_ticks() <= arcade_status_message_expires:
         info = difficulty_detail_font.render(arcade_status_message, True, (246, 241, 217))
-        bg = info.get_rect(center=(BASE_WIDTH // 2, 614)).inflate(28, 16)
+        bg = info.get_rect(center=(BASE_WIDTH // 2, 610)).inflate(28, 16)
         overlay = pygame.Surface(bg.size, pygame.SRCALPHA)
         overlay.fill((8, 14, 24, 225))
         game_surface.blit(overlay, bg.topleft)
         pygame.draw.rect(game_surface, (228, 197, 107), bg, 2, border_radius=9)
         game_surface.blit(info, info.get_rect(center=bg.center))
-
 
 def draw_arcade_trophy_room():
     draw_arcade_page_background(66)
@@ -19665,11 +19962,18 @@ def draw_arcade_trophy_room():
     pygame.draw.rect(game_surface, (15, 21, 31), panel, border_radius=18)
     pygame.draw.rect(game_surface, (225, 193, 103), panel, 3, border_radius=18)
     title = options_title_font.render("ARCADE TROPHY ROOM", True, (255, 255, 255))
-    subtitle = difficulty_detail_font.render("A running shelf of ticket prizes earned from Arcade Night.", True, (210, 217, 224))
+    subtitle = difficulty_detail_font.render(
+        "Ticket trophies live here. Redeemed cosmetics are available under Customize.",
+        True,
+        (210, 217, 224),
+    )
     game_surface.blit(title, title.get_rect(center=(BASE_WIDTH // 2, 132)))
     game_surface.blit(subtitle, subtitle.get_rect(center=(BASE_WIDTH // 2, 166)))
 
-    trophies = [prize for prize in ARCADE_PRIZE_CATALOG if prize['id'] in arcade_state.get('trophies', [])]
+    trophies = [
+        prize for prize in ARCADE_PRIZE_CATALOG
+        if prize.get('kind') == 'trophy' and prize['id'] in arcade_state.get('trophies', [])
+    ]
     if not trophies:
         empty = option_label_font.render("No trophies redeemed yet.", True, (232, 236, 240))
         hint = difficulty_detail_font.render("Visit the Prize Counter after stacking up some tickets.", True, (165, 175, 188))
@@ -19680,17 +19984,21 @@ def draw_arcade_trophy_room():
             rect = pygame.Rect(164 + (index % 3) * 330, 232 + (index // 3) * 180, 270, 132)
             pygame.draw.rect(game_surface, (29, 38, 52), rect, border_radius=14)
             pygame.draw.rect(game_surface, (222, 191, 102), rect, 2, border_radius=14)
-            icon_rect = pygame.Rect(rect.x + 22, rect.y + 22, 58, 58)
-            pygame.draw.ellipse(game_surface, (229, 192, 105), icon_rect)
-            pygame.draw.ellipse(game_surface, (250, 243, 220), icon_rect.inflate(-18, -18))
+            _draw_arcade_prize_art(prize, pygame.Rect(rect.x + 18, rect.y + 20, 66, 66))
             name = option_label_font.render(prize['name'], True, (248, 249, 250))
             cost = difficulty_detail_font.render(f"Redeemed for {prize['cost']} tickets", True, (189, 198, 208))
             game_surface.blit(name, name.get_rect(midleft=(rect.x + 96, rect.y + 42)))
-            draw_wrapped_text_limited(prize['description'], difficulty_detail_font, (210, 217, 224), pygame.Rect(rect.x + 96, rect.y + 56, rect.width - 114, 46), 2, line_spacing=4)
+            draw_wrapped_text_limited(
+                prize['description'], difficulty_detail_font, (210, 217, 224),
+                pygame.Rect(rect.x + 96, rect.y + 56, rect.width - 114, 46), 2, line_spacing=4
+            )
             game_surface.blit(cost, cost.get_rect(midleft=(rect.x + 96, rect.bottom - 22)))
 
-    draw_menu_button(arcade_trophy_room_back_rect, "Back to Prize Counter", game_mouse_pos, font=option_label_font)
-
+    draw_arcade_action_image_button(
+        arcade_trophy_room_back_rect,
+        "back_to_prize_counter",
+        "Back to Prize Counter",
+    )
 
 def draw_king_pong_opponent_select():
     draw_arcade_page_background(62)
@@ -20022,7 +20330,7 @@ def draw_ace_invaders_difficulty_select():
         game_surface.blit(title, title.get_rect(center=(BASE_WIDTH // 2, 90)))
 
     subtitle = difficulty_detail_font.render(
-        "Choose a difficulty. Ace Invaders runs forever - survive waves and chase the high score.",
+        "Choose a difficulty. Survive consecutive waves to earn tickets.",
         True,
         (213, 220, 228),
     )
@@ -23750,12 +24058,16 @@ while running:
                     current_state = (
                         debug_previous_state
                     )
+                    if current_state == STATE_DEAD_MANS_HAND:
+                        dead_mans_hand_game.capture_mouse()
 
             else:
 
                 debug_previous_state = (
                     current_state
                 )
+                if current_state == STATE_DEAD_MANS_HAND:
+                    dead_mans_hand_game.release_mouse()
 
                 current_state = (
                     STATE_DEBUG_MENU
@@ -23946,6 +24258,10 @@ while running:
                 elif debug_action == ACTION_SUIT_SNAKE:
                     audio.play_sound("button_click")
                     debug_open_suit_snake()
+
+                elif debug_action == ACTION_DEAD_MANS_HAND:
+                    audio.play_sound("button_click")
+                    start_dead_mans_hand(return_state=STATE_DEBUG_MENU)
 
                 elif debug_action == ACTION_SCORE_FOUR_SOLO:
                     audio.play_sound("button_click")
@@ -28181,6 +28497,7 @@ while running:
 
                         elif game_id == "prize_counter":
                             arcade_selected_prize_index = 0
+                            arcade_prize_page = 0
                             current_state = STATE_ARCADE_PRIZE_COUNTER
 
                         else:
@@ -28426,6 +28743,7 @@ while running:
         elif current_state == STATE_ARCADE_PRIZE_COUNTER:
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and menu_mouse_pos is not None:
+                page_count = max(1, math.ceil(len(ARCADE_PRIZE_CATALOG) / ARCADE_PRIZES_PER_PAGE))
                 if arcade_prize_back_rect.collidepoint(menu_mouse_pos):
                     audio.play_sound("button_click")
                     current_state = STATE_CAREER_EVENT_SELECT
@@ -28434,15 +28752,22 @@ while running:
                     current_state = STATE_ARCADE_TROPHY_ROOM
                 elif arcade_prize_buy_rect.collidepoint(menu_mouse_pos):
                     prize = ARCADE_PRIZE_CATALOG[arcade_selected_prize_index]
-                    success, new_state, message, _prize = redeem_prize(arcade_state, prize['id'])
-                    arcade_state = new_state
-                    if success:
-                        auto_save_career()
+                    _success, message, _prize = redeem_arcade_prize_for_career(prize['id'])
                     set_arcade_status_message(message)
                     audio.play_sound("button_click")
+                elif arcade_prize_prev_rect.collidepoint(menu_mouse_pos) and arcade_prize_page > 0:
+                    arcade_prize_page -= 1
+                    arcade_selected_prize_index = arcade_prize_page * ARCADE_PRIZES_PER_PAGE
+                    audio.play_sound("button_click")
+                elif arcade_prize_next_rect.collidepoint(menu_mouse_pos) and arcade_prize_page + 1 < page_count:
+                    arcade_prize_page += 1
+                    arcade_selected_prize_index = arcade_prize_page * ARCADE_PRIZES_PER_PAGE
+                    audio.play_sound("button_click")
                 else:
-                    for prize_index, rect in arcade_prize_card_rects.items():
-                        if rect.collidepoint(menu_mouse_pos):
+                    page_start = arcade_prize_page * ARCADE_PRIZES_PER_PAGE
+                    for prize_slot, rect in arcade_prize_card_rects.items():
+                        prize_index = page_start + prize_slot
+                        if prize_index < len(ARCADE_PRIZE_CATALOG) and rect.collidepoint(menu_mouse_pos):
                             arcade_selected_prize_index = prize_index
                             audio.play_sound("button_click")
                             break
@@ -28542,6 +28867,39 @@ while running:
                     if not suit_snake_game.finished:
                         suit_snake_game.forfeit()
                     finish_suit_snake_session()
+
+        elif current_state == STATE_DEAD_MANS_HAND:
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    exit_dead_mans_hand()
+                elif event.key in (pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4):
+                    dead_mans_hand_game.switch_weapon_by_slot(event.key - pygame.K_0)
+                elif event.key == pygame.K_r:
+                    if dead_mans_hand_game.game_over or dead_mans_hand_game.prototype_complete:
+                        dead_mans_hand_game.start_run()
+                        dead_mans_hand_game.capture_mouse()
+                    else:
+                        dead_mans_hand_game.start_reload()
+            elif event.type == pygame.MOUSEMOTION:
+                dead_mans_hand_game.handle_mouse_motion(event.rel[0])
+            elif event.type == pygame.MOUSEWHEEL:
+                dead_mans_hand_game.cycle_weapon(1 if event.y < 0 else -1)
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    dead_mans_hand_game.set_trigger_held(True)
+                    dead_mans_hand_game.fire()
+                elif event.button == 3:
+                    dead_mans_hand_game.set_aiming(True)
+                elif event.button == 4:
+                    dead_mans_hand_game.cycle_weapon(-1)
+                elif event.button == 5:
+                    dead_mans_hand_game.cycle_weapon(1)
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1:
+                    dead_mans_hand_game.set_trigger_held(False)
+                elif event.button == 3:
+                    dead_mans_hand_game.set_aiming(False)
 
         elif current_state == STATE_CAREER_REAL_ESTATE:
 
@@ -30406,6 +30764,31 @@ while running:
         if suit_snake_game.finished:
             claim_suit_snake_result()
         draw_suit_snake_screen()
+
+    elif current_state == STATE_DEAD_MANS_HAND:
+
+        dead_mans_hand_dt = min(0.05, max(0.0, clock.get_time() / 1000.0))
+        dead_mans_hand_game.update(dead_mans_hand_dt, pygame.key.get_pressed())
+        for dmh_sound_event in dead_mans_hand_game.pop_sound_events():
+            sound_name = {
+                "pistol_shot": "dead_mans_hand_pistol_shot",
+                "pistol_reload": "dead_mans_hand_pistol_reload",
+                "kar98k_shot": "dead_mans_hand_kar98k_shot",
+                "kar98k_bolt": "dead_mans_hand_kar98k_bolt",
+                "kar98k_reload": "dead_mans_hand_kar98k_reload",
+                "thompson_shot": "dead_mans_hand_thompson_shot",
+                "thompson_reload": "dead_mans_hand_thompson_reload",
+                "scar20_shot": "dead_mans_hand_scar20_shot",
+                "scar20_reload": "dead_mans_hand_scar20_reload",
+                "weapon_pickup": "dead_mans_hand_weapon_pickup",
+                "enemy_hit": "dead_mans_hand_enemy_hit",
+                "enemy_down": "dead_mans_hand_enemy_down",
+                "player_hit": "dead_mans_hand_player_hit",
+                "player_down": "dead_mans_hand_player_down",
+            }.get(dmh_sound_event)
+            if sound_name:
+                audio.play_sound(sound_name)
+        dead_mans_hand_game.draw(game_surface)
 
     elif current_state == STATE_FARO:
 

@@ -53,13 +53,14 @@ class CaseTests(unittest.TestCase):
  def transaction_env(self,save):
   tree=ast.parse(Path('main.py').read_text());fn=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='buy_case_for_screen')
   env=dict(copy=copy,current_game_mode='career',case_collection_state=new_case_state(),career_cash=10000,
-           career_ratings=make_player_rating_bundle(1000),career_rating=1000,career_fans=50,unlocked_felts=set(),
+           career_ratings=make_player_rating_bundle(1000),career_rating=1000,career_fans=50,
+           unlocked_menu_backgrounds=set(),unlocked_felts=set(),unlocked_titles=set(),unlocked_cursors=set(),CASE_ITEMS=ITEMS,
            purchase_loot_case=purchase,apply_rating_change=apply_rating_change,clamp_fans=lambda n:max(0,n),auto_save_career=save)
   exec(compile(ast.Module(body=[fn],type_ignores=[]),'actual case transaction','exec'),env);return env
  def test_save_failure_rolls_back_cash_ratings_fans_and_cosmetics(self):
   for identity in ('cash_vault','rating_blackjack','fan_club','midnight_felt'):
    def fail():raise OSError('disk full')
-   env=self.transaction_env(fail);keys=['case_collection_state','career_cash','career_ratings','career_rating','career_fans','unlocked_felts']
+   env=self.transaction_env(fail);keys=['case_collection_state','career_cash','career_ratings','career_rating','career_fans','unlocked_menu_backgrounds','unlocked_felts','unlocked_titles','unlocked_cursors']
    before=copy.deepcopy([env[k] for k in keys])
    with patch('case_opening.choose_item',return_value=ITEMS[identity]):
     with self.assertRaises(OSError):env['buy_case_for_screen']('prestige')
@@ -69,10 +70,10 @@ class CaseTests(unittest.TestCase):
   with patch('case_opening.choose_item',return_value=ITEMS['rating_blackjack']):receipt,wallet=env['buy_case_for_screen']('prestige')
   self.assertEqual(env['career_ratings']['blackjack'],1035);self.assertEqual(env['career_rating'],env['career_ratings']['overall'])
   self.assertEqual(len(saves),1)
-  before=copy.deepcopy((env['case_collection_state'],env['career_cash'],env['career_ratings'],env['career_fans'],env['unlocked_felts']))
+  before=copy.deepcopy((env['case_collection_state'],env['career_cash'],env['career_ratings'],env['career_fans'],env['unlocked_menu_backgrounds'],env['unlocked_felts'],env['unlocked_titles'],env['unlocked_cursors']))
   env['current_game_mode']='free';env['case_screen']=SimpleNamespace(state=new_case_state(),wallet=5000)
   with patch('case_opening.choose_item',return_value=ITEMS['midnight_felt']):env['buy_case_for_screen']('street')
-  self.assertEqual((env['case_collection_state'],env['career_cash'],env['career_ratings'],env['career_fans'],env['unlocked_felts']),before)
+  self.assertEqual((env['case_collection_state'],env['career_cash'],env['career_ratings'],env['career_fans'],env['unlocked_menu_backgrounds'],env['unlocked_felts'],env['unlocked_titles'],env['unlocked_cursors']),before)
  def test_reel_ends_on_committed_item_and_skip_does_not_purchase_twice(self):
   pygame.init()
   try:
