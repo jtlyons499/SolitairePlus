@@ -2,7 +2,7 @@
 
 A game about card games with progression, minigames, and aliens.
 
-![](https://i.imgur.com/pwxPPd0.png)
+![](https://i.imgur.com/jR7gUMW.png)
 
 ## Play the game
 
