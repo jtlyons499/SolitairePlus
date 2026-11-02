@@ -1,6 +1,6 @@
 # Solitaire+
 
-A growing card-game and career-simulation project built with Python and pygame-ce, featuring Solitaire, poker, casino games, multiplayer, arcade games, and Dead Man's Hand.
+A game about card games with progression, minigames, and aliens.
 
 ## Play the game
 
