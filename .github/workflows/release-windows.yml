@@ -1,0 +1,98 @@
+name: Build Windows Release
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "**/*.py"
+      - "requirements.txt"
+      - "Simple Solitaire.spec"
+      - ".github/workflows/release-windows.yml"
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install pyinstaller
+
+      - name: Generate Windows version metadata
+        shell: pwsh
+        run: |
+          if ("${{ github.ref_type }}" -eq "tag") {
+            $env:SOLITAIRE_VERSION = "${{ github.ref_name }}"
+          } else {
+            $env:SOLITAIRE_VERSION = "dev-${{ github.run_number }}"
+          }
+          python tools/write_version_info.py
+
+      - name: Build with PyInstaller
+        shell: pwsh
+        run: |
+          pyinstaller --clean --noconfirm "Simple Solitaire.spec"
+
+      - name: Verify executable
+        shell: pwsh
+        run: |
+          $exe = "dist\Simple Solitaire\Simple Solitaire.exe"
+          if (-not (Test-Path $exe)) {
+            throw "Expected executable was not produced: $exe"
+          }
+          Get-Item $exe | Format-List Name, Length, LastWriteTime
+
+      - name: Create player-ready ZIP
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "release\Solitaire-Windows" | Out-Null
+          Copy-Item -Path "dist\Simple Solitaire\*" -Destination "release\Solitaire-Windows" -Recurse -Force
+          Copy-Item -Path "README.md" -Destination "release\Solitaire-Windows\README.md" -Force
+          @"
+          Solitaire+
+          ==========
+
+          1. Extract this ZIP before running the game.
+          2. Double-click "Simple Solitaire.exe".
+          3. Keep the other files and folders beside the EXE.
+
+          No separate Python installation is required.
+          "@ | Set-Content -Path "release\Solitaire-Windows\PLAYING.txt" -Encoding UTF8
+          Compress-Archive -Path "release\Solitaire-Windows\*" -DestinationPath "Solitaire-Windows.zip" -Force
+
+      - name: Upload downloadable build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Solitaire-Windows
+          path: Solitaire-Windows.zip
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "${{ github.ref_name }}"
+          gh release create $tag "Solitaire-Windows.zip#Solitaire+ for Windows" --title "Solitaire+ $tag" --generate-notes

@@ -6,8 +6,10 @@ __pycache__/
 
 build/
 dist/
+release/
 dist.zip
 *.zip
+build_version_info.txt
 # Personal data and generated files
 saves/
 *.psd
