@@ -39,6 +39,12 @@ Press F10 to pull up the debug menu, which lets you select from some of the foll
 4. Advance progression by adding cash / profile XP / level / rating / customization unlocks
 Press F9 during games of Solitaire to automatically win.
 
+## Prioritized changes to come
+- Additional multiplayer gamemodes
+- Update multiplayer UI for simplicity/polish
+- AI betting behavior accounts for amassed gains (have a lot, bet more)
+- Additional assets added where missing
+
 ## Historic changelog
 - v0.0.5
   - to fill later
