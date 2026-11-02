@@ -5,13 +5,16 @@ from mp_appearance import Appearance
 from mp_profile import MultiplayerProfile
 from mp_presentation import Presentation
 from mp_showdown import payout_lines,compact_result
-from texas_holdem_ui import get_card_key as card_key,draw_holdem_glossy_button
+from texas_holdem_ui import get_card_key as card_key,draw_holdem_glossy_button,get_holdem_fonts
 
 class RoomView:
     def __init__(self,surface,assets,appearance=None,options=None,sound=None):
         self.appearance=appearance or Appearance(MultiplayerProfile());self.presentation=Presentation(self.appearance,options,sound);self.details=False;self.details_scroll=0;self.history_index=-1;self.mouse=(-1,-1);self.badge_rects=[];self.dragging=False;self.slider=None;self.minimum=0;self.maximum=0;self.log_scroll=0
         self.surface=surface;self.assets=assets;self.buttons=[];self.raise_amount=100;self.hand=-1;self.editing=False;self.amount_text='';self.bet_input=TextInput()
-        self.font=pygame.font.SysFont("georgia",23);self.small=pygame.font.SysFont("georgia",18);self.large=pygame.font.SysFont("georgia",29)
+        try:
+            fonts=get_holdem_fonts();self.font=fonts['small'];self.small=fonts['tiny'];self.large=fonts['title']
+        except Exception:
+            self.font=pygame.font.SysFont("georgia",23);self.small=pygame.font.SysFont("georgia",18);self.large=pygame.font.SysFont("georgia",29)
     def text(self,text,x,y,font=None,color=(246,237,207)):
         self.surface.blit((font or self.font).render(str(text),True,color),(x,y))
     def button(self,label,rect,action,enabled=True):
@@ -70,6 +73,11 @@ class RoomView:
         image=self.assets.cards.get(card_key(card),self.assets.back) if card else self.assets.back
         x,y,w,h,hidden=self.presentation.card_position(key,x,y,w,h,pygame.time.get_ticks())
         if hidden:image=self.assets.back
+        # Single-player-style depth: a small shadow keeps cards readable over
+        # custom felts and makes deal animations feel less flat.
+        shadow=pygame.Surface((max(1,w),max(1,h)),pygame.SRCALPHA)
+        pygame.draw.rect(shadow,(0,0,0,80),shadow.get_rect(),border_radius=max(3,w//12))
+        self.surface.blit(shadow,(x+4,y+5))
         self.surface.blit(pygame.transform.smoothscale(image,(w,h)),(x,y))
     def draw(self,table,mouse=None):
         if mouse is not None:self.mouse=mouse
@@ -107,13 +115,14 @@ class RoomView:
         if self.presentation.hand!=g.hand_number:self.log_scroll=0
         self.presentation.update(g,now);self.badge_rects=[]
         self.appearance.felt(s,pygame.Rect(174,176,1030,405))
-        self.panel((550,283,320,65))
-        self.text(f'Blinds: ${g.small_blind} / ${g.big_blind}',565,288,self.small)
+        self.panel((548,275,330,82))
+        self.text(f'Blinds  ${g.small_blind} / ${g.big_blind}',565,282,self.small)
         pot_label=('Last pot' if g.hand_complete else 'Pot')+f': ${g.pot if not g.hand_complete else g.last_resolved_pot:,}'
         image=self.font.render(pot_label,True,(246,237,207))
         if image.get_width()>205:image=pygame.transform.smoothscale(image,(205,image.get_height()))
-        s.blit(image,(565,314))
-        self.text(f'Hand {g.hand_number} • {g.current_stage.title()}',580,354,self.small)
+        s.blit(image,(565,309))
+        stage=(g.current_stage or 'preflop').replace('_',' ').title()
+        self.text(f'Hand {g.hand_number}  •  {stage}',580,337,self.small,(218,225,216))
         for i,card in enumerate(g.community_cards):self.card(card,431+i*103,374,96,134,key=('board',i))
         # Cards, avatar and compact name/stack badges echo the single-player table.
         positions=[(525,668),(85,400),(335,200),(658,140),(992,200),(1055,425)]
@@ -127,9 +136,14 @@ class RoomView:
             if not folded[i] and (hands[i] or i in g.hand_seat_indexes):
                 for j in range(2):self.card(hands[i][j] if len(hands[i])>j else None,x+32+j*(98 if i==0 else 53),y-(142 if i==0 else 85),96 if i==0 else 60,134 if i==0 else 84,key=('seat',i,j))
             avatar=pygame.Rect(x-40,y-3,64,64)
+            if active:
+                pygame.draw.ellipse(s,(239,196,77),avatar.inflate(10,10),4)
             if seat['kind']=='Human':
                 public=table.public_profiles.get(seat.get('identity'),{})
                 self.appearance.avatar(s,public,avatar,name)
+                dot=(105,220,125) if seat.get('connected') else (205,83,76)
+                pygame.draw.circle(s,dot,(avatar.right-3,avatar.bottom-3),7)
+                pygame.draw.circle(s,(20,22,22),(avatar.right-3,avatar.bottom-3),7,2)
             elif i>0:self.assets.portrait(g.npcs[i-1],avatar)
             label=self.font.render(display_name,True,(246,237,207))
             maximum=260 if i==0 else 210
@@ -137,9 +151,12 @@ class RoomView:
             money=self.small.render(f'${stacks[i]:,}',True,(246,237,207))
             width=min(maximum,max(78,label.get_width()+20,money.get_width()+20))
             badge=pygame.Rect(x+25,y,width,38);self.badge_rects.append(badge)
+            winner=g.hand_complete and i in g.winner_indexes
             self.panel(badge,active);s.blit(label,(x+35,y+5))
             money_rect=pygame.Rect(x+25,y+40,width,29);self.panel(money_rect);s.blit(money,money.get_rect(center=money_rect.center))
-            if g.hand_complete and i in g.winner_indexes:pygame.draw.rect(s,(138,228,128),badge,3,border_radius=10)
+            if winner:
+                pygame.draw.rect(s,(138,228,128),badge.inflate(4,4),4,border_radius=12)
+                crown=self.small.render('WINNER',True,(157,239,155));s.blit(crown,(badge.right+7,badge.y+7))
             action=('Disconnected' if not seat['connected'] else 'Busted' if stacks[i]==0 and g.hand_complete else 'All in' if stacks[i]==0 and i in g.hand_seat_indexes else 'Sitting out' if physical[i] in m.get('resting_seats',[]) and i not in g.hand_seat_indexes else 'Folded' if folded[i] else actions[i])
             if action:
                 action=action[:26];action_width=min(210,max(78,self.small.size(action)[0]+18))
@@ -149,7 +166,13 @@ class RoomView:
             if g.small_blind_index==i:roles.append('SB')
             if g.big_blind_index==i:roles.append('BB')
             if roles:
-                self.panel((x-40,y-32,58,26));self.text('/'.join(roles),x-33,y-30,self.small)
+                rx=x-40
+                for role in roles:
+                    colors={'D':((118,88,22),(245,205,90)),'SB':((48,68,88),(155,190,220)),'BB':((88,44,44),(220,145,145))}
+                    fill,border=colors.get(role,((35,50,48),(180,190,185)))
+                    rw=30 if role=='D' else 38;rr=pygame.Rect(rx,y-32,rw,24)
+                    pygame.draw.rect(s,fill,rr,border_radius=8);pygame.draw.rect(s,border,rr,2,border_radius=8)
+                    txt=self.small.render(role,True,(255,255,255));s.blit(txt,txt.get_rect(center=rr.center));rx+=rw+5
         self.panel((20,610,365,140));self.text('Game Log',35,620)
         self.button('Payout History',(195,618,175,30),'details',bool(getattr(table,'last_payout',None)) or g.hand_complete)
         self.button('Rejoin next hand' if m.get('sit_out') else 'Sit out next hand',(20,566,205,32),'sit_out',not table.pending)
@@ -177,6 +200,11 @@ class RoomView:
             self.text('Next hand in '+str(m.get('next_hand_seconds',6))+' seconds' if m.get('next_hand_seconds',6)>0 else 'Waiting for players to rejoin',937,678,self.small)
         else:
             active=g.current_actor==0 and g.actor_needs_action(0) and not table.pending
+            if active:
+                turn_rect=pygame.Rect(920,575,420,30)
+                layer=pygame.Surface(turn_rect.size,pygame.SRCALPHA);layer.fill((125,91,18,225));s.blit(layer,turn_rect)
+                pygame.draw.rect(s,(242,202,79),turn_rect,2,border_radius=8)
+                turn=self.small.render('YOUR TURN',True,(255,248,218));s.blit(turn,turn.get_rect(center=turn_rect.center))
             call=g.get_player_amount_to_call();minimum=g.get_minimum_raise_to() if g.current_bet else g.big_blind
             maximum=g.player_stack+g.player_round_bet
             if self.hand!=g.hand_number:self.hand=g.hand_number;self.raise_amount=minimum;self.editing=False;self.log_scroll=0
@@ -195,6 +223,14 @@ class RoomView:
                 action=('allin',maximum) if label=='ALL IN' else ('amount',value)
                 self.button(label,(935+j*99,710,92,29),action,active if label=='ALL IN' else canraise)
         self.presentation.draw(s,g,now,self.small)
+        if g.hand_complete:
+            result=(getattr(g,'result_text','') or '').strip()
+            if result:
+                banner=pygame.Rect(365,514,635,46);layer=pygame.Surface(banner.size,pygame.SRCALPHA);layer.fill((12,18,18,220));s.blit(layer,banner)
+                pygame.draw.rect(s,(235,190,70),banner,2,border_radius=12)
+                text=self.small.render(result,True,(255,245,214))
+                if text.get_width()>banner.w-30:text=pygame.transform.smoothscale(text,(banner.w-30,text.get_height()))
+                s.blit(text,text.get_rect(center=banner.center))
         if self.details:
             history=getattr(table,'payout_history',[])
             if history:

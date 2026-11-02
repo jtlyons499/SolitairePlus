@@ -19,6 +19,7 @@ from mp_options import Options
 from standalone_view import TableView
 import texas_holdem_ui as ui
 from poker_recap import handle_recap_action
+from dead_mans_hand_pvp import DeadMansHandPvPMode
 
 from multiplayer_paths import ROOT
 
@@ -50,12 +51,22 @@ def main():
     options_rect=pygame.Rect(915,15,150,40)
     profile_rect=pygame.Rect(1110,15,230,40)
     create_rect=pygame.Rect(363,660,300,55);room_join_rect=pygame.Rect(703,660,300,55)
+    dmh_pvp_rect=pygame.Rect(18,15,210,40);pvp_mode=None
     while running:
         sx,sy=screen.get_size();scale=min(sx/1366,sy/768);offset=((sx-1366*scale)/2,(sy-768*scale)/2)
         raw=pygame.mouse.get_pos();mouse=((raw[0]-offset[0])/scale,(raw[1]-offset[1])/scale)
         profile_rect.y=65 if table is not None else 15
         for event in pygame.event.get():
-            if event.type==pygame.QUIT:running=False;continue
+            if event.type==pygame.QUIT:
+                if pvp_mode is not None:pvp_mode.close()
+                running=False;continue
+            if pvp_mode is not None and event.type==pygame.KEYDOWN and event.key==pygame.K_F11:
+                options.values['fullscreen']=not options.values['fullscreen'];options.save();screen=options.display();continue
+            if pvp_mode is not None:
+                pvp_mode.handle_event(event,mouse)
+                if pvp_mode.closed:
+                    pvp_mode=None;pygame.key.start_text_input()
+                continue
             if event.type==pygame.KEYDOWN and event.key==pygame.K_F11:
                 options.values['fullscreen']=not options.values['fullscreen'];options.save();screen=options.display();continue
             if event.type==pygame.MOUSEBUTTONDOWN and event.button==1:
@@ -63,7 +74,7 @@ def main():
                 elif profile_screen.open:clickable=[rect for rect,action in profile_screen.buttons]
                 else:
                     clickable=[options_rect,profile_rect]
-                    if table is None:clickable += [quit_rect,start_rect,host_rect,join_rect,create_rect,room_join_rect]
+                    if table is None:clickable += [quit_rect,start_rect,host_rect,join_rect,create_rect,room_join_rect,dmh_pvp_rect]
                     else:
                         clickable.append(leave_rect)
                         if isinstance(table,RoomTable):clickable += [rect for rect,action in room_view.buttons]
@@ -104,6 +115,9 @@ def main():
                     elif host_rect.collidepoint(mouse):table=OnlineTable(name,True)
                     elif join_rect.collidepoint(mouse):table=OnlineTable(name,False,address.strip() or '127.0.0.1')
                     elif start_rect.collidepoint(mouse):table=StandaloneTable(name)
+                    elif dmh_pvp_rect.collidepoint(mouse):
+                        profile.data['name']=name.strip() or 'Player';profile.save();connection_settings.save(name,relay_address)
+                        pvp_mode=DeadMansHandPvPMode(profile.data['name'],relay_address,sound=sound);pygame.key.stop_text_input()
                 if event.type==pygame.KEYDOWN and event.key==pygame.K_RETURN:
                     if focus=='code' and room_code:table=RoomTable(name,False,relay_address,code=room_code,profile=profile)
                     elif focus=='relay':table=RoomTable(name,True,relay_address,profile=profile)
@@ -145,6 +159,11 @@ def main():
                     table=None;pygame.key.start_text_input()
                 elif action.startswith('recap_'):handle_recap_action(g,action)
                 elif table.act(action):sound('card_move')
+        if pvp_mode is not None:
+            pvp_mode.update(min(0.05,max(0.0,clock.get_time()/1000.0)))
+            pvp_mode.draw(canvas,mouse)
+            screen.fill((0,0,0));screen.blit(pygame.transform.smoothscale(canvas,(round(1366*scale),round(768*scale))),offset);pygame.display.flip();clock.tick(60)
+            continue
         if table is None:
             appearance.background(canvas)
             logo=appearance.image('assets/multiplayer/logo.png',(900,198)) or appearance.image('assets/ui/menu_ui/floating_logo.png',(620,175))
@@ -177,6 +196,7 @@ def main():
             if isinstance(table,OnlineTable):
                 label=pygame.font.Font(None,22).render(table.status,True,(245,233,201));canvas.blit(label,(450,72))
         if table is None:
+            wooden_button(canvas,appearance,dmh_pvp_rect,"DMH PvP",pygame.font.Font(None,24),hover=dmh_pvp_rect.collidepoint(mouse))
             wooden_button(canvas,appearance,profile_rect,f'Edit Profile • Lv {profile.level}',pygame.font.Font(None,24),hover=profile_rect.collidepoint(mouse))
             wooden_button(canvas,appearance,options_rect,'Options',pygame.font.Font(None,26),hover=options_rect.collidepoint(mouse))
             wooden_button(canvas,appearance,quit_rect,'Quit Game',pygame.font.Font(None,26),hover=quit_rect.collidepoint(mouse))

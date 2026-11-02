@@ -671,12 +671,12 @@
     "portrait": "assets/npcs/asseel_bat.png",
     "game_personality": "aggressive",
     "personality_traits": {
-      "caution": 7,
+      "caution": 8,
       "aggressiveness": 3,
-      "unpredictability": 4,
-      "escalation": 7,
-      "selectivity": 2,
-      "tenacity": 4,
+      "unpredictability": 3,
+      "escalation": 6,
+      "selectivity": 4,
+      "tenacity": 5,
       "pessimism": 6,
       "bitterness": 3
     }
@@ -979,12 +979,12 @@
     "portrait": "assets/npcs/ami_amica.png",
     "game_personality": "timid",
     "personality_traits": {
-      "caution": 9,
-      "aggressiveness": 1,
-      "unpredictability": 2,
-      "escalation": 1,
-      "selectivity": 5,
-      "tenacity": 5,
+      "caution": 5,
+      "aggressiveness": 2,
+      "unpredictability": 6,
+      "escalation": 3,
+      "selectivity": 4,
+      "tenacity": 6,
       "pessimism": 3,
       "bitterness": 6
     }
@@ -1045,13 +1045,13 @@
     "portrait": "assets/npcs/doon_ficus.png",
     "game_personality": "opportunist",
     "personality_traits": {
-      "caution": 6,
-      "aggressiveness": 6,
-      "unpredictability": 4,
-      "escalation": 5,
-      "selectivity": 9,
-      "tenacity": 8,
-      "pessimism": 2,
+      "caution": 8,
+      "aggressiveness": 5,
+      "unpredictability": 3,
+      "escalation": 7,
+      "selectivity": 7,
+      "tenacity": 5,
+      "pessimism": 4,
       "bitterness": 2
     }
   },
