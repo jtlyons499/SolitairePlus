@@ -15,7 +15,7 @@ A game about card games. Dynamic career progression, streamlined multiplayer, in
 3. Double-click `Simple Solitaire.exe`.
 
 You do **not** need to install Python to use the packaged Windows release.
-Yes, Windows typically **will** request permission to run the game the very first time, but that's how .exe files work.
+Yes, Windows typically will request permission to run the game the very first time, but that's how .exe files work.
 
 This application has been verified Stuxnet free since September 2026.
 
