@@ -1,14 +1,14 @@
 # Solitaire+
 
-A game about card games with progression, multiplayer, minigames, and aliens.
+A game about card games. Dynamic career progression, streamlined multiplayer, intelligent NPCs, minigames, and aliens.
 
 ![](https://i.imgur.com/jR7gUMW.png)
 
-## Play the game
+## Play the Game
 
 ### Windows
 
-**[Download the latest Windows release (v0.0.6)](https://github.com/jtlyons499/SolitairePlus/releases/latest/download/Solitaire-Windows.zip)**
+**[Download the latest Windows release (v0.0.6b)](https://github.com/jtlyons499/SolitairePlus/releases/latest/download/Solitaire-Windows.zip)**
 
 1. Download `Solitaire-Windows.zip`.
 2. Extract the ZIP to a folder.
@@ -17,7 +17,7 @@ A game about card games with progression, multiplayer, minigames, and aliens.
 You do **not** need to install Python to use the packaged Windows release.
 
 ## Latest changelog
-Solitaire+ 0.0.6 - second pass
+Solitaire+ 0.0.6b
 -------------------------------------------
 **MULTIPLAYER**
 -  Added three more games to multiplayer
@@ -84,6 +84,7 @@ Press F9 during games of Solitaire to automatically win.
   - Reduce stagnancy and repetition
   - Increase speed of battles
   - Improve gameplay flow and eliminate confusion
+ - Additional choose-your-own adventure story events in Career Mode
 
 ## Historic changelog
 v0.0.6 - first pass
