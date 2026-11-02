@@ -8,13 +8,21 @@ A game about card games with progression, minigames, and aliens.
 
 ### Windows
 
-**[Download the latest Windows release](https://github.com/jtlyons499/Solitaire/releases/latest/download/Solitaire-Windows.zip)**
+**[Download the latest Windows release](https://github.com/jtlyons499/SolitairePlus/releases/latest/download/Solitaire-Windows.zip)**
 
 1. Download `Solitaire-Windows.zip`.
 2. Extract the ZIP to a folder.
 3. Double-click `Simple Solitaire.exe`.
 
 You do **not** need to install Python to use the packaged Windows release.
+
+##  Quick Play / Debug / Bypass Progression / 
+Press F10 to pull up the debug menu, which lets you select from some of the following options:
+1. Trigger career "event nights" which present different games
+2. Trigger career modifications (simulate time, add reserve NPCs, etc.)
+3. Play solitaire challenge modes and all minigames
+4. Advance progression by adding cash / profile XP / level / rating / customization unlocks
+
 
 ## Source code
 
