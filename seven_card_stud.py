@@ -1222,6 +1222,23 @@ class SevenCardStudGame(TexasHoldemGame):
             - self.raises_this_round,
         )
 
+        # Stud is fixed-limit and exposes more information each street, so a
+        # large stack should not overwhelm visible-card logic. Wealth changes
+        # willingness to call/raise only, with more confidence allowed later.
+        wealth_scale = {
+            "third": 0.45,
+            "fourth": 0.55,
+            "fifth": 0.65,
+            "sixth": 0.75,
+            "seventh": 0.85,
+        }.get(self.current_stage, 0.55)
+        context["wealth_pressure"] = min(
+            1.0,
+            max(0.0, float(context.get("wealth_pressure", 0.0)))
+            * wealth_scale,
+        )
+        context["wealth_variant_scale"] = wealth_scale
+
         player_index = npc_index + 1
 
         context["exposed_cards"] = [

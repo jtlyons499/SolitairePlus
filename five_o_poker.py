@@ -421,6 +421,23 @@ class FiveOPokerGame:
             self.last_npc_action = f"{self.get_npc_name()} calls ${paid:,}."
             self._showdown()
 
+    def get_npc_wealth_pressure(self):
+        """Return 0..1 pressure from an NPC stack that has grown past buy-in."""
+        starting_stack = max(1, int(self.starting_stack or 0))
+        stack = max(0, int(self.npc_stack or 0))
+        wealth_ratio = stack / starting_stack
+
+        if wealth_ratio <= 1.15:
+            return 0.0
+
+        return max(
+            0.0,
+            min(
+                1.0,
+                (wealth_ratio - 1.15) / 1.35,
+            ),
+        )
+
     def _known_npc_strength(self, samples=120):
         """Estimate how often the NPC wins 3+ columns without peeking at the
         human's five face-down fourth cards."""
@@ -466,7 +483,9 @@ class FiveOPokerGame:
         strength = self._known_npc_strength()
         personality = get_poker_personality(self.npc)
         amount_to_call = max(0, self.current_bet - self.npc_betting_paid) if facing_bet else 0
+        starting_stack = max(1, int(self.starting_stack or 0))
         context = {
+            "game": "five_o_poker",
             "stage": "showdown_bet",
             "personality_traits": get_npc_traits(self.npc),
             "position": "unknown",
@@ -474,6 +493,9 @@ class FiveOPokerGame:
             "skill_factor": get_poker_skill_factor(self.npc),
             "amount_to_call": amount_to_call,
             "stack": self.npc_stack,
+            "starting_stack": self.starting_stack,
+            "wealth_ratio": self.npc_stack / starting_stack,
+            "wealth_pressure": self.get_npc_wealth_pressure(),
             "pot": self.pot,
             "current_bet": self.current_bet,
             "can_raise": False,

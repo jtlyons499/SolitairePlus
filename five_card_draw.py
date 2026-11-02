@@ -662,6 +662,17 @@ class FiveCardDrawGame(TexasHoldemGame):
             0.35,
         )
 
+        # A deep-stack Draw player should be able to press a chip advantage,
+        # especially after the draw, without turning every rich NPC into a
+        # maniac. Personality/hand strength still decide whether this extra
+        # room is actually used.
+        wealth_pressure = self.get_npc_wealth_pressure(npc_index)
+        stage_wealth_boost = {
+            "preflop": 0.60,
+            "post_draw": 0.35,
+        }.get(self.current_stage, 0.30)
+        fraction *= 1.0 + wealth_pressure * stage_wealth_boost
+
         base_stack = max(1, self.starting_stack)
         target_cap = max(
             self.get_minimum_open_bet(),
@@ -692,6 +703,21 @@ class FiveCardDrawGame(TexasHoldemGame):
             if 0 <= npc_index < len(self.npc_stood_pat)
             else False
         )
+
+        # Hold'em supplies the shared stack-wealth signal. Draw keeps most of
+        # it, but tones it down before cards are exchanged because the first
+        # betting round contains substantially less information.
+        wealth_scale = (
+            0.80
+            if self.current_stage == "preflop"
+            else 1.00
+        )
+        context["wealth_pressure"] = min(
+            1.0,
+            max(0.0, float(context.get("wealth_pressure", 0.0)))
+            * wealth_scale,
+        )
+        context["wealth_variant_scale"] = wealth_scale
 
         return context
 
