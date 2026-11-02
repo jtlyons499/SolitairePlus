@@ -8,7 +8,7 @@ A game about card games with progression, minigames, and aliens.
 
 ### Windows
 
-**[Download the latest Windows release](https://github.com/jtlyons499/Solitaire/releases/latest/download/Solitaire-Windows.zip)**
+**[Download the latest Windows release](https://github.com/jtlyons499/SolitairePlus/releases/latest/download/Solitaire-Windows.zip)**
 
 1. Download `Solitaire-Windows.zip`.
 2. Extract the ZIP to a folder.
