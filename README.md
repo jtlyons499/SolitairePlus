@@ -57,7 +57,7 @@ Solitaire+ 0.0.6b
   - Depending on the context of the game, the user can select messages to send to NPCs
   - Responses are determined by the NPCs strongest personality traits with a mix of randomization
   - NPCs may shift their behavior based on the user's quick chats (e.g. bet more aggressively)
-  -  During a hand of poker...
+  - During a hand of poker...
     - How's it going?
     - I have a crush on...(select NPC)
     - I despise...(select NPC)
