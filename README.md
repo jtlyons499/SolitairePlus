@@ -77,6 +77,7 @@ Press F10 to pull up the debug menu, which lets you select from some of the foll
 2. Trigger career modifications (simulate time, add reserve NPCs, etc.)
 3. Play solitaire challenge modes and all minigames
 4. Advance progression by adding cash / profile XP / level / rating / customization unlocks
+
 Press F9 during games of Solitaire to automatically win.
 
 ## Prioritized changes to come
