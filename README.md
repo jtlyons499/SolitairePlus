@@ -2,6 +2,8 @@
 
 A game about card games with progression, minigames, and aliens.
 
+![](https://i.imgur.com/pwxPPd0.png)
+
 ## Play the game
 
 ### Windows
@@ -16,7 +18,7 @@ You do **not** need to install Python to use the packaged Windows release.
 
 ## Source code
 
-The files in this repository are the development source code. If you only want to play the game, use the Windows download above instead of GitHub's automatically generated **Source code (zip)** download.
+The files in this repository are the development source code. If you only want to play the game, use the Windows download above instead of GitHub's auto **Source code (zip)** download.
 
 ### Running from source
 
