@@ -16,7 +16,7 @@ class RoomTable:
         self.name=clean_name(name);self.hosting=hosting;self.identity=0 if hosting else None;self.mode=mode if hosting else None
         self.peer=RelayPeer(hosting,address,self.name,code,version=2)
         self.authority=(RoomAuthority(self.name) if mode in (None,'holdem') else make_party_authority(mode,self.name)) if hosting else None
-        self.game=ClientGame();self.message={'type':'connecting'};self.status='Connecting to relay…';self.failed=False;self.last_sent=-1;self.pending=False
+        self.game=ClientGame();self.message={'type':'connecting'};self.status='Connecting to relay…';self.failed=False;self.last_sent=-1;self.pending=False;self.leave_notice='';self.leave_notice_seq=0
     @property
     def code(self):return self.peer.code
     def close(self):self.peer.close()
@@ -33,7 +33,12 @@ class RoomTable:
             elif kind=='peer_joined' and self.hosting:
                 self.authority.join(m['identity'],clean_name(m['name']));self.last_sent=-1
                 for owner,value in self.public_profiles.items():self.send_profile(owner,value,[m['identity']])
-            elif kind=='peer_left' and self.hosting:self.authority.leave(m['identity']);self.last_sent=-1
+            elif kind=='peer_left' and self.hosting:
+                leaving=clean_name(self.authority.connections.get(m['identity'],'Player'))
+                self.authority.leave(m['identity']);self.last_sent=-1
+                self.leave_notice_seq+=1;self.leave_notice=f'{leaving} left the game.'
+                for target in list(self.authority.connections):
+                    if target:self.peer.send({'type':'ack','target':target,'leave_notice':self.leave_notice,'leave_seq':self.leave_notice_seq})
             elif kind in ('lobby','state','waiting','party_state') and not self.hosting:self.apply(m)
             elif kind=='action' and self.hosting:
                 who=m.get('sender')
@@ -49,6 +54,10 @@ class RoomTable:
             elif kind=='ack' and 'public_profile' in m:
                 value=clean_public(m['public_profile'])
                 if value:self.public_profiles[m['owner']]=value
+            elif kind=='ack' and 'leave_notice' in m:
+                self.leave_notice=str(m.get('leave_notice','Player left the game.'))[:96]
+                try:self.leave_notice_seq=max(self.leave_notice_seq,int(m.get('leave_seq',self.leave_notice_seq+1)))
+                except (TypeError,ValueError):self.leave_notice_seq+=1
             elif kind=='ack':
                 self.pending=False
                 if not m.get('ok'):self.status='Table changed; try again after the next update'

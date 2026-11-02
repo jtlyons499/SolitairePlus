@@ -7,6 +7,7 @@ seats even though the Hold'em relay can route six clients.
 from __future__ import annotations
 
 import copy
+import json
 import math
 import random
 from fractions import Fraction
@@ -14,6 +15,7 @@ from fractions import Fraction
 from niche_poker_common import RANK_VALUES, build_standard_deck, round_chip_amount
 from score_four_difficulty import puzzle_pool
 from roulette import ROULETTE_NUMBERS, RED_NUMBERS
+from multiplayer_paths import ROOT
 
 SKILL_KEYS = ("low", "mid", "strong", "elite")
 SKILL_LABELS = {
@@ -27,6 +29,13 @@ ROULETTE_TIMERS = (15, 25, 40, 60)
 SCORE_FOUR_DIFFICULTIES = ("easy", "standard", "difficult", "extreme")
 
 
+def _load_npc_roster():
+    roster = json.loads((ROOT / "data" / "npcs.json").read_text(encoding="utf-8"))
+    if not isinstance(roster, list) or not roster:
+        raise ValueError("data/npcs.json must contain NPC records")
+    return roster
+
+
 def _clean_name(value):
     return "".join(c for c in str(value or "Player") if c.isprintable())[:32].strip() or "Player"
 
@@ -38,12 +47,13 @@ def _clamp_int(value, low, high, default=None):
         return low if default is None else default
 
 
-def _seat_record(kind="Empty", name="Open seat", skill="mid", identity=None):
+def _seat_record(kind="Empty", name="Open seat", skill="mid", identity=None, npc=None):
     return {
         "kind": kind,
         "name": _clean_name(name),
         "skill": skill if skill in SKILL_KEYS else "mid",
         "identity": identity,
+        "npc": copy.deepcopy(npc) if isinstance(npc, dict) else None,
         "connected": kind != "Human" or identity is not None,
         "spectator": False,
         "stack": 0,
@@ -58,6 +68,7 @@ class FourSeatAuthority:
 
     def __init__(self, host_name, rng=None):
         self.rng = rng or random.Random()
+        self.roster = copy.deepcopy(_load_npc_roster())
         self.connections = {0: _clean_name(host_name)}
         self.humans = {0: 0}
         self.seat_data = [_seat_record() for _ in range(4)]
@@ -114,16 +125,25 @@ class FourSeatAuthority:
     def _active_lobby_count(self):
         return sum(1 for seat in self.seat_data if seat["kind"] in ("Human", "NPC"))
 
+    def _random_npc_record(self, seat=None):
+        used = {
+            row.get("npc", {}).get("id")
+            for index, row in enumerate(self.seat_data)
+            if index != seat and row.get("kind") == "NPC" and isinstance(row.get("npc"), dict)
+        }
+        choices = [npc for npc in self.roster if npc.get("id") not in used] or list(self.roster)
+        npc = copy.deepcopy(self.rng.choice(choices))
+        # Party-mode skill is intentionally independent from the NPC's
+        # single-player tier. It is rerolled for each lobby selection.
+        skill = self.rng.choice(SKILL_KEYS)
+        return _seat_record("NPC", npc.get("name", "Computer"), skill=skill, npc=npc)
+
     def _cycle_npc(self, seat, delta=1):
+        # Older clients used this action to cycle skill. Keep accepting it,
+        # but reroll the actual single-player NPC + party-game skill together.
         if not 1 <= seat <= 3 or seat in self.humans.values() or self.started:
             return False
-        current = self.seat_data[seat]
-        if current["kind"] == "Empty":
-            skill = "mid"
-        else:
-            index = SKILL_KEYS.index(current.get("skill", "mid"))
-            skill = SKILL_KEYS[(index + (1 if delta >= 0 else -1)) % len(SKILL_KEYS)]
-        self.seat_data[seat] = _seat_record("NPC", f"{SKILL_LABELS[skill]} CPU", skill=skill)
+        self.seat_data[seat] = self._random_npc_record(seat)
         self._touch()
         return True
 
@@ -133,7 +153,7 @@ class FourSeatAuthority:
         if self.seat_data[seat]["kind"] == "NPC":
             self.seat_data[seat] = _seat_record()
         else:
-            self.seat_data[seat] = _seat_record("NPC", "Skilled CPU", skill="mid")
+            self.seat_data[seat] = self._random_npc_record(seat)
         self._touch()
         return True
 
@@ -168,7 +188,7 @@ class FourSeatAuthority:
             except (TypeError, ValueError, AttributeError):
                 return False
             return self._toggle_npc(seat)
-        if action == "npc_skill":
+        if action in ("npc_skill", "npc_reroll"):
             try:
                 seat = int((amount or {}).get("seat"))
                 delta = int((amount or {}).get("delta", 1))
@@ -761,6 +781,7 @@ class RouletteAuthority(FourSeatAuthority):
             "bet_seconds": self.bet_seconds, "seconds_left": max(0, math.ceil((self.deadline) / 1000)) if False else self.last_countdown,
             "round_number": self.round_number, "stacks": list(self.stacks), "result": self.result,
             "last_net": list(self.last_net), "bets": copy.deepcopy(self.bets[viewer]) if viewer is not None else [],
+            "all_bets": copy.deepcopy(self.bets),
             "spectating": viewer is None or self.seat_data[viewer].get("spectator", False),
         })
         return data

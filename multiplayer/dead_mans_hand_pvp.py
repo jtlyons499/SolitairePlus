@@ -24,6 +24,7 @@ from dead_mans_hand_game import (
 )
 from dead_mans_hand_weapons import WEAPON_DEFINITIONS
 from relay_transport import RelayPeer
+from mp_toast import LeaveToast
 
 ARENA_LEVEL_INDEX = 5  # O.K. Corral
 SYNC_INTERVAL = 0.05   # 20 Hz
@@ -542,6 +543,9 @@ class DeadMansHandPvPMode:
         self.last_guest_event_seq = 0
         self.last_sync = 0.0
         self.closed = False
+        self.leave_notice = ""
+        self.leave_notice_seq = 0
+        self.leave_toast = LeaveToast()
         self.sound = sound or (lambda _key: None)
         self.font = pygame.font.Font(None, 34)
         self.small = pygame.font.Font(None, 25)
@@ -565,6 +569,7 @@ class DeadMansHandPvPMode:
         self.connected = False
         self.remote_pose = None
         self.remote_name = "Opponent"
+        self.leave_notice = ""
         self.authority = {
             0: {"health": 100, "score": 0, "dead_until": 0.0, "protected_until": 0.0},
             1: {"health": 100, "score": 0, "dead_until": 0.0, "protected_until": 0.0},
@@ -765,8 +770,13 @@ class DeadMansHandPvPMode:
                     self.authority[1]["protected_until"] = now + SPAWN_PROTECTION_SECONDS
                 self.game.capture_mouse()
             elif kind == "disconnected":
+                was_connected = self.connected
+                leaving_name = self.remote_name or "Opponent"
                 self.status = m.get("text", "Disconnected")
                 self.connected = False
+                if was_connected:
+                    self.leave_notice_seq += 1
+                    self.leave_notice = f"{leaving_name} left the game."
                 if self.game:
                     self.game.release_mouse()
             elif kind == "action" and self.hosting:
@@ -932,8 +942,11 @@ class DeadMansHandPvPMode:
             else: self.code = self.code[:-1]
 
     def draw(self, canvas, mouse):
+        self.leave_toast.sync(self)
         if self.game and self.connected:
-            self.game.draw(canvas); return
+            self.game.draw(canvas)
+            self.leave_toast.draw(canvas, self.small)
+            return
         canvas.fill((17, 23, 27))
         title = self.title.render("DEAD MAN'S HAND • PvP", True, (224, 56, 48)); canvas.blit(title, title.get_rect(center=(683, 135)))
         sub = self.small.render("1v1 prototype • First to 5 kills • Host-authoritative hit confirmation", True, (225, 215, 190)); canvas.blit(sub, sub.get_rect(center=(683, 190)))
@@ -948,6 +961,7 @@ class DeadMansHandPvPMode:
         status = self.small.render(self.status, True, (235, 205, 130)); canvas.blit(status, status.get_rect(center=(683, 625)))
         if self.hosting and self.peer and self.peer.code:
             code = self.title.render(self.peer.code, True, (245, 230, 130)); canvas.blit(code, code.get_rect(center=(683, 690)))
+        self.leave_toast.draw(canvas, self.small)
 
 
 SPAWN_STATE = {

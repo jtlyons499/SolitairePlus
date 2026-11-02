@@ -5,12 +5,13 @@ from mp_appearance import Appearance
 from mp_profile import MultiplayerProfile
 from mp_presentation import Presentation
 from mp_showdown import payout_lines,compact_result
+from mp_toast import LeaveToast
 from texas_holdem_ui import get_card_key as card_key,draw_holdem_glossy_button,get_holdem_fonts
 
 class RoomView:
     def __init__(self,surface,assets,appearance=None,options=None,sound=None):
         self.appearance=appearance or Appearance(MultiplayerProfile());self.presentation=Presentation(self.appearance,options,sound);self.details=False;self.details_scroll=0;self.history_index=-1;self.mouse=(-1,-1);self.badge_rects=[];self.dragging=False;self.slider=None;self.minimum=0;self.maximum=0;self.log_scroll=0
-        self.surface=surface;self.assets=assets;self.buttons=[];self.raise_amount=100;self.hand=-1;self.editing=False;self.amount_text='';self.bet_input=TextInput()
+        self.surface=surface;self.assets=assets;self.buttons=[];self.raise_amount=100;self.hand=-1;self.editing=False;self.amount_text='';self.bet_input=TextInput();self.leave_toast=LeaveToast()
         try:
             fonts=get_holdem_fonts();self.font=fonts['small'];self.small=fonts['tiny'];self.large=fonts['title']
         except Exception:
@@ -81,7 +82,7 @@ class RoomView:
         self.surface.blit(pygame.transform.smoothscale(image,(w,h)),(x,y))
     def draw(self,table,mouse=None):
         if mouse is not None:self.mouse=mouse
-        s=self.surface;self.appearance.background(s);self.buttons=[];self.slider=None
+        s=self.surface;self.appearance.background(s);self.buttons=[];self.slider=None;self.leave_toast.sync(table)
         back=self.appearance.selected('back',self.assets.back.get_size())
         if back:self.assets.back=back
         logo=self.appearance.image('assets/poker/logos/texas_holdem.png',(225,76))
@@ -94,9 +95,9 @@ class RoomView:
             self.panel((350,20,120,30));self.text('copy code',361,23,self.small)
         self.text(table.status[:95],430,66,self.small)
         if table.failed:
-            self.text('Connection ended. Leave and create/join a new room.',230,325,self.large);return
+            self.text('Connection ended. Leave and create/join a new room.',230,325,self.large);self.leave_toast.draw(s,self.small);return
         m=table.message
-        if m['type']=='connecting':self.text('Connecting to relay…',440,325,self.large);return
+        if m['type']=='connecting':self.text('Connecting to relay…',440,325,self.large);self.leave_toast.draw(s,self.small);return
         if m['type'] in ('lobby','waiting'):
             self.text('Room lobby' if m['type']=='lobby' else 'Joining between hands',430,125,self.large)
             for i,seat in enumerate(m['seats']):
@@ -110,7 +111,7 @@ class RoomView:
                 for j,value in enumerate((1000,5000,10000,25000)):self.button('$'+str(value),(250+j*125,625,112,40),('stack',value))
                 self.button('Start table',(860,625,260,50),'start',bool(table.code))
             if m.get('waiting_names'):self.text('Waiting: '+', '.join(m['waiting_names']),250,710,self.small)
-            return
+            self.leave_toast.draw(s,self.small);return
         g=table.game;now=pygame.time.get_ticks()
         if self.presentation.hand!=g.hand_number:self.log_scroll=0
         self.presentation.update(g,now);self.badge_rects=[]
@@ -241,6 +242,7 @@ class RoomView:
             else:self.draw_details(getattr(table,'last_payout',None) or g)
 
         if m.get('waiting_names'):self.text('Joining next hand: '+', '.join(m['waiting_names']),390,748,self.small)
+        self.leave_toast.draw(s,self.small)
 
     def panel(self,rect,active=False):
         rect=pygame.Rect(rect);layer=pygame.Surface(rect.size,pygame.SRCALPHA)

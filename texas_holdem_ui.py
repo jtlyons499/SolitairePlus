@@ -11,7 +11,8 @@ from poker_speech import (
 )
 from poker_ui_assets import draw_poker_logo
 from poker_quick_chat import (
-    QUICK_CHAT_OPTIONS,
+    quick_chat_options_for_game,
+    quick_chat_target_options,
     quick_chat_availability,
     submit_holdem_quick_chat,
 )
@@ -291,6 +292,8 @@ holdem_chat_unread = False
 # Player quick-chat panel. The active game reference is refreshed every draw,
 # keeping the existing main.py click path unchanged.
 holdem_quick_chat_open = False
+holdem_quick_chat_target_mode = None
+holdem_quick_chat_pending = []
 _holdem_active_game = None
 
 _holdem_last_stage = None
@@ -1152,7 +1155,7 @@ def draw_holdem_showdown_banner(
 # CARD HELPERS // OTHER HELPERS
 # ==================================================
 
-def _get_holdem_quick_chat_rects():
+def _get_holdem_quick_chat_rects(game=None, target_mode=None):
     outer_rect = HOLDEM_LOG_RECT
     toggle_rect = pygame.Rect(
         outer_rect.x + 202,
@@ -1160,15 +1163,29 @@ def _get_holdem_quick_chat_rects():
         110,
         28
     )
+    if target_mode:
+        rows = [("__back__", "‹ Back")] + list(quick_chat_target_options(game, target_mode))
+    else:
+        rows = list(quick_chat_options_for_game(game))
+
+    row_height = 27
+    row_gap = 4
+    popup_height = 42 + len(rows) * (row_height + row_gap)
+    popup_height = max(74, min(322, popup_height))
     popup_rect = pygame.Rect(
         outer_rect.x,
-        outer_rect.y - 210,
+        outer_rect.y - popup_height - 12,
         320,
-        198
+        popup_height
     )
     option_rects = []
     option_y = popup_rect.y + 34
-    for key, label in QUICK_CHAT_OPTIONS:
+    for item in rows:
+        if target_mode and item[0] != "__back__":
+            npc_index, label = item
+            key = ("__target__", int(npc_index))
+        else:
+            key, label = item
         option_rects.append((
             key,
             label,
@@ -1176,11 +1193,44 @@ def _get_holdem_quick_chat_rects():
                 popup_rect.x + 12,
                 option_y,
                 popup_rect.width - 24,
-                27
+                row_height
             )
         ))
-        option_y += 31
+        option_y += row_height + row_gap
     return toggle_rect, popup_rect, option_rects
+
+
+def _queue_holdem_quick_chat_responses(responses):
+    now = pygame.time.get_ticks()
+    for response in responses or ():
+        if isinstance(response, dict):
+            speaker = response.get("speaker", "")
+            message = response.get("message", "")
+            delay = max(0, int(response.get("delay_ms", 0) or 0))
+        else:
+            try:
+                speaker, message = response[:2]
+                delay = int(response[2]) if len(response) > 2 else 0
+            except (TypeError, ValueError):
+                continue
+        if not message:
+            continue
+        if delay <= 0:
+            add_holdem_chat_message(speaker, message)
+        else:
+            holdem_quick_chat_pending.append((now + delay, speaker, message))
+    holdem_quick_chat_pending.sort(key=lambda item: item[0])
+
+
+def _pump_holdem_quick_chat_responses():
+    if not holdem_quick_chat_pending:
+        return
+    now = pygame.time.get_ticks()
+    due = []
+    while holdem_quick_chat_pending and holdem_quick_chat_pending[0][0] <= now:
+        due.append(holdem_quick_chat_pending.pop(0))
+    for _when, speaker, message in due:
+        add_holdem_chat_message(speaker, message)
 
 
 def handle_holdem_panel_click(
@@ -1190,6 +1240,7 @@ def handle_holdem_panel_click(
     global holdem_active_tab
     global holdem_chat_unread
     global holdem_quick_chat_open
+    global holdem_quick_chat_target_mode
 
     if mouse_pos is None:
         return False
@@ -1210,70 +1261,84 @@ def handle_holdem_panel_click(
         28
     )
 
+    game = _holdem_active_game
     quick_toggle_rect, quick_popup_rect, quick_option_rects = (
-        _get_holdem_quick_chat_rects()
+        _get_holdem_quick_chat_rects(game, holdem_quick_chat_target_mode)
     )
 
-    if log_tab_rect.collidepoint(
-            mouse_pos
-    ):
-
+    if log_tab_rect.collidepoint(mouse_pos):
         holdem_active_tab = "log"
         holdem_quick_chat_open = False
-
+        holdem_quick_chat_target_mode = None
         return True
 
-    if chat_tab_rect.collidepoint(
-            mouse_pos
-    ):
-
+    if chat_tab_rect.collidepoint(mouse_pos):
         holdem_active_tab = "chat"
         holdem_chat_unread = False
         holdem_quick_chat_open = False
-
+        holdem_quick_chat_target_mode = None
         return True
 
     if quick_toggle_rect.collidepoint(mouse_pos):
-        if holdem_table_chat_enabled and _holdem_active_game is not None:
+        if (
+            holdem_table_chat_enabled
+            and game is not None
+            and quick_chat_options_for_game(game)
+        ):
             holdem_quick_chat_open = not holdem_quick_chat_open
+            if not holdem_quick_chat_open:
+                holdem_quick_chat_target_mode = None
         return True
 
     if holdem_quick_chat_open:
         for key, label, rect in quick_option_rects:
             if not rect.collidepoint(mouse_pos):
                 continue
-
-            game = _holdem_active_game
             if game is None:
                 return True
 
-            enabled, _reason = quick_chat_availability(game, key)
-            if not enabled:
+            if key == "__back__":
+                holdem_quick_chat_target_mode = None
                 return True
 
-            result = submit_holdem_quick_chat(game, key)
+            if isinstance(key, tuple) and key and key[0] == "__target__":
+                target_index = int(key[1])
+                chat_key = holdem_quick_chat_target_mode
+                if not chat_key:
+                    return True
+                enabled, _reason = quick_chat_availability(game, chat_key, target_index)
+                if not enabled:
+                    return True
+                result = submit_holdem_quick_chat(game, chat_key, target_index=target_index)
+            else:
+                enabled, _reason = quick_chat_availability(game, key)
+                if not enabled:
+                    return True
+                if quick_chat_target_options(game, key):
+                    holdem_quick_chat_target_mode = key
+                    return True
+                result = submit_holdem_quick_chat(game, key)
+
             if result.get("accepted"):
-                add_holdem_chat_message("You", label)
-                for speaker, message in result.get("responses", []):
-                    add_holdem_chat_message(speaker, message)
+                add_holdem_chat_message("You", result.get("label", label))
+                _queue_holdem_quick_chat_responses(result.get("responses", []))
                 holdem_active_tab = "chat"
                 holdem_chat_unread = False
                 holdem_quick_chat_open = False
+                holdem_quick_chat_target_mode = None
             return True
 
-        # Clicking inside the open pop-up should not leak through to the table.
         if quick_popup_rect.collidepoint(mouse_pos):
             return True
 
-        # A normal table click dismisses the menu and continues to its action.
         holdem_quick_chat_open = False
+        holdem_quick_chat_target_mode = None
 
     return False
 
 # ==================================================
 # DRAW HOLDEM BUY-IN
 # ==================================================
-
 def draw_texas_holdem_buy_in(
         game_surface,
         mouse_pos,
@@ -3136,12 +3201,17 @@ def draw_holdem_log_panel(
         )
     )
 
+    quick_options = quick_chat_options_for_game(_holdem_active_game)
     quick_toggle_rect, quick_popup_rect, quick_option_rects = (
-        _get_holdem_quick_chat_rects()
+        _get_holdem_quick_chat_rects(
+            _holdem_active_game,
+            holdem_quick_chat_target_mode
+        )
     )
     quick_enabled = (
         holdem_table_chat_enabled
         and _holdem_active_game is not None
+        and bool(quick_options)
     )
 
     draw_holdem_glossy_button(
@@ -3164,8 +3234,9 @@ def draw_holdem_log_panel(
             radius=12
         )
 
+        title_text = "CHOOSE PLAYER" if holdem_quick_chat_target_mode else "QUICK CHAT"
         popup_title = holdem_small_font.render(
-            "QUICK CHAT",
+            title_text,
             True,
             (242, 224, 172)
         )
@@ -3178,11 +3249,12 @@ def draw_holdem_log_panel(
 
         tiny_font = get_holdem_fonts()["tiny"]
         for key, label, rect in quick_option_rects:
-            enabled, reason = quick_chat_availability(
-                _holdem_active_game,
-                key
-            )
-            button_text = label if enabled else f"{label}  •  {reason}"
+            if key == "__back__" or (isinstance(key, tuple) and key and key[0] == "__target__"):
+                enabled = True
+                button_text = label
+            else:
+                enabled, _reason = quick_chat_availability(_holdem_active_game, key)
+                button_text = label
             draw_holdem_glossy_button(
                 game_surface,
                 rect,
@@ -5502,10 +5574,20 @@ def draw_texas_holdem(
 ):
     global _holdem_active_game
     global holdem_quick_chat_open
+    global holdem_quick_chat_target_mode
 
     if _holdem_active_game is not holdem_game:
         holdem_quick_chat_open = False
+        holdem_quick_chat_target_mode = None
+        holdem_quick_chat_pending.clear()
         _holdem_active_game = holdem_game
+
+    _pump_holdem_quick_chat_responses()
+
+    # If the hand changes context while the menu is open, immediately leave a
+    # target submenu that no longer belongs to the current situation.
+    if holdem_quick_chat_target_mode and not quick_chat_target_options(holdem_game, holdem_quick_chat_target_mode):
+        holdem_quick_chat_target_mode = None
 
     poker_chip_images = (
         get_poker_chip_images()

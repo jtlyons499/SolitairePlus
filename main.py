@@ -24386,7 +24386,12 @@ while running:
                     debug_set_player_level(
                         max(LEVEL_XP_THRESHOLDS)
                     )
-                    print("Level:", player_level)
+                    from debug_unlocks import debug_unlock_everything
+                    unlock_summary = debug_unlock_everything(globals())
+                    show_debug_message(
+                        "Max level + all current unlocks enabled"
+                    )
+                    print("Level:", player_level, "Unlocks:", unlock_summary)
 
                 elif debug_action == ACTION_ACHIEVEMENT_TEST:
                     audio.play_sound("button_click")

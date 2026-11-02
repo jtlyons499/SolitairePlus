@@ -10,12 +10,19 @@ from score_four import ScoreFourGame
 from roulette import AMERICAN_WHEEL_ORDER, RED_NUMBERS
 from party_authority import SKILL_LABELS, STACK_OPTIONS, ROULETTE_TIMERS, SCORE_FOUR_DIFFICULTIES
 from mp_widgets import wooden_button
+from mp_toast import LeaveToast
 from texas_holdem_ui import draw_holdem_glossy_button, get_card_key
 
 WHITE = (246, 239, 216)
 MUTED = (190, 204, 197)
 GOLD = (242, 202, 79)
 PANEL = (12, 30, 25, 225)
+ROULETTE_PLAYER_COLORS = (
+    (72, 145, 235),
+    (236, 184, 58),
+    (170, 95, 225),
+    (48, 196, 151),
+)
 
 
 class PartyView:
@@ -37,6 +44,8 @@ class PartyView:
         self.roulette_chip = 50
         self.roulette_phase = None
         self.roulette_phase_started = 0
+        self.roulette_bet_targets = {}
+        self.leave_toast = LeaveToast()
 
     def text(self, value, pos, font=None, color=WHITE, center=False):
         label = (font or self.font).render(str(value), True, color)
@@ -67,10 +76,19 @@ class PartyView:
             public = table.public_profiles.get(row.get("identity"), {})
             self.appearance.avatar(self.surface, public, rect, row.get("name", "Player"))
         elif row.get("kind") == "NPC":
-            pygame.draw.ellipse(self.surface, (50, 72, 65), rect)
-            label = self.small.render("CPU", True, GOLD)
-            self.surface.blit(label, label.get_rect(center=rect.center))
-            pygame.draw.ellipse(self.surface, (210, 221, 214), rect, 2)
+            npc = row.get("npc")
+            drawn = False
+            if isinstance(npc, dict):
+                try:
+                    self.assets.portrait(npc, rect)
+                    drawn = True
+                except (AttributeError, KeyError, TypeError, pygame.error):
+                    drawn = False
+            if not drawn:
+                pygame.draw.ellipse(self.surface, (50, 72, 65), rect)
+                label = self.small.render("CPU", True, GOLD)
+                self.surface.blit(label, label.get_rect(center=rect.center))
+                pygame.draw.ellipse(self.surface, (210, 221, 214), rect, 2)
         else:
             pygame.draw.ellipse(self.surface, (35, 46, 42), rect)
             pygame.draw.ellipse(self.surface, (95, 111, 104), rect, 1)
@@ -105,8 +123,7 @@ class PartyView:
             if table.hosting and i > 0 and kind != "Human":
                 self.button("Remove NPC" if kind == "NPC" else "Add NPC", (x+18, 365, 110, 34), ("npc_toggle", i))
                 if kind == "NPC":
-                    self.button("‹", (x+138,365,35,34), ("npc_skill", i, -1))
-                    self.button("›", (x+207,365,35,34), ("npc_skill", i, 1))
+                    self.button("Reroll", (x+138, 365, 104, 34), ("npc_reroll", i))
             if kind == "NPC":
                 self.text(SKILL_LABELS.get(row.get("skill", "mid"), "Skilled"), (x+190, 414), self.small, GOLD, True)
 
@@ -147,6 +164,7 @@ class PartyView:
         kind = action[0]
         if kind == "npc_toggle": return table.act("npc_toggle", {"seat": action[1]})
         if kind == "npc_skill": return table.act("npc_skill", {"seat": action[1], "delta": action[2]})
+        if kind == "npc_reroll": return table.act("npc_reroll", {"seat": action[1]})
         if kind == "difficulty": return table.act("difficulty", action[1])
         if kind == "stack": return table.act("stack", action[1])
         if kind == "timer": return table.act("timer", action[1])
@@ -300,14 +318,62 @@ class PartyView:
         elif phase=='result': progress=1.0
         eased=1-(1-progress)**3; rotation=math.tau*4*eased
         pygame.draw.circle(self.surface,(5,5,5),(cx+4,cy+5),outer+8)
+        pygame.draw.circle(self.surface,(120,106,78),(cx,cy),outer+14,2)
         for idx,number in enumerate(AMERICAN_WHEEL_ORDER):
             a=-math.pi/2+idx*sector+rotation;b=a+sector
             color=(24,128,69) if number in ('0','00') else (172,42,42) if int(number) in RED_NUMBERS else (28,30,33)
             pts=[(cx+math.cos(a)*inner,cy+math.sin(a)*inner),(cx+math.cos(a)*outer,cy+math.sin(a)*outer),(cx+math.cos(b)*outer,cy+math.sin(b)*outer),(cx+math.cos(b)*inner,cy+math.sin(b)*inner)]
             pygame.draw.polygon(self.surface,color,pts)
         pygame.draw.circle(self.surface,WHITE,(cx,cy),outer,3);pygame.draw.circle(self.surface,(176,145,72),(cx,cy),inner);pygame.draw.circle(self.surface,WHITE,(cx,cy),inner,2)
+
+        ball = None
+        pocket_radius = (outer + inner) / 2 + 4
+        if phase == 'spinning':
+            # The host already chose the authoritative result when spinning
+            # begins.  Use that result only to animate the ball so it visibly
+            # decelerates into the same pocket instead of jumping there when
+            # the result phase starts.
+            if result in AMERICAN_WHEEL_ORDER:
+                idx = AMERICAN_WHEEL_ORDER.index(result)
+                target_angle = -math.pi/2 + (idx + .5) * sector
+            else:
+                target_angle = -math.pi/2
+            ball_eased = 1 - (1 - progress) ** 3
+            ball_angle = target_angle + math.tau * 7.35 * (1 - ball_eased)
+            ball_radius = (outer + 11) + (pocket_radius - (outer + 11)) * (progress ** 1.7)
+            ball = (round(cx + math.cos(ball_angle) * ball_radius), round(cy + math.sin(ball_angle) * ball_radius))
+        elif phase == 'result' and result in AMERICAN_WHEEL_ORDER:
+            idx = AMERICAN_WHEEL_ORDER.index(result)
+            ball_angle = -math.pi/2 + (idx + .5) * sector
+            ball = (round(cx + math.cos(ball_angle) * pocket_radius), round(cy + math.sin(ball_angle) * pocket_radius))
+        if ball:
+            pygame.draw.circle(self.surface,(0,0,0),(ball[0]+2,ball[1]+3),7)
+            pygame.draw.circle(self.surface,(250,247,229),ball,6)
+            pygame.draw.circle(self.surface,(205,198,176),ball,6,1)
+
         center='...' if phase=='spinning' else str(result) if result is not None and phase=='result' else '?'
         self.text(center,(cx,cy),self.font,WHITE,True)
+
+    def _draw_roulette_table_chips(self, m):
+        offsets = ((-12,-11),(12,-11),(-12,11),(12,11))
+        tiny = pygame.font.Font(None, 13)
+        for seat, bets in enumerate(m.get('all_bets', [])[:4]):
+            color = ROULETTE_PLAYER_COLORS[seat]
+            for bet in bets:
+                rect = self.roulette_bet_targets.get((bet.get('type'), bet.get('value')))
+                if rect is None:
+                    continue
+                dx,dy = offsets[seat]
+                center = (rect.centerx + dx, rect.centery + dy)
+                pygame.draw.circle(self.surface,(10,12,12),center,10)
+                pygame.draw.circle(self.surface,color,center,9)
+                pygame.draw.circle(self.surface,WHITE,center,9,1)
+                amount = int(bet.get('amount',0))
+                label = f"{amount//1000}k" if amount >= 1000 and amount % 1000 == 0 else str(amount)
+                image = tiny.render(label, True, (255,255,255))
+                if image.get_width() > 16:
+                    image = pygame.transform.smoothscale(image,(16,image.get_height()))
+                self.surface.blit(image,image.get_rect(center=center))
 
     def draw_roulette(self, table):
         m=table.message; self.appearance.background(self.surface); self.buttons=[]
@@ -323,31 +389,35 @@ class PartyView:
         for i,row in enumerate(seats):
             x=55+i*255
             self.panel((x,112,232,58),(12,31,26,225),GOLD if i==m.get('your_seat') else (125,148,138),2 if i==m.get('your_seat') else 1)
-            self.text(row.get('name','Open')[:14],(x+12,121),self.small)
+            pygame.draw.circle(self.surface, ROULETTE_PLAYER_COLORS[i], (x+15, 132), 6)
+            pygame.draw.circle(self.surface, WHITE, (x+15, 132), 6, 1)
+            self.text(row.get('name','Open')[:14],(x+27,121),self.small)
             detail=f"${stacks[i]:,}"+(f"  ({nets[i]:+d})" if phase=='result' and nets[i] else '')
             if row.get('spectator'):detail+=' • Spectating'
             self.text(detail,(x+12,146),self.small,MUTED)
 
         # American board: 0 / 00 plus 1-36, visually close to the base roulette table.
         board=pygame.Rect(62,205,820,390); self.panel(board,(16,22,20,235),(225,230,225),2,4)
-        self.roulette_cells=[]
+        self.roulette_cells=[]; self.roulette_bet_targets={}
         zero_rect=pygame.Rect(75,217,82,77); zero2_rect=pygame.Rect(75,302,82,77)
         for label,rect in (("0",zero_rect),("00",zero2_rect)):
-            pygame.draw.rect(self.surface,(26,118,66),rect);pygame.draw.rect(self.surface,WHITE,rect,2);self.text(label,rect.center,self.small,WHITE,True);self.roulette_cells.append((rect,"number",label))
+            pygame.draw.rect(self.surface,(26,118,66),rect);pygame.draw.rect(self.surface,WHITE,rect,2);self.text(label,rect.center,self.small,WHITE,True);self.roulette_cells.append((rect,"number",label));self.roulette_bet_targets[("number",label)]=rect
         start_x=165;cell_w=57;cell_h=55
         for number in range(1,37):
             col=(number-1)//3; row=(number-1)%3
             rect=pygame.Rect(start_x+col*cell_w,217+(2-row)*cell_h,cell_w,cell_h)
             color=(165,42,42) if number in RED_NUMBERS else (24,27,29)
             pygame.draw.rect(self.surface,color,rect);pygame.draw.rect(self.surface,WHITE,rect,1);self.text(str(number),rect.center,self.small,WHITE,True)
-            self.roulette_cells.append((rect,"number",str(number)))
+            self.roulette_cells.append((rect,"number",str(number)));self.roulette_bet_targets[("number",str(number))]=rect
         outside=(("RED","color","red"),("BLACK","color","black"),("ODD","parity","odd"),("EVEN","parity","even"),("1-18","range","low"),("19-36","range","high"))
         for j,(label,t,v) in enumerate(outside):
-            rect=pygame.Rect(165+j*112,405,104,44);self.button(label,rect,("roulette_bet",t,v),phase=='betting' and not m.get('spectating'))
+            rect=pygame.Rect(165+j*112,405,104,44);self.button(label,rect,("roulette_bet",t,v),phase=='betting' and not m.get('spectating'));self.roulette_bet_targets[(t,v)]=rect
         for j,(label,v) in enumerate((("1st 12",1),("2nd 12",2),("3rd 12",3))):
-            rect=pygame.Rect(165+j*224,462,216,44);self.button(label,rect,("roulette_bet","dozen",v),phase=='betting' and not m.get('spectating'))
+            rect=pygame.Rect(165+j*224,462,216,44);self.button(label,rect,("roulette_bet","dozen",v),phase=='betting' and not m.get('spectating'));self.roulette_bet_targets[("dozen",v)]=rect
         for j,(label,v) in enumerate((("Column 1",1),("Column 2",2),("Column 3",3))):
-            rect=pygame.Rect(165+j*224,518,216,44);self.button(label,rect,("roulette_bet","column",v),phase=='betting' and not m.get('spectating'))
+            rect=pygame.Rect(165+j*224,518,216,44);self.button(label,rect,("roulette_bet","column",v),phase=='betting' and not m.get('spectating'));self.roulette_bet_targets[("column",v)]=rect
+
+        self._draw_roulette_table_chips(m)
 
         # Chip tray and player's current bets.
         self.panel((62,620,820,110),(12,31,26,230),(140,160,152),1)
@@ -368,6 +438,7 @@ class PartyView:
     def draw(self, table, mouse=None):
         if mouse is not None: self.mouse=mouse
         self.buttons=[]
+        self.leave_toast.sync(table)
         if table.failed:
             self.appearance.background(self.surface)
             self.text("Connection ended", (683, 315), self.large, GOLD, True)
@@ -376,12 +447,19 @@ class PartyView:
             return
         m=table.message
         if m.get('type') in ('connecting',):
-            self.appearance.background(self.surface); self.text("Connecting to relay...",(683,330),self.large,GOLD,True); return
-        if m.get('type')=='lobby': return self.draw_lobby(table)
-        if table.mode=='score_four': return self.draw_score_four(table)
-        if table.mode=='blind_mans_bluff': return self.draw_bluff(table)
-        if table.mode=='roulette': return self.draw_roulette(table)
-        self.appearance.background(self.surface); self.text("Waiting for game state...",(683,330),self.large,GOLD,True)
+            self.appearance.background(self.surface); self.text("Connecting to relay...",(683,330),self.large,GOLD,True)
+            return
+        if m.get('type')=='lobby':
+            self.draw_lobby(table)
+        elif table.mode=='score_four':
+            self.draw_score_four(table)
+        elif table.mode=='blind_mans_bluff':
+            self.draw_bluff(table)
+        elif table.mode=='roulette':
+            self.draw_roulette(table)
+        else:
+            self.appearance.background(self.surface); self.text("Waiting for game state...",(683,330),self.large,GOLD,True)
+        self.leave_toast.draw(self.surface, self.small)
 
     def event(self, event, mouse, table):
         if event.type != pygame.MOUSEBUTTONDOWN or event.button != 1:
