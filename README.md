@@ -39,6 +39,7 @@ Solitaire+ 0.0.6 - second pass
 - Updated multiplayer Texas Hold'em to be current with the singeplayer version
   - Copied over more polished UI, improvements in AI behavior 
   - Clearer animations and card details
+  - 
 **SINGLEPLAYER**
 - Reworked how the poker rating is calculated in Career Mode
   - Increases/decreases are based more on the user's own change in money
