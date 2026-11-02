@@ -168,7 +168,7 @@ def build_monthly_flavor_story(npc_names=None):
         ),
         (
             "LOCAL CASINO DEALER KEEPS DRAWING JOKERS",
-            "After throwing the jokers away five times, the cards kept returning on the next hand.",
+            "Journalists around the world agree his misfortune is a good source of clicks.",
             "strange",
         ),
         (
@@ -178,27 +178,27 @@ def build_monthly_flavor_story(npc_names=None):
         ),
         (
             "LOCAL GRANDMOTHER ARRESTED FOR CARD COUNTING",
-            "Merriam Winkle was taken into custody after card counting and riding a shopping cart inside.",
+            "Merriam Winkle was taken into custody after card counting and reeking of Vicks Nose Drops, ew.",
             "oddity",
         ),
         (
             f"{npc.upper()} REPORTEDLY PRACTICES CRAZY EIGHTS WITH EIGHT DECKS",
-            f"Sources say {npc} insists the method improves concentration. Nobody has been able to verify this.",
+            f"Sources say {npc} insists the method improves skill, despite current scientific theories. Joe Rogan has organized a GoFundMe.",
             "players",
         ),
         (
-            f"{npc.upper()} BUYS 400 GREEN VISORS",
-            f"{npc} says the bulk order was 'for professional reasons.' Local retailers have reported an unexplained shortage.",
+            f"{npc.upper()} BUYS 300 NEW DECKS OF CARDS",
+            f"{npc} insists that new decks improves performance, likening the move to buying a new CSGO skin.",
             "players",
         ),
         (
             "TOURNAMENT VENDING MACHINE ENTERS POWER RANKINGS BY MISTAKE",
-            "A data-entry error briefly placed a snack machine at world #43. It gained three positions before administrators removed it.",
+            "A data-entry error briefly placed a snack machine at #43. Administrators removed it, despite Deep Blue's protests.",
             "oddity",
         ),
         (
-            "UNATTENDED DECK FOUND PERFECTLY SORTED BY SUIT",
-            "Security footage shows nobody approaching the table for nearly two hours before the deck was discovered in exact Ace-to-King order.",
+            "MAN IN GREEN SUIT? OR GREEN MAN FROM SPACE?!",
+            "Security footage caught a green humanoid figure at the casino. When staff asked for ID, he gleegl'd loudly and ran out.",
             "strange",
         ),
     )

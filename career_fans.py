@@ -19,6 +19,91 @@ def clamp_fans(value):
     return max(0, min(MAX_FANS, value))
 
 
+def normalize_fan_trend(history, limit=24):
+    cleaned = []
+    if not isinstance(history, (list, tuple)):
+        return cleaned
+    for entry in history[-max(1, int(limit)):]:
+        if isinstance(entry, dict):
+            raw = entry.get("change", 0)
+            reason = str(entry.get("reason", "") or "")[:80]
+            day = entry.get("day")
+        else:
+            raw, reason, day = entry, "", None
+        try:
+            change = int(round(raw))
+        except (TypeError, ValueError):
+            continue
+        if not change:
+            continue
+        row = {"change": change}
+        if reason:
+            row["reason"] = reason
+        if isinstance(day, int):
+            row["day"] = day
+        cleaned.append(row)
+    return cleaned[-limit:]
+
+
+def record_fan_trend(history, change, reason="", day=None, limit=24):
+    rows = normalize_fan_trend(history, limit=limit)
+    try:
+        change = int(round(change))
+    except (TypeError, ValueError):
+        return rows
+    if not change:
+        return rows
+    row = {"change": change}
+    if reason:
+        row["reason"] = str(reason)[:80]
+    if isinstance(day, int):
+        row["day"] = day
+    rows.append(row)
+    return rows[-limit:]
+
+
+def get_player_public_appeal_trait(history, current_fans=0):
+    """Derive player appeal from recent fan momentum rather than raw fame.
+
+    Recent changes weigh most.  A huge established fanbase cannot hide a long
+    losing trend, while a smaller player on a sustained upswing can become
+    Charming/Magnetic quickly.
+    """
+    rows = normalize_fan_trend(history)
+    if not rows:
+        return "steady"
+    weighted_net = 0.0
+    weighted_abs = 0.0
+    positive_weight = 0.0
+    total_weight = 0.0
+    for age, row in enumerate(reversed(rows[-12:])):
+        weight = 0.86 ** age
+        change = float(row["change"])
+        weighted_net += change * weight
+        weighted_abs += abs(change) * weight
+        total_weight += weight
+        if change > 0:
+            positive_weight += weight
+    direction = weighted_net / max(25.0, weighted_abs)
+    consistency = positive_weight / max(0.001, total_weight)
+    # Consistency breaks ties: many modest gains are more magnetic than one
+    # jackpot followed by losses.
+    score = direction * 0.78 + (consistency - 0.5) * 0.44
+    if score <= -0.48:
+        return "camera_shy"
+    if score <= -0.14:
+        return "reserved"
+    if score < 0.18:
+        return "steady"
+    if score < 0.52:
+        return "charming"
+    return "magnetic"
+
+
+def get_player_public_appeal_display_name(history, current_fans=0):
+    return get_public_appeal_display_name(get_player_public_appeal_trait(history, current_fans))
+
+
 def _stable_value(identity):
     text = str(identity or "npc")
     return sum((index + 1) * ord(char) for index, char in enumerate(text))
@@ -32,17 +117,11 @@ def get_npc_public_appeal_trait(npc):
         identity = npc.get("id") or npc.get("name") or "npc"
     else:
         identity = npc or "npc"
-
-    # Weighted toward ordinary/steady personalities, with rare extremes.
     bucket = _stable_value(identity) % 100
-    if bucket < 10:
-        return "camera_shy"
-    if bucket < 30:
-        return "reserved"
-    if bucket < 72:
-        return "steady"
-    if bucket < 94:
-        return "charming"
+    if bucket < 10: return "camera_shy"
+    if bucket < 30: return "reserved"
+    if bucket < 72: return "steady"
+    if bucket < 94: return "charming"
     return "magnetic"
 
 
@@ -55,164 +134,85 @@ def get_public_appeal_multiplier(trait):
 
 
 def calculate_npc_fans(rating, trait="steady"):
-    """Translate competitive strength into a broad fanbase, then apply appeal.
-
-    The cubic curve keeps ordinary competitors modest while allowing the truly
-    elite to become celebrity-level figures. The cap matches the player's cap.
-    """
-    try:
-        rating = int(rating)
-    except (TypeError, ValueError):
-        rating = 1000
-
+    try: rating = int(rating)
+    except (TypeError, ValueError): rating = 1000
     normalized = max(0.0, min(1.0, (rating - 650) / 2500.0))
     base = 350 + (normalized ** 3) * 920_000
     return clamp_fans(base * get_public_appeal_multiplier(trait))
 
 
 def ensure_npc_fan_state(state, npc):
-    if not isinstance(state, dict):
-        state = {}
-
+    if not isinstance(state, dict): state = {}
     trait = state.get("public_appeal")
     if trait not in PUBLIC_APPEAL_TRAITS:
-        trait = get_npc_public_appeal_trait(npc)
-        state["public_appeal"] = trait
-
+        trait = get_npc_public_appeal_trait(npc); state["public_appeal"] = trait
     overall = state.get("rating", 1000)
-    if isinstance(state.get("ratings"), dict):
-        overall = state["ratings"].get("overall", overall)
-
-    # Recalculate from rating so NPC popularity naturally follows their career.
+    if isinstance(state.get("ratings"), dict): overall = state["ratings"].get("overall", overall)
     state["fans"] = calculate_npc_fans(overall, trait)
     return state
 
 
 def fan_gain_from_rating_win(rating_gain, current_rating=1000):
     try:
-        rating_gain = max(0, int(rating_gain))
-        current_rating = max(100, int(current_rating))
-    except (TypeError, ValueError):
-        return 0
-
-    if rating_gain <= 0:
-        return 0
-
-    fame_scale = max(1.0, (current_rating / 650.0) ** 1.55)
-    return max(5, int(round(rating_gain * 3.0 * fame_scale)))
+        rating_gain=max(0,int(rating_gain)); current_rating=max(100,int(current_rating))
+    except (TypeError,ValueError): return 0
+    if rating_gain<=0:return 0
+    fame_scale=max(1.0,(current_rating/650.0)**1.55)
+    return max(5,int(round(rating_gain*3.0*fame_scale)))
 
 
 def fan_gain_from_cash_win(net_win, current_rating=1000):
     try:
-        net_win = max(0, int(net_win))
-        current_rating = max(100, int(current_rating))
-    except (TypeError, ValueError):
-        return 0
-
-    if net_win <= 0:
-        return 0
-
-    # Casino wins create attention, but much more slowly than competitive wins.
-    fame_scale = max(0.75, current_rating / 1400.0)
-    return max(2, int(round(math.sqrt(net_win) * 4.5 * fame_scale)))
+        net_win=max(0,int(net_win)); current_rating=max(100,int(current_rating))
+    except (TypeError,ValueError): return 0
+    if net_win<=0:return 0
+    fame_scale=max(0.75,current_rating/1400.0)
+    return max(2,int(round(math.sqrt(net_win)*4.5*fame_scale)))
 
 
-def fan_bonus_for_job(required_rating=0, pay=0):
-    try:
-        required_rating = max(0, int(required_rating))
-        pay = max(0, int(pay))
-    except (TypeError, ValueError):
-        return 0
-    return max(25, int(round(required_rating * 0.55 + pay * 3.0)))
+def fan_bonus_for_job(required_rating=0,pay=0):
+    try: required_rating=max(0,int(required_rating));pay=max(0,int(pay))
+    except (TypeError,ValueError):return 0
+    return max(25,int(round(required_rating*0.55+pay*3.0)))
 
 
 def fan_bonus_for_residence(price=0):
-    try:
-        price = max(0, int(price))
-    except (TypeError, ValueError):
-        return 0
-    if price <= 0:
-        return 0
-    return max(50, int(round(math.sqrt(price) * 95)))
+    try: price=max(0,int(price))
+    except (TypeError,ValueError):return 0
+    if price<=0:return 0
+    return max(50,int(round(math.sqrt(price)*95)))
 
 
 def fan_bonus_for_achievement(difficulty="normal"):
-    values = {
-        "easy": 250,
-        "normal": 750,
-        "hard": 2_500,
-        "elite": 8_000,
-        "legendary": 25_000,
-        "secret": 12_000,
-    }
-    return values.get(str(difficulty or "normal").lower(), values["normal"])
+    values={"easy":250,"normal":750,"hard":2500,"elite":8000,"legendary":25000,"secret":12000}
+    return values.get(str(difficulty or "normal").lower(),values["normal"])
 
 
-def fan_change_from_autograph_accuracy(accuracy, current_fans=0, current_rating=1000):
-    """Translate autograph tracing accuracy into a signed fan change.
-
-    Better-known players have more people waiting in line, so both gains and
-    embarrassments scale gently with existing fame and rating. The curve stays
-    intentionally modest so the event matters without becoming a fan farm.
-    """
+def fan_change_from_autograph_accuracy(accuracy,current_fans=0,current_rating=1000):
     try:
-        accuracy = max(0.0, min(100.0, float(accuracy)))
-        current_fans = max(0, int(current_fans))
-        current_rating = max(100, int(current_rating))
-    except (TypeError, ValueError):
-        return 0
-
-    audience = max(
-        85.0,
-        110.0
-        + current_rating * 0.10
-        + math.sqrt(current_fans) * 1.15,
-    )
-
-    if accuracy >= 92:
-        multiplier = 1.45
-    elif accuracy >= 82:
-        multiplier = 1.00
-    elif accuracy >= 70:
-        multiplier = 0.62
-    elif accuracy >= 58:
-        multiplier = 0.28
-    elif accuracy >= 45:
-        multiplier = 0.08
-    elif accuracy >= 30:
-        multiplier = -0.18
-    else:
-        multiplier = -0.38
-
-    change = int(round(audience * multiplier))
-    if multiplier > 0:
-        return max(5, change)
-    if multiplier < 0:
-        return min(-5, change)
+        accuracy=max(0.0,min(100.0,float(accuracy)));current_fans=max(0,int(current_fans));current_rating=max(100,int(current_rating))
+    except (TypeError,ValueError):return 0
+    audience=max(85.0,110.0+current_rating*0.10+math.sqrt(current_fans)*1.15)
+    if accuracy>=92:multiplier=1.45
+    elif accuracy>=82:multiplier=1.00
+    elif accuracy>=70:multiplier=.62
+    elif accuracy>=58:multiplier=.28
+    elif accuracy>=45:multiplier=.08
+    elif accuracy>=30:multiplier=-.18
+    else:multiplier=-.38
+    change=int(round(audience*multiplier))
+    if multiplier>0:return max(5,change)
+    if multiplier<0:return min(-5,change)
     return 0
 
 
-def fan_loss_from_bad_result(current_fans=0, net_loss=0, severity=1.0):
-    """Return a modest positive fan-loss amount after a poor performance.
-
-    Losses scale gently with the size of the existing fanbase and, for casino
-    games, with money lost.  The intent is to make bad nights matter without
-    erasing hours of progress from one unlucky result.
-    """
+def fan_loss_from_bad_result(current_fans=0,net_loss=0,severity=1.0):
     try:
-        current_fans = max(0, int(current_fans))
-        net_loss = max(0, int(net_loss))
-        severity = max(0.25, float(severity))
-    except (TypeError, ValueError):
-        return 0
-
-    if current_fans <= 0:
-        return 0
-
-    audience_component = 5.0 + math.sqrt(current_fans) * 0.32
-    cash_component = math.sqrt(net_loss) * 0.85 if net_loss > 0 else 0.0
-    loss = int(round((audience_component + cash_component) * severity))
-
-    # Keep a single bad result noticeable but not catastrophic.
-    maximum = max(10, int(round(current_fans * 0.035)))
-    return max(1, min(current_fans, maximum, loss))
+        current_fans=max(0,int(current_fans));net_loss=max(0,int(net_loss));severity=max(.25,float(severity))
+    except (TypeError,ValueError):return 0
+    if current_fans<=0:return 0
+    audience_component=5.0+math.sqrt(current_fans)*.32
+    cash_component=math.sqrt(net_loss)*.85 if net_loss>0 else 0.0
+    loss=int(round((audience_component+cash_component)*severity))
+    maximum=max(10,int(round(current_fans*.035)))
+    return max(1,min(current_fans,maximum,loss))

@@ -2570,3 +2570,29 @@ def draw_five_card_draw(
                 fonts["tiny"]
             )
 
+
+# === POKER CAREER POLISH BATCH: shared Quick Chat / status ribbon ===
+from poker_variant_quick_chat import controller_for as _variant_qc_controller_for
+_draw_variant_qc = _variant_qc_controller_for("five_card_draw")
+_draw_five_card_draw_base = draw_five_card_draw
+_draw_panel_click_base = handle_five_card_draw_panel_click
+
+
+def draw_five_card_draw(*args, **kwargs):
+    result = _draw_five_card_draw_base(*args, **kwargs)
+    surface = args[0] if len(args) > 0 else kwargs.get("surface")
+    mouse_pos = args[1] if len(args) > 1 else kwargs.get("mouse_pos")
+    game = args[2] if len(args) > 2 else kwargs.get("game")
+    if surface is not None and game is not None:
+        _draw_variant_qc.draw(surface, mouse_pos, game, DRAW_LOG_RECT, add_five_card_draw_chat_message)
+        _draw_variant_qc.draw_status_ribbon(surface, game)
+    return result
+
+
+def handle_five_card_draw_panel_click(mouse_pos):
+    global _draw_active_tab, _draw_chat_unread
+    if _draw_variant_qc.handle_click(mouse_pos, add_five_card_draw_chat_message):
+        _draw_active_tab = "chat"
+        _draw_chat_unread = False
+        return True
+    return _draw_panel_click_base(mouse_pos)

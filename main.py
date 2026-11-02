@@ -429,7 +429,11 @@ from career_fans import (
     fan_change_from_autograph_accuracy,
     fan_loss_from_bad_result,
     get_public_appeal_display_name,
+    get_player_public_appeal_display_name,
+    normalize_fan_trend,
+    record_fan_trend,
 )
+from career_world_flavor import rating_milestone_stories, strongest_rating_status
 
 from achievements import (
     ACHIEVEMENT_DEFINITIONS,
@@ -3676,6 +3680,8 @@ career_last_fan_change = 0
 career_last_fan_reason = ""
 career_fan_rewarded_jobs = set()
 career_fan_news_milestones = set()
+career_fan_trend = []
+career_rating_news_flags = set()
 
 # ==================================================
 # ACHIEVEMENTS
@@ -6342,10 +6348,23 @@ def draw_blackjack():
             game_surface.blit(tooltip, tooltip_rect)
 
 
+def check_player_rating_world_reactions():
+    global career_rating_news_flags
+    stories, updated_flags = rating_milestone_stories(
+        player_name,
+        career_ratings,
+        career_rating_news_flags,
+    )
+    career_rating_news_flags = updated_flags
+    for headline, body, category in stories:
+        add_career_news(headline, body, category)
+
+
 def grant_rating_cosmetics(force=False):
     if force or current_game_mode in ("career", "head_to_head"):
         unlock_ratings(career_ratings, (MENU_BACKGROUNDS, FELTS, TITLES),
                        (unlocked_menu_backgrounds, unlocked_felts, unlocked_titles))
+        check_player_rating_world_reactions()
 
 
 def award_career_rating(rating_key, amount):
@@ -6438,6 +6457,13 @@ def award_career_fans(amount, reason=""):
 
     career_last_fan_change = actual
     career_last_fan_reason = str(reason or "")
+    global career_fan_trend
+    career_fan_trend = record_fan_trend(
+        career_fan_trend,
+        actual,
+        reason=career_last_fan_reason,
+        day=globals().get("career_day"),
+    )
 
     if actual > 0:
         milestone_labels = (
@@ -9974,6 +10000,7 @@ def begin_free_play_sandbox(use_cash=False):
             "career_cash": career_cash,
             "career_fans": career_fans,
             "career_fan_news_milestones": set(career_fan_news_milestones),
+            "career_fan_trend": list(career_fan_trend),
             "career_news_items": copy.deepcopy(career_news_items),
             "career_rounds_won": career_rounds_won,
             "career_challenges_won": career_challenges_won,
@@ -10015,6 +10042,9 @@ def finish_free_play_sandbox():
         career_fans = free_play_snapshot["career_fans"]
         career_fan_news_milestones = set(
             free_play_snapshot["career_fan_news_milestones"]
+        )
+        career_fan_trend[:] = list(
+            free_play_snapshot.get("career_fan_trend", career_fan_trend)
         )
         career_news_items = copy.deepcopy(
             free_play_snapshot["career_news_items"]
@@ -10559,6 +10589,9 @@ def build_profile_save_data():
         "fan_news_milestones"
     ] = sorted(career_fan_news_milestones)
 
+    career_data["fan_trend"] = list(career_fan_trend)
+    career_data["rating_news_flags"] = sorted(career_rating_news_flags)
+
     # ----------------------------
     # Calendar
     # ----------------------------
@@ -10778,6 +10811,8 @@ def apply_profile_save_data(
     global career_fans
     global career_fan_rewarded_jobs
     global career_fan_news_milestones
+    global career_fan_trend
+    global career_rating_news_flags
 
     global career_year
     global career_month
@@ -11003,6 +11038,9 @@ def apply_profile_save_data(
         )
         if str(value).isdigit()
     )
+
+    career_fan_trend = normalize_fan_trend(career_data.get("fan_trend", []))
+    career_rating_news_flags = set(str(value) for value in career_data.get("rating_news_flags", []))
 
     arcade_state = normalize_arcade_save_state(
         career_data.get(
@@ -17246,7 +17284,7 @@ def draw_career_leaderboard_bio():
     fans = int(entry.get("fans", 0) or 0)
     appeal_key = entry.get("public_appeal", "steady")
     appeal = (
-        "N/A"
+        get_player_public_appeal_display_name(career_fan_trend, career_fans)
         if entry.get("is_player")
         else get_public_appeal_display_name(appeal_key)
     )
@@ -17309,6 +17347,7 @@ def draw_career_leaderboard_bio():
         + (f"  |  {entry.get('career_stage', 'Established')}" if not is_player else ""),
         f"Personality: {personality}",
         f"Public Appeal: {appeal}",
+        *([f"Rating Status: {strongest_rating_status(career_ratings)[0]}"] if is_player else []),
         f"Fans: {fans:,}",
         f"Hometown: {hometown}",
         f"Favorite Suit: {favorite_suit}",
@@ -17333,9 +17372,9 @@ def draw_career_leaderboard_bio():
         (0, 0, 0),
         pygame.Rect(
             bio_panel_rect.x + 25,
-            bio_panel_rect.y + 190,
+            bio_panel_rect.y + 26 + len(details) * 24,
             bio_panel_rect.width - 50,
-            bio_panel_rect.height - 202
+            max(36, bio_panel_rect.height - (38 + len(details) * 24))
         ),
         max_lines=3,
         line_spacing=4

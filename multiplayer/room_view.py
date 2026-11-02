@@ -6,12 +6,13 @@ from mp_profile import MultiplayerProfile
 from mp_presentation import Presentation
 from mp_showdown import payout_lines,compact_result
 from mp_toast import LeaveToast
+from mp_chat import MultiplayerChat
 from texas_holdem_ui import get_card_key as card_key,draw_holdem_glossy_button,get_holdem_fonts
 
 class RoomView:
     def __init__(self,surface,assets,appearance=None,options=None,sound=None):
         self.appearance=appearance or Appearance(MultiplayerProfile());self.presentation=Presentation(self.appearance,options,sound);self.details=False;self.details_scroll=0;self.history_index=-1;self.mouse=(-1,-1);self.badge_rects=[];self.dragging=False;self.slider=None;self.minimum=0;self.maximum=0;self.log_scroll=0
-        self.surface=surface;self.assets=assets;self.buttons=[];self.raise_amount=100;self.hand=-1;self.editing=False;self.amount_text='';self.bet_input=TextInput();self.leave_toast=LeaveToast()
+        self.surface=surface;self.assets=assets;self.buttons=[];self.raise_amount=100;self.hand=-1;self.editing=False;self.amount_text='';self.bet_input=TextInput();self.leave_toast=LeaveToast();self.chat=MultiplayerChat();self.active_tab='log'
         try:
             fonts=get_holdem_fonts();self.font=fonts['small'];self.small=fonts['tiny'];self.large=fonts['title']
         except Exception:
@@ -23,7 +24,20 @@ class RoomView:
         font=self.small if self.small.size(label)[0]<=rect.w-14 else pygame.font.SysFont('georgia',max(12,int(18*(rect.w-14)/self.small.size(label)[0])))
         draw_holdem_glossy_button(self.surface,rect,label,self.mouse,font,enabled,attention=enabled and action=='check_call')
         if enabled:self.buttons.append((rect,action))
+    def is_text_entry_active(self):
+        return bool(self.editing or self.chat.editing)
+    def chat_rects(self):
+        return (pygame.Rect(32,710,260,28),pygame.Rect(300,710,72,28))
     def event(self,event,mouse,table):
+        log_tab=pygame.Rect(32,618,88,28);chat_tab=pygame.Rect(126,618,76,28)
+        input_rect,send_rect=self.chat_rects()
+        if not self.details and event.type==pygame.MOUSEBUTTONDOWN and event.button==1:
+            if log_tab.collidepoint(mouse):
+                self.active_tab='log';self.chat.close();return True
+            if chat_tab.collidepoint(mouse):
+                self.active_tab='chat';return True
+        if not self.details and self.active_tab=='chat' and self.chat.event(event,mouse,table,input_rect,send_rect):
+            return True
         if self.details:
             if event.type==pygame.KEYDOWN and event.key==pygame.K_ESCAPE:self.details=False
             elif event.type==pygame.MOUSEWHEEL:self.details_scroll=max(0,self.details_scroll-event.y)
@@ -35,7 +49,10 @@ class RoomView:
                     elif action=='history_next':self.history_index+=1;self.details_scroll=0
                     break
             return True
-        if event.type==pygame.MOUSEWHEEL:self.log_scroll=max(0,self.log_scroll-event.y);return True
+        if event.type==pygame.MOUSEWHEEL:
+            if self.active_tab=='chat':
+                self.chat.event(event,mouse,table,*self.chat_rects());return True
+            self.log_scroll=max(0,self.log_scroll-event.y);return True
         if event.type==pygame.MOUSEBUTTONUP:self.dragging=False
         if event.type==pygame.MOUSEBUTTONDOWN and event.button==1 and self.slider and self.slider.collidepoint(mouse):self.dragging=True
         if self.dragging and event.type in (pygame.MOUSEMOTION,pygame.MOUSEBUTTONDOWN):
@@ -174,8 +191,13 @@ class RoomView:
                     rw=30 if role=='D' else 38;rr=pygame.Rect(rx,y-32,rw,24)
                     pygame.draw.rect(s,fill,rr,border_radius=8);pygame.draw.rect(s,border,rr,2,border_radius=8)
                     txt=self.small.render(role,True,(255,255,255));s.blit(txt,txt.get_rect(center=rr.center));rx+=rw+5
-        self.panel((20,610,365,140));self.text('Game Log',35,620)
-        self.button('Payout History',(195,618,175,30),'details',bool(getattr(table,'last_payout',None)) or g.hand_complete)
+        self.panel((20,610,365,140))
+        chat_messages=m.get('chat_messages',[])
+        chat_unread=self.chat.sync_unread(chat_messages,self.active_tab=='chat')
+        draw_holdem_glossy_button(s,pygame.Rect(32,618,88,28),'GAME LOG',self.mouse,self.small,True,selected=self.active_tab=='log')
+        draw_holdem_glossy_button(s,pygame.Rect(126,618,76,28),'CHAT'+(' •' if chat_unread else ''),self.mouse,self.small,True,selected=self.active_tab=='chat')
+        if self.active_tab=='log':
+            self.button('Payout History',(209,618,163,28),'details',bool(getattr(table,'last_payout',None)) or g.hand_complete)
         self.button('Rejoin next hand' if m.get('sit_out') else 'Sit out next hand',(20,566,205,32),'sit_out',not table.pending)
         self.panel((920,566,420,38))
         description=hand_type(g)
@@ -184,12 +206,26 @@ class RoomView:
         if hand_label.get_width()>390:hand_label=pygame.transform.smoothscale(hand_label,(390,hand_label.get_height()))
         s.blit(hand_label,hand_label.get_rect(midleft=(935,585)))
         if g.player_stack<=0 and (g.hand_complete or 0 not in g.hand_seat_indexes):
-            self.button('Buy back $'+str(m.get('starting_stack',g.starting_stack)),(235,566,200,32),'buyback',not table.pending)
-        lines=m.get('public_log',g.get_hand_history_lines())
-        end=max(0,len(lines)-self.log_scroll);shown=lines[max(0,end-4):end]
-        clip=s.get_clip();s.set_clip(pygame.Rect(32,655,340,87))
-        for j,line in enumerate(shown):self.text(line,35,655+j*21,self.small)
-        s.set_clip(clip)
+            if m.get('buyback_pending'):
+                self.button('Buy back queued',(235,566,200,32),'buyback',False)
+                self.text('Rejoining next hand',244,600,self.small,(242,202,79))
+            else:
+                self.button('Buy back $'+str(m.get('starting_stack',g.starting_stack)),(235,566,200,32),'buyback',not table.pending)
+        if self.active_tab=='chat':
+            input_rect,send_rect=self.chat_rects()
+            self.chat.draw_messages(s,chat_messages,pygame.Rect(32,652,340,52),self.small,(218,225,216),(242,202,79),max_lines=2)
+            self.panel(input_rect,self.chat.active)
+            placeholder=self.chat.text if self.chat.text else 'Type a message…'
+            color=(246,237,207) if self.chat.text else (150,165,160)
+            shown_text=MultiplayerChat._fit(self.small,placeholder+('|' if self.chat.active else ''),input_rect.w-16)
+            self.text(shown_text,input_rect.x+8,input_rect.y+5,self.small,color)
+            draw_holdem_glossy_button(s,send_rect,'SEND',self.mouse,self.small,bool(self.chat.text.strip()))
+        else:
+            lines=m.get('public_log',g.get_hand_history_lines())
+            end=max(0,len(lines)-self.log_scroll);shown=lines[max(0,end-4):end]
+            clip=s.get_clip();s.set_clip(pygame.Rect(32,652,340,90))
+            for j,line in enumerate(shown):self.text(line,35,652+j*21,self.small)
+            s.set_clip(clip)
         self.panel((920,610,420,140))
         if g.hand_complete:
             ready=m.get('ready_count',0);total=m.get('ready_total',1)

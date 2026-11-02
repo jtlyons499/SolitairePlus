@@ -175,13 +175,27 @@ ANYTHING_GOING_REPLIES = {
 }
 
 def quick_chat_options_for_game(game):
-    """Return only lines that make sense in the game's current situation."""
+    """Return only lines that make sense in the current poker situation.
+
+    Hold'em, Draw, Stud and Five-O deliberately share the same conversation
+    categories, while each variant supplies its own live-stage names.
+    """
     if game is None or not getattr(game, "npcs", None):
         return ()
     if getattr(game, "hand_complete", False):
         return BETWEEN_HAND_OPTIONS
-    stage = str(getattr(game, "current_stage", "idle") or "idle")
-    if stage in ("preflop", "flop", "turn", "river"):
+    stage = str(
+        getattr(game, "current_stage", None)
+        or getattr(game, "phase", "idle")
+        or "idle"
+    ).lower()
+    in_hand_stages = {
+        "preflop", "flop", "turn", "river",          # Hold'em
+        "draw", "post_draw",                         # Five-Card Draw
+        "third", "fourth", "fifth", "sixth", "seventh",  # Stud
+        "placement", "betting", "showdown_bet",     # Five-O / niche poker
+    }
+    if stage in in_hand_stages:
         return IN_HAND_OPTIONS
     return ()
 

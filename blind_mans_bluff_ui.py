@@ -360,3 +360,31 @@ def draw_blind_mans_bluff(
     )
     surface.blit(session, (156, 702))
 
+
+# === POKER CAREER POLISH BATCH: Blind Man's Bluff Quick Chat / status ===
+from poker_variant_quick_chat import controller_for as _variant_qc_controller_for
+_bluff_variant_qc = _variant_qc_controller_for("blind_mans_bluff")
+_bluff_draw_base = draw_blind_mans_bluff
+_bluff_action_base = get_blind_mans_bluff_action
+_BLUFF_CHAT_ANCHOR = pygame.Rect(956, 10, 156, 50)
+
+
+def draw_blind_mans_bluff(*args, **kwargs):
+    result = _bluff_draw_base(*args, **kwargs)
+    surface = args[0] if len(args) > 0 else kwargs.get("surface")
+    mouse_pos = args[1] if len(args) > 1 else kwargs.get("mouse_pos")
+    game = args[2] if len(args) > 2 else kwargs.get("game")
+    if surface is not None and game is not None:
+        _bluff_variant_qc.draw_status_ribbon(surface, game, pygame.Rect(515, 68, 336, 34))
+        _bluff_variant_qc.draw(
+            surface, mouse_pos, game, _BLUFF_CHAT_ANCHOR, post_message=None, five_o=True,
+            history_rect=pygame.Rect(24, 675, 300, 54),
+        )
+    return result
+
+
+def get_blind_mans_bluff_action(mouse_pos, game):
+    _bluff_variant_qc.bind(game)
+    if _bluff_variant_qc.handle_click(mouse_pos, post_message=None):
+        return "ui_click"
+    return _bluff_action_base(mouse_pos, game)

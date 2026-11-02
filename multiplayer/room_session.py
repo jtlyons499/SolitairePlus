@@ -8,6 +8,12 @@ from relay_transport import RelayPeer
 from room_table import RoomAuthority
 from party_authority import make_party_authority
 
+CHAT_MODES={'holdem','blind_mans_bluff','roulette'}
+
+def _clean_chat(value):
+    printable = "".join(c for c in str(value or "") if c.isprintable() or c.isspace())
+    return " ".join(printable.split())[:160]
+
 class RoomTable:
     def __init__(self,name,hosting,address,code='',profile=None,mode='holdem'):
         if profile:profile.data['name']=clean_name(name)
@@ -16,7 +22,7 @@ class RoomTable:
         self.name=clean_name(name);self.hosting=hosting;self.identity=0 if hosting else None;self.mode=mode if hosting else None
         self.peer=RelayPeer(hosting,address,self.name,code,version=2)
         self.authority=(RoomAuthority(self.name) if mode in (None,'holdem') else make_party_authority(mode,self.name)) if hosting else None
-        self.game=ClientGame();self.message={'type':'connecting'};self.status='Connecting to relay…';self.failed=False;self.last_sent=-1;self.pending=False;self.leave_notice='';self.leave_notice_seq=0
+        self.game=ClientGame();self.message={'type':'connecting'};self.status='Connecting to relay…';self.failed=False;self.last_sent=-1;self.pending=False;self.leave_notice='';self.leave_notice_seq=0;self.chat_messages=[];self.chat_seq=0
     @property
     def code(self):return self.peer.code
     def close(self):self.peer.close()
@@ -46,6 +52,12 @@ class RoomTable:
                     value=clean_public(m.get('profile'))
                     if value and who in self.authority.connections:
                         self.public_profiles[who]=value;self.send_profile(who,value)
+                    continue
+                if m.get('action')=='chat':
+                    # Chat rides the existing action envelope but is intentionally
+                    # ack-free. A chat ack could otherwise clear the client's
+                    # pending flag for an unrelated betting action.
+                    if self.append_chat(who,m.get('amount','')):self.last_sent=-1
                     continue
                 self.collect_awards()
                 ok=self.authority.act(who,m.get('action'),m.get('amount',0),m.get('revision'))
@@ -101,8 +113,17 @@ class RoomTable:
             }.get(phase, 'Multiplayer game')
         else:self.status=m.get('text','Waiting for next hand')
     def act(self,action,amount=0):
-        if self.failed or self.pending:return False
+        if self.failed:return False
         revision=self.message.get('revision',0)
+        if action=='chat':
+            if self.mode not in CHAT_MODES:return False
+            if self.hosting:
+                ok=self.append_chat(0,amount)
+                if ok:self.last_sent=-1
+                return ok
+            # Chat should not lock betting controls while waiting for an ack.
+            return self.peer.send({'type':'action','action':'chat','amount':amount,'revision':revision})
+        if self.pending:return False
         if self.hosting:
             self.collect_awards()
             ok=self.authority.act(0,action,amount,revision)
@@ -111,6 +132,15 @@ class RoomTable:
         else:
             ok=self.peer.send({'type':'action','action':action,'amount':amount,'revision':revision});self.pending=ok
         return ok
+
+    def append_chat(self,identity,text):
+        if self.mode not in CHAT_MODES or self.authority is None or identity not in self.authority.connections:return False
+        text=_clean_chat(text)
+        if not text:return False
+        self.chat_seq+=1
+        self.chat_messages.append({'seq':self.chat_seq,'name':clean_name(self.authority.connections.get(identity,'Player')),'text':text})
+        self.chat_messages=self.chat_messages[-50:]
+        return True
 
     def send_profile(self, owner, value, recipients=None):
         recipients=self.authority.connections if recipients is None else recipients
@@ -141,6 +171,7 @@ class RoomTable:
         if self.mode not in (None,'holdem'):
             message=self.authority.view(identity)
             message['mode']=self.mode
+            if self.mode in CHAT_MODES:message['chat_messages']=list(self.chat_messages)
             for owner,seat in self.authority.humans.items():
                 if 0<=seat<len(message.get('seats',[])):message['seats'][seat]['identity']=owner
             return message
@@ -150,6 +181,7 @@ class RoomTable:
         message=self.authority.view(identity)
         message['mode']='holdem'
         message['public_log']=self.public_log[-100:]
+        message['chat_messages']=list(self.chat_messages)
         message['chips_added']=self.authority.chips_added
         message['xp_awards']=self.awards.get(identity,[])
         for owner,seat in self.authority.humans.items():message['seats'][seat]['identity']=owner

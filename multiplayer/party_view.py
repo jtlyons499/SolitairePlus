@@ -11,6 +11,7 @@ from roulette import AMERICAN_WHEEL_ORDER, RED_NUMBERS
 from party_authority import SKILL_LABELS, STACK_OPTIONS, ROULETTE_TIMERS, SCORE_FOUR_DIFFICULTIES
 from mp_widgets import wooden_button
 from mp_toast import LeaveToast
+from mp_chat import MultiplayerChat
 from texas_holdem_ui import draw_holdem_glossy_button, get_card_key
 
 WHITE = (246, 239, 216)
@@ -26,7 +27,7 @@ ROULETTE_PLAYER_COLORS = (
 
 
 class PartyView:
-    def __init__(self, surface, assets, appearance):
+    def __init__(self, surface, assets, appearance, sound=None):
         self.surface = surface
         self.assets = assets
         self.appearance = appearance
@@ -46,6 +47,10 @@ class PartyView:
         self.roulette_phase_started = 0
         self.roulette_bet_targets = {}
         self.leave_toast = LeaveToast()
+        self.chat = MultiplayerChat()
+        self.chat_open = False
+        self.sound = sound
+        self._sfx_state = {}
 
     def text(self, value, pos, font=None, color=WHITE, center=False):
         label = (font or self.font).render(str(value), True, color)
@@ -92,6 +97,103 @@ class PartyView:
         else:
             pygame.draw.ellipse(self.surface, (35, 46, 42), rect)
             pygame.draw.ellipse(self.surface, (95, 111, 104), rect, 1)
+
+    def is_text_entry_active(self):
+        # Treat an open chat overlay as an active UI layer even before the
+        # text box itself has focus. This lets Escape close chat first instead
+        # of accidentally leaving the multiplayer room.
+        return bool(self.chat_open)
+
+    def _play(self, key):
+        if callable(self.sound):
+            self.sound(key)
+
+    def _chat_rects(self):
+        return pygame.Rect(946, 458, 286, 36), pygame.Rect(1240, 458, 72, 36)
+
+    def _chat_panel_rect(self):
+        return pygame.Rect(918, 154, 414, 358)
+
+    def draw_chat_button(self, table):
+        messages = table.message.get("chat_messages", [])
+        unread = self.chat.sync_unread(messages, self.chat_open)
+        label = "CHAT" + (" •" if unread else "")
+        self.button(label, (1170, 72, 160, 36), "chat_toggle", True, selected=self.chat_open)
+
+    def draw_chat_overlay(self, table):
+        if not self.chat_open:
+            return
+        rect = self._chat_panel_rect()
+        shade = pygame.Surface(rect.size, pygame.SRCALPHA)
+        shade.fill((5, 13, 12, 246))
+        self.surface.blit(shade, rect.topleft)
+        pygame.draw.rect(self.surface, GOLD, rect, 2, border_radius=14)
+        self.text("TABLE CHAT", (rect.x + 22, rect.y + 18), self.font, GOLD)
+        self.text("Custom messages • Enter sends", (rect.x + 22, rect.y + 50), self.small, MUTED)
+        self.chat.draw_messages(
+            self.surface, table.message.get("chat_messages", []),
+            pygame.Rect(rect.x + 22, rect.y + 82, rect.width - 44, 205),
+            self.small, MUTED, GOLD, max_lines=8,
+        )
+        input_rect, send_rect = self._chat_rects()
+        self.panel(input_rect, (8, 20, 18, 245), GOLD if self.chat.active else (126,148,140), 2 if self.chat.active else 1, 8)
+        placeholder = self.chat.text if self.chat.text else "Type a message…"
+        color = WHITE if self.chat.text else (155,170,164)
+        shown = MultiplayerChat._fit(self.small, placeholder + ("|" if self.chat.active else ""), input_rect.w - 18)
+        self.text(shown, (input_rect.x + 9, input_rect.y + 8), self.small, color)
+        draw_holdem_glossy_button(self.surface, send_rect, "SEND", self.mouse, self.small, bool(self.chat.text.strip()))
+
+    @staticmethod
+    def _bet_signature(all_bets):
+        rows=[]
+        for seat,bets in enumerate(all_bets or []):
+            for bet in bets or []:
+                rows.append((seat,str(bet.get("type")),str(bet.get("value")),int(bet.get("amount",0) or 0)))
+        return tuple(sorted(rows))
+
+    def sync_sfx(self, table):
+        m=table.message
+        if m.get("type") not in ("party_state",):
+            self._sfx_state.pop(table.mode, None)
+            return
+        mode=table.mode
+        previous=self._sfx_state.get(mode)
+        current={"revision":m.get("revision",0),"phase":m.get("phase")}
+        if mode=="blind_mans_bluff":
+            current.update(hand=m.get("hand_number"),actions=tuple(m.get("actions",[])),winners=tuple(m.get("winners",[])))
+            if previous:
+                if current["hand"]!=previous.get("hand"):
+                    self._play("card_shuffle")
+                old_actions=previous.get("actions",())
+                for i,action in enumerate(current["actions"]):
+                    old=old_actions[i] if i<len(old_actions) else ""
+                    if not action or action==old:
+                        continue
+                    lower=action.lower()
+                    if "check" in lower:self._play("check")
+                    elif any(word in lower for word in ("call","bet","rais")):
+                        self._play(("chips_1","chips_2","chips_3")[int(m.get("revision",0))%3])
+                    elif "fold" in lower:self._play("card_move")
+                if current["phase"]=="result" and previous.get("phase")!="result":
+                    self._play("card_flip")
+                    if m.get("your_seat") in current["winners"]:self._play("hand_win")
+        elif mode=="roulette":
+            bets=self._bet_signature(m.get("all_bets",[]));total=sum(row[3] for row in bets)
+            current.update(bets=bets,total=total,result=m.get("result"),net=tuple(m.get("last_net",[])))
+            if previous:
+                if total!=previous.get("total",0):
+                    self._play(("chips_1","chips_2","chips_3")[int(m.get("revision",0))%3])
+                if current["phase"]=="result" and previous.get("phase")!="result":
+                    seat=m.get("your_seat")
+                    nets=current["net"]
+                    if isinstance(seat,int) and seat<len(nets) and nets[seat]>0:self._play("hand_win")
+        elif mode=="score_four":
+            current.update(round=m.get("round_number"),winner=m.get("round_winner"),match=m.get("match_winner"))
+            if previous:
+                if current["round"]!=previous.get("round"):self._play("button_click")
+                if current["winner"] is not None and previous.get("winner") is None and current["winner"]==m.get("your_seat"):
+                    self._play("hand_win")
+        self._sfx_state[mode]=current
 
     # ------------------------------------------------------------------
     # Shared room lobby
@@ -261,8 +363,10 @@ class PartyView:
     def draw_bluff(self, table):
         m=table.message; self.appearance.background(self.surface); self.buttons=[]
         self.appearance.felt(self.surface, pygame.Rect(158, 150, 1050, 430))
-        self.text("BLIND MAN'S BLUFF", (36, 35), self.large, GOLD)
-        self.text(f"Hand {m.get('hand_number',0)}  •  Ante ${m.get('ante',0):,}  •  Pot ${m.get('pot',0):,}", (36, 85), self.small, MUTED)
+        self.panel((24,22,700,82),(8,24,20,232),(147,169,160),1,14)
+        self.text("BLIND MAN'S BLUFF", (46, 36), self.large, GOLD)
+        self.text(f"Hand {m.get('hand_number',0)}  •  Ante ${m.get('ante',0):,}  •  Pot ${m.get('pot',0):,}", (48, 78), self.small, MUTED)
+        self.draw_chat_button(table)
         positions=((505,610),(95,315),(510,150),(1000,315)); seats=m.get('seats',[]); cards=m.get('cards',[]); stacks=m.get('stacks',[0]*4); folded=m.get('folded',[True]*4); actions=m.get('actions',['']*4)
         for i,(x,y) in enumerate(positions):
             row=seats[i]; active=m.get('current_actor')==i and m.get('phase')=='betting'
@@ -282,7 +386,10 @@ class PartyView:
                 veil=pygame.Surface(rect.size,pygame.SRCALPHA);veil.fill((20,20,20,125));self.surface.blit(veil,rect)
             if active: pygame.draw.rect(self.surface,GOLD,rect,3,border_radius=6)
 
-        self.panel((900,610,430,125),(10,26,22,235),(150,169,160),1)
+        your_turn=(m.get('phase')=='betting' and m.get('current_actor')==m.get('your_seat') and not m.get('spectating'))
+        self.panel((900,610,430,125),(10,26,22,235),GOLD if your_turn else (150,169,160),2 if your_turn else 1)
+        if your_turn:
+            self.text("YOUR TURN",(1115,606),self.small,GOLD,True)
         if m.get('spectating'):
             self.text("You are spectating",(1115,640),self.font,GOLD,True)
             self.text("You can keep watching after going broke.",(1115,675),self.small,MUTED,True)
@@ -377,24 +484,28 @@ class PartyView:
 
     def draw_roulette(self, table):
         m=table.message; self.appearance.background(self.surface); self.buttons=[]
-        self.text("ROULETTE",(38,28),self.large,GOLD)
-        self.text(f"Round {m.get('round_number',1)}",(42,78),self.small,MUTED)
+        self.panel((24,22,700,82),(8,24,20,232),(147,169,160),1,14)
+        self.text("ROULETTE",(46,36),self.large,GOLD)
+        self.text(f"Round {m.get('round_number',1)}",(48,78),self.small,MUTED)
         phase=m.get('phase'); seconds=m.get('seconds_left')
         status = f"BETTING • {seconds}s" if phase=='betting' else "WHEEL SPINNING" if phase=='spinning' else "RESULT" if phase=='result' else "TABLE FINISHED"
-        self.text(status,(683,56),self.font,GOLD,True)
+        self.panel((475,42,225,42),(16,35,29,230),GOLD,1,12)
+        self.text(status,(587,63),self.small,GOLD,True)
+        self.draw_chat_button(table)
         self.draw_roulette_wheel(m)
 
-        # Player strips.
+        # Player strips now use the same portrait-first hierarchy as the poker tables.
         seats=m.get('seats',[]); stacks=m.get('stacks',[0]*4); nets=m.get('last_net',[0]*4)
         for i,row in enumerate(seats):
             x=55+i*255
-            self.panel((x,112,232,58),(12,31,26,225),GOLD if i==m.get('your_seat') else (125,148,138),2 if i==m.get('your_seat') else 1)
-            pygame.draw.circle(self.surface, ROULETTE_PLAYER_COLORS[i], (x+15, 132), 6)
-            pygame.draw.circle(self.surface, WHITE, (x+15, 132), 6, 1)
-            self.text(row.get('name','Open')[:14],(x+27,121),self.small)
+            self.panel((x,112,232,72),(12,31,26,225),GOLD if i==m.get('your_seat') else (125,148,138),2 if i==m.get('your_seat') else 1)
+            self.avatar(table,i,pygame.Rect(x+10,119,48,48))
+            pygame.draw.circle(self.surface, ROULETTE_PLAYER_COLORS[i], (x+62, 124), 6)
+            pygame.draw.circle(self.surface, WHITE, (x+62, 124), 6, 1)
+            self.text(row.get('name','Open')[:14],(x+70,120),self.small)
             detail=f"${stacks[i]:,}"+(f"  ({nets[i]:+d})" if phase=='result' and nets[i] else '')
             if row.get('spectator'):detail+=' • Spectating'
-            self.text(detail,(x+12,146),self.small,MUTED)
+            self.text(detail,(x+70,148),self.small,MUTED)
 
         # American board: 0 / 00 plus 1-36, visually close to the base roulette table.
         board=pygame.Rect(62,205,820,390); self.panel(board,(16,22,20,235),(225,230,225),2,4)
@@ -459,9 +570,20 @@ class PartyView:
             self.draw_roulette(table)
         else:
             self.appearance.background(self.surface); self.text("Waiting for game state...",(683,330),self.large,GOLD,True)
+        if table.mode in ('blind_mans_bluff','roulette'):
+            self.draw_chat_overlay(table)
         self.leave_toast.draw(self.surface, self.small)
 
     def event(self, event, mouse, table):
+        if table.mode in ('blind_mans_bluff','roulette') and self.chat_open:
+            # Escape closes the chat layer before the global multiplayer loop
+            # gets a chance to interpret it as "leave room".
+            if event.type==pygame.KEYDOWN and event.key==pygame.K_ESCAPE and not self.chat.editing:
+                self.chat_open=False;self.chat.close();return True
+            input_rect,send_rect=self._chat_rects()
+            if self.chat.event(event,mouse,table,input_rect,send_rect):return True
+            if event.type==pygame.MOUSEBUTTONDOWN and event.button==1 and not self._chat_panel_rect().collidepoint(mouse):
+                self.chat_open=False;self.chat.close();return True
         if event.type != pygame.MOUSEBUTTONDOWN or event.button != 1:
             return False
         m=table.message
@@ -469,6 +591,11 @@ class PartyView:
             for rect,action in self.buttons:
                 if rect.collidepoint(mouse): return self.lobby_event(table,action)
             return False
+        for rect,action in self.buttons:
+            if rect.collidepoint(mouse) and action=='chat_toggle':
+                self.chat_open=not self.chat_open
+                if not self.chat_open:self.chat.close()
+                return True
         if table.mode=='score_four':
             if self.score_event(table,mouse): return True
             for rect,action in self.buttons:

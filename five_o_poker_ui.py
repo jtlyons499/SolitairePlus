@@ -379,3 +379,31 @@ def draw_five_o_poker(surface, mouse_pos, game, player_name, draw_submenu_backgr
             _draw_button(surface, FAST_RECT, "Column reveal: " + ("Fast" if game.fast_reveal else "Readable"), mouse_pos, font)
             _draw_button(surface, SOUND_RECT, "Column sounds: " + ("On" if game.sounds_enabled else "Off"), mouse_pos, font)
             _draw_button(surface, CLOSE_RECT, "DONE", mouse_pos, font)
+
+# === POKER CAREER POLISH BATCH: Hold'em-style table polish / Quick Chat ===
+from poker_variant_quick_chat import controller_for as _variant_qc_controller_for
+_five_o_variant_qc = _variant_qc_controller_for("five_o_poker")
+_five_o_draw_base = draw_five_o_poker
+_five_o_action_base = get_five_o_action
+_FIVE_O_CHAT_ANCHOR = pygame.Rect(758, 10, 320, 50)
+
+
+def draw_five_o_poker(*args, **kwargs):
+    result = _five_o_draw_base(*args, **kwargs)
+    surface = args[0] if len(args) > 0 else kwargs.get("surface")
+    mouse_pos = args[1] if len(args) > 1 else kwargs.get("mouse_pos")
+    game = args[2] if len(args) > 2 else kwargs.get("game")
+    if surface is not None and game is not None and not getattr(game, "options_open", False):
+        _five_o_variant_qc.draw_status_ribbon(surface, game, pygame.Rect(515, 68, 336, 34))
+        _five_o_variant_qc.draw(
+            surface, mouse_pos, game, _FIVE_O_CHAT_ANCHOR, post_message=None, five_o=True,
+            history_rect=pygame.Rect(24, 618, 312, 38),
+        )
+    return result
+
+
+def get_five_o_action(mouse_pos, game):
+    _five_o_variant_qc.bind(game)
+    if _five_o_variant_qc.handle_click(mouse_pos, post_message=None):
+        return "ui_click"
+    return _five_o_action_base(mouse_pos, game)

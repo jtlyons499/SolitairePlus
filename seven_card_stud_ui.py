@@ -2488,3 +2488,29 @@ def draw_seven_card_stud(
 
     draw_action_panel(surface, mouse_pos, game, next_hand_seconds=next_hand_seconds)
 
+
+# === POKER CAREER POLISH BATCH: shared Quick Chat / status ribbon ===
+from poker_variant_quick_chat import controller_for as _variant_qc_controller_for
+_stud_variant_qc = _variant_qc_controller_for("seven_card_stud")
+_stud_draw_base = draw_seven_card_stud
+_stud_panel_click_base = handle_seven_card_stud_panel_click
+
+
+def draw_seven_card_stud(*args, **kwargs):
+    result = _stud_draw_base(*args, **kwargs)
+    surface = args[0] if len(args) > 0 else kwargs.get("surface")
+    mouse_pos = args[1] if len(args) > 1 else kwargs.get("mouse_pos")
+    game = args[2] if len(args) > 2 else kwargs.get("game")
+    if surface is not None and game is not None:
+        _stud_variant_qc.draw(surface, mouse_pos, game, STUD_LOG_RECT, add_seven_card_stud_chat_message)
+        _stud_variant_qc.draw_status_ribbon(surface, game)
+    return result
+
+
+def handle_seven_card_stud_panel_click(mouse_pos):
+    global _stud_active_tab, _stud_chat_unread
+    if _stud_variant_qc.handle_click(mouse_pos, add_seven_card_stud_chat_message):
+        _stud_active_tab = "chat"
+        _stud_chat_unread = False
+        return True
+    return _stud_panel_click_base(mouse_pos)

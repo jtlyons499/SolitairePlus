@@ -39,7 +39,7 @@ class RoomAuthority:
         self.names=[host_name]+[n['name'] for n in self.npcs]
         self.humans={0:0};self.connections={0:host_name};self.waiting=[];self.departed=set()
         self.game=None;self.revision=0;self.ready=set();self.due=0;self.starting_stack=5000;self.new_seats=set()
-        self.chips_added=0;self.table_notices=[];self.sit_out=set();self.resume_at=None;self.completed_hand=0;self.next_hand_seconds=6;self.table_speed=ui.holdem_table_speed
+        self.chips_added=0;self.table_notices=[];self.sit_out=set();self.pending_buybacks=set();self.resume_at=None;self.completed_hand=0;self.next_hand_seconds=6;self.table_speed=ui.holdem_table_speed
     def join(self, identity, name):
         if identity in self.connections:return
         self.connections[identity]=name
@@ -58,7 +58,7 @@ class RoomAuthority:
             self.new_seats.add(seat)
         return True
     def leave(self, identity):
-        self.connections.pop(identity,None);self.sit_out.discard(identity)
+        self.connections.pop(identity,None);self.sit_out.discard(identity);self.pending_buybacks.discard(identity)
         self.waiting=[pair for pair in self.waiting if pair[0]!=identity]
         if identity in self.humans:self.departed.add(identity)
         self.ready.discard(identity);self.revision+=1
@@ -111,6 +111,7 @@ class RoomAuthority:
         message.update(base);message['ready_count']=len(self.ready&self.required());message['ready_total']=len(self.required());message['you_ready']=identity in self.ready
         message['physical_seat']=self.humans[identity]
         message['sit_out']=identity in self.sit_out
+        message['buyback_pending']=identity in self.pending_buybacks
         message['resting_seats']=sorted(self.game.sitting_out)
         message['table_speed']=self.table_speed
         message['next_hand_seconds']=self.next_hand_seconds
@@ -125,15 +126,20 @@ class RoomAuthority:
             self.table_notices.append(f'{self.names[self.humans[identity]]} {text}.');self.revision+=1
             return True
         if action=='buyback':
-            if not self.game or identity not in self.humans:return False
+            if not self.game or identity not in self.humans or identity in self.pending_buybacks:return False
             seat=self.humans[identity]
-            if not self.game.hand_complete and seat in self.game.hand_seat_indexes:return False
             stack=self.game.player_stack if seat==0 else self.game.npc_stacks[seat-1]
             if stack>0:return False
-            if seat==0:self.game.player_stack=self.starting_stack;self.game.player_busted=False
-            else:self.game.npc_stacks[seat-1]=self.starting_stack;self.game.npc_busted[seat-1]=False
-            self.chips_added+=self.starting_stack;self.ready.discard(identity);self.revision+=1
-            self.table_notices.append(f'{self.names[seat]} bought back in for ${self.starting_stack:,}.')
+            self.ready.discard(identity)
+            if not self.game.hand_complete:
+                # A rebuy during an active hand is only a reservation. Restoring
+                # chips now can make a busted seat visible to live-seat logic and
+                # accidentally drop it into the current hand.
+                self.pending_buybacks.add(identity);self.revision+=1
+                self.table_notices.append(f'{self.names[seat]} bought back for ${self.starting_stack:,} and will rejoin next hand.')
+                return True
+            self._apply_buyback(identity)
+            self.revision+=1
             return True
         if action=='next_hand':
             if not self.game or not self.game.hand_complete:return False
@@ -162,10 +168,28 @@ class RoomAuthority:
             if not g.hand_complete and (seat or action=='fold'):g.advance_to_next_actor()
             self.revision+=1;self.due=0
         return ok
+    def _apply_buyback(self,identity):
+        if not self.game or identity not in self.humans:return False
+        seat=self.humans[identity]
+        stack=self.game.player_stack if seat==0 else self.game.npc_stacks[seat-1]
+        if stack>0:
+            self.pending_buybacks.discard(identity);return False
+        if seat==0:self.game.player_stack=self.starting_stack;self.game.player_busted=False
+        else:self.game.npc_stacks[seat-1]=self.starting_stack;self.game.npc_busted[seat-1]=False
+        self.pending_buybacks.discard(identity);self.chips_added+=self.starting_stack
+        self.table_notices.append(f'{self.names[seat]} returns with ${self.starting_stack:,}.')
+        return True
+    def apply_pending_buybacks(self):
+        changed=False
+        for identity in list(self.pending_buybacks):
+            if identity in self.connections:changed=self._apply_buyback(identity) or changed
+            else:self.pending_buybacks.discard(identity)
+        return changed
     def next_if_ready(self):
         if self.game and self.game.hand_complete and self.required()<=self.ready:
             self.replace_busted_npcs()
             self.boundary()
+            self.apply_pending_buybacks()
             if sum(s>0 for s in [self.game.player_stack,*self.game.npc_stacks])>1:
                 self.game.sitting_out={self.humans[i] for i in self.sit_out if i in self.humans}
                 if len(self.game.get_live_player_indexes())<2:return

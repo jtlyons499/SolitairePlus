@@ -38,6 +38,9 @@ class BlindMansBluffGame:
 
     def start_session(self, npcs, starting_stack):
         self.npcs = list(npcs or [])[:3]
+        self.quick_chat_state = None
+        self._quick_chat_event_counter = 0
+        self._quick_chat_event_signature = None
         self.starting_stack = max(0, int(starting_stack))
         self.player_stack = self.starting_stack
         self.npc_stacks = [self.starting_stack for _ in self.npcs]
@@ -232,6 +235,12 @@ class BlindMansBluffGame:
             "maximum_raise_to": stack + self.round_bets[seat],
         }
         context.update(self._grudge_context(seat))
+        from poker_quick_chat import get_npc_quick_chat_context
+        from poker_quick_chat_adapter import adapt_quick_chat_game
+        context.update(get_npc_quick_chat_context(
+            adapt_quick_chat_game(self, "blind_mans_bluff"),
+            seat - 1,
+        ))
         return context
 
     def _npc_take_turn(self, seat):

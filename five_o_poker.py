@@ -103,6 +103,9 @@ class FiveOPokerGame:
     def start_session(self, npc, starting_stack):
         self.personality_memory.clear()
         self.last_npc_chat = ""
+        self.quick_chat_state = None
+        self._quick_chat_event_counter = 0
+        self._quick_chat_event_signature = None
         self.npc = npc or {"name": "Opponent", "skill_tier": "mid"}
         self.starting_stack = max(0, int(starting_stack))
         self.player_stack = self.starting_stack
@@ -503,6 +506,12 @@ class FiveOPokerGame:
             "minimum_open_bet": self.get_effective_bet_unit(),
             "maximum_open_bet": self.get_effective_bet_unit(),
         }
+        # Share the same short-lived conversational effects used by Hold'em,
+        # Draw and Stud without duplicating any dialogue in this module.
+        from poker_quick_chat import get_npc_quick_chat_context
+        from poker_quick_chat_adapter import adapt_quick_chat_game
+        context.update(get_npc_quick_chat_context(adapt_quick_chat_game(self, "five_o_poker"), 0))
+
         grudge = self.personality_memory.intensity(npc_identity(self.npc, 1), "player",
                                                    self.hand_number, get_npc_traits(self.npc)["bitterness"])
         context.update(grudge_pressure=grudge if facing_bet else 0.0,

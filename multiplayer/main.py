@@ -68,6 +68,7 @@ def main():
             sounds[key].play()
 
     room_view.presentation.sound = sound
+    party_view.sound = sound
 
     leave_rect = pygame.Rect(1130, 15, 210, 40)
     options_rect = pygame.Rect(1000, 15, 120, 40)
@@ -122,11 +123,18 @@ def main():
                 continue
 
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                if table is not None:
-                    close_table()
-                else:
-                    options.open = True; pygame.key.stop_text_input()
-                continue
+                text_entry = bool(
+                    table is not None and (
+                        (table.mode == "holdem" and room_view.is_text_entry_active())
+                        or (table.mode in ("blind_mans_bluff", "roulette") and party_view.is_text_entry_active())
+                    )
+                )
+                if not text_entry:
+                    if table is not None:
+                        close_table()
+                    else:
+                        options.open = True; pygame.key.stop_text_input()
+                    continue
 
             # ----------------------------------------------------------
             # Main multiplayer hub
@@ -184,7 +192,9 @@ def main():
                 continue
 
             if table.mode != "holdem":
-                if party_view.event(event, mouse, table): sound("button_click")
+                if party_view.event(event, mouse, table):
+                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        sound("button_click")
                 continue
 
             # ----------------------------------------------------------
@@ -214,6 +224,7 @@ def main():
             if table.mode == "holdem":
                 room_view.draw(table, mouse)
             elif table.mode in ("score_four", "blind_mans_bluff", "roulette"):
+                party_view.sync_sfx(table)
                 party_view.draw(table, mouse)
             else:
                 appearance.background(canvas)
