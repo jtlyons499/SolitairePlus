@@ -856,7 +856,7 @@ except (pygame.error, OSError):
 # GAME STATES // CONSTANTS // CAREER CONSTANTS // CAREER STATES // BUILD VERSION
 # ========================================================================================
 
-BUILD_VERSION = "0.0.5-dantest"
+BUILD_VERSION = "0.0.6"
 
 STATE_SPLASH = "splash"
 STATE_MENU = "menu"
