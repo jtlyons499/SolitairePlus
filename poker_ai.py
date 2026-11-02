@@ -871,6 +871,9 @@ def decide_poker_action(personality, context, rng=None):
     enriched = strategic_context(context)
     decision = _decide_trait_action(personality, enriched, rng)
     decision["strategy"] = dict(enriched["advanced_strategy"])
+    # Diagnostic-only metadata used by debug tools and future UI tuning.
+    decision["wealth_pressure"] = _clamp(float(enriched.get("wealth_pressure", 0.0)))
+    decision["wealth_ratio"] = max(0.0, float(enriched.get("wealth_ratio", 1.0)))
     return decision
 
 
@@ -903,6 +906,103 @@ def _decide_trait_action(
         profile["raise_threshold"] = _clamp(profile["raise_threshold"] + strategy["raise_threshold_delta"], .20, .92)
         profile["trap_chance"] = _clamp(profile["trap_chance"] + strategy["trap_delta"], 0, .35)
     t = profile["trait_units"]
+
+    # Hold'em can supply a session-wealth signal when an NPC has built a
+    # meaningfully larger stack than the table buy-in. Wealth never replaces
+    # hand strength: it only makes personalities that already like pressure
+    # a little more willing to use their chip advantage. Selective players
+    # primarily use the boost for value, while loose/aggressive players also
+    # gain a small bluffing bump. Other poker variants omit this context value
+    # and therefore retain their existing behavior.
+    wealth_pressure = _clamp(float(context.get("wealth_pressure", 0.0)))
+    wealth_boldness = wealth_pressure * _clamp(
+        0.08
+        + 0.62 * t["aggressiveness"]
+        + 0.20 * t["escalation"]
+        + 0.08 * t["unpredictability"]
+        - 0.38 * t["caution"],
+        0.04,
+        1.0
+    )
+    wealth_recklessness = wealth_boldness * (1.0 - 0.72 * t["selectivity"])
+
+    if wealth_boldness > 0.0:
+        profile["open_base"] = _clamp(
+            profile["open_base"] + 0.11 * wealth_boldness,
+            0.005,
+            0.80
+        )
+        profile["raise_chance"] = _clamp(
+            profile["raise_chance"] + 0.20 * wealth_boldness,
+            0.02,
+            0.95
+        )
+        profile["raise_threshold"] = _clamp(
+            profile["raise_threshold"] - 0.08 * wealth_boldness,
+            0.20,
+            0.92
+        )
+        profile["call_margin"] -= 0.045 * wealth_boldness
+        profile["bet_min"] = _clamp(
+            profile["bet_min"] * (1.0 + 0.18 * wealth_boldness),
+            0.10,
+            1.10
+        )
+        profile["bet_max"] = _clamp(
+            profile["bet_max"] * (1.0 + 0.32 * wealth_boldness),
+            0.25,
+            1.55
+        )
+        profile["bluff_chance"] = _clamp(
+            profile["bluff_chance"] + 0.065 * wealth_recklessness,
+            0.005,
+            0.34
+        )
+
+    # Player quick-chat can temporarily tilt, calm, or make an NPC skeptical.
+    # These are intentionally small session-local deltas supplied only by
+    # Hold'em; other poker variants keep their existing behavior.
+    quick_chat_aggression = max(
+        -0.12,
+        min(0.22, float(context.get("quick_chat_aggression", 0.0)))
+    )
+    quick_chat_bluff_delta = max(
+        -0.06,
+        min(0.08, float(context.get("quick_chat_bluff_delta", 0.0)))
+    )
+    if quick_chat_aggression:
+        profile["open_base"] = _clamp(
+            profile["open_base"] + 0.65 * quick_chat_aggression,
+            0.005,
+            0.82
+        )
+        profile["raise_chance"] = _clamp(
+            profile["raise_chance"] + quick_chat_aggression,
+            0.02,
+            0.96
+        )
+        profile["raise_threshold"] = _clamp(
+            profile["raise_threshold"] - 0.28 * quick_chat_aggression,
+            0.20,
+            0.92
+        )
+        profile["bet_min"] = _clamp(
+            profile["bet_min"] * (1.0 + 0.50 * quick_chat_aggression),
+            0.10,
+            1.15
+        )
+        profile["bet_max"] = _clamp(
+            profile["bet_max"] * (1.0 + 0.70 * quick_chat_aggression),
+            0.25,
+            1.60
+        )
+    if quick_chat_bluff_delta:
+        profile["bluff_chance"] = _clamp(
+            profile["bluff_chance"] + quick_chat_bluff_delta,
+            0.005,
+            0.38
+        )
+
     grudge = float(context.get("grudge_pressure", 0.0)) * t["bitterness"]
     survival_risk = max(0.0, min(1.0, context.get("amount_to_call", 0)
                         / max(1, context.get("stack", 1))))
@@ -1218,6 +1318,10 @@ def _decide_trait_action(
 
     required_strength -= position_call_bonus
     required_strength += strategy.get("call_requirement_delta", 0)
+    required_strength += max(
+        -0.10,
+        min(0.10, float(context.get("quick_chat_call_requirement_delta", 0.0)))
+    )
     required_strength += 0.19*pessimism + 0.28*survival
     required_strength -= 0.20*grudge
 

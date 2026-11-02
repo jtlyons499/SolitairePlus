@@ -33,7 +33,7 @@ class RelayServer:
                 if len(self.rooms) >= 500:
                     raise ValueError('Relay is full')
                 while True:
-                    code = ''.join(secrets.choice('ABCDEFGHJKLMNPQRSTUVWXYZ23456789') for _ in range(8))
+                    code = f'{secrets.randbelow(100000):05d}'
                     if code not in self.rooms:
                         break
                 room = {'host': writer, 'guest': None}

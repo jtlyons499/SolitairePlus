@@ -1,6 +1,7 @@
 import random
 from npc_personality import get_npc_traits, PokerGrudgeMemory, npc_identity
 from poker_strategy import PokerTableReads
+from poker_quick_chat import get_npc_quick_chat_context, reset_holdem_quick_chat
 from collections import Counter
 from itertools import combinations
 
@@ -379,6 +380,7 @@ class TexasHoldemGame:
         self.player_model.reset()
         self.table_reads.clear()
         self.personality_memory.clear()
+        reset_holdem_quick_chat(self)
         self.hand_seat_indexes = []
 
         # ==================================================
@@ -2702,6 +2704,13 @@ class TexasHoldemGame:
         }
         context["personality_traits"] = get_npc_traits(self.npcs[npc_index])
         context["starting_stack"] = self.starting_stack
+        context["wealth_ratio"] = (
+            stack / max(1, self.starting_stack)
+        )
+        context["wealth_pressure"] = self.get_npc_wealth_pressure(
+            npc_index
+        )
+        context.update(get_npc_quick_chat_context(self, npc_index))
         context["hand_number"] = self.hand_number
         context["npc_identity"] = npc_identity(self.npcs[npc_index], npc_index + 1)
         context["opponent_reads"] = [
@@ -3032,6 +3041,34 @@ class TexasHoldemGame:
     # entire stack too early in the hand.
     # ==================================================
 
+    def get_npc_wealth_pressure(
+            self,
+            npc_index
+    ):
+        """Return 0..1 pressure from a stack that has grown beyond the buy-in.
+
+        A small run-good bump should not rewrite a personality, so the effect
+        begins only after the NPC is at least 15% above the starting stack and
+        reaches full strength around 2.5x the original buy-in.
+        """
+        if not (0 <= npc_index < len(self.npc_stacks)):
+            return 0.0
+
+        starting_stack = max(1, int(self.starting_stack or 0))
+        stack = max(0, int(self.npc_stacks[npc_index]))
+        wealth_ratio = stack / starting_stack
+
+        if wealth_ratio <= 1.15:
+            return 0.0
+
+        return max(
+            0.0,
+            min(
+                1.0,
+                (wealth_ratio - 1.15) / 1.35
+            )
+        )
+
     def get_npc_stage_bet_cap(
             self,
             npc_index
@@ -3053,6 +3090,19 @@ class TexasHoldemGame:
             self.current_stage,
             0.25
         )
+
+        # Wealthy stacks are allowed to exert more pressure on early/middle
+        # streets. The personality AI still decides whether to use this extra
+        # room; this merely prevents the old fixed buy-in cap from making a
+        # huge chip leader bet exactly like a fresh stack.
+        wealth_pressure = self.get_npc_wealth_pressure(npc_index)
+        stage_wealth_boost = {
+            "preflop": 0.70,
+            "flop": 0.85,
+            "turn": 0.65,
+            "river": 0.50,
+        }.get(self.current_stage, 0.45)
+        fraction *= 1.0 + wealth_pressure * stage_wealth_boost
 
         base_stack = max(
             1,

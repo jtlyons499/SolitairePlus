@@ -6,15 +6,16 @@ from lan_protocol import ClientGame
 from lan_session import clean_name
 from relay_transport import RelayPeer
 from room_table import RoomAuthority
+from party_authority import make_party_authority
 
 class RoomTable:
-    def __init__(self,name,hosting,address,code='',profile=None):
+    def __init__(self,name,hosting,address,code='',profile=None,mode='holdem'):
         if profile:profile.data['name']=clean_name(name)
         self.profile=profile;self.public_profiles={};self.session_id=str(uuid.uuid4());self.reward_hand=0;self.participants={};self.awards={};self.profile_sent=False;self.public_log=[];self.log_hand=0;self.log_actions=[];self.log_stage=None;self.notices_seen=0;self.last_payout=None;self.payout_history=[]
         if profile:self.public_profiles[0]=profile.public() if hosting else {}
-        self.name=clean_name(name);self.hosting=hosting;self.identity=0 if hosting else None
+        self.name=clean_name(name);self.hosting=hosting;self.identity=0 if hosting else None;self.mode=mode if hosting else None
         self.peer=RelayPeer(hosting,address,self.name,code,version=2)
-        self.authority=RoomAuthority(self.name) if hosting else None
+        self.authority=(RoomAuthority(self.name) if mode in (None,'holdem') else make_party_authority(mode,self.name)) if hosting else None
         self.game=ClientGame();self.message={'type':'connecting'};self.status='Connecting to relay…';self.failed=False;self.last_sent=-1;self.pending=False
     @property
     def code(self):return self.peer.code
@@ -33,7 +34,7 @@ class RoomTable:
                 self.authority.join(m['identity'],clean_name(m['name']));self.last_sent=-1
                 for owner,value in self.public_profiles.items():self.send_profile(owner,value,[m['identity']])
             elif kind=='peer_left' and self.hosting:self.authority.leave(m['identity']);self.last_sent=-1
-            elif kind in ('lobby','state','waiting') and not self.hosting:self.apply(m)
+            elif kind in ('lobby','state','waiting','party_state') and not self.hosting:self.apply(m)
             elif kind=='action' and self.hosting:
                 who=m.get('sender')
                 if m.get('action')=='profile':
@@ -62,11 +63,15 @@ class RoomTable:
                 if sent:self.last_sent=self.authority.revision
     def apply(self,m):
         self.message=m;self.pending=False
-        if self.profile:
+        announced=m.get('mode')
+        if announced:
+            self.mode=announced
+        if self.mode in (None,'holdem') and self.profile:
             previous=self.profile.data['xp']
             for award in m.get('xp_awards',[]):self.profile.award(award)
             if previous!=self.profile.data['xp']:self.refresh_profile()
-        if m['type']=='state':
+        if m['type']=='state' and self.mode in (None,'holdem'):
+            self.mode='holdem'
             self.game.apply(m)
             if self.game.hand_complete:
                 import copy
@@ -76,7 +81,15 @@ class RoomTable:
                 if not self.payout_history or self.payout_history[-1].hand_number!=self.game.hand_number:
                     self.payout_history.append(self.last_payout);self.payout_history=self.payout_history[-30:]
             self.status='Your turn' if self.game.current_actor==0 else 'Waiting for other seats'
-        elif m['type']=='lobby':self.status='Host selects NPCs and starts the table'
+        elif m['type']=='lobby':
+            self.status='Host configures the room and starts the game'
+        elif m['type']=='party_state':
+            phase=m.get('phase','')
+            self.status={
+                'round':'Race to 24', 'round_result':'Round complete', 'match_result':'Match complete',
+                'betting':'Place your bets' if self.mode=='roulette' else 'Betting',
+                'spinning':'Wheel spinning', 'result':'Round complete', 'finished':'Table finished',
+            }.get(phase, 'Multiplayer game')
         else:self.status=m.get('text','Waiting for next hand')
     def act(self,action,amount=0):
         if self.failed or self.pending:return False
@@ -103,6 +116,7 @@ class RoomTable:
             self.peer.send({'type':'action','action':'profile','profile':self.profile.public()})
 
     def collect_awards(self):
+        if self.mode not in (None,'holdem') or self.authority is None:return
         g=self.authority.game
         if not g:return
         if getattr(self,'tracked_hand',None)!=g.hand_number:
@@ -115,10 +129,17 @@ class RoomTable:
         self.last_sent=-1
 
     def view(self,identity):
+        if self.mode not in (None,'holdem'):
+            message=self.authority.view(identity)
+            message['mode']=self.mode
+            for owner,seat in self.authority.humans.items():
+                if 0<=seat<len(message.get('seats',[])):message['seats'][seat]['identity']=owner
+            return message
         for notice in self.authority.table_notices[self.notices_seen:]:self.public_log.append(notice)
         self.notices_seen=len(self.authority.table_notices)
         self.collect_log()
         message=self.authority.view(identity)
+        message['mode']='holdem'
         message['public_log']=self.public_log[-100:]
         message['chips_added']=self.authority.chips_added
         message['xp_awards']=self.awards.get(identity,[])
@@ -126,6 +147,7 @@ class RoomTable:
         return message
 
     def collect_log(self):
+        if self.mode not in (None,'holdem') or self.authority is None:return
         g=self.authority.game
         if not g:return
         if self.log_hand!=g.hand_number:

@@ -54,8 +54,9 @@ class Options:
         button('−',(700,383,100,40),('volume',-25));button('+',(815,383,100,40),('volume',25))
         button('Animation '+('On' if self.values['animations'] else 'Off'),(365,448,180,40),('toggle','animations'))
         for i,speed in enumerate(('slow','normal','fast')):button(speed.title()+(' *' if self.values['motion']==speed else ''),(560+i*145,448,135,40),('motion',speed))
-        host=table is None or not hasattr(table,'hosting') or table.hosting
-        text('Table pace (host controls the room)',365,510)
+        holdem_context=table is None or getattr(table,'mode','holdem') in (None,'holdem')
+        host=holdem_context and (table is None or not hasattr(table,'hosting') or table.hosting)
+        text("Hold'em table pace (host controls the room)",365,510)
         current=getattr(table,'message',{}).get('table_speed',self.values['speed'])
         for i,speed in enumerate(('slow','normal','fast')):button(speed.title()+(' [On]' if current==speed else ''),(365+i*210,553,195,40),('speed',speed),host)
 
@@ -71,7 +72,8 @@ class Options:
                 elif action[0]=='volume':self.values['volume']=max(0,min(100,self.values['volume']+action[1]))
                 elif action[0]=='speed':
                     self.values['speed']=action[1];ui.holdem_table_speed=action[1]
-                    if getattr(table,'hosting',False) and getattr(table,'authority',None):table.authority.set_speed(action[1])
+                    authority=getattr(table,'authority',None)
+                    if getattr(table,'hosting',False) and authority is not None and hasattr(authority,'set_speed'):authority.set_speed(action[1])
                 elif action[0]=='motion':self.values['motion']=action[1]
                 self.save();break
         return resize

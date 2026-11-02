@@ -201,7 +201,7 @@ class RoomView:
         else:
             active=g.current_actor==0 and g.actor_needs_action(0) and not table.pending
             if active:
-                turn_rect=pygame.Rect(920,575,420,30)
+                turn_rect=pygame.Rect(920,530,420,30)
                 layer=pygame.Surface(turn_rect.size,pygame.SRCALPHA);layer.fill((125,91,18,225));s.blit(layer,turn_rect)
                 pygame.draw.rect(s,(242,202,79),turn_rect,2,border_radius=8)
                 turn=self.small.render('YOUR TURN',True,(255,248,218));s.blit(turn,turn.get_rect(center=turn_rect.center))

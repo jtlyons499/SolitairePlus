@@ -926,7 +926,7 @@ class DeadMansHandPvPMode:
             elif self.join_rect.collidepoint(mouse) and self.code.strip(): self._start(False)
         if event.type == pygame.TEXTINPUT:
             if self.focus == "relay": self.relay_address = (self.relay_address + event.text)[:128]
-            else: self.code = (self.code + event.text.upper())[:8]
+            else: self.code = (self.code + event.text.upper())[:5]
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_BACKSPACE:
             if self.focus == "relay": self.relay_address = self.relay_address[:-1]
             else: self.code = self.code[:-1]

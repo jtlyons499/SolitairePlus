@@ -118,30 +118,40 @@ def _poker_standings_deltas(starting_ratings, stacks, hands):
 
 
 def _player_poker_rating_request(raw_standings_delta, final_stack, starting_stack):
-    """Blend bankroll ROI with a smaller table-position/rating signal.
+    """Blend bankroll ROI with a deliberately small table-position signal.
+
+    Poker Career rating is primarily about what the player actually did with
+    their buy-in.  Final table position still matters, especially when the
+    field is strong, but it should never turn a responsible cash-out into a
+    giant rating loss.
 
     Tuning goals:
-    - exact break-even is constrained to roughly +/-5 points;
-    - small losses stay small (about -10 at -5% and -14 at -10%);
+    - exact break-even is constrained to roughly +/-3 points;
+    - small losses stay small (about -4 at -5% and -8 at -10%);
     - a profitable completed session never produces a negative rating change;
-    - even a bust is capped at about -60 points.
-
-    The smooth ROI cap also prevents a tiny profit from receiving a huge reward
-    merely because the player happened to finish above much lower-rated rivals.
+    - even a complete bust is capped at about -50 points;
+    - table standings are a secondary modifier, not the main result.
     """
     starting_stack = max(1, int(starting_stack))
     roi = (float(final_stack) - starting_stack) / starting_stack
     bounded_roi = max(-1.0, min(1.0, roi))
 
-    financial_delta = 52.0 * math.tanh(1.5 * bounded_roi)
-    blended = financial_delta + 0.35 * float(raw_standings_delta)
+    # ROI is the dominant signal.  The tanh curve keeps very large wins/losses
+    # from exploding rating movement while remaining sensitive near break-even.
+    financial_delta = 48.0 * math.tanh(1.35 * bounded_roi)
+    blended = financial_delta + 0.22 * float(raw_standings_delta)
 
     magnitude = min(1.0, abs(roi))
-    movement_cap = 5.0 + 55.0 * (magnitude ** 0.8)
+    movement_cap = 3.0 + 47.0 * (magnitude ** 0.8)
     requested = max(-movement_cap, min(movement_cap, blended))
 
+    # Cashing out ahead is always at least a small positive result.  A session
+    # that returns exactly the starting stack can only move a few points either
+    # way, regardless of hand count or opponent ratings.
     if roi > 0:
         requested = max(1.0, requested)
+    elif roi == 0:
+        requested = max(-3.0, min(3.0, requested))
 
     return requested
 
@@ -195,7 +205,13 @@ def settle_poker_session(ratings, results, states, game_key, game):
     requested = _player_poker_rating_request(raw_deltas[0], stacks[0], starting_stack)
 
     actual = apply_rating_change(ratings, game_key, requested)
-    record_result(results, game_key, scores[0], actual)
+
+    # Career W/L bookkeeping follows the session's bankroll result.  A player
+    # who cashes out ahead should not be recorded as having lost the session
+    # merely because one or more NPCs ended with an even larger stack.
+    player_net = int(stacks[0]) - starting_stack
+    player_score = 1.0 if player_net > 0 else 0.0 if player_net < 0 else 0.5
+    record_result(results, game_key, player_score, actual)
 
     # Preserve NPC ordering/skill signal from the pairwise model while
     # compensating for the player's ROI guardrail.  This avoids gifting every
@@ -213,7 +229,7 @@ def settle_poker_session(ratings, results, states, game_key, game):
     # schemas.  UI-facing changes use the actual rounded reward, not the raw
     # requested amount.
     game.session_rating_change = actual
-    game.session_rating_net = int(stacks[0]) - starting_stack
+    game.session_rating_net = player_net
     game.session_rating_roi = game.session_rating_net / max(1, starting_stack)
 
     return actual
