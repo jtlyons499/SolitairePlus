@@ -35,6 +35,7 @@ Solitaire+ 0.0.6 - second pass
   - Lobby/room codes are shorter and apply to whichever game the host selected
   - LAN and Practice options removed
   - Game defaults to using the server running on Railway, no need to know an IP
+  - Blind Man's Bluff, Roulette, and Hold'em now have live chat for users to interact
 - Updated multiplayer Texas Hold'em to be current with the singeplayer version
   - Copied over more polished UI, improvements in AI behavior 
   - Clearer animations and card details
@@ -42,6 +43,9 @@ Solitaire+ 0.0.6 - second pass
 - Reworked how the poker rating is calculated in Career Mode
   - Increases/decreases are based more on the user's own change in money
   - More generous rating rewards for cash gains, less punishing for cash losses
+- Rating decline caused by age in NPCs is now much stronger, 
+- User now has a public appeal status based on recent trends in fan engagement
+- News now addresses major milestones in user's rating progression, oddity stories re-written
 - NPC decision making now accounts for having larger amounts of money in all poker games
   - NPCs may bet more, may raise instead of calling, call instead of backing down, etc.
   - Personality traits still control the degree to which this impacts NPCs
