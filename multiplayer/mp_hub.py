@@ -43,7 +43,7 @@ class MultiplayerHub:
         self.text(surface,f'Multiplayer Level {self.profile.level}',(209,427),self.small,(196,209,201),True)
         self.text(surface,f"{self.profile.data['xp']} XP  •  {self.profile.data['wins']} winning hands",(209,455),self.small,(196,209,201),True)
         self.button(surface,'EDIT PROFILE / AVATAR',(94,500,230,48),'profile',mouse)
-        self.text(surface,'Avatars now use the same layered', (209,575),self.small,(196,209,201),True)
+        self.text(surface,'Avatar editing follows the same', (209,575),self.small,(196,209,201),True)
         self.text(surface,'builder as single-player profiles.', (209,600),self.small,(196,209,201),True)
 
         # Game selector.

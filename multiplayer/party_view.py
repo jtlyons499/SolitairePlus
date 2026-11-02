@@ -369,7 +369,11 @@ class PartyView:
         if mouse is not None: self.mouse=mouse
         self.buttons=[]
         if table.failed:
-            self.appearance.background(self.surface); self.text("Connection ended",(683,330),self.large,GOLD,True); return
+            self.appearance.background(self.surface)
+            self.text("Connection ended", (683, 315), self.large, GOLD, True)
+            detail = str(getattr(table, "status", "Disconnected") or "Disconnected")[:100]
+            self.text(detail, (683, 360), self.small, MUTED, True)
+            return
         m=table.message
         if m.get('type') in ('connecting',):
             self.appearance.background(self.surface); self.text("Connecting to relay...",(683,330),self.large,GOLD,True); return

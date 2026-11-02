@@ -45,7 +45,7 @@ class ProfileScreen:
             (max(1, int(avatar.get_width() * scale)), max(1, int(avatar.get_height() * scale))),
         )
         surface.blit(preview, preview.get_rect(center=frame.center))
-        self.text(surface, "Same layered avatar builder as your single-player profile", (102, 528), self.small, (205, 216, 208))
+        self.text(surface, "Avatar Builder", (102, 528), self.small, (205, 216, 208))
 
     def draw(self, surface, table=None):
         self.appearance.background(surface)
