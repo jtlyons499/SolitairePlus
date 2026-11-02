@@ -1,6 +1,6 @@
 # Solitaire+
 
-A game about card games with progression, minigames, and aliens.
+A game about card games with progression, multiplayer, minigames, and aliens.
 
 ![](https://i.imgur.com/jR7gUMW.png)
 
