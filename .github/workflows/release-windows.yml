@@ -23,10 +23,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python 3.14
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.14"
           cache: pip
@@ -51,7 +51,7 @@ jobs:
       - name: Build with PyInstaller
         shell: pwsh
         run: |
-          python -m PyInstaller --clean --noconfirm --noupx "Simple Solitaire.spec"
+          python -m PyInstaller --clean --noconfirm "Simple Solitaire.spec"
 
       - name: Verify executable
         shell: pwsh
