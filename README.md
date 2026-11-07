@@ -1,23 +1,26 @@
 # Solitaire+
 
-A game about card games with progression, multiplayer, minigames, and aliens.
+A game about card games. Dynamic career progression, streamlined multiplayer, intelligent NPCs, minigames, and aliens.
 
 ![](https://i.imgur.com/jR7gUMW.png)
 
-## Play the game
+## Play the Game
 
 ### Windows
 
-**[Download the latest Windows release (v0.0.6)](https://github.com/jtlyons499/SolitairePlus/releases/latest/download/Solitaire-Windows.zip)**
+**[Download the latest Windows release (v0.0.6b)](https://github.com/jtlyons499/SolitairePlus/releases/latest/download/Solitaire-Windows.zip)**
 
 1. Download `Solitaire-Windows.zip`.
 2. Extract the ZIP to a folder.
 3. Double-click `Simple Solitaire.exe`.
 
 You do **not** need to install Python to use the packaged Windows release.
+Yes, Windows typically will request permission to run the game the very first time, but that's how .exe files work.
+
+This application has been verified Stuxnet free since September 2026.
 
 ## Latest changelog
-Solitaire+ 0.0.6 - second pass
+Solitaire+ 0.0.6b
 -------------------------------------------
 **MULTIPLAYER**
 -  Added three more games to multiplayer
@@ -39,7 +42,7 @@ Solitaire+ 0.0.6 - second pass
 - Updated multiplayer Texas Hold'em to be current with the singeplayer version
   - Copied over more polished UI, improvements in AI behavior 
   - Clearer animations and card details
-  - 
+    
 **SINGLEPLAYER**
 - Reworked how the poker rating is calculated in Career Mode
   - Increases/decreases are based more on the user's own change in money
@@ -54,7 +57,7 @@ Solitaire+ 0.0.6 - second pass
   - Depending on the context of the game, the user can select messages to send to NPCs
   - Responses are determined by the NPCs strongest personality traits with a mix of randomization
   - NPCs may shift their behavior based on the user's quick chats (e.g. bet more aggressively)
-  -  During a hand of poker...
+  - During a hand of poker...
     - How's it going?
     - I have a crush on...(select NPC)
     - I despise...(select NPC)
@@ -74,6 +77,7 @@ Press F10 to pull up the debug menu, which lets you select from some of the foll
 2. Trigger career modifications (simulate time, add reserve NPCs, etc.)
 3. Play solitaire challenge modes and all minigames
 4. Advance progression by adding cash / profile XP / level / rating / customization unlocks
+
 Press F9 during games of Solitaire to automatically win.
 
 ## Prioritized changes to come
@@ -84,6 +88,7 @@ Press F9 during games of Solitaire to automatically win.
   - Reduce stagnancy and repetition
   - Increase speed of battles
   - Improve gameplay flow and eliminate confusion
+ - Additional choose-your-own adventure story events in Career Mode
 
 ## Historic changelog
 v0.0.6 - first pass
