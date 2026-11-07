@@ -36,7 +36,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
-          python -m pip install pyinstaller
+          python -m pip install pyinstaller==6.22.3
 
       - name: Generate Windows version metadata
         shell: pwsh
@@ -51,7 +51,7 @@ jobs:
       - name: Build with PyInstaller
         shell: pwsh
         run: |
-          pyinstaller --clean --noconfirm "Simple Solitaire.spec"
+          python -m PyInstaller --clean --noconfirm --noupx "Simple Solitaire.spec"
 
       - name: Verify executable
         shell: pwsh
@@ -61,6 +61,31 @@ jobs:
             throw "Expected executable was not produced: $exe"
           }
           Get-Item $exe | Format-List Name, Length, LastWriteTime
+
+      # Preflight scan: detects threats *on this runner only*. It cannot
+      # guarantee that a consumer's current Defender cloud model agrees.
+      - name: Scan built executable with Microsoft Defender (if available)
+        shell: pwsh
+        run: |
+          $exe = (Resolve-Path -LiteralPath "dist\Simple Solitaire\Simple Solitaire.exe").Path
+          $status = Get-MpComputerStatus -ErrorAction SilentlyContinue
+          if ($null -eq $status -or -not $status.AMServiceEnabled -or -not $status.AntivirusEnabled) {
+            Write-Warning "Defender is unavailable on this runner. No antivirus scan was performed."
+          } else {
+            Write-Host "Defender enabled. Scanning $exe"
+            Start-MpScan -ScanType CustomScan -ScanPath $exe -ErrorAction Stop
+            if (-not (Test-Path -LiteralPath $exe)) {
+              throw "Defender removed or quarantined the executable. Stop publication."
+            }
+            $detected = @(Get-MpThreatDetection -ErrorAction SilentlyContinue | Where-Object {
+              @($_.Resources) | Where-Object { $_ -like "*$exe*" }
+            })
+            if ($detected.Count -gt 0) {
+              $detected | Format-List ThreatID, ThreatStatusID, Resources
+              throw "Defender flagged the generated executable. Stop publication."
+            }
+            Write-Host "No Defender detection reported by this runner's scan."
+          }
 
       - name: Create player-ready ZIP
         shell: pwsh
@@ -79,12 +104,17 @@ jobs:
           No separate Python installation is required.
           "@ | Set-Content -Path "release\Solitaire-Windows\PLAYING.txt" -Encoding UTF8
           Compress-Archive -Path "release\Solitaire-Windows\*" -DestinationPath "Solitaire-Windows.zip" -Force
+          $hash = (Get-FileHash -Algorithm SHA256 "Solitaire-Windows.zip").Hash.ToLowerInvariant()
+          "$hash  Solitaire-Windows.zip" | Set-Content -Path "Solitaire-Windows.zip.sha256" -Encoding ASCII
+          Write-Host "SHA256 of Windows ZIP: $hash"
 
       - name: Upload downloadable build artifact
         uses: actions/upload-artifact@v4
         with:
           name: Solitaire-Windows
-          path: Solitaire-Windows.zip
+          path: |
+            Solitaire-Windows.zip
+            Solitaire-Windows.zip.sha256
           if-no-files-found: error
           retention-days: 14
 
@@ -95,4 +125,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $tag = "${{ github.ref_name }}"
-          gh release create $tag "Solitaire-Windows.zip#Solitaire+ for Windows" --title "Solitaire+ $tag" --generate-notes
+          gh release create $tag "Solitaire-Windows.zip#Solitaire+ for Windows" "Solitaire-Windows.zip.sha256#SHA-256 checksum" --title "Solitaire+ $tag" --generate-notes
