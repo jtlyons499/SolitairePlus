@@ -101,6 +101,9 @@ def advance_career_day(
     if state.career_weekday_index >= 5:
         state.career_weekday_index = 0
 
+    # B18: the date changed, so the next roster check re-syncs the live NPCs.
+    state.career_roster_dirty = True
+
     # ==================================================
     # End of current 15-day calendar block
     # ==================================================

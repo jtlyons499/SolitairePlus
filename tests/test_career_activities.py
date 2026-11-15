@@ -1,5 +1,5 @@
 from tests.support import locate
-from solitaireplus.career.alien_night import new_alien_story, refresh_adventure_schedule
+from solitaireplus.career.alien_night import STORY as ALIEN_STORY, new_alien_story, refresh_adventure_schedule
 import ast
 import copy
 import json
@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 import pygame
 from solitaireplus.career.activities import (STORY,new_story,normalize_story,start_night,choose_option,
- requirement_reason,validate_story,add_story_catalogs,reconcile_story_cosmetics)
+ requirement_reason,validate_story,add_story_catalogs,reconcile_story_cosmetics,night_is_valid)
 from solitaireplus.career.activities_ui import CareerActivityScreen
 
 class BigfootTests(unittest.TestCase):
@@ -89,7 +89,8 @@ class BigfootTests(unittest.TestCase):
           unlocked_menu_backgrounds=set(),unlocked_felts=set(),unlocked_titles=set(),
           STATE_CAREER_ACTIVITY='story',STATE_CAREER_HUB='hub',auto_save_career=lambda:None,
           award_career_fans=lambda n,r:n,advance_career_day=lambda **kw:None)
-        locate.exec_functions(['start_career_activity','handle_career_activity'],scope);scope['start_career_activity']();scope['handle_career_activity'](('choice',0))
+        scope.update(night_is_valid=night_is_valid,ALIEN_STORY=ALIEN_STORY)
+        locate.exec_functions(['start_career_activity','handle_career_activity','current_career_activity','current_career_schedule_entry'],scope);scope['start_career_activity']();scope['handle_career_activity'](('choice',0))
         scope['handle_career_activity'](('choice',0));scope['start_career_activity']()
         self.assertEqual(scope['career_cash'],150)
         self.assertEqual(scope['career_bigfoot_story']['visits'],1)

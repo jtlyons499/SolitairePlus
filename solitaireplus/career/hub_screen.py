@@ -17,7 +17,7 @@ from solitaireplus.career.event_progress import restore_event_progress
 from solitaireplus.games.cryptid.collection import reward_battle
 from solitaireplus.profile import save_data
 from solitaireplus.career.events.press_interview import select_interview
-from solitaireplus.career.activities import start_night
+from solitaireplus.career.activities import night_is_valid, start_night
 from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
@@ -70,7 +70,8 @@ def get_current_career_activity():
     for entry in state.career_current_schedule:
 
         if (
-            entry.get(
+            isinstance(entry, dict)  # skip a bad (non-dict) day from save data
+            and entry.get(
                 "day_number"
             )
             == state.career_day_of_month
@@ -79,12 +80,43 @@ def get_current_career_activity():
 
     return None
 
+def current_career_schedule_entry():
+    """Today's calendar entry, career_current_schedule[career_day_of_month - 1].
+
+    None when bad save data leaves no such entry (B20): an empty or short schedule, a day of 0 or
+    less (which must not wrap round to the end of the list), or an entry that is not a dict.
+    """
+    days = state.career_current_schedule
+    day = state.career_day_of_month
+    if not isinstance(days, list) or not isinstance(day, int) or not 1 <= day <= len(days):
+        return None
+    entry = days[day - 1]
+    return entry if isinstance(entry, dict) else None
+
 def start_career_activity(work=False):
-    entry = state.career_current_schedule[state.career_day_of_month - 1]
+    entry = current_career_schedule_entry()
+    if entry is None:
+        return  # no calendar entry for today (bad save data): stay on the hub, nothing to start
     alien = entry.get("event_id") == "alien_night"
     kind = "alien" if alien else "bigfoot"
     story = state.career_alien_story if alien else state.career_bigfoot_story
-    if entry.get("career_activity", {}).get("kind") != kind or (entry["career_activity"].get("version") != 2 and not entry["career_activity"].get("claimed")):
+    activity = entry.get("career_activity")
+    played = False
+    if isinstance(activity, dict):
+        # A night already played paid its reward: it is never replaced by a fresh night, so this
+        # calendar day can't pay twice. "Played" also counts a result left by choose_option()
+        # when the claimed flag itself is damaged, and a played night of the other story.
+        played = (bool(activity.get("claimed")) or activity.get("stage") in ("result", "complete")
+                  or "result_text" in activity or "cash_change" in activity)
+        if not night_is_valid(activity, data=ALIEN_STORY if activity.get("kind") == "alien" else None):
+            # A malformed night (B20) the activity screen can't show: a played one stays (and
+            # the player stays on the hub); an unplayed one holds nothing, so a fresh night
+            # replaces it.
+            if played:
+                return
+            activity = None
+    # A missing, malformed or out-of-date unplayed activity is replaced by a fresh night.
+    if not isinstance(activity, dict) or (not played and (activity.get("kind") != kind or activity.get("version") != 2)):
         entry["career_activity"] = start_night(story, data=ALIEN_STORY if alien else None)
     state.current_state = state_names.STATE_CAREER_ACTIVITY
     career_saving.auto_save_career()
@@ -104,9 +136,11 @@ def complete_career_work_day():
         0
     )
 
-    # A pre-removal shift may already have paid out on this calendar entry.
-    legacy_shift = state.career_current_schedule[state.career_day_of_month - 1].get("career_activity", {})
-    if legacy_shift.get("kind") == "work" and legacy_shift.get("claimed"):
+    # A pre-removal shift may already have paid out on this calendar entry. A missing day entry or
+    # a non-dict activity (bad save data) holds no paid shift, so the work day pays normally.
+    entry = current_career_schedule_entry()
+    legacy_shift = entry.get("career_activity") if entry is not None else None
+    if isinstance(legacy_shift, dict) and legacy_shift.get("kind") == "work" and legacy_shift.get("claimed"):
         pay = 0
 
     state.career_cash += pay
@@ -2066,9 +2100,9 @@ def handle_event(event):
             if current_activity is not None:
 
                 activity_type = (
-                    current_activity[
+                    current_activity.get(  # a day without one (bad save data) matches no branch
                         "activity_type"
-                    ]
+                    )
                 )
 
                 if (
@@ -2135,16 +2169,18 @@ def handle_event(event):
                         night.CAREER_ACTIVITY_ARCADE_NIGHT
                 ):
 
-                    state.career_event_entry = state.career_current_schedule[
-                        state.career_day_of_month - 1
-                        ]
+                    entry = current_career_schedule_entry()
 
-                    if not restore_event_progress(state.career_event_entry, legacy.game_namespace()):
-                        state.career_event_has_activity = False
-                        night.reset_career_event_result_log()
-                        night.reset_career_event_session_totals(activity_type)
+                    # No calendar entry for today (bad save data): stay on the hub.
+                    if entry is not None:
+                        state.career_event_entry = entry
 
-                    state.current_state = state_names.STATE_CAREER_EVENT_SELECT
+                        if not restore_event_progress(state.career_event_entry, legacy.game_namespace()):
+                            state.career_event_has_activity = False
+                            night.reset_career_event_result_log()
+                            night.reset_career_event_session_totals(activity_type)
+
+                        state.current_state = state_names.STATE_CAREER_EVENT_SELECT
 
                 # ----------------------------
                 # Work
@@ -2166,24 +2202,26 @@ def handle_event(event):
                         activity_type
                         == night.CAREER_ACTIVITY_EVENT
                 ):
-                    state.career_event_entry = state.career_current_schedule[
-                        state.career_day_of_month - 1
-                    ]
-                    state.career_event_has_activity = False
+                    entry = current_career_schedule_entry()
 
-                    event_id = state.career_event_entry.get("event_id")
+                    # No calendar entry for today (bad save data): stay on the hub.
+                    if entry is not None:
+                        state.career_event_entry = entry
+                        state.career_event_has_activity = False
 
-                    if event_id == "press_interview_01":
-                        start_press_interview_event()
-                    elif event_id == "sign_autographs_01":
-                        start_sign_autographs_event()
-                    elif event_id == "head_to_head_01":
-                        head_to_head_screen.start_head_to_head_event()
+                        event_id = state.career_event_entry.get("event_id")
 
-                    if event_id in ("career_encounter", "bigfoot_night", "alien_night"):
-                        start_career_activity(work=False)
-                    else:
-                        state.current_state = state_names.STATE_CAREER_EVENT
+                        if event_id == "press_interview_01":
+                            start_press_interview_event()
+                        elif event_id == "sign_autographs_01":
+                            start_sign_autographs_event()
+                        elif event_id == "head_to_head_01":
+                            head_to_head_screen.start_head_to_head_event()
+
+                        if event_id in ("career_encounter", "bigfoot_night", "alien_night"):
+                            start_career_activity(work=False)
+                        else:
+                            state.current_state = state_names.STATE_CAREER_EVENT
 
         elif state.career_jobs_rect.collidepoint(
                 state.game_mouse_pos

@@ -1,9 +1,48 @@
-{"modules": {
-  "solitaireplus/games/casino/blackjack_screen.py": {"doc": "Blackjack table and bet screens (moved out of legacy.py).",
-    "screens": ["blackjack_bet", "blackjack"], "names": ["settle_blackjack_round"]},
-  "solitaireplus/games/casino/roulette_screen.py": {"doc": "Roulette table screen (moved out of legacy.py).",
-    "screens": ["roulette"], "names": ["settle_roulette_round", "try_place_or_remove_roulette_bet"]},
-  "solitaireplus/games/casino/horse_races_screen.py": {"doc": "Horse races screen and its music cue (moved out of legacy.py).",
-    "screens": ["horse_races"], "names": ["settle_horse_race_result"]},
-  "solitaireplus/games/casino/faro_screen.py": {"doc": "Faro table screen (moved out of legacy.py).", "screens": ["faro"]}
-}}
+{
+ "modules": {
+  "solitaireplus/games/casino/blackjack_screen.py": {
+   "doc": "Blackjack table and bet screens (moved out of legacy.py).",
+   "screens": [
+    "blackjack_bet",
+    "blackjack"
+   ],
+   "names": [
+    "settle_blackjack_round",
+    "blackjack_change_bet_rect"
+   ]
+  },
+  "solitaireplus/games/casino/roulette_screen.py": {
+   "doc": "Roulette table screen (moved out of legacy.py).",
+   "screens": [
+    "roulette"
+   ],
+   "names": [
+    "settle_roulette_round",
+    "try_place_or_remove_roulette_bet",
+    "roulette_game"
+   ]
+  },
+  "solitaireplus/games/casino/horse_races_screen.py": {
+   "doc": "Horse races screen and its music cue (moved out of legacy.py).",
+   "screens": [
+    "horse_races"
+   ],
+   "names": [
+    "settle_horse_race_result",
+    "start_horse_races_session",
+    "stop_horse_race_music",
+    "horse_races_game"
+   ]
+  },
+  "solitaireplus/games/casino/faro_screen.py": {
+   "doc": "Faro table screen (moved out of legacy.py).",
+   "screens": [
+    "faro"
+   ],
+   "names": [
+    "start_faro_session",
+    "faro_game"
+   ]
+  }
+ }
+}

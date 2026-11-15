@@ -41,6 +41,11 @@ How to use this file (maintainers and AI agents):
 - After a career Solitaire round, "Leave table? → No" now returns to the Career hub instead of dealing an extra round that paid full rewards.
 - Leaving a career round from the pause menu, or backing out of the difficulty screen, no longer leaves the round's challenge rules on the next game.
 - Removed the Solitaire F7/F8 debug keys (the instant win moves to the F10 debug menu later).
+- The Career hub and leaderboards no longer rebuild the whole NPC roster several times a frame.
+- Switching side jobs several times in one day now gives one news story (naming your latest job) instead of one per click.
+- Damaged career activity data (a Bigfoot or Alien night) no longer crashes the game every frame; the night is skipped safely.
+- After a locked save, the Career hub now says the progress went to a recovery file instead of "Profile saved".
+- F10 debug menu: jumping to the Career hub or a debug night during Free Play no longer saves the Free Play $5,000 into your career, debug nights no longer use up a career day, and leaving a debug session no longer leaves the game in debug mode (where real career nights weren't recorded).
 
 ### Online play
 - Room codes are now 6 letters/digits instead of 5 digits, and guessing other people's room codes is slowed down and then blocked. Old 5-digit codes still work with players who haven't updated.

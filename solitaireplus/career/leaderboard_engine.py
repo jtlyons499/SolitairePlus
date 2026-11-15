@@ -302,6 +302,7 @@ def sync_career_npc_runtime_state():
             state.career_year, state.career_month,
         )
     sync_npc_runtime_state(state.career_leaderboard_state, month=state.career_month)
+    state.career_roster_dirty = False
 
 
 
@@ -311,7 +312,8 @@ def ensure_career_leaderboard():
         initialize_career_leaderboard()
 
         career_saving.auto_save_career()
-    else:
+    elif state.career_roster_dirty:
+        # B18: drawing code calls this every frame; re-sync only after the roster or date changed.
         sync_career_npc_runtime_state()
 
 def initialize_career_leaderboard():

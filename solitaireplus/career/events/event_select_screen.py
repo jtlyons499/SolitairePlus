@@ -16,6 +16,7 @@ import pygame
 from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.career.event_progress import store_event_progress
+from solitaireplus.debug.game_mode import end_debug_game_mode
 from solitaireplus.app.lazy import lazy
 news_screen = lazy("solitaireplus.career.news_screen")
 night = lazy("solitaireplus.career.events.night")
@@ -892,6 +893,7 @@ def handle_event(event):
             if career_event_return_rect.collidepoint(state.menu_mouse_pos):
                 sounds.audio.play_sound("button_click")
                 store_event_progress(state.career_event_entry, legacy.game_namespace())
+                end_debug_game_mode()   # a debug night cannot be resumed from the hub (B22)
                 career_saving.auto_save_career()
                 state.current_state = state_names.STATE_CAREER_HUB
 

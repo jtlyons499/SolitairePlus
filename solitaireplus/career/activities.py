@@ -93,6 +93,63 @@ def requirement_reason(story, option, cash, *, data=None):
         return f"Requires: ${-option['effects']['cash']:,}"
     return ''
 
+def _is_number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+def _is_text(value):
+    """A str pygame can render: no NUL and no lone surrogates (both are valid JSON escapes)."""
+    if not isinstance(value, str) or chr(0) in value:
+        return False
+    try:
+        value.encode('utf-8')
+    except UnicodeEncodeError:
+        return False
+    return True
+
+def _catalog_keys(values, catalog):
+    return isinstance(values, list) and all(isinstance(key, str) and key in catalog for key in values)
+
+def _choice_is_valid(option, data):
+    if not isinstance(option, dict) or not isinstance(option.get('id'), str) or not _is_text(option.get('text')):
+        return False
+    requires, effects = option.get('requires'), option.get('effects')
+    if not isinstance(requires, dict) or not isinstance(effects, dict):
+        return False
+    attitude = requires.get('attitude')
+    return (_catalog_keys(requires.get('items', []), data['items'])
+            and (not attitude or isinstance(attitude, list) and all(isinstance(value, str) for value in attitude))
+            and _is_number(effects.get('cash')) and _is_number(effects.get('fans'))
+            and _catalog_keys(effects.get('items'), data['items'])
+            and _catalog_keys(effects.get('cosmetics'), data['cosmetics']))
+
+def night_is_valid(night, *, data=None):
+    """True when the activity screen can show this calendar night and choose_option() can play it.
+
+    Nights are read back from the save file, so any key can be missing or hold the wrong type (B20).
+    The screen indexes 'night', 'claimed', 'intro', 'options', 'cash_change' and 'fan_change'
+    directly and looks choice items and cosmetics up in the story catalogs. A night that fails this
+    check is malformed: it is never drawn or paid. Every night start_night() and choose_option()
+    make passes, and so do claimed nights saved before version 2.
+    """
+    data = STORY if data is None else data
+    if not isinstance(night, dict) or night.get('kind') != data.get('kind', 'bigfoot'):
+        return False
+    number, scene, claimed = night.get('night'), night.get('scene'), night.get('claimed')
+    if not isinstance(claimed, bool) or not isinstance(number, int) or isinstance(number, bool):
+        return False
+    if scene is not None and not isinstance(scene, str):
+        return False
+    if claimed:
+        if not _is_text(night.get('result_text', '')):
+            return False
+        # The result page shows the cash, fans and cosmetics unless the whole story is complete.
+        return night.get('stage') == 'complete' or (
+            _is_number(night.get('cash_change')) and _is_number(night.get('fan_change'))
+            and _catalog_keys(night.get('earned_cosmetics', []), data['cosmetics']))
+    options = night.get('options')
+    return (_is_text(night.get('intro')) and isinstance(options, list) and bool(options)
+            and all(_choice_is_valid(option, data) for option in options))
+
 def choose_option(story, night, index, cash, *, data=None):
     data = STORY if data is None else data
     if night.get('claimed') or story['finished'] or night.get('scene') != story['scene']:

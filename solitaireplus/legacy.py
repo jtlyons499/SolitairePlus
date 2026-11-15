@@ -315,6 +315,8 @@ from solitaireplus.games.poker.blind_mans_bluff_ui import (
     ACTION_FOLD as BLUFF_ACTION_FOLD,
 )
 
+from solitaireplus.debug.game_mode import enter_debug_game_mode, end_debug_game_mode, keep_night_context, restore_night_context
+
 from solitaireplus.debug.poker_select import (
     draw_debug_poker_npc_select,
     get_debug_poker_select_action,
@@ -386,6 +388,8 @@ from solitaireplus.debug.menu import (
     ACTION_LEVEL_MAX,
     ACTION_ACHIEVEMENT_TEST,
     ACTION_CLOSE,
+    LAUNCH_ACTIONS as DEBUG_LAUNCH_ACTIONS,
+    CAREER_HUB_JUMP_ACTIONS as DEBUG_CAREER_HUB_JUMP_ACTIONS,
 )
 
 from solitaireplus.profile.saves import (
@@ -4380,6 +4384,7 @@ def debug_open_casual_cards():
                 night.CAREER_ACTIVITY_CASUAL_CARDS
             ].copy()
         ),
+        "debug": True,
     }
 
     state.career_event_has_activity = False
@@ -4399,6 +4404,7 @@ def debug_open_casino_night():
                 night.CAREER_ACTIVITY_CASINO_NIGHT
             ].copy()
         ),
+        "debug": True,
     }
 
     state.career_event_has_activity = False
@@ -4411,7 +4417,7 @@ def debug_open_casino_night():
 def debug_prepare_arcade_night():
     """Create a standalone Arcade Night context for F10 testing."""
 
-    state.current_game_mode = "debug"
+    enter_debug_game_mode()
     state.career_event_entry = {
         "activity_type": night.CAREER_ACTIVITY_ARCADE_NIGHT,
         "title": "Arcade Night",
@@ -5050,6 +5056,7 @@ def debug_open_crazy_eights():
         "game_ids": night.CAREER_EVENT_GAMES[
             night.CAREER_ACTIVITY_CASUAL_CARDS
         ].copy(),
+        "debug": True,
     }
 
     state.career_event_has_activity = False
@@ -5065,6 +5072,7 @@ def debug_open_bango():
         "game_ids": night.CAREER_EVENT_GAMES[
             night.CAREER_ACTIVITY_CASUAL_CARDS
         ].copy(),
+        "debug": True,
     }
 
     state.career_event_has_activity = False
@@ -5082,6 +5090,7 @@ def debug_open_score_four_solo():
                 night.CAREER_ACTIVITY_CASUAL_CARDS
             ].copy()
         ),
+        "debug": True,
     }
 
     state.career_event_has_activity = False
@@ -5101,6 +5110,7 @@ def debug_open_score_four_competitive():
                 night.CAREER_ACTIVITY_CASUAL_CARDS
             ].copy()
         ),
+        "debug": True,
     }
 
     state.career_event_has_activity = False
@@ -5124,6 +5134,7 @@ def debug_open_blackjack():
                 night.CAREER_ACTIVITY_CASINO_NIGHT
             ].copy()
         ),
+        "debug": True,
     }
 
     state.career_event_has_activity = False
@@ -5199,6 +5210,7 @@ def debug_open_roulette():
                 night.CAREER_ACTIVITY_CASINO_NIGHT
             ].copy()
         ),
+        "debug": True,
     }
 
     state.career_event_has_activity = False
@@ -5304,13 +5316,14 @@ def finish_horse_races_session():
 
 def debug_open_horse_races():
 
-    state.current_game_mode = "debug"
+    enter_debug_game_mode()
     state.career_event_entry = {
         "activity_type": night.CAREER_ACTIVITY_CASINO_NIGHT,
         "title": "Casino Night",
         "game_ids": night.CAREER_EVENT_GAMES[
             night.CAREER_ACTIVITY_CASINO_NIGHT
         ].copy(),
+        "debug": True,
     }
     state.career_event_has_activity = False
     night.reset_career_event_result_log()
@@ -5386,6 +5399,7 @@ def debug_open_faro():
         "game_ids": night.CAREER_EVENT_GAMES[
             night.CAREER_ACTIVITY_NICHE_NIGHT
         ].copy(),
+        "debug": True,
     }
 
     state.career_event_has_activity = False
@@ -5503,16 +5517,25 @@ def finish_five_o_poker_session():
 
 def debug_open_five_o_poker():
 
-    state.current_game_mode = "debug"
+    saved_night = keep_night_context()
+    entered_debug_mode = enter_debug_game_mode()
     state.career_event_entry = {
         "activity_type": night.CAREER_ACTIVITY_NICHE_NIGHT,
         "title": "Niche Game Night",
         "game_ids": night.CAREER_EVENT_GAMES[night.CAREER_ACTIVITY_NICHE_NIGHT].copy(),
+        "debug": True,
     }
     state.career_event_has_activity = False
     night.reset_career_event_result_log()
     night.reset_career_event_session_totals(night.CAREER_ACTIVITY_NICHE_NIGHT)
-    return start_five_o_poker_session()
+    if start_five_o_poker_session():
+        return True
+    # Nothing started (not enough cash). Leave "debug" only if this launcher switched it on:
+    # an earlier debug session the player goes back to must stay in "debug" mode.
+    if entered_debug_mode:
+        end_debug_game_mode()
+    restore_night_context(saved_night)   # the night in progress, untouched
+    return False
 
 
 def start_blind_mans_bluff_session(starting_stack=None):
@@ -5612,16 +5635,25 @@ def finish_blind_mans_bluff_session():
 
 def debug_open_blind_mans_bluff():
 
-    state.current_game_mode = "debug"
+    saved_night = keep_night_context()
+    entered_debug_mode = enter_debug_game_mode()
     state.career_event_entry = {
         "activity_type": night.CAREER_ACTIVITY_NICHE_NIGHT,
         "title": "Niche Game Night",
         "game_ids": night.CAREER_EVENT_GAMES[night.CAREER_ACTIVITY_NICHE_NIGHT].copy(),
+        "debug": True,
     }
     state.career_event_has_activity = False
     night.reset_career_event_result_log()
     night.reset_career_event_session_totals(night.CAREER_ACTIVITY_NICHE_NIGHT)
-    return start_blind_mans_bluff_session()
+    if start_blind_mans_bluff_session():
+        return True
+    # Nothing started (not enough cash). Leave "debug" only if this launcher switched it on:
+    # an earlier debug session the player goes back to must stay in "debug" mode.
+    if entered_debug_mode:
+        end_debug_game_mode()
+    restore_night_context(saved_night)   # the night in progress, untouched
+    return False
 
 
 def debug_open_head_to_head():
@@ -5653,6 +5685,7 @@ def debug_prepare_poker_night():
         "high_stakes_game_id": random.choice(
             game_ids
         ) if game_ids else None,
+        "debug": True,
     }
 
     state.career_event_has_activity = False
@@ -5669,8 +5702,11 @@ def debug_open_poker_night():
 
 def open_debug_poker_npc_select(game_id):
 
+    # Back (no table played) puts the night in progress back as it was.
+    state.debug_poker_select_saved_night = keep_night_context()
     debug_prepare_poker_night()
-    state.current_game_mode = "debug"
+    # Back from the selector (no table played) ends the debug mode, if this switched it on (B22).
+    state.debug_poker_select_entered_debug_mode = enter_debug_game_mode()
     state.debug_poker_select_game_id = str(game_id)
     state.debug_poker_selected_ids = make_debug_poker_default_selection(
         NPCS,
@@ -5713,7 +5749,7 @@ def debug_open_solitaire_challenge(
     state.pending_career_activity_type = None
     state.pending_career_challenge_id = None
 
-    state.current_game_mode = "debug"
+    entered_debug_mode = enter_debug_game_mode()
 
     game.clear_challenge()
     game.set_difficulty(
@@ -5723,6 +5759,8 @@ def debug_open_solitaire_challenge(
     if not game.set_challenge(
             challenge_id
     ):
+        if entered_debug_mode:
+            end_debug_game_mode()   # nothing started: leave only the "debug" mode this switched on
         return False
 
     game.new_game()
@@ -5797,6 +5835,38 @@ def finish_free_play_sandbox():
         career_saving.auto_save_career()
 
 
+def debug_end_free_play_sandbox():
+    """An F10 launch of a game, night or career screen: end a running Free Play sandbox first (B21).
+
+    Restores the real Career cash/ratings/fans, so later Career saves never write the
+    sandbox values. Free Play mode becomes Career mode (like debug_start_next_career_month),
+    also as the mode a debug launcher goes back to (state.debug_saved_game_mode), so ending
+    a debug night never brings back Free Play mode without its sandbox. The Free Play game
+    the debug menu was opened from is over, so Close / F10 go to the Free Play select instead.
+    Returns True when a sandbox (or Free Play mode) was ended.
+    """
+
+    sandbox_running = state.free_play_snapshot is not None
+    free_mode = state.current_game_mode == "free"
+    saved_free_mode = state.debug_saved_game_mode == "free"
+
+    if not (sandbox_running or free_mode or saved_free_mode):
+        return False
+
+    if sandbox_running or free_mode:
+        finish_free_play_sandbox()
+
+    if free_mode:
+        state.current_game_mode = "career"
+    if saved_free_mode:
+        state.debug_saved_game_mode = "career"
+
+    if sandbox_running:
+        state.debug_previous_state = state_names.STATE_FREE_PLAY_SELECT
+
+    return True
+
+
 def get_free_play_return_state():
     return state_names.STATE_FREE_PLAY_SELECT if state.current_game_mode == "free" else state_names.STATE_CAREER_EVENT_SELECT
 
@@ -5832,6 +5902,7 @@ def debug_start_next_career_month(save=True):
 
     state.career_day_of_month = 1
     state.career_weekday_index = 0
+    state.career_roster_dirty = True  # B18: new date, so the live roster is re-synced
 
     leaderboard_engine.update_career_leaderboard_ratings()
     maybe_add_monthly_flavor_news()
@@ -5851,6 +5922,7 @@ def debug_add_career_prospect(prodigy=False):
     story = add_prospect(state.career_npc_world, state.career_leaderboard_state, PROSPECT_POOL,
                          state.career_year, state.career_month, force_prodigy=prodigy)
     if story:
+        state.career_roster_dirty = True  # B18: an NPC joined (the sync below clears it)
         leaderboard_engine.sync_career_npc_runtime_state()
         news_screen.add_career_news(story["headline"], story["body"], story["category"])
         career_saving.auto_save_career()
@@ -7674,6 +7746,14 @@ def loop_event_debug_poker_npc_select(event):
 
             if action_name == DEBUG_POKER_ACTION_BACK:
                 sounds.audio.play_sound("button_click")
+                # No table was played: leave the "debug" mode open_debug_poker_npc_select
+                # switched on, so Close does not take it onto a real screen (B22). An earlier
+                # debug session's mode stays.
+                if state.debug_poker_select_entered_debug_mode:
+                    end_debug_game_mode()
+                state.debug_poker_select_entered_debug_mode = False
+                restore_night_context(state.debug_poker_select_saved_night)
+                state.debug_poker_select_saved_night = None
                 state.current_state = state_names.STATE_DEBUG_MENU
 
             elif action_name == DEBUG_POKER_ACTION_RANDOMIZE:
@@ -7715,6 +7795,21 @@ def loop_event_debug_menu(event):
                 state.game_mouse_pos
             )
         )
+
+        # Every button that launches a game, night or career screen ends a running Free Play
+        # sandbox first, so no later Career save (hub actions, the event select's Return...)
+        # writes the sandbox cash (B21). The menu's own controls and Close keep the sandbox.
+        if debug_action in DEBUG_LAUNCH_ACTIONS:
+            debug_end_free_play_sandbox()
+
+        # A jump to the Career Hub also leaves the "debug" mode of a debug night the player
+        # did not end, so the real hub never runs in "debug" mode (B22).
+        if debug_action in DEBUG_CAREER_HUB_JUMP_ACTIONS:
+            end_debug_game_mode()
+            # The hub only runs Career nights: a mode left over from the main menu (None) would
+            # record no results, like "debug".
+            if state.current_game_mode != "career":
+                state.current_game_mode = "career"
 
         # ==========================================
         # Expandable Minigames navigation

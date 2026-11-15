@@ -17,8 +17,9 @@ def refresh_adventure_schedule(schedule, bigfoot, alien, current_day=None):
             continue
         if entry.get('completed') or entry.get('event_id') not in ('career_encounter','bigfoot_night','alien_night'):
             continue
-        state=entry.get('career_activity') or {}
-        if day==current_day and state.get('claimed'):
+        state=entry.get('career_activity')
+        # A non-dict activity (bad save data, B20) is not a claimed outcome to keep.
+        if day==current_day and isinstance(state,dict) and state.get('claimed'):
             continue
         event_id = kind+'_night' if kind else 'press_interview_01'
         if entry.get('event_id') != event_id:

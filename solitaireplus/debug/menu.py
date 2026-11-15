@@ -185,6 +185,26 @@ _CATEGORY_ACTION_TO_ID = {
     for category_id, action, _label, _entries in MINIGAME_CATEGORIES
 }
 
+# Every button that leaves the menu for a game, night or career screen: the Career column,
+# the Solitaire challenges and every Minigames entry. These end a running Free Play sandbox
+# first (B21). The category toggles, the progression controls and Close stay on the menu or
+# go back to the game, so they keep the sandbox.
+LAUNCH_ACTIONS = frozenset(
+    [action for action, _label in CAREER_ENTRIES + CHALLENGE_ENTRIES]
+    + [action for _id, _toggle, _label, entries in MINIGAME_CATEGORIES for action, _name in entries]
+)
+
+# The buttons that jump to the Career Hub. They also leave the "debug" mode of a debug night
+# the player did not end (B22), so the real hub never runs in "debug" mode.
+CAREER_HUB_JUMP_ACTIONS = frozenset((
+    ACTION_CAREER_HUB,
+    ACTION_ADVANCE_CAREER_DAY,
+    ACTION_NEW_CAREER_MONTH,
+    ACTION_ADD_PROSPECT,
+    ACTION_ADD_PRODIGY,
+    ACTION_CAREER_YEAR,
+))
+
 _expanded_minigame_category = None
 _ACTION_RECTS = {}
 _CATEGORY_RECTS = {}

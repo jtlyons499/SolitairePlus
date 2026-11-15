@@ -529,6 +529,40 @@ def draw_career_jobs():
     )
 
 
+def add_job_change_news():
+    """Report the player's new job in the news, at most once per career day.
+
+    A later switch on the same career day rewrites that day's job story (so it names
+    the job the player now has) instead of adding another one."""
+
+    headline = (
+        f"{state.player_name.upper()} "
+        f"TAKES NEW SIDE JOB"
+    )
+
+    body = (
+        f"{state.player_name} has accepted work as "
+        f"{career_names.get_career_job_name()}. "
+        f"Sources close to the situation say "
+        f"the decision was largely financial."
+    )
+
+    for item in state.career_news_items:
+        if (
+                item.get("category") == "job"
+                and item.get("career_day") == state.career_day
+        ):
+            item["headline"] = headline
+            item["body"] = body
+            return
+
+    news_screen.add_career_news(
+        headline,
+        body,
+        "job"
+    )
+
+
 def handle_event(event):
     """Old main-loop event branch for STATE_CAREER_JOBS."""
 
@@ -591,19 +625,7 @@ def handle_event(event):
                         )
                         state.career_fan_rewarded_jobs.add(state.career_job)
 
-                    news_screen.add_career_news(
-                        (
-                            f"{state.player_name.upper()} "
-                            f"TAKES NEW SIDE JOB"
-                        ),
-                        (
-                            f"{state.player_name} has accepted work as "
-                            f"{career_names.get_career_job_name()}. "
-                            f"Sources close to the situation say "
-                            f"the decision was largely financial."
-                        ),
-                        "job"
-                    )
+                    add_job_change_news()
 
                 career_saving.auto_save_career()
 

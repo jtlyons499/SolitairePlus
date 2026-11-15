@@ -365,3 +365,70 @@ lines):
 
 **Results:** `screen_harness compare` → `IDENTICAL 64/64`; `replay compare` → `IDENTICAL 18/18` (baseline
 `3a1784d`). Tests `PASSED`.
+
+## Phase 5 (fix): B18, B19, B20, B21, B22, B23, B12 (career hub)
+
+Fixed by the fix workflow (one agent per bug, test first, adversarial review), then a repair workflow for the
+two fixes the reviews rejected (B20, B21+B22; each repair reviewed again), then the lead closed what the
+second reviews still found.
+
+- **B18** — `state.career_roster_dirty`: the NPC roster syncs only after the date or roster changed (day advance,
+  debug month/prospect, profile load); the hub and leaderboards no longer sync every frame (10 hub frames: 30
+  syncs → at most 1). `test_career_roster_sync`.
+- **B19** — job news only when the job really changes, one story per career day (a second switch rewrites that
+  day's story to name the latest job). `test_career_job_news`.
+- **B20** — bad story-activity data never crashes or pays: `activities.night_is_valid()` (what the real
+  `CareerActivityScreen` and `choose_option()` index, incl. text pygame can render), one bounds-and-dict check
+  for today's calendar entry (`hub_screen.current_career_schedule_entry()`), guarded Work day and adventure
+  refresh. A malformed night is skipped (back to the hub); an unplayed one is replaced by a fresh night; a played
+  one is never replaced, also when its claimed flag is damaged or it belongs to the other story (so a day can't
+  pay twice). `test_career_activity_bad_data`, `test_career_activities`.
+- **B21** — the F10 menu ends a running Free Play sandbox before every game, night or career launch (only its
+  own controls keep it); ending it also turns a saved "free" mode into "career". And at the root: any save
+  during a sandbox (a level-up, an achievement, a debug action) writes the real career values kept in the
+  sandbox snapshot, never the sandbox stake (`save_data.build_profile_save_data`).
+  `test_debug_menu_ends_free_play_sandbox`.
+- **B22** — `debug/game_mode.py` (`enter_debug_game_mode` / `end_debug_game_mode`): the mode before a debug
+  launcher comes back when its night ends, on the debug menu's career jumps (which then run in "career" mode),
+  and on Back from the poker table picker; a failed launch ends debug mode only if it switched it on. Every
+  debug night is marked `debug: True`, so ending it never uses a career day. Back from the poker table picker and
+  a failed Five-O / Blind Man's Bluff launch put the night in progress back untouched (entry, results, session
+  totals). `test_debug_night_mode`.
+- **B23 (no change, designer)** — pinned by `test_npc_monthly_rating_pins`. Finding: the game never calls
+  `simulate_npc_rating_month` (only tests do); the monthly change players see comes from
+  `npc_development.advance_npc_development` (age curves, `scale_rewards=False`), now pinned too.
+  **Numbers for Dan** (real monthly path, real roster, 12 months from 2026-01, world seed 2026):
+
+  | NPC | Age | Start | End | Change |
+  |---|---|---|---|---|
+  | Jiu Wang | 21 | 1795.95 | 1814.90 | +18.95 |
+  | Mary LaFleur | 22 | 1234.75 | 1230.75 | −4.00 |
+  | Luke Jingle | 37 | 1808.40 | 1807.80 | −0.60 |
+  | Gary Undo (star) | 38 | 3123.50 | 3119.95 | −3.55 |
+  | Shelly Barn | 42 | 2818.50 | 2808.60 | −9.90 |
+  | Monkus Carlton | 46 | 2496.05 | 2483.40 | −12.65 |
+
+  Across 20 careers (world seeds 1–20): age ≤ 22 (200 samples) mean +15.3, median +14.1, 7% went down; age ≥ 35
+  (440 samples) mean −13.8, median −21.8, 90% went down (the 89-year-old Addled Grandfather about −60 a year).
+- **B12 (career hub)** — `auto_save_career()` returns whether the save reached the slot file; the hub shows the
+  recovery-file message instead of "Profile saved to slot N." after a locked save. `test_career_hub_save_recovery`.
+
+**Results:** tests `PASSED`. `screen_harness compare` → `IDENTICAL 64/64`; `replay compare` → `IDENTICAL 18/18`
+(baseline `d8ed4d0`): no static screen or journey value changes.
+
+**New findings (not fixed):**
+- **N20 (designer):** debug launchers that don't switch to "debug" mode (Casual Cards, Casino, Poker Night, Crazy
+  Eights, Bango, Score Four, Blackjack, Roulette, Faro) play inside the Career: real ratings, fans, cash and
+  Career news, only the day advance is skipped. Should debug nights be fully sandboxed?
+- **N21 (designer):** some late-30s NPCs gain +200 to +250 in one year when their rolled `peak_age` is just above
+  their age (`npc_development.ability_target` spreads the bonus over a very short gap).
+- **N22:** `get_career_leaderboard()` still rebuilds and sorts the whole leaderboard on every call (twice per hub
+  frame); cheaper than the roster sync B18 removed, but repeated work.
+- **N23:** clicking the job you already have still re-rolls future work-day titles and saves.
+- **N24:** moved code still uses `state.<name>` as a for-loop variable (`for job_id, state.rect in ...`), a
+  leftover of the conversion from globals; to clean up in Phase 12.
+- **N25:** the ~40 other `auto_save_career()` callers show the locked-save toast on the hub controls, which are
+  only drawn on the hub, so a locked save from another screen is silent unless the player returns within 8 s.
+- **N26:** switching jobs A → B → A in one day leaves one (rewritten) story although the day ends with the
+  starting job.
+- **N27:** a shown rating rounds .5 to even (2818.50 shows as 2818), so a shown change can be one point off.

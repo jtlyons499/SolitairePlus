@@ -347,6 +347,23 @@ def build_profile_save_data():
     profile_data["poker_learning"] = normalize_learning(legacy.game_namespace().get("career_poker_learning"))
     from solitaireplus.career.case_opening import normalize_case_state
     profile_data["case_opening"] = normalize_case_state(legacy.game_namespace().get("case_collection_state"))
+
+    # A Free Play sandbox is running: its stake and results are not the career's. Whatever
+    # saves now (a level-up, an achievement, a debug action), save the real career values the
+    # sandbox snapshot keeps (B21: the sandbox $5,000 must never reach the profile).
+    snapshot = getattr(state, "free_play_snapshot", None)
+    if snapshot is not None:
+        career_data = profile_data["career"]
+        career_data["rating"] = snapshot["career_rating"]
+        career_data["ratings"] = dict(snapshot["career_ratings"])
+        career_data["cash"] = snapshot["career_cash"]
+        career_data["fans"] = snapshot["career_fans"]
+        career_data["fan_news_milestones"] = sorted(snapshot["career_fan_news_milestones"])
+        career_data["fan_trend"] = list(snapshot.get("career_fan_trend", career_data["fan_trend"]))
+        career_data["news_items"] = list(snapshot["career_news_items"])
+        career_data["rounds_won"] = snapshot["career_rounds_won"]
+        career_data["challenges_won"] = snapshot["career_challenges_won"]
+        career_data["total_moves"] = snapshot["career_total_moves"]
     return profile_data
 
 def apply_profile_save_data(
@@ -494,6 +511,7 @@ def apply_profile_save_data(
         )
     )
     state.career_npc_world = copy.deepcopy(career_data.get("npc_world", {}))
+    state.career_roster_dirty = True  # B18: another roster and date were loaded
 
     state.career_rating = career_data.get(
         "rating",

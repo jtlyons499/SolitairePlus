@@ -97,8 +97,11 @@ blackjack_bet_dropdown_open = False
 score_four_opponent_choices = []
 score_four_opponent_npc = None
 debug_previous_state = None
+debug_saved_game_mode = None   # current_game_mode from before a debug launcher set "debug" (debug/game_mode.py)
 debug_poker_select_game_id = None
 debug_poker_selected_ids = []
+debug_poker_select_entered_debug_mode = False   # open_debug_poker_npc_select switched "debug" on (Back ends it)
+debug_poker_select_saved_night = None   # the night in progress when the poker table picker opened (Back restores it)
 career_event_entry = None
 career_event_has_activity = False
 career_event_summary_title = ""
@@ -146,6 +149,8 @@ career_weekday_index = 0
 career_day = 1
 career_leaderboard_state = {}
 career_npc_world = {}
+# B18: True when the live NPC roster must be re-synced (roster or career date changed).
+career_roster_dirty = True
 career_leaderboard_star_id = None
 career_residence = (
     "dingy_apartment"

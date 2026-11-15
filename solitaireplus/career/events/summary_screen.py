@@ -4,6 +4,7 @@ import pygame
 from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
+from solitaireplus.debug.game_mode import end_debug_game_mode
 calendar = lazy("solitaireplus.career.calendar")
 legacy = lazy("solitaireplus.legacy")
 window = lazy("solitaireplus.app.window")
@@ -212,6 +213,8 @@ def handle_event(event):
                 calendar.advance_career_day(
                     completed=True
                 )
+
+            end_debug_game_mode()   # the night is over: leave a debug launcher's "debug" mode (B22)
 
             state.career_event_entry = None
             state.career_event_has_activity = False

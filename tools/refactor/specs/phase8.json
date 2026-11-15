@@ -1,8 +1,40 @@
-{"modules": {
-  "solitaireplus/games/cards/crazy_eights_screen.py": {"doc": "Crazy Eights table screen (moved out of legacy.py).",
-    "screens": ["crazy_eights"], "names": ["start_crazy_eights_session", "claim_crazy_eights_result"]},
-  "solitaireplus/games/cards/bango_screen.py": {"doc": "Bango table screen (moved out of legacy.py).", "screens": ["bango"]},
-  "solitaireplus/games/cards/score_four_screen.py": {"doc": "Score Four screens: mode select, opponent select and the table (moved out of legacy.py).",
-    "screens": ["score_four", "score_four_mode_select", "score_four_opponent_select"],
-    "names": ["draw_score_four_opponent_select", "draw_score_four", "settle_score_four_session_result"]}
-}}
+{
+ "modules": {
+  "solitaireplus/games/cards/crazy_eights_screen.py": {
+   "doc": "Crazy Eights table screen (moved out of legacy.py).",
+   "screens": [
+    "crazy_eights"
+   ],
+   "names": [
+    "start_crazy_eights_session",
+    "claim_crazy_eights_result"
+   ]
+  },
+  "solitaireplus/games/cards/bango_screen.py": {
+   "doc": "Bango table screen (moved out of legacy.py).",
+   "screens": [
+    "bango"
+   ],
+   "names": [
+    "bango_game",
+    "start_bango_session"
+   ]
+  },
+  "solitaireplus/games/cards/score_four_screen.py": {
+   "doc": "Score Four screens: mode select, opponent select and the table (moved out of legacy.py).",
+   "screens": [
+    "score_four",
+    "score_four_mode_select",
+    "score_four_opponent_select"
+   ],
+   "names": [
+    "draw_score_four_opponent_select",
+    "draw_score_four",
+    "settle_score_four_session_result",
+    "score_four_game",
+    "SCORE_FOUR_TIER_DISPLAY_NAMES",
+    "get_score_four_npc_progress"
+   ]
+  }
+ }
+}
