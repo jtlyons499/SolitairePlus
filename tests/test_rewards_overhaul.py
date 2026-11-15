@@ -1,3 +1,4 @@
+from tests.support import locate
 from unittest.mock import patch
 from pathlib import Path
 
@@ -94,7 +95,7 @@ def test_shared_unlock_helper_supports_all_four_cosmetic_categories():
 
 
 def test_main_wires_paged_counter_custom_buttons_and_cursor_ownership():
-    source = Path("main.py").read_text(encoding="utf-8")
+    source = locate.source()
     for filename in (
         "continue.png", "redeem_tickets.png", "trophy_room.png", "back_to_prize_counter.png"
     ):
@@ -106,8 +107,7 @@ def test_main_wires_paged_counter_custom_buttons_and_cursor_ownership():
 
 def _extract_function(name):
     import ast
-    tree = ast.parse(Path("main.py").read_text(encoding="utf-8"))
-    node = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == name)
+    node = locate.function_node(name)
     return compile(ast.Module(body=[node], type_ignores=[]), f"extracted {name}", "exec")
 
 

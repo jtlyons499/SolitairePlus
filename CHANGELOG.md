@@ -35,6 +35,7 @@ How to use this file (maintainers and AI agents):
 - The game no longer remembers the default server address as if you had chosen it, so moving the server to a new address won't strand anyone.
 - The game folder is tidier: `SolitairePlus.exe` and `SolitaireNet.exe` sit next to one `SolitairePlus_Data` folder that holds everything else.
 - Each release now lists every file with a checksum (`manifest.json`) and ships a small "changes only" download, so future in-game updates only fetch what actually changed.
+- New developer safety net for the upcoming code reorganisation: every screen is rendered headless and compared pixel by pixel between versions, and 18 scripted playthroughs check that money, XP and progress come out the same (`tools/screen_harness.py`, `tools/replay.py`).
 
 ## [0.0.6b] - 2026-11-02
 

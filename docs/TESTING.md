@@ -38,8 +38,22 @@ GitHub Actions is free for public repositories, so this costs nothing.
 
 | Suite name | Folder | Tests | Import path |
 |---|---|---|---|
-| `game` | `tests/` | single-player game code (career, poker, arcade, saves, assets, ...) | `tests/`, then the repository root |
-| `multiplayer` | `multiplayer/tests/` | multiplayer tables, relay server, the game's network client, profiles | `multiplayer/tests/`, `multiplayer/`, then the root |
+| `game` | `tests/` | single-player game code (career, poker, arcade, saves, assets, ...) | the test file's folder, `tests/`, then the repository root |
+| `multiplayer` | `multiplayer/tests/` | multiplayer tables, relay server, the game's network client, profiles | the test file's folder, `multiplayer/tests/`, `multiplayer/`, then the root |
+
+Test files are found **recursively**: any `test_*.py` in the suite folder or a subfolder (for example
+`tests/career/test_x.py`), except helper folders (`tests/support/`, `fixtures/`). A test's id is always
+`<file name>.Class.test` (or `<file name>.test_function` for a plain pytest-style function), whatever folder the
+file is in, so two test files in one suite must not share a name; the runner stops with an error if they do.
+Both `unittest.TestCase` classes and plain module-level `test_*` functions (no arguments) are run. (Before
+2026-11-15 the plain functions were silently skipped.)
+
+Tests that check or run real game code without starting the game (for example, running `auto_save_career` in a
+fake namespace, or checking that a sound name is wired up) must not read `main.py` directly, because that code is
+moving into the `solitaireplus/` package. Use the code locator instead: `from tests.support import locate`, then
+`locate.function_node(name)`, `locate.exec_functions([...], env)`, `locate.source_contains(snippet)` or
+`locate.source()`. It searches `main.py` and `solitaireplus/**/*.py`; see the docstring in
+`tests/support/locate.py`.
 
 The updater (`updater/`, built as `SolitaireUpdater.exe`) is tested in the `game` suite by `tests/test_updater.py`
 (planning, downloading, applying, rolling back an update, using fake releases on disk via `file://` URLs) and
@@ -73,7 +87,11 @@ import path and starts pygame headless:
 ```powershell
 .\.venv\Scripts\python.exe tools\run_tests.py --worker game test_runtime_support
 .\.venv\Scripts\python.exe tools\run_tests.py --worker multiplayer test_relay.RelayTests.test_pair_forward_disconnect
+.\.venv\Scripts\python.exe tools\run_tests.py --worker game test_arcade_audio.test_arcade_cabinets_have_optional_individual_music_hooks
+.\.venv\Scripts\python.exe tools\run_tests.py --worker game tests\test_runtime_support.py
 ```
+
+The target is a file name (found in any subfolder), a dotted test id, or the path of a test file.
 
 ## How the runner works
 
@@ -183,6 +201,39 @@ the self-test again. Lines starting with `ok` passed. The last line says `PASSED
 `tools/release_preflight.py` loads every image in `assets/` and every JSON file in `data/`, and checks that the
 required files exist. It runs after the tests in the same places. A failure prints the broken file's path. Missing
 *optional* cosmetics are listed but don't fail.
+
+## Screenshot and replay safety net (restructure work)
+
+Two tools prove that moving code around changed nothing a player can see:
+
+```
+.venv\Scripts\python.exe tools\screen_harness.py compare            # every screen, pixel by pixel
+.venv\Scripts\python.exe tools\replay.py compare                    # 18 scripted playthroughs
+.venv\Scripts\python.exe tools\screen_harness.py compare --baseline HEAD~1 --scene casino_roulette
+```
+
+- `compare` checks out the baseline commit (default `HEAD`) in a git worktree under
+  `.harness_out/worktrees/`, runs every script there and in the working tree, and compares.
+  It prints `IDENTICAL n/n` or lists what differs; diff images (changed pixels in red) go to
+  `.harness_out/scene-diff/` or `.harness_out/journey-diff/`. Nothing in `.harness_out/` is
+  committed. Both sides render on the same machine, so fonts can't cause false differences.
+  Rendered baselines are cached per commit and harness version.
+- `selfcheck` renders the working tree twice and must say `IDENTICAL` (proves a new script is
+  deterministic). `render` / `run` just produce the PNGs (`list` shows the names).
+- `screen_harness.py` has about 60 scenes (one or more screenshots per screen, including open
+  dialogs, mid-hand poker and results). `replay.py` has 18 journeys; at each checkpoint it
+  records the state, cash, XP, level, rating, career day and fans, plus a screenshot, and
+  `compare` checks the values too.
+- How it works: each script runs `main.py` in a child process with the dummy SDL drivers, a
+  1366x768 window, a virtual clock (exactly 1/60 s per frame), fixed random seeds, scripted
+  mouse/keyboard input, a fake music player and a temporary `LOCALAPPDATA` holding
+  `tests/support/fixtures/profile_1.json` (rebuild it with `screen_harness.py make-fixture`).
+  Scripts run inside `pygame.display.flip()`, one step per frame, and read or change game state
+  through a probe that finds names in `main.py` or in `solitaireplus.app.state`.
+- Scripts live in `tools/harness/` (`scenes*.py`, `journeys.py`; API in `scripts.py` and
+  `sim.py`). Use only function and variable names that stay stable through the restructure.
+- A fix that changes a screen on purpose shows up as `DIFFERS`; list those scenes in the commit
+  message. A move commit must be `IDENTICAL`.
 
 ## Notes for AI assistants
 

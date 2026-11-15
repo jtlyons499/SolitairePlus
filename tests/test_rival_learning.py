@@ -1,4 +1,5 @@
 """Rival memories survive saves, track identities, and never transfer unwitnessed facts."""
+from tests.support import locate
 import ast
 import copy
 import json
@@ -106,8 +107,7 @@ class LearningTests(unittest.TestCase):
         self.assertEqual(len(records['remaining']['player']['history']),4)
 
     def test_actual_main_profile_and_session_bindings(self):
-        tree=ast.parse(Path('main.py').read_text())
-        functions={n.name:n for n in tree.body if isinstance(n,ast.FunctionDef)}
+        functions={name:locate.function_node(name) for name in ('start_texas_holdem_session','start_five_card_draw_session','start_seven_card_stud_session','build_profile_save_data','apply_profile_save_data')}
         for key,cls in (('texas_holdem',TexasHoldemGame),('five_card_draw',FiveCardDrawGame),('seven_card_stud',SevenCardStudGame)):
             function=functions['start_'+key+'_session']
             binding=next(n for n in function.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Attribute) and t.attr=='learning_store' for t in n.targets))

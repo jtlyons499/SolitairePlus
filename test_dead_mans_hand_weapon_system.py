@@ -1,10 +1,11 @@
+from tests.support import locate
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_dead_mans_hand_sfx_live_in_dedicated_folder():
-    source = (ROOT / "main.py").read_text(encoding="utf-8")
+    source = locate.source()
     assert "assets/sounds/dead_mans_hand/pistol_shot.wav" in source
     assert "assets/sounds/dead_mans_hand/pistol_reload.wav" in source
     assert "assets/sounds/dead_mans_hand/enemy_hit.wav" in source
@@ -26,7 +27,7 @@ def test_dead_mans_hand_has_ads_reload_and_per_weapon_viewmodel_config():
 
 
 def test_dead_mans_hand_main_wires_rmb_ads_and_r_reload():
-    source = (ROOT / "main.py").read_text(encoding="utf-8")
+    source = locate.source()
     assert "dead_mans_hand_game.set_aiming(True)" in source
     assert "dead_mans_hand_game.set_aiming(False)" in source
     assert "dead_mans_hand_game.start_reload()" in source

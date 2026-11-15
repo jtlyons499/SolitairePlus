@@ -1,4 +1,5 @@
 """Real pot resolution, odd chips, modal controls and production timer gating."""
+from tests.support import locate
 import ast
 from pathlib import Path
 from types import SimpleNamespace
@@ -62,9 +63,8 @@ class RecapTests(unittest.TestCase):
         handle_recap_action(g,'recap_open');self.assertEqual(g.recap_page,0)
 
     def test_production_timers_pause_and_restart_after_review(self):
-        tree=ast.parse(Path('main.py').read_text())
         branches=[]
-        for node in ast.walk(tree):
+        for node in locate.walk():
             if not isinstance(node,ast.If):continue
             condition=ast.unparse(node.test)
             if condition=='getattr(texas_holdem_game, \'recap_open\', False)' and any(isinstance(x,ast.Assign) for x in node.body):
@@ -93,7 +93,7 @@ class RecapTests(unittest.TestCase):
         self.assertEqual(state['stats']['holdem_hand_wins'],8)
 
     def test_actual_main_table_clear_hook_does_not_repeat_each_frame(self):
-        tree=ast.parse(Path('main.py').read_text());function=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='process_texas_holdem_showdown')
+        function=locate.function_node('process_texas_holdem_showdown')
         g=TexasHoldemGame();g.start_session([{'name':'Rival'}],1000,10)
         g.hand_number=1;g.hand_complete=True;g.current_stage='showdown';g.npc_busted=[True];g.player_busted=False;g.winner_indexes=[]
         events=[]

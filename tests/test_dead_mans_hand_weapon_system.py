@@ -1,3 +1,4 @@
+from tests.support import locate
 from pathlib import Path
 
 from dead_mans_hand import LEVELS, wall_at
@@ -7,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_dead_mans_hand_sfx_live_in_dedicated_folder():
-    source = (ROOT / "main.py").read_text(encoding="utf-8")
+    source = locate.source()
     for filename in (
         "pistol_shot.wav", "pistol_reload.wav",
         "kar98k_shot.wav", "kar98k_bolt.wav", "kar98k_reload.wav",
@@ -52,7 +53,7 @@ def test_renderer_has_ads_reload_bolt_pickups_and_viewmodel_frames():
 
 
 def test_main_wires_weapon_switching_trigger_hold_and_reload():
-    source = (ROOT / "main.py").read_text(encoding="utf-8")
+    source = locate.source()
     assert "dead_mans_hand_game.switch_weapon_by_slot" in source
     assert "dead_mans_hand_game.cycle_weapon" in source
     assert "dead_mans_hand_game.set_trigger_held(True)" in source

@@ -17,3 +17,6 @@ saves/
 *.log
 *.tmp
 release_preflight.json
+
+# Screen harness / replay output (renders, diffs, baseline worktrees)
+.harness_out/

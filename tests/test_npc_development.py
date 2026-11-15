@@ -1,3 +1,4 @@
+from tests.support import locate
 from career_activities import normalize_story, reconcile_story_cosmetics
 """Career-world regression tests; run from the project root with unittest."""
 import ast
@@ -13,7 +14,7 @@ from types import SimpleNamespace
 import profile as profiles
 import npc_manager
 from achievements import normalize_achievement_state
-from career_fans import clamp_fans
+from career_fans import clamp_fans, normalize_fan_trend
 from career_npc_development import (ability_target, advance_npc_development,
                                     choose_prospect_band, development_stage,
                                     ensure_npc_development, month_index)
@@ -22,9 +23,10 @@ from career_npc_world import (add_prospect, advance_career_world, career_roster,
 from career_ratings import CATEGORY_KEYS as GAME_RATING_KEYS, derive_overall, normalize_rating_bundle
 from npc_personality import TRAIT_NAMES
 from career_event_progress import store_event_progress
+from case_opening import ITEMS as CASE_ITEMS
+from arcade_support import ARCADE_PRIZE_CATALOG
 
 ROOT = Path(__file__).resolve().parents[1]
-MAIN_TREE = ast.parse((ROOT / "main.py").read_text(encoding="utf-8"))
 
 
 def world(seed=42, base=None, year=2026, month=1):
@@ -35,9 +37,7 @@ def world(seed=42, base=None, year=2026, month=1):
 
 
 def main_functions(names, values):
-    nodes = [node for node in MAIN_TREE.body if isinstance(node, ast.FunctionDef) and node.name in names]
-    if len(nodes) != len(names):
-        raise AssertionError("Requested main functions were not found")
+    nodes = locate.function_nodes(*names)
     namespace = dict(values)
     exec(compile(ast.Module(body=nodes, type_ignores=[]), "main NPC integration", "exec"), namespace)
     return namespace
@@ -277,8 +277,9 @@ class MainIntegrationTests(unittest.TestCase):
             copy=copy, normalize_story=normalize_story, reconcile_story_cosmetics=reconcile_story_cosmetics, game=game, score_four_game=SimpleNamespace(layout="compact"), store_event_progress=store_event_progress, make_default_profile=profiles.make_default_profile,
             avatar_bases=["base_01"], avatar_eyes=["eyes_01"], avatar_hair=["hair_01"],
             avatar_tops=["top_01"], avatar_glasses=[], favorite_suit_options=["Hearts"],
-            cursor_runtime_surfaces={"cursor": None}, VERIFIED_DEALS_ENABLED=False,
-            clamp_fans=clamp_fans, normalize_rating_bundle=normalize_rating_bundle,
+            cursor_runtime_surfaces={"cursor": None}, cursor_cosmetics={"cursor": {}}, REWARD_CURSOR_IDS=set(), unlocked_cursors={"cursor"},
+            CASE_ITEMS=CASE_ITEMS, ARCADE_PRIZE_CATALOG=ARCADE_PRIZE_CATALOG, VERIFIED_DEALS_ENABLED=False,
+            clamp_fans=clamp_fans, normalize_fan_trend=normalize_fan_trend, normalize_rating_bundle=normalize_rating_bundle,
             normalize_achievement_state=normalize_achievement_state,
             get_next_level_xp=lambda level: 100, sync_achievement_cosmetic_rewards=lambda: None,
             grant_rating_cosmetics=lambda **kwargs: None,

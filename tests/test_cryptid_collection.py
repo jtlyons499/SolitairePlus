@@ -1,4 +1,5 @@
 """Collection migration, committed rewards, deck legality and UI integration."""
+from tests.support import locate
 import ast
 from collections import Counter
 import copy
@@ -21,11 +22,10 @@ from career_hub_controls import CareerHubControls
 from cryptid_creatures_ai import choose_cryptid_action
 
 ROOT=Path(__file__).resolve().parents[1]
-TREE=ast.parse((ROOT/'main.py').read_text())
 
 
 def main_functions(names,env):
-    nodes=[n for n in TREE.body if isinstance(n,ast.FunctionDef) and n.name in names]
+    nodes=locate.function_nodes(*names)
     assert len(nodes)==len(names)
     exec(compile(ast.Module(body=nodes,type_ignores=[]),'main orchestration','exec'),env)
     return env

@@ -8,6 +8,12 @@ How it works (see docs/TESTING.md for the full explanation):
 * There are two suites. "game" is tests/ (single-player code). "multiplayer"
   is multiplayer/tests/ and needs multiplayer/ first on the import path,
   because multiplayer/ has its own copies of some modules.
+* Test files (test_*.py) are found in the suite folder and all its subfolders
+  (except helper folders such as tests/support/). A test's id is always
+  <file name>.Class.test (or <file name>.test_function), whatever subfolder the
+  file is in, so two test files in one suite must not share a name.
+* Both unittest TestCase classes and plain module-level test_* functions
+  (pytest style, no arguments) are run.
 * Each test file runs in its own Python process with a time limit, so a test
   that hangs cannot freeze the whole run.
 * Tests listed in tests/KNOWN_FAILURES.txt were already broken before this
@@ -23,6 +29,8 @@ How it works (see docs/TESTING.md for the full explanation):
 from __future__ import annotations
 
 import argparse
+import importlib.util
+import inspect
 import json
 import os
 import subprocess
@@ -35,11 +43,13 @@ ROOT = Path(__file__).resolve().parents[1]
 KNOWN_FAILURES = ROOT / "tests" / "KNOWN_FAILURES.txt"
 
 SUITES = {
-    # name: (test directory, import path in priority order)
+    # name: (test directory, import path after the test file's own folder, in priority order)
     "game": (ROOT / "tests", [ROOT / "tests", ROOT]),
     "multiplayer": (ROOT / "multiplayer" / "tests",
                     [ROOT / "multiplayer" / "tests", ROOT / "multiplayer", ROOT]),
 }
+
+NOT_TEST_FOLDERS = {"support", "fixtures", "__pycache__"}  # helper folders inside a suite, never searched
 
 MODULE_TIMEOUT = 300      # seconds per test file
 QUARANTINE_TIMEOUT = 30   # seconds per quarantined test
@@ -60,6 +70,50 @@ def load_known_failures() -> dict[str, dict[str, str]]:
             raise SystemExit(f"{KNOWN_FAILURES.name} line {number} is not 'suite:test.id  # reason': {raw!r}")
         known[suite][test_id.strip()] = reason.strip() or "no reason given"
     return known
+
+
+def discover(suite_name: str) -> list[Path]:
+    """Every test_*.py in the suite folder and its subfolders, sorted by file name.
+
+    Stops with an error if two files share a name, because test ids use the file name only."""
+    directory, _ = SUITES[suite_name]
+    found: dict[str, Path] = {}
+    for path in sorted(directory.rglob("test_*.py")):
+        if any(part in NOT_TEST_FOLDERS for part in path.relative_to(directory).parts[:-1]):
+            continue
+        if path.stem in found:
+            raise SystemExit(f"Two test files in suite '{suite_name}' are both called {path.name}: "
+                             f"{found[path.stem].relative_to(ROOT)} and {path.relative_to(ROOT)}. "
+                             "Rename one (test ids use the file name only).")
+        found[path.stem] = path
+    return [found[stem] for stem in sorted(found)]
+
+
+def resolve_target(suite_name: str, target: str) -> tuple[Path, str]:
+    """Turn a worker target into (test file, wanted test id).
+
+    A target is a .py path, or a dotted id: test_x, test_x.Class, test_x.Class.test_y or test_x.test_func."""
+    if target.endswith(".py"):
+        path = Path(target)
+        path = (path if path.is_absolute() else ROOT / path).resolve()
+        if not path.is_file():
+            raise SystemExit(f"No such test file: {target}")
+        return path, path.stem
+    module = target.split(".", 1)[0]
+    for path in discover(suite_name):
+        if path.stem == module:
+            return path, target
+    raise SystemExit(f"No test file {module}.py in suite '{suite_name}'")
+
+
+def import_path(suite_name: str, test_file: Path) -> list[Path]:
+    """The test file's own folder first, then the suite's import path, without repeats."""
+    _, paths = SUITES[suite_name]
+    ordered: list[Path] = []
+    for path in [test_file.parent, *paths]:
+        if all(path.resolve() != seen.resolve() for seen in ordered):
+            ordered.append(path)
+    return ordered
 
 
 def child_env() -> dict[str, str]:
@@ -104,9 +158,38 @@ def iter_tests(suite):
             yield item
 
 
+class FunctionTest(unittest.FunctionTestCase):
+    """A plain module-level test_* function, reported as <file name>.<function name>."""
+
+    def __init__(self, module_name: str, function):
+        super().__init__(function)
+        self._id = f"{module_name}.{function.__name__}"
+
+    def id(self):
+        return self._id
+
+    def __str__(self):
+        return f"{self._testFunc.__name__} ({self._id})"
+
+
+def load_file(test_file: Path) -> unittest.TestSuite:
+    """Import a test file under its own name; collect its TestCase tests and plain test_* functions."""
+    module_name = test_file.stem
+    spec = importlib.util.spec_from_file_location(module_name, test_file)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module  # so mock.patch("test_x.name") and re-imports find this module
+    spec.loader.exec_module(module)
+    suite = unittest.defaultTestLoader.loadTestsFromModule(module)
+    for name, value in vars(module).items():
+        if (name.startswith("test") and inspect.isfunction(value) and value.__module__ == module_name
+                and not inspect.signature(value).parameters):
+            suite.addTest(FunctionTest(module_name, value))
+    return suite
+
+
 def worker(suite_name: str, target: str, skip_ids: list[str]) -> None:
-    _, paths = SUITES[suite_name]
-    for path in reversed(paths):
+    test_file, wanted = resolve_target(suite_name, target)
+    for path in reversed(import_path(suite_name, test_file)):
         sys.path.insert(0, str(path))
     os.chdir(ROOT)
     try:
@@ -114,8 +197,11 @@ def worker(suite_name: str, target: str, skip_ids: list[str]) -> None:
         pygame.init()  # headless thanks to the dummy SDL drivers set in child_env()
     except Exception as error:  # a broken pygame install should still let pure-logic tests run
         print(f"warning: pygame could not be initialised: {error}", file=sys.stderr)
-    loaded = unittest.defaultTestLoader.loadTestsFromName(target)
-    selected = unittest.TestSuite(t for t in iter_tests(loaded) if t.id() not in set(skip_ids))
+    tests = [t for t in iter_tests(load_file(test_file))
+             if t.id() == wanted or t.id().startswith(wanted + ".")]
+    if not tests and wanted != test_file.stem:
+        raise SystemExit(f"No test matches {wanted!r} in {test_file.relative_to(ROOT)}")
+    selected = unittest.TestSuite(t for t in tests if t.id() not in set(skip_ids))
     result = unittest.TextTestRunner(stream=sys.stderr, verbosity=1).run(selected)
     summary = {
         "ran": result.testsRun,
@@ -134,10 +220,10 @@ def run_suite(name: str, known: dict[str, str], skip_quarantined: bool) -> tuple
     report: list[str] = []
     print(f"\n=== Suite '{name}' ({directory.relative_to(ROOT)}) ===", flush=True)
     hanging = {test_id for test_id, reason in known.items() if reason.upper().startswith("HANGS")}
-    for test_file in sorted(directory.glob("test_*.py")):
+    for test_file in discover(name):
         module = test_file.stem
         skip = sorted(test_id for test_id in hanging if test_id.startswith(module + "."))
-        args = ["--worker", name, module, *(f"--skip={test_id}" for test_id in skip)]
+        args = ["--worker", name, str(test_file.relative_to(ROOT)), *(f"--skip={test_id}" for test_id in skip)]
         started = time.monotonic()
         status, result, output = run_child(args, MODULE_TIMEOUT)
         seconds = time.monotonic() - started

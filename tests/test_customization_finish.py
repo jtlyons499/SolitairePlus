@@ -1,3 +1,4 @@
+from tests.support import locate
 import ast
 from pathlib import Path
 import tempfile
@@ -38,11 +39,10 @@ class CustomizationFinishTests(unittest.TestCase):
    second=cache.get('b',source,(16,16));self.assertIs(second,cache.surface);self.assertIsNot(first,second)
    self.assertEqual(scale.call_count,2)
  def test_drawing_and_clicks_share_sorted_catalog_order(self):
-  tree=ast.parse(Path('main.py').read_text())
-  function=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='draw_customize_menu')
+  function=locate.function_node('draw_customize_menu')
   assignment=next(n for n in ast.walk(function) if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='asset_ids' for t in n.targets))
   self.assertEqual(ast.unparse(assignment.value),'get_customize_asset_ids()')
-  equip=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='equip_customize_item')
+  equip=locate.function_node('equip_customize_item')
   env=dict(refresh_cosmetic_assets=lambda:None,cosmetic_art_available=lambda asset:False,selected_felt='f_default')
   exec(compile(ast.Module(body=[equip],type_ignores=[]),'equip integration','exec'),env)
   env['equip_customize_item']('missing');self.assertEqual(env['selected_felt'],'f_default')

@@ -1,4 +1,5 @@
 """Framing, portrait fallback and main-loop delegation."""
+from tests.support import locate
 import ast
 import os
 from pathlib import Path
@@ -35,9 +36,7 @@ class PortraitUiTests(unittest.TestCase):
         self.assertTrue(any(target.get_at((x,y))[:3] == (255,255,255)
                             for x in range(25,75) for y in range(25,75)))
     def test_main_delegates_with_current_surface_and_loader(self):
-        tree = ast.parse((Path(__file__).resolve().parents[1] / 'main.py').read_text())
-        node = next(n for n in tree.body if isinstance(n, ast.FunctionDef)
-                    and n.name == 'draw_npc_portrait')
+        node = locate.function_node('draw_npc_portrait')
         seen = []
         values = [object() for _ in range(4)]
         env = dict(game_surface=values[0], NPC_PORTRAIT_STYLES=values[1],

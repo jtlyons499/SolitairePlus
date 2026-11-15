@@ -16,15 +16,15 @@
 #
 # Fixing these is on the future refactor sprint list (see AGENTS.md).
 
-# --- Stale tests: rebuild main.py functions in a fake environment that lacks names added later
-game:test_career_polish.CareerPolishTests.test_rating_cosmetics_reconcile_on_load_and_remain_unlocked   # NameError check_player_rating_world_reactions (fake env is out of date)
-game:test_cryptid_creatures.CryptidUiTests.test_production_free_play_path_restores_actual_career_snapshot   # NameError career_fan_trend (fake env is out of date)
-game:test_npc_development.MainIntegrationTests.test_actual_profile_load_anchors_world_at_saved_date_and_save_is_independent   # NameError normalize_fan_trend (fake env is out of date)
-
 # --- Stale tests: save preview images to a folder that only existed on the original author's AI tool
 game:test_case_opening.CaseTests.test_reel_ends_on_committed_item_and_skip_does_not_purchase_twice   # hard-coded /workspace/scratch path
 game:test_poker_recap.RecapTests.test_recap_render_and_chip_events_do_not_change_rules_or_repeat_sfx   # hard-coded /workspace/scratch path
 game:test_table_polish.TablePolishTests.test_large_card_layout_and_next_hand_hit_target_render   # hard-coded /workspace/scratch path
+
+# --- Stale source checks: plain test functions that tools/run_tests.py did not collect before 2026-11-15
+#     (they already failed on main at 154b890; the code was changed after the tests were written)
+game:test_dead_mans_hand_weapon_system.test_hud_supports_custom_assets_without_health_or_ammo_numbers   # expects the weapon icon path built from weapon_id; the code now loops over candidate names
+game:test_dead_mans_hand_weapon_system.test_pistol_tuning_keeps_separate_ads_and_hip_muzzle_anchors   # expects pistol ADS anchor (0.515, 1.060); tuning is now (0.495, 1.06)
 
 # --- Expected numbers predate the NPC aging/rating rebalance (designer to confirm intended values)
 game:test_npc_development.DevelopmentTests.test_decline_is_gentle_capped_and_does_not_retroactively_reset_veterans   # rebalance changed decline numbers

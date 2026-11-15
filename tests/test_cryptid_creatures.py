@@ -1,4 +1,5 @@
 """Rules, hidden-information boundary, Free Play integration and artist assets."""
+from tests.support import locate
 import ast
 from collections import Counter
 import copy
@@ -294,11 +295,10 @@ class CryptidUiTests(unittest.TestCase):
         self.assertEqual(s.hand,[])
 
     def test_production_free_play_path_restores_actual_career_snapshot(self):
-        tree=ast.parse((ROOT/"main.py").read_text())
         names={"start_free_play_game","begin_free_play_sandbox","finish_free_play_sandbox","leave_free_play_game"}
-        nodes=[node for node in tree.body if isinstance(node,ast.FunctionDef) and node.name in names]
+        nodes=locate.function_nodes(*sorted(names))
         career=dict(career_rating=1234,career_ratings={"solitaire":1345,"overall":1234},career_cash=91234,
-                    career_fans=600,career_fan_news_milestones={100,500},career_news_items=[{"headline":"original"}],
+                    career_fans=600,career_fan_news_milestones={100,500},career_fan_trend=[{"change":20,"reason":"Won a showdown","day":3}],career_news_items=[{"headline":"original"}],
                     career_rounds_won=17,career_challenges_won=4,career_total_moves=5050,
                     career_event_result_log=[{"game":"solitaire"}],career_event_has_activity=False)
         screen=self.screen()

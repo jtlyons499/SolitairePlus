@@ -1,3 +1,4 @@
+from tests.support import locate
 import ast
 from pathlib import Path
 from types import SimpleNamespace
@@ -36,8 +37,7 @@ class ReadabilityTests(unittest.TestCase):
         namespace.update(career_rating=1040.4,career_ratings=dict(strategy=1060.5,poker=1020.2,casino=1000),career_fans=17)
         store_event_progress(entry,namespace)
         restore_event_progress(entry,namespace)
-        tree=ast.parse(Path('main.py').read_text())
-        function=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='build_career_event_summary')
+        function=locate.function_node('build_career_event_summary')
         namespace['_build_career_event_summary']=lambda:namespace.update(career_event_summary_lines=['Night completed.','Current Rating: 1040.4','Current Fans: 17'])
         exec(compile(ast.Module(body=[function],type_ignores=[]),'night summary','exec'),namespace)
         namespace['build_career_event_summary']()

@@ -1,8 +1,9 @@
+from tests.support import locate
 from pathlib import Path
 
 
 def test_ambient_playlist_auto_discovers_drop_in_tracks():
-    main_source = Path("main.py").read_text(encoding="utf-8")
+    main_source = locate.source()
 
     assert 'discover_music_files(' in main_source
     assert '"assets/music",' in main_source
@@ -11,7 +12,7 @@ def test_ambient_playlist_auto_discovers_drop_in_tracks():
 
 
 def test_arcade_cabinets_have_optional_individual_music_hooks():
-    main_source = Path("main.py").read_text(encoding="utf-8")
+    main_source = locate.source()
     audio_source = Path("audio.py").read_text(encoding="utf-8")
 
     for game_id in (
@@ -39,7 +40,7 @@ def test_machine_music_respects_global_off_and_restores_playlist():
 
 
 def test_placeholder_machine_music_defaults_off_and_requires_opt_in():
-    main_source = Path("main.py").read_text(encoding="utf-8")
+    main_source = locate.source()
 
     assert "arcade_placeholder_music_enabled = False" in main_source
     assert 'Placeholder Music: {\'On\' if arcade_placeholder_music_enabled else \'Off\'}' in main_source
@@ -58,7 +59,7 @@ def test_bad_music_files_are_skipped_instead_of_crashing_playlist():
 
 
 def test_arcade_custom_reroll_and_quit_assets_are_wired():
-    main_source = Path("main.py").read_text(encoding="utf-8")
+    main_source = locate.source()
 
     assert '"reroll_rivals": "assets/arcade/ui/reroll_rivals.png"' in main_source
     assert '"quit": "assets/arcade/ui/quit.png"' in main_source

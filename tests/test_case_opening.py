@@ -1,4 +1,5 @@
 """Case odds, committed rewards, save rollback, isolated practice and reel alignment."""
+from tests.support import locate
 import ast
 import copy
 import random
@@ -51,7 +52,7 @@ class CaseTests(unittest.TestCase):
   award_earned_trophies(state,data);award_earned_trophies(state,data)
   self.assertEqual(state['inventory'],{'hundred_wins':1,'table_champion':1});self.assertEqual(state['opened'],0)
  def transaction_env(self,save):
-  tree=ast.parse(Path('main.py').read_text());fn=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='buy_case_for_screen')
+  fn=locate.function_node('buy_case_for_screen')
   env=dict(copy=copy,current_game_mode='career',case_collection_state=new_case_state(),career_cash=10000,
            career_ratings=make_player_rating_bundle(1000),career_rating=1000,career_fans=50,
            unlocked_menu_backgrounds=set(),unlocked_felts=set(),unlocked_titles=set(),unlocked_cursors=set(),CASE_ITEMS=ITEMS,

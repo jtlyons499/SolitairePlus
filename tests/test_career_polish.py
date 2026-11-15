@@ -1,3 +1,4 @@
+from tests.support import locate
 import ast
 import copy
 import random
@@ -9,10 +10,8 @@ from career_session_summary import poker_session_status, night_game_net, night_c
 from career_event_progress import store_event_progress, restore_event_progress
 from rating_unlocks import add_rating_catalogs, unlock_ratings, rating_lock_progress, lock_reason
 
-SOURCE=ast.parse(Path('main.py').read_text())
 def production_function(name, env):
- node=next(n for n in SOURCE.body if isinstance(n,ast.FunctionDef) and n.name==name)
- exec(compile(ast.Module(body=[node],type_ignores=[]),'production Career function','exec'),env)
+ locate.exec_functions([name],env,'production Career function')
  return env[name]
 
 class CareerPolishTests(unittest.TestCase):
@@ -93,7 +92,7 @@ class CareerPolishTests(unittest.TestCase):
 
  def test_rating_cosmetics_reconcile_on_load_and_remain_unlocked(self):
   catalogs=[{}, {}, {}];add_rating_catalogs(*catalogs);sets=[set(),set(),set()]
-  env=dict(current_game_mode='menu',career_ratings={'strategy':1400,'poker':1000,'casino':1000,'overall':1300},MENU_BACKGROUNDS=catalogs[0],FELTS=catalogs[1],TITLES=catalogs[2],unlocked_menu_backgrounds=sets[0],unlocked_felts=sets[1],unlocked_titles=sets[2],unlock_ratings=unlock_ratings)
+  env=dict(current_game_mode='menu',career_ratings={'strategy':1400,'poker':1000,'casino':1000,'overall':1300},MENU_BACKGROUNDS=catalogs[0],FELTS=catalogs[1],TITLES=catalogs[2],unlocked_menu_backgrounds=sets[0],unlocked_felts=sets[1],unlocked_titles=sets[2],unlock_ratings=unlock_ratings,check_player_rating_world_reactions=lambda:None)
   grant=production_function('grant_rating_cosmetics',env);grant(force=True)
   self.assertIn('bg_rating_strategy_1400',sets[0])
   env['career_ratings']['strategy']=1000;grant(force=True)

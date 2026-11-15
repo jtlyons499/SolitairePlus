@@ -1,3 +1,4 @@
+from tests.support import locate
 import ast
 import copy
 import json
@@ -25,12 +26,11 @@ from five_o_poker import FiveOPokerGame
 from score_four import ScoreFourGame
 
 ROOT = Path(__file__).resolve().parents[1]
-MAIN_TREE = ast.parse((ROOT / "main.py").read_text(encoding="utf-8"))
 
 
 def main_functions(*names, **values):
     """Execute actual orchestration functions without launching the asset UI."""
-    nodes = [node for node in MAIN_TREE.body if isinstance(node, ast.FunctionDef) and node.name in names]
+    nodes = locate.function_nodes(*names)
     assert len(nodes) == len(names)
     namespace = dict(track_night_cash=track_night_cash, grant_rating_cosmetics=lambda: None, current_game_mode="career", career_rating=1000,
                      career_ratings=make_player_rating_bundle(), career_rating_results={},

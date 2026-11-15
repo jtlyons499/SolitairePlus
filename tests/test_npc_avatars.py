@@ -1,4 +1,5 @@
 """Artist-layer, saved-identity and production portrait integration tests."""
+from tests.support import locate
 import ast
 import copy
 import json
@@ -249,9 +250,7 @@ class ArtistRendererTests(unittest.TestCase):
         self.assertEqual(tuple(image.get_at((180, 180)))[:3], (90, 170, 220))
 
     def test_main_portrait_override_has_priority_then_falls_back_to_artist_layers(self):
-        tree = ast.parse((ROOT / "main.py").read_text(encoding="utf-8"))
-        node = next(n for n in tree.body if isinstance(n, ast.FunctionDef)
-                    and n.name == "get_npc_portrait_surface")
+        node = locate.function_node("get_npc_portrait_surface")
         calls = []
         expected = pygame.Surface((72, 72))
         env = {"pygame": pygame, "npc_icon_cache": {},

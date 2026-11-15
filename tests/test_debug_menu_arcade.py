@@ -1,3 +1,4 @@
+from tests.support import locate
 from pathlib import Path
 
 
@@ -15,7 +16,7 @@ def test_debug_menu_uses_expandable_minigame_categories():
 
 def test_arcade_debug_entries_are_available_from_minigame_accordion():
     debug_source = Path("debug_menu.py").read_text(encoding="utf-8")
-    main_source = Path("main.py").read_text(encoding="utf-8")
+    main_source = locate.source()
 
     assert 'ACTION_ARCADE_NIGHT = "arcade_night"' in debug_source
     assert 'ACTION_KING_PONG = "king_pong"' in debug_source
