@@ -1,8 +1,10 @@
 from case_opening import new_case_state, normalize_case_state
 from arcade_support import make_default_arcade_state, normalize_arcade_state
 from poker_learning import new_learning, normalize_learning
+import hashlib
 import json
 import os
+import shutil
 import tempfile
 import time
 from pathlib import Path
@@ -19,6 +21,55 @@ from runtime_support import save_directory
 SAVE_FOLDER = str(save_directory())
 
 PROFILE_VERSION = 10
+
+# ==================================================
+# SAVE VERSIONS AND MIGRATIONS
+#
+# RULE: whenever the shape of a save changes, add 1 to PROFILE_VERSION and add a
+# function to MIGRATIONS that turns a save of the OLD version into the new one.
+#   MIGRATIONS = {10: upgrade_10_to_11, 11: upgrade_11_to_12}
+# Each function receives the save dict and returns it. They run in order on load,
+# so a save from any older version is brought up to date step by step.
+# (Saves up to version 10 are already handled by the normalize_* calls below and by
+# main.py, so the list starts empty.)
+# A save from a NEWER version is never loaded or overwritten: an older game would
+# silently drop the newer data. The player is told to update instead.
+# ==================================================
+
+MIGRATIONS = {}
+
+
+class ProfileUnavailable(Exception):
+    """A save exists but cannot be opened. str(error) is the message for the player."""
+    short_label = "Can't open"
+
+
+class ProfileDamaged(ProfileUnavailable):
+    short_label = "Damaged save"
+
+
+class ProfileTooNew(ProfileUnavailable):
+    short_label = "Needs update"
+
+
+def migrate(data):
+    """Bring a loaded save up to PROFILE_VERSION. Raises ProfileTooNew for newer saves."""
+    try:
+        version = int(data.get("profile_version", 0) or 0)
+    except (TypeError, ValueError):
+        version = 0
+    if version > PROFILE_VERSION:
+        raise ProfileTooNew(
+            "This save was made by a newer version of Solitaire+. "
+            "Update the game (main menu or Options > Updates) to play it."
+        )
+    while version < PROFILE_VERSION:
+        step = MIGRATIONS.get(version)
+        if step is not None:
+            data = step(data)
+        version += 1
+    data["profile_version"] = PROFILE_VERSION
+    return data
 
 PROFILE_SLOT_COUNT = 3
 
@@ -231,6 +282,7 @@ def save_profile(
     )
 
     path = os.path.abspath(path)
+    keep_backup(path)
     temporary = None
     try:
         with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=os.path.dirname(path), suffix=".tmp", delete=False) as file:
@@ -263,6 +315,26 @@ def save_profile(
                 pass
 
 
+def backup_path(slot):
+    return get_profile_path(slot) + ".bak"
+
+
+def keep_backup(path):
+    """Before overwriting a save, keep the previous one as <name>.bak if it is readable.
+
+    A damaged file never replaces a good backup.
+    """
+    if not os.path.isfile(path):
+        return
+    try:
+        with open(path, "r", encoding="utf-8") as file:
+            if not isinstance(json.load(file), dict):
+                return
+        shutil.copy2(path, path + ".bak")
+    except (OSError, ValueError):
+        pass
+
+
 def replace_with_retry(source, destination):
     for attempt, delay in enumerate((0.05, 0.1, 0.2, 0.4, 0.8, 0)):
         try:
@@ -276,7 +348,7 @@ def replace_with_retry(source, destination):
 
 def recovery_paths(slot):
     path = Path(get_profile_path(slot))
-    return list(path.parent.glob(path.name + ".recovery.*.json"))
+    return [p for p in path.parent.glob(path.name + ".recovery.*.json") if ".damaged-" not in p.name]
 
 
 def latest_profile_path(slot):
@@ -289,22 +361,63 @@ def latest_profile_path(slot):
 # LOAD
 # ==================================================
 
+def _read_save(path):
+    with open(path, "r", encoding="utf-8") as file:
+        data = json.load(file)
+    if not isinstance(data, dict):
+        raise ValueError("save is not a JSON object")
+    return data
+
+
+def _keep_damaged_copy(path):
+    """Copy an unreadable save aside (never delete it) so it could be repaired by hand.
+
+    The profile screen reloads saves every frame, so the copy is named after the
+    file's content and made only once per damaged version.
+    """
+    try:
+        digest = hashlib.sha1(Path(path).read_bytes()).hexdigest()[:10]
+        copy = f"{path}.damaged-{digest}.json"
+        if not os.path.exists(copy):
+            shutil.copy2(path, copy)
+            print(f"Save file could not be read; kept a copy at {copy} and tried older copies.")
+    except OSError:
+        pass
+
+
 def load_profile(
         slot=1
 ):
-    path = latest_profile_path(slot)
-    if path is None:
+    """Load a save slot. Returns None for an empty slot.
+
+    Tries the newest file first, then older copies (recovery files, then the
+    .bak of the previous good save). Raises ProfileDamaged if every copy is
+    unreadable, and ProfileTooNew if the save comes from a newer game version.
+    """
+    newest = latest_profile_path(slot)
+    candidates = [newest] if newest else []
+    candidates += sorted((p for p in [Path(get_profile_path(slot)), *recovery_paths(slot)]
+                          if p.is_file() and p != newest),
+                         key=lambda p: p.stat().st_mtime_ns, reverse=True)
+    if Path(backup_path(slot)).is_file():
+        candidates.append(Path(backup_path(slot)))
+    if not candidates:
         return None
 
-    with open(
-        path,
-        "r",
-        encoding="utf-8"
-    ) as file:
-        data = json.load(
-            file
+    data = None
+    for path in candidates:
+        try:
+            data = _read_save(path)
+            break
+        except (OSError, ValueError):
+            _keep_damaged_copy(path)
+    if data is None:
+        raise ProfileDamaged(
+            f"Profile {slot} is damaged and no readable backup was found. "
+            "A copy was kept in the saves folder; delete this slot to start over."
         )
 
+    data = migrate(data)
     migrate_profile_ratings(data)
     data.setdefault("career", {}).setdefault("npc_world", {})
     data["cryptid_creatures"]=normalize_collection(data.get("cryptid_creatures"),data.get("progression",{}).get("level",1))
@@ -339,4 +452,6 @@ def delete_profile(slot):
         )
     for recovery in recovery_paths(slot):
         recovery.unlink()
+    if os.path.exists(backup_path(slot)):
+        os.remove(backup_path(slot))
 

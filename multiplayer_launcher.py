@@ -28,7 +28,7 @@ def run_multiplayer():
 
 # Server-only and test-only modules. The packaged game does not ship them
 # (keep in sync with MP_EXCLUDED in SolitairePlus.spec).
-SELFTEST_SKIP = {'relay_server', 'room_relay', 'relay_transport'}
+SELFTEST_SKIP = {'relay_server', 'room_relay', 'relay_websocket', 'relay_transport'}
 
 
 def run_selftest(folder):

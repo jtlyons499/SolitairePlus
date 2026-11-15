@@ -46,6 +46,12 @@ The updater (`updater/`, built as `SolitaireUpdater.exe`) is tested in the `game
 `tests/test_updater_signatures.py` (the real Windows signature check, using a throwaway certificate created in memory;
 skipped on PCs without Windows PowerShell).
 
+Saves: `tests/test_profile_recovery.py` covers damaged saves (fall back to the `.bak` copy), saves from newer
+versions (refused), and the migration chain.
+
+Relay room codes and guessing protection: `multiplayer/tests/test_relay_codes.py`. Encrypted WebSocket play:
+`multiplayer/tests/test_relay_websocket.py` (TCP and WebSocket players in one room, plus a real `SolitaireNet` process).
+
 The network service (`netservice/`, built as `SolitaireNet.exe`) is tested in the `game` suite by
 `tests/test_netservice.py`, which uses small fake servers on `127.0.0.1` (no internet needed). The real
 game path (game → `SolitaireNet` child process → relay server) is tested in `multiplayer/tests/test_net_client.py`.

@@ -1,8 +1,7 @@
 """Six-client routing; identities are assigned by the relay, never by guests."""
 import asyncio
 import json
-import secrets
-from relay_server import send, MAX_LINE
+from relay_server import send, MAX_LINE, new_room_code
 
 HOST_MESSAGE_TYPES = {'lobby', 'state', 'party_state', 'ack', 'waiting'}
 
@@ -19,18 +18,17 @@ async def handle_room(server, reader, writer, request):
         if request.get('type') == 'create':
             if len(server.rooms) >= 500:
                 raise ValueError('Relay is full')
-            while True:
-                code = f'{secrets.randbelow(100000):05d}'
-                if code not in server.rooms:
-                    break
+            code = new_room_code(server.rooms, request)
             identity = 0
             room = {'version': 2, 'clients': {0: writer}, 'next_id': 1}
             server.rooms[code] = room
             await send(writer, {'type': 'room', 'code': code, 'identity': 0})
         elif request.get('type') == 'join':
+            server.check_join_allowed(writer)
             code = str(request.get('code', '')).upper().strip()
             room = server.rooms.get(code)
             if not room or room.get('version') != 2:
+                await server.record_failed_join(writer)
                 raise ValueError('Room not found or uses an older game version')
             if len(room['clients']) >= 6:
                 raise ValueError('Room already has six humans')

@@ -1,0 +1,3 @@
+# What the relay server needs on Railway (when Railway builds from the multiplayer/ folder).
+# See docs/RAILWAY_DEPLOY.md. Keep the version in step with the root requirements.txt.
+websockets==15.0.1

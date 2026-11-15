@@ -24,6 +24,7 @@ scheme(s) to SCHEMES below. The game does not change.
 from __future__ import annotations
 
 from .relay import RelayConnection
+from .websocket import WebSocketConnection
 
 # The server players use unless they type a different address.
 # This is the ONLY place the default server is defined. Moving the server
@@ -33,6 +34,8 @@ DEFAULT_ADDRESS = "tcp://yamanote.proxy.rlwy.net:40274"
 SCHEMES = {
     "tcp": RelayConnection,   # relay server, plain TCP
     "tls": RelayConnection,   # relay server, TLS-encrypted TCP
+    "wss": WebSocketConnection,  # relay server over encrypted WebSocket (HTTPS, port 443)
+    "ws": WebSocketConnection,   # unencrypted WebSocket: local testing only
 }
 
 

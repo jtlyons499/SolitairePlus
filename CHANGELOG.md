@@ -18,6 +18,14 @@ How to use this file (maintainers and AI agents):
 - An interrupted update (for example a power cut) is undone automatically the next time you start the game.
 - Your Options choices (music, volume, sound effects, window size, fullscreen, double-click) are now remembered between launches.
 
+### Fixes
+- A damaged save file no longer crashes the game on the profile screen. The game opens the previous good copy (a backup is now kept on every save). If no copy is readable, the slot says "Damaged save" and the damaged file is kept so it can be repaired.
+- A save made by a newer version of the game is no longer opened (and silently damaged) by an older version; the slot says "Needs update".
+
+### Online play
+- Room codes are now 6 letters/digits instead of 5 digits, and guessing other people's room codes is slowed down and then blocked. Old 5-digit codes still work with players who haven't updated.
+- Online play can now use an encrypted connection (wss://) once the relay server is switched over. It needs no setup for players.
+
 ### Behind the scenes
 - The game's version number now comes from one place (`version.py`), so the in-game version always matches the GitHub release.
 - The game program is now called `SolitairePlus.exe` (was `Simple Solitaire.exe`). Saves are not affected.

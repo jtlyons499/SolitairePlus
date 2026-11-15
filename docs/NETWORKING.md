@@ -35,8 +35,26 @@ each piece of code lives, and how to add a new way of connecting without touchin
 | Network service (`SolitaireNet.exe`) | `netservice/` | players' PCs | a new `SolitaireNet.exe` (the game exe is untouched) |
 | Game's network client | `multiplayer/net_client.py` | players' PCs | an update to the loose `multiplayer\` files |
 | Room logic, game rules, screens | `multiplayer/room_session.py`, `room_table.py`, `party_authority.py`, `*_view.py` | players' PCs | an update to the loose `multiplayer\` files |
-| Relay server | `multiplayer/relay_server.py`, `multiplayer/room_relay.py` | Railway | a redeploy on Railway only (see `docs/RAILWAY_DEPLOY.md`, Step 6) |
+| Relay server | `multiplayer/relay_server.py`, `multiplayer/room_relay.py`, `multiplayer/relay_websocket.py` | Railway | a redeploy on Railway only (see `docs/RAILWAY_DEPLOY.md`) |
 | Default server address | `netservice/connectors/__init__.py` → `DEFAULT_ADDRESS` | players' PCs | a new `SolitaireNet.exe` |
+
+## Connection types available today
+
+| Address | Connector | Notes |
+|---|---|---|
+| `tcp://host:port` | `connectors/relay.py` | The original plain connection (not encrypted). The current default. |
+| `tls://host:port` | `connectors/relay.py` | Encrypted TCP. Needs the relay started with `--cert/--key`. |
+| `wss://host/` | `connectors/websocket.py` | Encrypted WebSocket through an HTTPS address (Railway provides one for free). Recommended next default; see `docs/RAILWAY_DEPLOY.md` Part 4. |
+| `ws://host:port/` | `connectors/websocket.py` | Unencrypted WebSocket, for local testing only. |
+
+The relay runs a TCP listener and, with `--ws-port` or `RELAY_WS_PORT`, a WebSocket listener in the same process.
+Both share the same rooms, so players on different connection types can play together.
+
+**Room codes:** clients send `"codes": 2` when creating a room and get 6 characters from `CODE_ALPHABET` (no 0/O, 1/I).
+Older clients get 5 digits. Every wrong code costs the guesser a 1-second pause, and 10 wrong codes in a minute
+from one address are refused for a while (`relay_server.py`: `FAILED_JOIN_*`).
+
+**Is the live relay current?** `python tools/relay_probe.py [address]` (see `docs/RAILWAY_DEPLOY.md`).
 
 ## The game ↔ service contract
 

@@ -82,12 +82,7 @@ class RelayConnection:
         writer = None
         tasks = []
         try:
-            host, port, secure = parse_address(self.address)
-            context = ssl.create_default_context() if secure else None
-            connect = asyncio.ensure_future(asyncio.wait_for(
-                asyncio.open_connection(host, port, ssl=context, server_hostname=host if secure else None,
-                                        limit=MAX_LINE + 1),
-                CONNECT_TIMEOUT))
+            connect = asyncio.ensure_future(asyncio.wait_for(self._open(), CONNECT_TIMEOUT))
             stop = asyncio.ensure_future(self._stop.wait())
             await asyncio.wait({connect, stop}, return_when=asyncio.FIRST_COMPLETED)
             if self._closed:
@@ -101,8 +96,10 @@ class RelayConnection:
                 raise ConnectionError("Could not reach the server (timed out)") from None
             # The handshake must be the first line the server sees, even if the game
             # queued messages while we were still connecting.
+            # "codes": 2 asks newer relays for 6-character room codes (older relays ignore it).
             writer.write(_line({"type": "create" if self.hosting else "join", "version": self.room_version,
-                                "code": self.code, "name": self.name}))
+                                "code": self.code, "name": self.name, "codes": 2}))
+            await asyncio.wait_for(writer.drain(), SEND_TIMEOUT)
             tasks = [asyncio.ensure_future(job) for job in
                      (self._read_loop(reader), self._write_loop(writer), self._ping_loop(), self._stop.wait())]
             done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
@@ -123,6 +120,13 @@ class RelayConnection:
                     pass
 
     # ------------------------------------------------------------ internals
+    async def _open(self):
+        """Connect and return (reader, writer). Other connectors override only this."""
+        host, port, secure = parse_address(self.address)
+        context = ssl.create_default_context() if secure else None
+        return await asyncio.open_connection(host, port, ssl=context, server_hostname=host if secure else None,
+                                             limit=MAX_LINE + 1)
+
     def _report(self, text: str) -> None:
         if not self._closed:
             self._closed = True

@@ -90,7 +90,7 @@ class RelayConnectorTests(unittest.TestCase):
             await send(writer, {'type': 'room', 'code': '12345', 'identity': 0})
             await send(writer, {'type': 'pong'})
         delivered, codes, lines = run_against(handler)
-        self.assertEqual(lines[0], {'type': 'create', 'version': 2, 'code': '', 'name': 'Tester'})
+        self.assertEqual(lines[0], {'type': 'create', 'version': 2, 'code': '', 'name': 'Tester', 'codes': 2})
         self.assertEqual(codes, ['12345'])
         self.assertEqual(delivered[0]['type'], 'status')
         self.assertEqual(delivered[1], {'type': 'room', 'code': '12345', 'identity': 0})

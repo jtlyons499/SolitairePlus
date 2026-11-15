@@ -90,7 +90,8 @@ class SixRelayTests(unittest.TestCase):
         deadline=time.monotonic()+4
         while not host.code and time.monotonic()<deadline:host.update(0);time.sleep(.01)
         self.assertTrue(host.code)
-        self.assertEqual(len(host.code),5);self.assertTrue(host.code.isdigit())
+        from relay_server import CODE_ALPHABET
+        self.assertEqual(len(host.code),6);self.assertTrue(set(host.code)<=set(CODE_ALPHABET))  # 6-character codes since 0.0.7
         clients=[host]
         for i in range(1,3):
             client=RoomTable('Guest '+str(i),False,self.address,host.code);self.peers.append(client);clients.append(client)

@@ -398,7 +398,11 @@ from profile import (
     profile_exists,
     delete_profile,
     PROFILE_SLOT_COUNT,
+    ProfileUnavailable,
 )
+
+# Shown on the profile screen when a slot cannot be opened (damaged, or made by a newer version).
+profile_select_notice = ""
 
 from career_ratings import (
     RATING_KEYS,
@@ -10426,9 +10430,17 @@ def format_round_time(
 def get_profile_slot_display_data(
         slot
 ):
-    loaded = load_profile(
-        slot
-    )
+    try:
+        loaded = load_profile(
+            slot
+        )
+    except ProfileUnavailable as problem:
+        # Show the slot as unavailable instead of crashing the profile screen.
+        return {
+            "exists": True,
+            "name": problem.short_label,
+            "level": None,
+        }
 
     if loaded is None:
         return {
@@ -21284,6 +21296,10 @@ def draw_profile_select_screen():
 
 
 
+    if profile_select_notice:
+        notice = ui_small_font.render(profile_select_notice, True, (255, 210, 160))
+        game_surface.blit(notice, notice.get_rect(center=(BASE_WIDTH // 2, 150)))
+
     # ----------------------------
     # Save slots
     # ----------------------------
@@ -21381,7 +21397,7 @@ def draw_profile_select_screen():
         if data["exists"]:
             level_surface = (
                 option_value_font.render(
-                    f"Level {data['level']}",
+                    f"Level {data['level']}" if data["level"] is not None else "Can't open",
                     True,
                     (
                         255,
@@ -24698,15 +24714,25 @@ while running:
                         "button_click"
                     )
 
-                    loaded = load_profile(
-                        slot_selected
-                    )
+                    try:
+                        loaded = load_profile(
+                            slot_selected
+                        )
+                        profile_select_notice = ""
+                    except ProfileUnavailable as problem:
+                        # Damaged, or made by a newer version: explain, and never treat it
+                        # as an empty slot (creating a profile there would overwrite it).
+                        loaded = False
+                        profile_select_notice = str(problem)
+
+                    if loaded is False:
+                        pass
 
                     # ----------------------------
                     # Empty slot -> create profile
                     # ----------------------------
 
-                    if loaded is None:
+                    elif loaded is None:
                         pending_profile_slot = (
                             slot_selected
                         )

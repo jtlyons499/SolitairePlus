@@ -142,9 +142,10 @@ def main():
             # ----------------------------------------------------------
             if table is None:
                 if code_active and event.type in (pygame.TEXTINPUT, pygame.KEYDOWN):
-                    room_code = text_input.event(event, room_code, 5, uppercase=True)
-                    room_code = "".join(c for c in room_code if c.isdigit())[:5]
-                    if event.type == pygame.KEYDOWN and event.key in (pygame.K_RETURN, pygame.K_KP_ENTER) and len(room_code) == 5:
+                    # Room codes are 6 letters/digits (or 5 digits from an older relay server).
+                    room_code = text_input.event(event, room_code, 6, uppercase=True)
+                    room_code = "".join(c for c in room_code if c.isascii() and c.isalnum())[:6]
+                    if event.type == pygame.KEYDOWN and event.key in (pygame.K_RETURN, pygame.K_KP_ENTER) and len(room_code) in (5, 6):
                         table = RoomTable(profile.data["name"], False, relay_address, code=room_code, profile=profile, mode=None)
                         code_active = False; pygame.key.stop_text_input()
                         connection_settings.save(profile.data["name"], relay_address)
@@ -163,7 +164,7 @@ def main():
                         profile.save(); connection_settings.save(profile.data["name"], relay_address)
                         table = RoomTable(profile.data["name"], True, relay_address, profile=profile, mode=hub.selected_mode)
                         code_active = False; pygame.key.stop_text_input()
-                    elif clicked == "join" and len(room_code) == 5:
+                    elif clicked == "join" and len(room_code) in (5, 6):
                         profile.save(); connection_settings.save(profile.data["name"], relay_address)
                         table = RoomTable(profile.data["name"], False, relay_address, code=room_code, profile=profile, mode=None)
                         code_active = False; pygame.key.stop_text_input()

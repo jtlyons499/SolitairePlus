@@ -13,4 +13,4 @@ See docs/NETWORKING.md.
 
 # Version of this component only (not the game version). Bump it when you
 # change anything in netservice/, so SolitaireNet.exe is rebuilt and shipped.
-__version__ = "1.0.0"
+__version__ = "1.1.0"

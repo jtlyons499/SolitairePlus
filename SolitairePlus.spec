@@ -22,7 +22,7 @@ CONTENTS = 'SolitairePlus_Data'
 # multiplayer/*.py ship as loose source files (multiplayer_launcher runs them),
 # so multiplayer updates do not change the game exe. Server-only and test-only
 # modules are left out of the player install.
-MP_EXCLUDED = {'relay_server.py', 'room_relay.py', 'relay_transport.py'}
+MP_EXCLUDED = {'relay_server.py', 'room_relay.py', 'relay_websocket.py', 'relay_transport.py'}
 mp_files = [
     (str(p), str(p.parent.relative_to(project)))
     for p in (project / 'multiplayer').rglob('*.py')
@@ -100,7 +100,7 @@ net = Analysis(
     pathex=[str(project)],
     binaries=[],
     datas=[],
-    hiddenimports=['netservice.connectors.relay'],
+    hiddenimports=['netservice.connectors.relay', 'netservice.connectors.websocket', 'websockets.asyncio.client'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

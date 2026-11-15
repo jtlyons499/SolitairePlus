@@ -36,7 +36,7 @@ class NetClientTests(unittest.TestCase):
     def test_two_players_pair_and_exchange_messages_through_the_service(self):
         host = self.peer(True, self.address, 'Host')
         self.assertIn('Waiting for friend', self.wait(host, 'status')['text'])
-        self.assertEqual(len(host.code), 5)  # code arrives as a separate "code" event
+        self.assertEqual(len(host.code), 6)  # code arrives as a separate "code" event (6 characters since 0.0.7)
         guest = self.peer(False, self.address, 'Guest', host.code)
         self.assertEqual(self.wait(host, 'hello')['name'], 'Guest')
         self.assertEqual(self.wait(guest, 'hello')['name'], 'Host')
