@@ -6,7 +6,7 @@ import sys
 import unittest
 from unittest.mock import Mock, patch
 
-import multiplayer_launcher as launcher
+from solitaireplus.app import multiplayer_launcher as launcher
 
 
 class LauncherTests(unittest.TestCase):
@@ -40,7 +40,7 @@ class LauncherTests(unittest.TestCase):
     def test_real_dispatch_uses_multiplayer_engine(self):
         script = '''
 import pygame
-import multiplayer_launcher
+from solitaireplus.app import multiplayer_launcher
 pygame.event.get = lambda: [pygame.event.Event(pygame.QUIT)]
 multiplayer_launcher.run_multiplayer()
 import texas_holdem

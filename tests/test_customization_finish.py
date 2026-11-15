@@ -5,8 +5,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 import pygame
-from cosmetic_assets import CosmeticCatalog, SingleDriftCache
-import five_o_poker_ui as five
+from solitaireplus.app.cosmetic_assets import CosmeticCatalog, SingleDriftCache
+from solitaireplus.games.poker import five_o_ui as five
 
 class CustomizationFinishTests(unittest.TestCase):
  @classmethod
@@ -34,7 +34,7 @@ class CustomizationFinishTests(unittest.TestCase):
    self.assertIs(bound,catalog.surfaces);self.assertEqual(bound['later'].get_size(),(12,12))
  def test_animation_cache_holds_one_background_and_rebuilds_only_when_needed(self):
   cache=SingleDriftCache();source=pygame.Surface((8,8))
-  with patch('cosmetic_assets.pygame.transform.smoothscale',wraps=pygame.transform.smoothscale) as scale:
+  with patch('solitaireplus.app.cosmetic_assets.pygame.transform.smoothscale',wraps=pygame.transform.smoothscale) as scale:
    first=cache.get('a',source,(16,16));self.assertIs(first,cache.get('a',source,(16,16)))
    second=cache.get('b',source,(16,16));self.assertIs(second,cache.surface);self.assertIsNot(first,second)
    self.assertEqual(scale.call_count,2)

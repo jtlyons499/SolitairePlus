@@ -6,11 +6,11 @@ import unittest
 os.environ.setdefault('SDL_VIDEODRIVER','dummy')
 os.environ.setdefault('SDL_AUDIODRIVER','dummy')
 import pygame
-from cryptid_battle_feedback import BattleFeedback, BattleSounds, snapshot
-from cryptid_creatures import Action, CryptidBattle
-from cryptid_creatures_ui import CryptidScreen
-from cryptid_encounter_view import ACTIVE_RECTS
-from cryptid_creatures_ai import choose_cryptid_action
+from solitaireplus.games.cryptid.battle_feedback import BattleFeedback, BattleSounds, snapshot
+from solitaireplus.games.cryptid.creatures import Action, CryptidBattle
+from solitaireplus.games.cryptid.ui import CryptidScreen
+from solitaireplus.games.cryptid.encounter_view import ACTIVE_RECTS
+from solitaireplus.games.cryptid.ai import choose_cryptid_action
 
 
 class FeedbackTests(unittest.TestCase):

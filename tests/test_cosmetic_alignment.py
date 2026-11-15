@@ -1,6 +1,6 @@
 import unittest
 import pygame
-from cosmetic_assets import normalize_cosmetic
+from solitaireplus.app.cosmetic_assets import normalize_cosmetic
 
 class CosmeticAlignment(unittest.TestCase):
     def test_background_uses_logical_canvas(self):

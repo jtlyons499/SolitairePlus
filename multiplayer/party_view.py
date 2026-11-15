@@ -5,9 +5,9 @@ import math
 from fractions import Fraction
 import pygame
 
-import score_four_ui as sfui
-from score_four import ScoreFourGame
-from roulette import AMERICAN_WHEEL_ORDER, RED_NUMBERS
+from solitaireplus.games.cards import score_four_ui as sfui
+from solitaireplus.games.cards.score_four import ScoreFourGame
+from solitaireplus.games.casino.roulette import AMERICAN_WHEEL_ORDER, RED_NUMBERS
 from party_authority import SKILL_LABELS, STACK_OPTIONS, ROULETTE_TIMERS, SCORE_FOUR_DIFFICULTIES
 from mp_widgets import wooden_button
 from mp_toast import LeaveToast

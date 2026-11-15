@@ -2,9 +2,9 @@ from tests.support import locate
 from unittest.mock import patch
 from pathlib import Path
 
-from arcade_support import ARCADE_PRIZE_CATALOG, make_default_arcade_state, redeem_prize
-from case_opening import ITEMS, new_case_state, purchase
-from reward_cosmetics import unlock_reward
+from solitaireplus.games.arcade.support import ARCADE_PRIZE_CATALOG, make_default_arcade_state, redeem_prize
+from solitaireplus.career.case_opening import ITEMS, new_case_state, purchase
+from solitaireplus.profile.cosmetics import unlock_reward
 
 
 def test_requested_trophy_names_are_preserved_on_stable_ids():
@@ -28,18 +28,18 @@ def test_rating_case_rewards_are_category_based_with_custom_art_hooks():
 
 
 def test_scaled_cash_and_fan_rewards_use_current_player_amounts():
-    with patch("case_opening.choose_item", return_value=ITEMS["cash_pouch"]):
+    with patch("solitaireplus.career.case_opening.choose_item", return_value=ITEMS["cash_pouch"]):
         receipt, _wallet = purchase(new_case_state(), "street", 400_000)
     assert receipt["amount"] == 40_000
 
-    with patch("case_opening.choose_item", return_value=ITEMS["fan_club"]):
+    with patch("solitaireplus.career.case_opening.choose_item", return_value=ITEMS["fan_club"]):
         receipt, _wallet = purchase(new_case_state(), "street", 400_000, fans=400_000)
     assert receipt["amount"] == 6_000
 
 
 def test_fixed_super_jackpots_are_exactly_200k():
     for item_id in ("cash_jackpot", "fan_jackpot"):
-        with patch("case_opening.choose_item", return_value=ITEMS[item_id]):
+        with patch("solitaireplus.career.case_opening.choose_item", return_value=ITEMS[item_id]):
             receipt, _wallet = purchase(new_case_state(), "collector", 500_000, fans=500_000)
         assert receipt["amount"] == 200_000
         assert ITEMS[item_id]["weight"] == 0.08
@@ -113,8 +113,8 @@ def _extract_function(name):
 
 def test_case_transaction_unlocks_non_felt_cosmetics_and_rolls_back_atomically():
     import copy
-    from case_opening import purchase as purchase_case
-    from career_ratings import apply_rating_change, make_player_rating_bundle
+    from solitaireplus.career.case_opening import purchase as purchase_case
+    from solitaireplus.career.ratings import apply_rating_change, make_player_rating_bundle
 
     env = {
         "copy": copy,
@@ -136,7 +136,7 @@ def test_case_transaction_unlocks_non_felt_cosmetics_and_rolls_back_atomically()
     }
     exec(_extract_function("buy_case_for_screen"), env)
 
-    with patch("case_opening.choose_item", return_value=ITEMS["case_garden_gnomes"]):
+    with patch("solitaireplus.career.case_opening.choose_item", return_value=ITEMS["case_garden_gnomes"]):
         env["buy_case_for_screen"]("prestige")
     assert "bg_case_garden_gnomes" in env["unlocked_menu_backgrounds"]
 
@@ -146,7 +146,7 @@ def test_case_transaction_unlocks_non_felt_cosmetics_and_rolls_back_atomically()
         "cursors": set(env["unlocked_cursors"]),
     }
     env["auto_save_career"] = lambda: (_ for _ in ()).throw(OSError("disk full"))
-    with patch("case_opening.choose_item", return_value=ITEMS["case_pocket_watch"]):
+    with patch("solitaireplus.career.case_opening.choose_item", return_value=ITEMS["case_pocket_watch"]):
         try:
             env["buy_case_for_screen"]("prestige")
         except OSError:
@@ -159,7 +159,7 @@ def test_case_transaction_unlocks_non_felt_cosmetics_and_rolls_back_atomically()
 
 
 def test_arcade_cosmetic_redeem_unlocks_customize_reward():
-    from arcade_support import clone_arcade_state
+    from solitaireplus.games.arcade.support import clone_arcade_state
 
     prize = next(p for p in ARCADE_PRIZE_CATALOG if p["name"] == "Joystick")
     state = make_default_arcade_state()

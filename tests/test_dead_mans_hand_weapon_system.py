@@ -1,8 +1,8 @@
 from tests.support import locate
 from pathlib import Path
 
-from dead_mans_hand import LEVELS, wall_at
-from dead_mans_hand_weapons import DEFAULT_WEAPON_PICKUPS, WEAPON_DEFINITIONS, weapon_for_slot
+from solitaireplus.games.dead_mans_hand.levels import LEVELS, wall_at
+from solitaireplus.games.dead_mans_hand.weapons import DEFAULT_WEAPON_PICKUPS, WEAPON_DEFINITIONS, weapon_for_slot
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -41,7 +41,7 @@ def test_starter_pickups_are_in_open_level_cells():
 
 
 def test_renderer_has_ads_reload_bolt_pickups_and_viewmodel_frames():
-    source = (ROOT / "dead_mans_hand_game.py").read_text(encoding="utf-8")
+    source = (ROOT / "solitaireplus/games/dead_mans_hand/game.py").read_text(encoding="utf-8")
     assert "def set_aiming(self, active):" in source
     assert "def start_reload(self):" in source
     assert "def switch_weapon_by_slot(self, slot):" in source
@@ -62,7 +62,7 @@ def test_main_wires_weapon_switching_trigger_hold_and_reload():
 
 
 def test_hud_supports_custom_assets_without_health_or_ammo_numbers():
-    source = (ROOT / "dead_mans_hand_game.py").read_text(encoding="utf-8")
+    source = (ROOT / "solitaireplus/games/dead_mans_hand/game.py").read_text(encoding="utf-8")
     assert 'Path("dead_mans_hand") / "ui" / "health_bar_bg.png"' in source
     assert 'Path("dead_mans_hand") / "ui" / "ammo_bar_bg.png"' in source
     assert 'Path("dead_mans_hand") / "ui" / "kill_count.png"' in source
@@ -73,7 +73,7 @@ def test_hud_supports_custom_assets_without_health_or_ammo_numbers():
 
 
 def test_dead_mans_hand_hides_live_score_and_tracks_total_kills():
-    source = (ROOT / "dead_mans_hand_game.py").read_text(encoding="utf-8")
+    source = (ROOT / "solitaireplus/games/dead_mans_hand/game.py").read_text(encoding="utf-8")
     assert 'f"SCORE {self.score:,}' not in source
     assert "self.total_kills = 0" in source
     assert "self.total_kills += 1" in source

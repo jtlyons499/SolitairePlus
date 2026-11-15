@@ -7,7 +7,7 @@ import unittest
 os.environ.setdefault('SDL_VIDEODRIVER', 'dummy')
 os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')
 import pygame
-from npc_portrait_ui import draw_portrait, get_npc_initials
+from solitaireplus.npc.portrait_ui import draw_portrait, get_npc_initials
 
 class PortraitUiTests(unittest.TestCase):
     @classmethod

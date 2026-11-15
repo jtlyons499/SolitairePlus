@@ -8,9 +8,9 @@ from unittest.mock import patch
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
 import pygame
-from card import Card
-from game import Game
-from solitaire_race_deals import (RANKS, SUITS, _recent, build_race_deal,
+from solitaireplus.games.solitaire.card import Card
+from solitaireplus.games.solitaire.rules import Game
+from solitaireplus.games.solitaire.race_deals import (RANKS, SUITS, _recent, build_race_deal,
                                  initial_state, opening_is_varied, verify_deal)
 
 ROOT = Path(__file__).resolve().parents[1]

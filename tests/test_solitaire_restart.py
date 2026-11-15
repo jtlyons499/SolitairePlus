@@ -5,8 +5,8 @@ from unittest.mock import Mock,patch
 os.environ.setdefault('SDL_VIDEODRIVER','dummy')
 os.environ.setdefault('SDL_AUDIODRIVER','dummy')
 import pygame
-from game import Game
-from solitaire_restart import restart_hand, RestartPrompt
+from solitaireplus.games.solitaire.rules import Game
+from solitaireplus.games.solitaire.restart import restart_hand, RestartPrompt
 
 class RestartTests(unittest.TestCase):
     @classmethod
@@ -21,7 +21,7 @@ class RestartTests(unittest.TestCase):
         for _ in range(2):
             g.waste.append(g.stock.pop());g.tableau[0][0].face_up=False
             g.move_count=80;g.undo_stack=[{}];g.hint_data={'example':1};g.selected_card=object()
-            with patch('solitaire_restart.pygame.time.get_ticks',return_value=2000):self.assertTrue(restart_hand(g))
+            with patch('solitaireplus.games.solitaire.restart.pygame.time.get_ticks',return_value=2000):self.assertTrue(restart_hand(g))
             self.assertEqual(self.signature(g),initial);self.assertEqual(g.waste,[])
             self.assertEqual(g.move_count,0);self.assertEqual(g.round_start_ticks,2000)
             self.assertEqual(g.hints_remaining,initial_hints);self.assertIsNone(g.round_summary)

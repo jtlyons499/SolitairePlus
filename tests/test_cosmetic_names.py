@@ -1,7 +1,7 @@
 """Catalog names change without breaking persistent cosmetic IDs."""
 import unittest
 from pathlib import PurePosixPath
-from rating_unlocks import RATING_ART, THRESHOLDS, add_rating_catalogs, unlock_ratings
+from solitaireplus.profile.unlocks import RATING_ART, THRESHOLDS, add_rating_catalogs, unlock_ratings
 
 class CosmeticNameTests(unittest.TestCase):
  def test_all_rating_requirements_and_save_ids_are_preserved(self):

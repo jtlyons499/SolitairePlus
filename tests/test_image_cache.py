@@ -7,8 +7,8 @@ from unittest.mock import patch
 os.environ.setdefault('SDL_VIDEODRIVER', 'dummy')
 os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')
 import pygame
-from shared.image_cache import ImageCache
-import career_asset_images as career
+from solitaireplus.ui.image_cache import ImageCache
+from solitaireplus.career import asset_images as career
 
 class ImageCacheTests(unittest.TestCase):
     @classmethod

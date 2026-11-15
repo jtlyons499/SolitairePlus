@@ -1,5 +1,5 @@
 from tests.support import locate
-from career_activities import normalize_story, reconcile_story_cosmetics
+from solitaireplus.career.activities import normalize_story, reconcile_story_cosmetics
 """Career-world regression tests; run from the project root with unittest."""
 import ast
 import copy
@@ -11,20 +11,20 @@ import unittest
 from unittest.mock import patch
 from types import SimpleNamespace
 
-import profile as profiles
-import npc_manager
-from achievements import normalize_achievement_state
-from career_fans import clamp_fans, normalize_fan_trend
-from career_npc_development import (ability_target, advance_npc_development,
+from solitaireplus.profile import saves as profiles
+from solitaireplus.npc import manager as npc_manager
+from solitaireplus.profile.achievements import normalize_achievement_state
+from solitaireplus.career.fans import clamp_fans, normalize_fan_trend
+from solitaireplus.career.npc_development import (ability_target, advance_npc_development,
                                     choose_prospect_band, development_stage,
                                     ensure_npc_development, month_index)
-from career_npc_world import (add_prospect, advance_career_world, career_roster,
+from solitaireplus.career.npc_world import (add_prospect, advance_career_world, career_roster,
                               ensure_career_world)
-from career_ratings import CATEGORY_KEYS as GAME_RATING_KEYS, derive_overall, normalize_rating_bundle
-from npc_personality import TRAIT_NAMES
-from career_event_progress import store_event_progress
-from case_opening import ITEMS as CASE_ITEMS
-from arcade_support import ARCADE_PRIZE_CATALOG
+from solitaireplus.career.ratings import CATEGORY_KEYS as GAME_RATING_KEYS, derive_overall, normalize_rating_bundle
+from solitaireplus.npc.personality import TRAIT_NAMES
+from solitaireplus.career.event_progress import store_event_progress
+from solitaireplus.career.case_opening import ITEMS as CASE_ITEMS
+from solitaireplus.games.arcade.support import ARCADE_PRIZE_CATALOG
 
 ROOT = Path(__file__).resolve().parents[1]
 

@@ -4,10 +4,10 @@ from pathlib import Path
 _project_root = str(Path(__file__).resolve().parent.parent)
 if _project_root not in sys.path:
     sys.path.append(_project_root)
-from shared import npc_personality as _implementation
+from solitaireplus.npc import personality as _implementation
 
 # Explicit exports allow IDEs to resolve the shared API.
-from shared.npc_personality import (
+from solitaireplus.npc.personality import (
     LEGACY_TRAITS,
     PokerGrudgeMemory,
     TRAIT_LABELS,

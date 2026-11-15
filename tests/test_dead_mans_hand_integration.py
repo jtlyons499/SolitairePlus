@@ -5,7 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_debug_menu_exposes_dead_mans_hand_as_standalone_prototype():
-    source = (ROOT / "debug_menu.py").read_text(encoding="utf-8")
+    source = (ROOT / "solitaireplus/debug/menu.py").read_text(encoding="utf-8")
     assert 'ACTION_DEAD_MANS_HAND = "dead_mans_hand"' in source
     assert '"Standalone / Prototype"' in source
     assert '(ACTION_DEAD_MANS_HAND, "Dead Man\'s Hand")' in source

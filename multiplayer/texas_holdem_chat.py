@@ -4,10 +4,10 @@ from pathlib import Path
 _project_root = str(Path(__file__).resolve().parent.parent)
 if _project_root not in sys.path:
     sys.path.append(_project_root)
-from shared import texas_holdem_chat as _implementation
+from solitaireplus.games.poker import holdem_chat as _implementation
 
 # Explicit exports allow IDEs to resolve the shared API.
-from shared.texas_holdem_chat import (
+from solitaireplus.games.poker.holdem_chat import (
     ACTION_CHAT_CHANCE,
     PLAYER_REACTION_CHANCE,
     generate_npc_action_chat,

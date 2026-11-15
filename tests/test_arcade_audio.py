@@ -13,7 +13,7 @@ def test_ambient_playlist_auto_discovers_drop_in_tracks():
 
 def test_arcade_cabinets_have_optional_individual_music_hooks():
     main_source = locate.source()
-    audio_source = Path("audio.py").read_text(encoding="utf-8")
+    audio_source = Path("solitaireplus/app/audio.py").read_text(encoding="utf-8")
 
     for game_id in (
         "king_pong",
@@ -31,7 +31,7 @@ def test_arcade_cabinets_have_optional_individual_music_hooks():
 
 
 def test_machine_music_respects_global_off_and_restores_playlist():
-    audio_source = Path("audio.py").read_text(encoding="utf-8")
+    audio_source = Path("solitaireplus/app/audio.py").read_text(encoding="utf-8")
 
     assert 'self.music_mode == "off"' in audio_source
     assert 'self.machine_music_resume_mode' in audio_source
@@ -49,7 +49,7 @@ def test_placeholder_machine_music_defaults_off_and_requires_opt_in():
 
 
 def test_bad_music_files_are_skipped_instead_of_crashing_playlist():
-    audio_source = Path("audio.py").read_text(encoding="utf-8")
+    audio_source = Path("solitaireplus/app/audio.py").read_text(encoding="utf-8")
 
     assert "self._failed_music_tracks = set()" in audio_source
     assert "except (pygame.error, OSError) as exc:" in audio_source

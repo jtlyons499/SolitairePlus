@@ -244,7 +244,7 @@ class InUseFileTests(UpdaterTestCase):
         self.assertFalse((self.install / "pending-delete.txt").exists())
 
     def test_the_game_cleans_up_leftovers_too(self):
-        import update_check
+        from solitaireplus.app import update_check
         aside = self.install / ("SolitaireUpdater.exe" + transaction.config.OLD_SUFFIX)
         write(aside, b"old updater")
         write(self.install / "pending-delete.txt", b"SolitaireUpdater.exe.updating-old\n../../evil.updating-old\n")

@@ -12,9 +12,9 @@ import math
 import random
 from fractions import Fraction
 
-from niche_poker_common import RANK_VALUES, build_standard_deck, round_chip_amount
-from score_four_difficulty import puzzle_pool
-from roulette import ROULETTE_NUMBERS, RED_NUMBERS
+from solitaireplus.games.poker.niche_common import RANK_VALUES, build_standard_deck, round_chip_amount
+from solitaireplus.games.cards.score_four_difficulty import puzzle_pool
+from solitaireplus.games.casino.roulette import ROULETTE_NUMBERS, RED_NUMBERS
 from multiplayer_paths import ROOT
 
 SKILL_KEYS = ("low", "mid", "strong", "elite")

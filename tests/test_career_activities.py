@@ -1,14 +1,14 @@
 from tests.support import locate
-from alien_night import new_alien_story, refresh_adventure_schedule
+from solitaireplus.career.alien_night import new_alien_story, refresh_adventure_schedule
 import ast
 import copy
 import json
 import unittest
 from pathlib import Path
 import pygame
-from career_activities import (STORY,new_story,normalize_story,start_night,choose_option,
+from solitaireplus.career.activities import (STORY,new_story,normalize_story,start_night,choose_option,
  requirement_reason,validate_story,add_story_catalogs,reconcile_story_cosmetics)
-from career_activities_ui import CareerActivityScreen
+from solitaireplus.career.activities_ui import CareerActivityScreen
 
 class BigfootTests(unittest.TestCase):
     def test_all_playable_paths_finish_and_unlock_all_endings(self):

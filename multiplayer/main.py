@@ -3,7 +3,7 @@ import os
 import pygame
 
 from multiplayer_paths import ROOT
-from runtime_support import bootstrap
+from solitaireplus.app.runtime_support import bootstrap
 bootstrap()
 
 from mp_widgets import TextInput, wooden_button

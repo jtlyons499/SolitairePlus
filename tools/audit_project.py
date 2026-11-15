@@ -69,6 +69,14 @@ def static_string(node):
             return left + right
     if isinstance(node, ast.Call):
         name = ast.unparse(node.func)
+        if name == 'str' and len(node.args) == 1:
+            return static_string(node.args[0])
+        if name in ('paths.asset', 'paths.data'):
+            # solitaireplus.app.paths: paths.asset("ui/x.png") is "assets/ui/x.png"
+            args = [static_string(arg) for arg in node.args]
+            if all(arg is not None for arg in args):
+                return '/'.join([name.split('.')[1] + 's' if name.endswith('asset') else 'data', *args])
+            return None
         if name.endswith('.join') or name in ('Path', 'pathlib.Path'):
             args = [static_string(arg) for arg in node.args]
             if args and all(arg is not None for arg in args):
@@ -117,6 +125,7 @@ def scan(root, hashes=True):
                 entry.update(lines=len(source.splitlines()), classes=sum(isinstance(n, ast.ClassDef) for n in ast.walk(tree)),
                              functions=sum(isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) for n in ast.walk(tree)),
                              imports=sorted(set(n.module or '' for n in ast.walk(tree) if isinstance(n, ast.ImportFrom)) | set(a.name for n in ast.walk(tree) if isinstance(n, ast.Import) for a in n.names)))
+                parents = {child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
                 for node in ast.walk(tree):
                     loc = f'{rel}:{getattr(node,"lineno",0)}'
                     if isinstance(node, (ast.Constant, ast.BinOp, ast.Call)):
@@ -125,11 +134,14 @@ def scan(root, hashes=True):
                             record(value, loc)
                     elif isinstance(node, ast.JoinedStr):
                         pattern = ''.join(v.value if isinstance(v, ast.Constant) else '{...}' for v in node.values)
+                        parent = parents.get(node)
+                        if isinstance(parent, ast.Call) and ast.unparse(parent.func) in ('paths.asset', 'paths.data'):
+                            pattern = ('assets/' if ast.unparse(parent.func) == 'paths.asset' else 'data/') + pattern
                         if 'assets/' in pattern or 'data/' in pattern:
                             dynamic.append({'source': loc, 'pattern': pattern})
                 # Solitaire's rating art table combines folder names and filenames at runtime.
                 # Read its literal table without importing/executing project code.
-                if path.name == 'rating_unlocks.py':
+                if path.name in ('rating_unlocks.py', 'unlocks.py'):
                     for node in tree.body:
                         if isinstance(node, ast.Assign) and any(isinstance(t,ast.Name) and t.id == 'RATING_ART' for t in node.targets):
                             table = ast.literal_eval(node.value)

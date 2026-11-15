@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
-import runtime_support as runtime
+from solitaireplus.app import runtime_support as runtime
 
 class RuntimeTests(unittest.TestCase):
     def test_source_saves_remain_in_project(self):

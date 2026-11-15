@@ -32,7 +32,7 @@ class PackagingTests(unittest.TestCase):
 
     def test_selftest_skips_exactly_the_modules_the_package_leaves_out(self):
         sys.path.insert(0, str(ROOT))
-        import multiplayer_launcher
+        from solitaireplus.app import multiplayer_launcher
         excluded = {name.removesuffix(".py") for name in spec_constant("MP_EXCLUDED")}
         self.assertEqual(excluded, multiplayer_launcher.SELFTEST_SKIP)
 

@@ -12,11 +12,11 @@ os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
 import pygame
 
-import npc_manager
-from career_npc_world import add_prospect, ensure_career_world
-from npc_avatars import (AVATAR_PARTS, avatar_age_band, ensure_prospect_avatar,
+from solitaireplus.npc import manager as npc_manager
+from solitaireplus.career.npc_world import add_prospect, ensure_career_world
+from solitaireplus.npc.avatars import (AVATAR_PARTS, avatar_age_band, ensure_prospect_avatar,
                          get_avatar_choices, valid_part_id)
-from npc_portraits import NpcAvatarRenderer
+from solitaireplus.npc.portraits import NpcAvatarRenderer
 
 ROOT = Path(__file__).resolve().parents[1]
 

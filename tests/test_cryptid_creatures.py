@@ -14,11 +14,11 @@ os.environ.setdefault("SDL_VIDEODRIVER","dummy")
 os.environ.setdefault("SDL_AUDIODRIVER","dummy")
 import pygame
 
-from cryptid_creatures import (Action, Creature, CryptidBattle, CryptidCatalog,
+from solitaireplus.games.cryptid.creatures import (Action, Creature, CryptidBattle, CryptidCatalog,
                                HAND_LIMIT, damage_values)
-from cryptid_creatures_ai import choose_cryptid_action
-from cryptid_cards import ART_RECT, CryptidCardRenderer
-from cryptid_creatures_ui import CryptidScreen
+from solitaireplus.games.cryptid.ai import choose_cryptid_action
+from solitaireplus.games.cryptid.cards import ART_RECT, CryptidCardRenderer
+from solitaireplus.games.cryptid.ui import CryptidScreen
 
 ROOT=Path(__file__).resolve().parents[1]
 

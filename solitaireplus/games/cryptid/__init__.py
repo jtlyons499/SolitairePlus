@@ -1,0 +1,1 @@
+"""Cryptid Creatures card battler."""

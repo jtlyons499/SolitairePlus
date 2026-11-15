@@ -5,8 +5,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-import app_settings
-import update_check
+from solitaireplus.app import app_settings
+from solitaireplus.app import update_check
 
 
 class AppSettingsTests(unittest.TestCase):

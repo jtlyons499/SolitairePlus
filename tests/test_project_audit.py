@@ -33,7 +33,8 @@ class ProjectAuditTests(unittest.TestCase):
     def test_rating_table_resolved_without_importing_project(self):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp)
-            (root/'rating_unlocks.py').write_text('RATING_ART={"bg_rating_global_1500": ("bg_small_world.png", "Small World")}\nraise RuntimeError("must not execute")\n')
+            (root/'solitaireplus/profile').mkdir(parents=True)
+            (root/'solitaireplus/profile/unlocks.py').write_text('RATING_ART={"bg_rating_global_1500": ("bg_small_world.png", "Small World")}\nraise RuntimeError("must not execute")\n')
             refs=scan(root)['references']
             self.assertEqual(refs[0]['path'],'assets/ui/menu_ui/backgrounds/bg_small_world.png')
             self.assertFalse(refs[0]['exists'])

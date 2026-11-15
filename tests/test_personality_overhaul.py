@@ -4,14 +4,14 @@ import random
 import unittest
 from collections import Counter
 
-from npc_personality import (TRAIT_NAMES, get_npc_traits, build_trait_profile,
+from solitaireplus.npc.personality import (TRAIT_NAMES, get_npc_traits, build_trait_profile,
                              PokerGrudgeMemory, npc_identity)
-from npc_manager import NPCS
-from poker_ai import decide_poker_action, choose_poker_open_bet_amount, choose_poker_raise_to_amount
-from blind_mans_bluff import BlindMansBluffGame
-from texas_holdem import TexasHoldemGame
-from five_card_draw import FiveCardDrawGame
-from seven_card_stud import SevenCardStudGame
+from solitaireplus.npc.manager import NPCS
+from solitaireplus.games.poker.ai import decide_poker_action, choose_poker_open_bet_amount, choose_poker_raise_to_amount
+from solitaireplus.games.poker.blind_mans_bluff import BlindMansBluffGame
+from solitaireplus.games.poker.holdem import TexasHoldemGame
+from solitaireplus.games.poker.five_card_draw import FiveCardDrawGame
+from solitaireplus.games.poker.seven_card_stud import SevenCardStudGame
 
 
 def traits(**changes):

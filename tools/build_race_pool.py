@@ -7,7 +7,7 @@ import sys
 import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from solitaire_race_deals import apply_move, fits, initial_state, opening_is_varied, rank, red, verify_deal
+from solitaireplus.games.solitaire.race_deals import apply_move, fits, initial_state, opening_is_varied, rank, red, verify_deal
 
 
 def safe(card, foundations):

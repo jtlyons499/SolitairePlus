@@ -5,10 +5,10 @@ import random
 from pathlib import Path
 from types import SimpleNamespace
 import unittest
-from press_interview import PRESS_INTERVIEW_QUESTION_POOL, select_interview, answer_outcome
-from career_session_summary import poker_session_status, night_game_net, night_cash_total, track_night_cash
-from career_event_progress import store_event_progress, restore_event_progress
-from rating_unlocks import add_rating_catalogs, unlock_ratings, rating_lock_progress, lock_reason
+from solitaireplus.career.events.press_interview import PRESS_INTERVIEW_QUESTION_POOL, select_interview, answer_outcome
+from solitaireplus.career.session_summary import poker_session_status, night_game_net, night_cash_total, track_night_cash
+from solitaireplus.career.event_progress import store_event_progress, restore_event_progress
+from solitaireplus.profile.unlocks import add_rating_catalogs, unlock_ratings, rating_lock_progress, lock_reason
 
 def production_function(name, env):
  locate.exec_functions([name],env,'production Career function')

@@ -4,10 +4,10 @@ from pathlib import Path
 _project_root = str(Path(__file__).resolve().parent.parent)
 if _project_root not in sys.path:
     sys.path.append(_project_root)
-from shared import poker_ui_assets as _implementation
+from solitaireplus.games.poker import ui_assets as _implementation
 
 # Explicit exports allow IDEs to resolve the shared API.
-from shared.poker_ui_assets import (
+from solitaireplus.games.poker.ui_assets import (
     POKER_LOGO_DRAW_SIZE,
     POKER_LOGO_PATHS,
     POKER_LOGO_SOURCE_SIZE,

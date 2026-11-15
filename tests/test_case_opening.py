@@ -9,10 +9,10 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 import pygame
-import profile as profiles
-from case_opening import CASES,ITEMS,new_case_state,normalize_case_state,case_price,purchase,award_earned_trophies
-from case_opening_ui import CaseOpeningScreen
-from career_ratings import make_player_rating_bundle,apply_rating_change
+from solitaireplus.profile import saves as profiles
+from solitaireplus.career.case_opening import CASES,ITEMS,new_case_state,normalize_case_state,case_price,purchase,award_earned_trophies
+from solitaireplus.career.case_opening_ui import CaseOpeningScreen
+from solitaireplus.career.ratings import make_player_rating_bundle,apply_rating_change
 
 
 class CaseTests(unittest.TestCase):
@@ -29,14 +29,14 @@ class CaseTests(unittest.TestCase):
  def test_rewards_come_from_paid_price_and_preserve_receipt(self):
   for identity in ('cold_pizza','golden_shuffler','cash_vault','rating_blackjack','fan_club','midnight_felt'):
    state=new_case_state()
-   with patch('case_opening.choose_item',return_value=ITEMS[identity]):receipt,cash=purchase(state,'collector',10000)
+   with patch('solitaireplus.career.case_opening.choose_item',return_value=ITEMS[identity]):receipt,cash=purchase(state,'collector',10000)
    self.assertEqual(state['opened'],1);self.assertEqual(state['inventory'][identity],1)
    self.assertEqual(state['history'][0],receipt)
    self.assertEqual(cash,10000-receipt['cost']+(receipt['amount'] if receipt['kind']=='cash' else 0))
    self.assertEqual(normalize_case_state(state),state)
  def test_history_is_bounded_and_duplicates_remain_collectible(self):
   state=new_case_state()
-  with patch('case_opening.choose_item',return_value=ITEMS['cold_pizza']):
+  with patch('solitaireplus.career.case_opening.choose_item',return_value=ITEMS['cold_pizza']):
    for i in range(45):purchase(state,'street',100000)
   self.assertEqual(len(state['history']),30);self.assertEqual(state['inventory']['cold_pizza'],45)
  def test_profile_slots_and_old_save_defaults(self):
@@ -63,17 +63,17 @@ class CaseTests(unittest.TestCase):
    def fail():raise OSError('disk full')
    env=self.transaction_env(fail);keys=['case_collection_state','career_cash','career_ratings','career_rating','career_fans','unlocked_menu_backgrounds','unlocked_felts','unlocked_titles','unlocked_cursors']
    before=copy.deepcopy([env[k] for k in keys])
-   with patch('case_opening.choose_item',return_value=ITEMS[identity]):
+   with patch('solitaireplus.career.case_opening.choose_item',return_value=ITEMS[identity]):
     with self.assertRaises(OSError):env['buy_case_for_screen']('prestige')
    self.assertEqual([env[k] for k in keys],before)
  def test_actual_career_rewards_and_free_play_do_not_touch_career(self):
   saves=[];env=self.transaction_env(lambda:saves.append(True))
-  with patch('case_opening.choose_item',return_value=ITEMS['rating_blackjack']):receipt,wallet=env['buy_case_for_screen']('prestige')
+  with patch('solitaireplus.career.case_opening.choose_item',return_value=ITEMS['rating_blackjack']):receipt,wallet=env['buy_case_for_screen']('prestige')
   self.assertEqual(env['career_ratings']['blackjack'],1035);self.assertEqual(env['career_rating'],env['career_ratings']['overall'])
   self.assertEqual(len(saves),1)
   before=copy.deepcopy((env['case_collection_state'],env['career_cash'],env['career_ratings'],env['career_fans'],env['unlocked_menu_backgrounds'],env['unlocked_felts'],env['unlocked_titles'],env['unlocked_cursors']))
   env['current_game_mode']='free';env['case_screen']=SimpleNamespace(state=new_case_state(),wallet=5000)
-  with patch('case_opening.choose_item',return_value=ITEMS['midnight_felt']):env['buy_case_for_screen']('street')
+  with patch('solitaireplus.career.case_opening.choose_item',return_value=ITEMS['midnight_felt']):env['buy_case_for_screen']('street')
   self.assertEqual((env['case_collection_state'],env['career_cash'],env['career_ratings'],env['career_fans'],env['unlocked_menu_backgrounds'],env['unlocked_felts'],env['unlocked_titles'],env['unlocked_cursors']),before)
  def test_reel_ends_on_committed_item_and_skip_does_not_purchase_twice(self):
   pygame.init()

@@ -1,46 +1,46 @@
-from runtime_support import bootstrap
+from solitaireplus.app.runtime_support import bootstrap
 bootstrap()
 
 # Dispatch before importing single-player modules or initializing its window.
 import sys as _launch_sys
 if "--multiplayer" in _launch_sys.argv:
-    from multiplayer_launcher import run_multiplayer
+    from solitaireplus.app.multiplayer_launcher import run_multiplayer
     run_multiplayer()
     raise SystemExit(0)
 
 # If an update was interrupted (e.g. power cut), let the updater undo it first.
 # It restarts the game afterwards. See update_check.py.
-import update_check
+from solitaireplus.app import update_check
 if update_check.recover_if_needed():
     raise SystemExit(0)
 update_check.cleanup_leftovers()
 
-from alien_night import STORY as ALIEN_STORY, new_alien_story, refresh_adventure_schedule
-from solitaire_restart import RestartPrompt
+from solitaireplus.career.alien_night import STORY as ALIEN_STORY, new_alien_story, refresh_adventure_schedule
+from solitaireplus.games.solitaire.restart import RestartPrompt
 solitaire_restart_prompt = RestartPrompt()
-from profile_avatar_assets import load_avatar_bank, avatar_options
-from career_asset_images import (get_jobfinder_image, get_realestate_image,
+from solitaireplus.profile.avatar import load_avatar_bank, avatar_options
+from solitaireplus.career.asset_images import (get_jobfinder_image, get_realestate_image,
                                  get_career_hub_image, get_country_flag_surface)
-from career_activities import new_story, normalize_story, start_night, choose_option, reconcile_story_cosmetics
-from career_activities_ui import CareerActivityScreen
-from cosmetic_assets import CosmeticCatalog, SingleDriftCache
-from press_interview import PRESS_INTERVIEW_QUESTION_POOL, select_interview, answer_outcome
-from career_session_summary import poker_session_status, night_game_net, track_night_cash, night_cash_total
-from rating_unlocks import unlock_ratings, lock_reason, rating_lock_progress
-from multiplayer_launcher import MultiplayerLauncher
+from solitaireplus.career.activities import new_story, normalize_story, start_night, choose_option, reconcile_story_cosmetics
+from solitaireplus.career.activities_ui import CareerActivityScreen
+from solitaireplus.app.cosmetic_assets import CosmeticCatalog, SingleDriftCache
+from solitaireplus.career.events.press_interview import PRESS_INTERVIEW_QUESTION_POOL, select_interview, answer_outcome
+from solitaireplus.career.session_summary import poker_session_status, night_game_net, track_night_cash, night_cash_total
+from solitaireplus.profile.unlocks import unlock_ratings, lock_reason, rating_lock_progress
+from solitaireplus.app.multiplayer_launcher import MultiplayerLauncher
 multiplayer_launcher = MultiplayerLauncher()
 
-from career_event_progress import store_event_progress, restore_event_progress
-from career_time_warp import advance_months
-from case_opening import (
+from solitaireplus.career.event_progress import store_event_progress, restore_event_progress
+from solitaireplus.career.time_warp import advance_months
+from solitaireplus.career.case_opening import (
     ITEMS as CASE_ITEMS,
     new_case_state,
     normalize_case_state,
     purchase as purchase_loot_case,
     award_earned_trophies,
 )
-from case_opening_ui import CaseOpeningScreen
-from arcade_support import (
+from solitaireplus.career.case_opening_ui import CaseOpeningScreen
+from solitaireplus.games.arcade.support import (
     ARCADE_COMING_SOON_GAME_IDS,
     ARCADE_MACHINE_NAMES,
     ARCADE_PRIZE_CATALOG,
@@ -61,18 +61,18 @@ from arcade_support import (
     register_suit_snake_result,
     spend_tokens,
 )
-from bluff_presentation import update_bluff_presentation
-from poker_recap import handle_recap_action
-from poker_learning import new_learning, normalize_learning
+from solitaireplus.games.poker.bluff_presentation import update_bluff_presentation
+from solitaireplus.games.poker.recap import handle_recap_action
+from solitaireplus.games.poker.learning import new_learning, normalize_learning
 import os
 import sys
 import time
 import copy
 import ctypes
 
-from career_hub_controls import CareerHubControls
-from npc_personality import personality_summary
-from npc_personality_ui import draw_npc_traits
+from solitaireplus.career.hub_controls import CareerHubControls
+from solitaireplus.npc.personality import personality_summary
+from solitaireplus.npc.personality_ui import draw_npc_traits
 
 import random
 
@@ -81,12 +81,12 @@ import pygame
 import json
 
 
-from audio import AudioManager
-from game import Game, BASE_WIDTH, BASE_HEIGHT
+from solitaireplus.app.audio import AudioManager
+from solitaireplus.games.solitaire.rules import Game, BASE_WIDTH, BASE_HEIGHT
 
-from score_four import ScoreFourGame
-from crazy_eights import CrazyEightsGame
-from crazy_eights_ui import (
+from solitaireplus.games.cards.score_four import ScoreFourGame
+from solitaireplus.games.cards.crazy_eights import CrazyEightsGame
+from solitaireplus.games.cards.crazy_eights_ui import (
     draw_crazy_eights,
     get_crazy_eights_action,
     ACTION_RETURN as CRAZY_EIGHTS_ACTION_RETURN,
@@ -95,34 +95,34 @@ from crazy_eights_ui import (
     ACTION_CARD as CRAZY_EIGHTS_ACTION_CARD,
     ACTION_SUIT as CRAZY_EIGHTS_ACTION_SUIT,
 )
-from bango import BangoGame
-from cryptid_creatures_ui import CryptidScreen
-from cryptid_collection import new_collection, normalize_collection, award_level_packs, reward_battle
-from bango_ui import (
+from solitaireplus.games.cards.bango import BangoGame
+from solitaireplus.games.cryptid.ui import CryptidScreen
+from solitaireplus.games.cryptid.collection import new_collection, normalize_collection, award_level_packs, reward_battle
+from solitaireplus.games.cards.bango_ui import (
     draw_bango,
     get_bango_action,
     ACTION_RETURN as BANGO_ACTION_RETURN,
     ACTION_CALL as BANGO_ACTION_CALL,
     ACTION_CONTINUE as BANGO_ACTION_CONTINUE,
 )
-from blackjack import BlackjackGame
-from king_pong import KingPongGame, KING_PONG_DIFFICULTIES
-from battle_bosses import (
+from solitaireplus.games.casino.blackjack import BlackjackGame
+from solitaireplus.games.arcade.king_pong import KingPongGame, KING_PONG_DIFFICULTIES
+from solitaireplus.games.arcade.battle_bosses import (
     BATTLE_BOSSES_DIFFICULTIES,
     build_battle_bosses_choices,
 )
-from battle_bosses_game import BattleBossesGame
-from ace_invaders import ACE_INVADERS_DIFFICULTIES
-from ace_invaders_game import AceInvadersGame
-from suit_snake import SUIT_SNAKE_MODES, SUIT_SNAKE_MOVEMENT_STYLES
-from suit_snake_game import SuitSnakeGame
-from dead_mans_hand_game import DeadMansHandGame
+from solitaireplus.games.arcade.battle_bosses_game import BattleBossesGame
+from solitaireplus.games.arcade.ace_invaders import ACE_INVADERS_DIFFICULTIES
+from solitaireplus.games.arcade.ace_invaders_game import AceInvadersGame
+from solitaireplus.games.arcade.suit_snake import SUIT_SNAKE_MODES, SUIT_SNAKE_MOVEMENT_STYLES
+from solitaireplus.games.arcade.suit_snake_game import SuitSnakeGame
+from solitaireplus.games.dead_mans_hand.game import DeadMansHandGame
 
-from texas_holdem import (
+from solitaireplus.games.poker.holdem import (
     TexasHoldemGame,
 )
 
-from texas_holdem_ui import (
+from solitaireplus.games.poker.holdem_ui import (
     draw_texas_holdem,
     get_texas_holdem_action,
     ACTION_RETURN as HOLDEM_ACTION_RETURN,
@@ -155,17 +155,17 @@ from texas_holdem_ui import (
     get_texas_holdem_buy_in_action,
 )
 
-from texas_holdem_chat import (
+from solitaireplus.games.poker.holdem_chat import (
     generate_npc_action_chat,
     generate_player_action_reaction,
     generate_showdown_chat,
 )
 
-from five_card_draw import (
+from solitaireplus.games.poker.five_card_draw import (
     FiveCardDrawGame,
 )
 
-from five_card_draw_ui import (
+from solitaireplus.games.poker.five_card_draw_ui import (
     draw_five_card_draw,
     draw_five_card_draw_buy_in,
     get_five_card_draw_buy_in_action,
@@ -195,11 +195,11 @@ from five_card_draw_ui import (
     ACTION_OPTIONS as DRAW_ACTION_OPTIONS,
 )
 
-from seven_card_stud import (
+from solitaireplus.games.poker.seven_card_stud import (
     SevenCardStudGame,
 )
 
-from seven_card_stud_ui import (
+from solitaireplus.games.poker.seven_card_stud_ui import (
     draw_seven_card_stud,
     draw_seven_card_stud_buy_in,
     get_seven_card_stud_buy_in_action,
@@ -217,7 +217,7 @@ from seven_card_stud_ui import (
     ACTION_OPTIONS as STUD_ACTION_OPTIONS,
 )
 
-from npc_manager import (
+from solitaireplus.npc.manager import (
     NPCS,
     BASE_NPCS,
     PROSPECT_POOL,
@@ -229,12 +229,12 @@ from npc_manager import (
     sync_npc_runtime_state,
 )
 
-from roulette import (
+from solitaireplus.games.casino.roulette import (
     RouletteGame,
     RED_NUMBERS,
 )
 
-from roulette_ui import (
+from solitaireplus.games.casino.roulette_ui import (
     draw_roulette,
     get_roulette_action,
     ACTION_RETURN as ROULETTE_ACTION_RETURN,
@@ -259,8 +259,8 @@ from roulette_ui import (
     ACTION_BET_COLUMN_3,
 )
 
-from horse_races import HorseRaceGame
-from horse_races_ui import (
+from solitaireplus.games.casino.horse_races import HorseRaceGame
+from solitaireplus.games.casino.horse_races_ui import (
     draw_horse_races,
     get_horse_races_action,
     ACTION_RETURN as HORSE_RACES_ACTION_RETURN,
@@ -277,8 +277,8 @@ from horse_races_ui import (
     ACTION_HORSE_PREFIX as HORSE_RACES_ACTION_HORSE_PREFIX,
 )
 
-from faro import FaroGame
-from faro_ui import (
+from solitaireplus.games.casino.faro import FaroGame
+from solitaireplus.games.casino.faro_ui import (
     draw_faro,
     get_faro_action,
     ACTION_RETURN as FARO_ACTION_RETURN,
@@ -291,8 +291,8 @@ from faro_ui import (
     ACTION_BET_RANK_PREFIX as FARO_ACTION_BET_RANK_PREFIX,
 )
 
-from five_o_poker import FiveOPokerGame
-from five_o_poker_ui import (
+from solitaireplus.games.poker.five_o import FiveOPokerGame
+from solitaireplus.games.poker.five_o_ui import (
     draw_five_o_poker,
     get_five_o_action,
     ACTION_RETURN as FIVE_O_ACTION_RETURN,
@@ -304,8 +304,8 @@ from five_o_poker_ui import (
     ACTION_COLUMN_PREFIX as FIVE_O_ACTION_COLUMN_PREFIX,
 )
 
-from blind_mans_bluff import BlindMansBluffGame
-from blind_mans_bluff_ui import (
+from solitaireplus.games.poker.blind_mans_bluff import BlindMansBluffGame
+from solitaireplus.games.poker.blind_mans_bluff_ui import (
     draw_blind_mans_bluff,
     get_blind_mans_bluff_action,
     get_blind_mans_bluff_bet_amount,
@@ -318,7 +318,7 @@ from blind_mans_bluff_ui import (
     ACTION_FOLD as BLUFF_ACTION_FOLD,
 )
 
-from debug_poker_select import (
+from solitaireplus.debug.poker_select import (
     draw_debug_poker_npc_select,
     get_debug_poker_select_action,
     make_default_selection as make_debug_poker_default_selection,
@@ -329,17 +329,17 @@ from debug_poker_select import (
     ACTION_CYCLE as DEBUG_POKER_ACTION_CYCLE,
 )
 
-from head_to_head import (
+from solitaireplus.games.solitaire.head_to_head import (
     HeadToHeadRace,
     select_head_to_head_opponents,
 )
-from head_to_head_ui import (
+from solitaireplus.games.solitaire.head_to_head_ui import (
     draw_head_to_head_selection,
     draw_head_to_head_hud,
     get_selection_action as get_head_to_head_selection_action,
 )
 
-from debug_menu import (
+from solitaireplus.debug.menu import (
     draw_debug_menu,
     get_debug_action,
     show_debug_message,
@@ -391,7 +391,7 @@ from debug_menu import (
     ACTION_CLOSE,
 )
 
-from profile import (
+from solitaireplus.profile.saves import (
     make_default_profile,
     save_profile,
     load_profile,
@@ -404,7 +404,7 @@ from profile import (
 # Shown on the profile screen when a slot cannot be opened (damaged, or made by a newer version).
 profile_select_notice = ""
 
-from career_ratings import (
+from solitaireplus.career.ratings import (
     RATING_KEYS,
     GAME_RATING_KEYS,
     apply_rating_change,
@@ -417,7 +417,7 @@ from career_ratings import (
     normalize_rating_bundle,
 )
 
-from career_rating_events import (
+from solitaireplus.career.rating_events import (
     record_result,
     record_poker_showdown,
     settle_competitive_result,
@@ -425,11 +425,11 @@ from career_rating_events import (
     settle_poker_session,
 )
 
-from career_npc_world import ensure_career_world, advance_career_world, add_prospect
-from career_npc_development import development_stage
-from npc_portraits import draw_layered_portrait, register_player_avatar_art
+from solitaireplus.career.npc_world import ensure_career_world, advance_career_world, add_prospect
+from solitaireplus.career.npc_development import development_stage
+from solitaireplus.npc.portraits import draw_layered_portrait, register_player_avatar_art
 
-from career_fans import (
+from solitaireplus.career.fans import (
     MAX_FANS,
     clamp_fans,
     fan_bonus_for_achievement,
@@ -444,9 +444,9 @@ from career_fans import (
     normalize_fan_trend,
     record_fan_trend,
 )
-from career_world_flavor import rating_milestone_stories, strongest_rating_status
+from solitaireplus.career.world_flavor import rating_milestone_stories, strongest_rating_status
 
-from achievements import (
+from solitaireplus.profile.achievements import (
     ACHIEVEMENT_DEFINITIONS,
     make_default_achievement_state,
     normalize_achievement_state,
@@ -456,21 +456,21 @@ from achievements import (
     register_optional_cosmetics,
 )
 
-from achievements_ui import (
+from solitaireplus.menus.achievements_screen import (
     BACK_RECT as ACHIEVEMENTS_BACK_RECT,
     clamp_scroll as clamp_achievements_scroll,
     draw_achievements_screen,
     draw_achievement_popup,
 )
 
-from autograph_event import (
+from solitaireplus.career.events.autographs import (
     AutographEvent,
     AUTOGRAPH_CANVAS_RECT,
     AUTOGRAPH_CLEAR_RECT,
     AUTOGRAPH_SUBMIT_RECT,
 )
 
-from career_news import (
+from solitaireplus.career.news import (
     build_casual_cards_story,
     build_poker_story,
     build_casino_story,
@@ -480,9 +480,9 @@ from career_news import (
     build_head_to_head_story,
 )
 
-from help_history import HISTORY_HELP_PAGES
+from solitaireplus.app.help_history import HISTORY_HELP_PAGES
 
-from settings import (
+from solitaireplus.app.settings import (
     DEFAULT_WINDOW_SIZE,
     RESOLUTION_OPTIONS,
     MENU_BACKGROUNDS,
@@ -2065,7 +2065,7 @@ TRAINING_GAMES = {
     },
 }
 
-from npc_portrait_ui import (draw_portrait as draw_framed_npc_portrait,
+from solitaireplus.npc.portrait_ui import (draw_portrait as draw_framed_npc_portrait,
                             get_npc_initials)
 
 def _build_career_event_summary():
@@ -2849,7 +2849,7 @@ def buy_case_for_screen(case_id):
             receipt["amount"] = actual - career_fans
             career_fans = actual
         elif receipt["kind"] == "cosmetic":
-            from reward_cosmetics import unlock_reward
+            from solitaireplus.profile.cosmetics import unlock_reward
             item = CASE_ITEMS[receipt["item_id"]]
             unlock_reward(
                 item.get("cosmetic_type"),
@@ -5620,7 +5620,7 @@ options_back_rect = pygame.Rect(
 #  Options choices in %LOCALAPPDATA%\SimpleSolitaire\app_settings.json)
 # ==================================================
 
-import app_settings as app_settings_module
+from solitaireplus.app import app_settings as app_settings_module
 
 app_settings = app_settings_module.AppSettings()
 update_checker = update_check.UpdateChecker()
@@ -5852,12 +5852,12 @@ def _draw_blackjack_dealer_identity(rect):
 
 
 def _draw_blackjack_background():
-    from blackjack_presentation import draw_background
+    from solitaireplus.games.casino.blackjack_presentation import draw_background
     draw_background(game_surface, menu_background_surfaces.get(selected_menu_background), felt_surfaces.get(selected_felt))
 
 
 def _draw_blackjack_button(rect, label, mouse, font=None, selected=False):
-    from blackjack_presentation import draw_button
+    from solitaireplus.games.casino.blackjack_presentation import draw_button
     draw_button(game_surface, rect, label, mouse, font or blackjack_body_font, selected=selected)
 
 
@@ -6518,7 +6518,7 @@ def preview_competitive_rating(game_key, opponent, won):
     requested = elo_delta(career_ratings[game_key], opponent_rating, 1 if won else 0)
     if game_key == "score_four":
         requested = {"low":45, "mid":60, "strong":50, "elite":65}.get(opponent.get("skill_tier"),60) if won else -10
-    from career_ratings import reward_scale
+    from solitaireplus.career.ratings import reward_scale
     if requested > 0: requested *= reward_scale(career_ratings[game_key])
 
     return int(round(max(100, career_ratings[game_key] + requested))) - int(round(career_ratings[game_key]))
@@ -10227,7 +10227,7 @@ def start_free_play_game(game_id):
         return True
 
     if game_id == "case_opening":
-        from case_opening import new_case_state
+        from solitaireplus.career.case_opening import new_case_state
         case_screen.enter(new_case_state(), FREE_PLAY_STARTING_CASH, buy_case_for_screen, temporary=True)
         current_state = STATE_CASE_OPENING
         return True
@@ -10574,7 +10574,7 @@ def get_profile_avatar():
     return avatar_surface
 
 def build_profile_save_data():
-    from arcade_support import clone_arcade_state as clone_arcade_save_state
+    from solitaireplus.games.arcade.support import clone_arcade_state as clone_arcade_save_state
     store_event_progress(globals().get("career_event_entry"), globals())
 
     profile_data = (
@@ -10884,28 +10884,28 @@ def build_profile_save_data():
     ] = game.deal_mode
 
     profile_data["cryptid_creatures"] = copy.deepcopy(globals().get("cryptid_collection_state", profile_data["cryptid_creatures"]))
-    from poker_learning import normalize_learning
+    from solitaireplus.games.poker.learning import normalize_learning
     profile_data["poker_learning"] = normalize_learning(globals().get("career_poker_learning"))
-    from case_opening import normalize_case_state
+    from solitaireplus.career.case_opening import normalize_case_state
     profile_data["case_opening"] = normalize_case_state(globals().get("case_collection_state"))
     return profile_data
 
 def apply_profile_save_data(
         data
 ):
-    from arcade_support import normalize_arcade_state as normalize_arcade_save_state
+    from solitaireplus.games.arcade.support import normalize_arcade_state as normalize_arcade_save_state
     global career_bigfoot_story, career_alien_story
-    from alien_night import STORY as ALIEN_STORY, refresh_adventure_schedule
+    from solitaireplus.career.alien_night import STORY as ALIEN_STORY, refresh_adventure_schedule
     career_bigfoot_story = normalize_story(data.get("career", {}).get("bigfoot_story"))
     career_alien_story = normalize_story(data.get("career", {}).get("alien_story"), data=ALIEN_STORY)
     global career_poker_learning
-    from poker_learning import normalize_learning
+    from solitaireplus.games.poker.learning import normalize_learning
     career_poker_learning = normalize_learning(data.get("poker_learning"))
     global case_collection_state
-    from case_opening import normalize_case_state
+    from solitaireplus.career.case_opening import normalize_case_state
     case_collection_state = normalize_case_state(data.get("case_opening"))
     global cryptid_collection_state
-    from cryptid_collection import normalize_collection
+    from solitaireplus.games.cryptid.collection import normalize_collection
     cryptid_collection_state = normalize_collection(data.get('cryptid_creatures'),data.get('progression',{}).get('level',1))
     global profile_country_text
     global profile_age_text
@@ -11375,7 +11375,7 @@ def apply_profile_save_data(
 
     # Reconcile possession-backed cosmetics so an earned reward remains owned
     # even if it was earned before its PNG existed or came from an older save.
-    from reward_cosmetics import unlock_reward
+    from solitaireplus.profile.cosmetics import unlock_reward
     for item_id, count in case_collection_state.get("inventory", {}).items():
         item = CASE_ITEMS.get(item_id, {})
         if count and item.get("kind") == "cosmetic":
@@ -11609,7 +11609,7 @@ def draw_wrapped_text(
         )
 
 def draw_score_four_opponent_select():
-    from score_four_ui import background, logo, text
+    from solitaireplus.games.cards.score_four_ui import background, logo, text
     background(game_surface)
     logo(game_surface)
     text(game_surface, 'Choose a rival', (683, 140), 32, center=True)
@@ -12031,7 +12031,7 @@ def settle_score_four_session_result():
 
 
 def draw_score_four():
-    from score_four_ui import draw_score_four_table
+    from solitaireplus.games.cards.score_four_ui import draw_score_four_table
     settle_score_four_session_result()
     draw_score_four_table(game_surface, score_four_game, game_mouse_pos, globals())
 
@@ -12275,7 +12275,7 @@ def draw_solitaire_help_diagram(panel_rect):
             )
 
 def draw_score_four_mode_select():
-    from score_four_ui import draw_difficulty_select, draw_mode_select
+    from solitaireplus.games.cards.score_four_ui import draw_difficulty_select, draw_mode_select
     if score_four_game.difficulty_menu:
         draw_difficulty_select(game_surface, game_mouse_pos, globals())
     else:
@@ -13066,7 +13066,7 @@ def add_player_xp(amount):
             )
 
             if globals().get('cryptid_collection_state') is not None:
-                from cryptid_collection import award_level_packs
+                from solitaireplus.games.cryptid.collection import award_level_packs
                 packs=award_level_packs(cryptid_collection_state,level)
                 if packs:level_unlocks.append(('cryptid_pack',str(packs)))
             unlocked_items.extend(
@@ -19819,7 +19819,7 @@ def draw_career_event_select():
         return
     if career_event_entry.get("activity_type") == CAREER_ACTIVITY_ARCADE_NIGHT:
         return
-    from career_ratings import GAME_CATEGORIES
+    from solitaireplus.career.ratings import GAME_CATEGORIES
     games = career_event_entry.get("game_ids", [])
     count = len(games)
     if not count:
@@ -19961,7 +19961,7 @@ def redeem_arcade_prize_for_career(prize_id):
 
     arcade_state = new_state
     if prize and prize.get("kind") == "cosmetic":
-        from reward_cosmetics import unlock_reward
+        from solitaireplus.profile.cosmetics import unlock_reward
         unlock_reward(
             prize.get("cosmetic_type"),
             prize.get("asset_id"),
@@ -24563,7 +24563,7 @@ while running:
                     debug_set_player_level(
                         max(LEVEL_XP_THRESHOLDS)
                     )
-                    from debug_unlocks import debug_unlock_everything
+                    from solitaireplus.debug.unlocks import debug_unlock_everything
                     unlock_summary = debug_unlock_everything(globals())
                     show_debug_message(
                         "Max level + all current unlocks enabled"
@@ -25363,20 +25363,20 @@ while running:
                 score_four_game.rating_info_open = False
                 continue
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and game_mouse_pos is not None:
-                from score_four_ui import handle_rating_info_click
+                from solitaireplus.games.cards.score_four_ui import handle_rating_info_click
                 if handle_rating_info_click(game_mouse_pos, score_four_game):
                     audio.play_sound("button_click")
                     continue
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and game_mouse_pos is not None:
-                from score_four_ui import LAYOUT_RECT, toggle_layout, play_control_sound
+                from solitaireplus.games.cards.score_four_ui import LAYOUT_RECT, toggle_layout, play_control_sound
                 if not score_four_game.difficulty_menu and LAYOUT_RECT.collidepoint(game_mouse_pos):
                     toggle_layout(score_four_game)
                     play_control_sound(audio, "select")
                     continue
 
             if score_four_game.difficulty_menu and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and menu_mouse_pos is not None:
-                from score_four_ui import difficulty_action
+                from solitaireplus.games.cards.score_four_ui import difficulty_action
                 choice = difficulty_action(menu_mouse_pos)
                 if choice == "back":
                     score_four_game.difficulty_menu = False
@@ -26175,7 +26175,7 @@ while running:
 
             if getattr(texas_holdem_game, "recap_open", False):
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    from poker_recap import get_recap_action
+                    from solitaireplus.games.poker.recap import get_recap_action
                     handle_recap_action(texas_holdem_game, get_recap_action(game_mouse_pos, texas_holdem_game))
                     if not texas_holdem_game.recap_open:
                         texas_holdem_next_hand_at = 0
@@ -27840,13 +27840,13 @@ while running:
                 score_four_game.rating_info_open = False
                 continue
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and game_mouse_pos is not None:
-                from score_four_ui import handle_rating_info_click
+                from solitaireplus.games.cards.score_four_ui import handle_rating_info_click
                 if handle_rating_info_click(game_mouse_pos, score_four_game):
                     audio.play_sound("button_click")
                     continue
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and game_mouse_pos is not None:
-                from score_four_ui import LAYOUT_RECT, toggle_layout, play_control_sound
+                from solitaireplus.games.cards.score_four_ui import LAYOUT_RECT, toggle_layout, play_control_sound
                 if not score_four_game.difficulty_menu and LAYOUT_RECT.collidepoint(game_mouse_pos):
                     toggle_layout(score_four_game)
                     play_control_sound(audio, "select")
@@ -27945,7 +27945,7 @@ while running:
                         score_four_game.mode == "competitive"
                         and score_four_game.round_complete
                 ):
-                    from score_four_ui import ROUND_CONTINUE_RECT
+                    from solitaireplus.games.cards.score_four_ui import ROUND_CONTINUE_RECT
                     if game_mouse_pos is not None and ROUND_CONTINUE_RECT.collidepoint(game_mouse_pos):
                         if score_four_game.continue_competitive_round():
                             audio.play_sound("button_click")
@@ -31218,7 +31218,7 @@ while running:
     if current_state == STATE_TEXAS_HOLDEM:
 
         now = pygame.time.get_ticks()
-        from holdem_turn_flow import repair_betting_turn
+        from solitaireplus.games.poker.turn_flow import repair_betting_turn
         repair_betting_turn(texas_holdem_game)
 
         # ==================================================

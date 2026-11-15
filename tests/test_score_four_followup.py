@@ -2,22 +2,22 @@
 from fractions import Fraction
 import unittest
 from unittest.mock import patch
-from score_four import ScoreFourGame
+from solitaireplus.games.cards.score_four import ScoreFourGame
 from tests.test_career_ratings import main_functions, npc
-from career_ratings import make_player_rating_bundle
+from solitaireplus.career.ratings import make_player_rating_bundle
 
 class ScoreFourFollowupTests(unittest.TestCase):
     def test_hint_meter_and_repeated_hints_use_same_clock(self):
-        with patch('score_four.time.monotonic', return_value=100): g=ScoreFourGame()
+        with patch('solitaireplus.games.cards.score_four.time.monotonic', return_value=100): g=ScoreFourGame()
         self.assertEqual(g.solo_hint_progress(100),0)
         self.assertAlmostEqual(g.solo_hint_progress(115),.5)
-        with patch('score_four.time.monotonic', return_value=130):
+        with patch('solitaireplus.games.cards.score_four.time.monotonic', return_value=130):
             self.assertTrue(g.solo_hint_available())
             self.assertTrue(g.request_solo_hint())
             self.assertFalse(g.request_solo_hint())
         self.assertAlmostEqual(g.solo_hint_progress(145),.5)
-        with patch('score_four.time.monotonic', return_value=160): self.assertTrue(g.request_solo_hint())
-        with patch('score_four.time.monotonic', return_value=161):
+        with patch('solitaireplus.games.cards.score_four.time.monotonic', return_value=160): self.assertTrue(g.request_solo_hint())
+        with patch('solitaireplus.games.cards.score_four.time.monotonic', return_value=161):
             g.reset_current_puzzle()
             self.assertFalse(g.solo_hint_available())
             g.new_puzzle()

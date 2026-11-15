@@ -1,4 +1,4 @@
-from dead_mans_hand import LEVELS, LEVEL_VALIDATION_ERRORS, normalize_angle, wall_at
+from solitaireplus.games.dead_mans_hand.levels import LEVELS, LEVEL_VALIDATION_ERRORS, normalize_angle, wall_at
 
 
 def test_dead_mans_hand_levels_validate():

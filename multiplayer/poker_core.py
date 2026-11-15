@@ -4,10 +4,10 @@ from pathlib import Path
 _project_root = str(Path(__file__).resolve().parent.parent)
 if _project_root not in sys.path:
     sys.path.append(_project_root)
-from shared import poker_core as _implementation
+from solitaireplus.games.poker import core as _implementation
 
 # Explicit exports allow IDEs to resolve the shared API.
-from shared.poker_core import (
+from solitaireplus.games.poker.core import (
     POKER_RANK_NAMES,
     POKER_RANK_PLURALS,
     POKER_RANK_SHORT,

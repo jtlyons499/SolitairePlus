@@ -5,7 +5,7 @@ import unittest
 os.environ.setdefault('SDL_VIDEODRIVER','dummy')
 os.environ.setdefault('SDL_AUDIODRIVER','dummy')
 import pygame
-from profile_avatar_assets import load_avatar_bank, avatar_options
+from solitaireplus.profile.avatar import load_avatar_bank, avatar_options
 
 class AvatarAssetsTests(unittest.TestCase):
     @classmethod

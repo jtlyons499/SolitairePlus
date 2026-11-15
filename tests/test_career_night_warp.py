@@ -2,10 +2,10 @@ from tests.support import locate
 import ast,copy,unittest
 from pathlib import Path
 import pygame
-from career_event_progress import store_event_progress,restore_event_progress
-from career_time_warp import advance_months
-from career_hub_controls import CareerHubControls
-from texas_holdem import TexasHoldemGame
+from solitaireplus.career.event_progress import store_event_progress,restore_event_progress
+from solitaireplus.career.time_warp import advance_months
+from solitaireplus.career.hub_controls import CareerHubControls
+from solitaireplus.games.poker.holdem import TexasHoldemGame
 
 class NightWarpTests(unittest.TestCase):
  def test_night_snapshot_roundtrip_and_isolation(self):

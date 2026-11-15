@@ -65,3 +65,40 @@ How to check a phase yourself:
   drawn); the next-hand bet buttons are always visible. Dead state, cleanup candidate for Phase 12.
 - The game's `profile_select` screenshot shows bug B9 (level hidden under Delete) and the Customize screen
   shows the D1 "DEBUG +100 XP" button, as the brief describes.
+
+## Phase 1: package skeleton and paths
+
+**What moved:** every root module except `main.py`, `version.py` (and the two stray files left for Phase 12:
+`verify_solitaire_state.py`, root `test_dead_mans_hand_weapon_system.py`) is now in `solitaireplus/`
+(`app/`, `ui/`, `menus/`, `profile/`, `career/` + `career/events/`, `npc/`, `games/<family>/`, `debug/`), with
+the names from brief §6.1 (`game.py` → `games/solitaire/rules.py`, `profile.py` → `profile/saves.py`,
+`texas_holdem.py` → `games/poker/holdem.py`, …; full table in `tools/refactor/phase1_move.py`). `shared/` was
+merged into `games/poker/` (core, strategy, speech, ui_assets, learning, holdem_chat), `npc/` (personality,
+personality_chat) and `ui/image_cache.py`; the eight root shims are deleted. Multiplayer keeps its own shims
+(they now point at `solitaireplus`) until Phase 11.
+
+- Imports rewritten with `tools/refactor/imports.py` (libcst; 433 imports in the moved modules, `main.py`,
+  `multiplayer/`, `tests/`, `tools/`). Every local name stays the same (`import game` became
+  `from solitaireplus.games.solitaire import rules as game`), so no other line changed. Mock targets such as
+  `patch("score_four.random")` were rewritten too.
+- `solitaireplus/app/paths.py` (`root()`, `asset()`, `data()`, `resolve()`). All 15 `Path(__file__)` lookups
+  now use it (`runtime_support.ROOT` and `multiplayer_launcher.ROOT` included), and 150 working-folder-relative
+  `"assets/…"` / `"data/…"` strings in code became `paths.asset(...)` / `paths.data(...)`
+  (`tools/refactor/asset_paths.py`).
+- Data tables keep root-relative paths on purpose (`settings.py`, `achievements.py`, `unlocks.py`,
+  `help_history.py`, `games/arcade/support.py`, and the JSON files in `data/`): they are data that could be
+  saved or sent, so they must not become machine-specific absolute paths. The loaders in moved modules resolve
+  them with `paths.resolve()` (`cosmetic_assets`, `achievements`, `achievements_screen`). Loaders still in
+  `main.py` rely on the working folder until Phase 2. `runtime_support.bootstrap()` keeps its `chdir`.
+- Build: `SolitairePlus.spec` unchanged (still `Analysis(['main.py'])`; PyInstaller follows `solitaireplus`).
+  `tools/make_manifest.py`: the game exe's inputs are now `main.py` + `solitaireplus/**/*.py` (still not
+  `version.py`). `tools/audit_project.py` understands `paths.asset(...)` and the new `unlocks.py` name.
+- Tests: file-name references (`Path("audio.py")` …) point at the new files; `test_shared_imports.py` now checks
+  the new modules and that the multiplayer shims return the very same module objects.
+
+**Results:** tests `PASSED` (no quarantine changes). `screen_harness compare` → `IDENTICAL 63/63`,
+`replay compare` → `IDENTICAL 18/18` (baseline `bba00a0`). `build_release.ps1 -SkipTests`: built; packaged
+self-tests SolitaireNet, SolitaireUpdater and multiplayer modules all pass; the packaged game ran 10 s with an
+empty `game-*.log`.
+
+**Surprises:** the `shared/` modules used relative imports, which the rewrite tool skips; fixed by hand (4 lines).

@@ -9,21 +9,21 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
-import profile as profile_module
-from career_ratings import (GAME_RATING_KEYS, GAME_CATEGORIES, CATEGORY_KEYS, RATING_KEYS, apply_rating_change,
+from solitaireplus.profile import saves as profile_module
+from solitaireplus.career.ratings import (GAME_RATING_KEYS, GAME_CATEGORIES, CATEGORY_KEYS, RATING_KEYS, apply_rating_change,
                             boost_npc_overall, derive_overall, elo_delta,
                             ensure_npc_career_state, make_npc_rating_bundle,
                             make_player_rating_bundle, migrate_profile_ratings,
                             normalize_rating_bundle, simulate_npc_rating_month)
-from career_rating_events import (record_poker_showdown, record_result,
+from solitaireplus.career.rating_events import (record_poker_showdown, record_result,
                                  settle_competitive_result, settle_house_result,
                                  settle_poker_session)
-from career_session_summary import track_night_cash
-from texas_holdem import TexasHoldemGame
-from five_card_draw import FiveCardDrawGame
-from seven_card_stud import SevenCardStudGame
-from five_o_poker import FiveOPokerGame
-from score_four import ScoreFourGame
+from solitaireplus.career.session_summary import track_night_cash
+from solitaireplus.games.poker.holdem import TexasHoldemGame
+from solitaireplus.games.poker.five_card_draw import FiveCardDrawGame
+from solitaireplus.games.poker.seven_card_stud import SevenCardStudGame
+from solitaireplus.games.poker.five_o import FiveOPokerGame
+from solitaireplus.games.cards.score_four import ScoreFourGame
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -312,8 +312,8 @@ class RatingTests(unittest.TestCase):
         self.assertEqual(env["award_career_rating"]("overall", 500), 0)
 
     def test_house_payout_guards_rate_exactly_once_including_free_play(self):
-        from blackjack import BlackjackGame
-        from roulette import RouletteGame
+        from solitaireplus.games.casino.blackjack import BlackjackGame
+        from solitaireplus.games.casino.roulette import RouletteGame
         no_op = lambda *args, **kwargs: 0
         for mode in ("career", "free"):
             blackjack, roulette = BlackjackGame(), RouletteGame()
@@ -349,7 +349,7 @@ class RatingTests(unittest.TestCase):
                 self.assertEqual(env["career_ratings"], make_player_rating_bundle())
 
     def test_head_to_head_forfeit_is_loss_and_duplicate_finish_is_ignored(self):
-        from head_to_head import HeadToHeadRace
+        from solitaireplus.games.solitaire.head_to_head import HeadToHeadRace
         no_op = lambda *args, **kwargs: 0
         for won, forfeited in ((True, False), (False, False), (False, True)):
             race = HeadToHeadRace(random.Random(1))

@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 def test_debug_menu_uses_expandable_minigame_categories():
-    source = Path("debug_menu.py").read_text(encoding="utf-8")
+    source = Path("solitaireplus/debug/menu.py").read_text(encoding="utf-8")
     assert "MINIGAME_CATEGORIES = (" in source
     assert '"Arcade Games"' in source
     assert '"Casual / Puzzle"' in source
@@ -15,7 +15,7 @@ def test_debug_menu_uses_expandable_minigame_categories():
 
 
 def test_arcade_debug_entries_are_available_from_minigame_accordion():
-    debug_source = Path("debug_menu.py").read_text(encoding="utf-8")
+    debug_source = Path("solitaireplus/debug/menu.py").read_text(encoding="utf-8")
     main_source = locate.source()
 
     assert 'ACTION_ARCADE_NIGHT = "arcade_night"' in debug_source
@@ -40,7 +40,7 @@ def test_arcade_debug_entries_are_available_from_minigame_accordion():
 
 
 def test_niche_games_moved_into_relevant_minigame_categories():
-    source = Path("debug_menu.py").read_text(encoding="utf-8")
+    source = Path("solitaireplus/debug/menu.py").read_text(encoding="utf-8")
     challenge_block = source.split("CHALLENGE_ENTRIES = (", 1)[1].split(")\n\nPROGRESSION_ENTRIES", 1)[0]
     assert "ACTION_FARO" not in challenge_block
     assert "ACTION_FIVE_O_POKER" not in challenge_block

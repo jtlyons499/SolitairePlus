@@ -2,8 +2,8 @@
 import random
 import unittest
 import pygame
-from cryptid_creatures import Action, CryptidBattle, damage_breakdown, damage_values
-from cryptid_creatures_ui import CryptidScreen
+from solitaireplus.games.cryptid.creatures import Action, CryptidBattle, damage_breakdown, damage_values
+from solitaireplus.games.cryptid.ui import CryptidScreen
 
 
 class PolishTests(unittest.TestCase):

@@ -20,7 +20,7 @@ is built from plus the Python/PyInstaller versions. When that fingerprint
 matches the previous release, the previous release's file is reused unchanged.
 
 Parts ("components") of the install folder:
-    game     SolitairePlus.exe         built from the root *.py files and shared/
+    game     SolitairePlus.exe         built from main.py and solitaireplus/
     net      SolitaireNet.exe          built from netservice/
     updater  SolitaireUpdater.exe      built from updater/
     runtime  SolitairePlus_Data/*      Python, pygame and other libraries (DLLs, .pyd, base_library.zip)
@@ -54,7 +54,7 @@ BUILD_TOOLING = ["SolitairePlus.spec", "requirements-build.txt", "tools/write_ve
 COMPONENT_INPUTS = {
     # version.py is excluded on purpose: it ships as a loose file, so a version bump alone
     # does not need a new game exe.
-    "game": (["*.py", "shared/**/*.py", "requirements.txt", *BUILD_TOOLING], {"version.py"}),
+    "game": (["main.py", "solitaireplus/**/*.py", "requirements.txt", *BUILD_TOOLING], {"version.py"}),
     "net": (["netservice/**/*.py", *BUILD_TOOLING], set()),
     "updater": (["updater/**/*.py", *BUILD_TOOLING], set()),
     "runtime": (["SolitairePlus.spec", "requirements.txt", "requirements-build.txt"], set()),

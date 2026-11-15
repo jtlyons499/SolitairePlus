@@ -4,9 +4,9 @@ from pathlib import Path
 from types import SimpleNamespace
 import unittest
 import pygame
-from score_four_ui import hint_meter_surface
-from poker_recap import recap_lines, recap_display_lines, draw_recap
-from career_event_progress import restore_event_progress, store_event_progress
+from solitaireplus.games.cards.score_four_ui import hint_meter_surface
+from solitaireplus.games.poker.recap import recap_lines, recap_display_lines, draw_recap
+from solitaireplus.career.event_progress import restore_event_progress, store_event_progress
 
 class ReadabilityTests(unittest.TestCase):
     @classmethod

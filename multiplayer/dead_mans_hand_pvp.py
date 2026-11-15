@@ -14,15 +14,15 @@ from pathlib import Path
 
 import pygame
 
-from dead_mans_hand import FOV, LEVELS, RENDER_HEIGHT, RENDER_WIDTH, normalize_angle, wall_at
-from dead_mans_hand_game import (
+from solitaireplus.games.dead_mans_hand.levels import FOV, LEVELS, RENDER_HEIGHT, RENDER_WIDTH, normalize_angle, wall_at
+from solitaireplus.games.dead_mans_hand.game import (
     ADS_TRANSITION_SPEED,
     JUMP_GRAVITY,
     JUMP_IMPULSE,
     MAX_SHIELD,
     DeadMansHandGame,
 )
-from dead_mans_hand_weapons import WEAPON_DEFINITIONS
+from solitaireplus.games.dead_mans_hand.weapons import WEAPON_DEFINITIONS
 from net_client import open_peer
 from mp_toast import LeaveToast
 

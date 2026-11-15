@@ -5,11 +5,11 @@ from pathlib import Path
 from types import SimpleNamespace
 import unittest
 import pygame
-from texas_holdem import TexasHoldemGame
-from poker_recap import recap_lines, draw_recap, get_recap_action, handle_recap_action, CLOSE, NEXT
-from achievements import make_default_achievement_state, record_event
-from blind_mans_bluff import BlindMansBluffGame
-from bluff_presentation import effects_for, draw_bluff_effects, update_bluff_presentation
+from solitaireplus.games.poker.holdem import TexasHoldemGame
+from solitaireplus.games.poker.recap import recap_lines, draw_recap, get_recap_action, handle_recap_action, CLOSE, NEXT
+from solitaireplus.profile.achievements import make_default_achievement_state, record_event
+from solitaireplus.games.poker.blind_mans_bluff import BlindMansBluffGame
+from solitaireplus.games.poker.bluff_presentation import effects_for, draw_bluff_effects, update_bluff_presentation
 
 
 def card(rank,suit):return {'rank':rank,'suit':suit}

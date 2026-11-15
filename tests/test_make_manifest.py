@@ -44,7 +44,7 @@ class SourceHashTests(unittest.TestCase):
     def make_repo(self, folder: Path) -> Path:
         write(folder / "main.py", b"print('game')\r\n")
         write(folder / "version.py", b'__version__ = "0.0.7"\n')
-        write(folder / "shared" / "poker_core.py", b"x = 1\n")
+        write(folder / "solitaireplus" / "games" / "poker" / "core.py", b"x = 1\n")
         write(folder / "netservice" / "service.py", b"y = 2\n")
         write(folder / "SolitairePlus.spec", b"spec\n")
         return folder
@@ -63,7 +63,7 @@ class SourceHashTests(unittest.TestCase):
             write(repo / "netservice" / "service.py", b"y = 3\n")
             self.assertEqual(mm.source_hash("game", repo, TOOLS), game)   # net code is not in the game exe
             self.assertNotEqual(mm.source_hash("net", repo, TOOLS), net)
-            write(repo / "shared" / "poker_core.py", b"x = 2\n")
+            write(repo / "solitaireplus" / "games" / "poker" / "core.py", b"x = 2\n")
             self.assertNotEqual(mm.source_hash("game", repo, TOOLS), game)
             self.assertNotEqual(mm.source_hash("game", repo, "python 3.14.1"), mm.source_hash("game", repo, TOOLS))
 

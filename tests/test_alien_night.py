@@ -2,8 +2,8 @@
 import copy
 import json
 import unittest
-from alien_night import STORY, new_alien_story, refresh_adventure_schedule
-from career_activities import new_story, normalize_story, start_night, choose_option, requirement_reason
+from solitaireplus.career.alien_night import STORY, new_alien_story, refresh_adventure_schedule
+from solitaireplus.career.activities import new_story, normalize_story, start_night, choose_option, requirement_reason
 
 class AlienNightTests(unittest.TestCase):
     def test_every_choice_is_reachable_and_all_endings_and_rewards_work(self):

@@ -4,13 +4,13 @@ import random
 import unittest
 from collections import Counter
 
-from npc_personality import TRAIT_NAMES, build_trait_profile
-from poker_ai import decide_poker_action, choose_poker_open_bet_amount, choose_poker_raise_to_amount
-from poker_strategy import (PokerTableReads, estimate_range, signature_for,
+from solitaireplus.npc.personality import TRAIT_NAMES, build_trait_profile
+from solitaireplus.games.poker.ai import decide_poker_action, choose_poker_open_bet_amount, choose_poker_raise_to_amount
+from solitaireplus.games.poker.strategy import (PokerTableReads, estimate_range, signature_for,
                             strategic_context, strategy_chat_line)
-from texas_holdem import TexasHoldemGame
-from five_card_draw import FiveCardDrawGame
-from seven_card_stud import SevenCardStudGame
+from solitaireplus.games.poker.holdem import TexasHoldemGame
+from solitaireplus.games.poker.five_card_draw import FiveCardDrawGame
+from solitaireplus.games.poker.seven_card_stud import SevenCardStudGame
 
 
 def npc(identity, rating=2600):

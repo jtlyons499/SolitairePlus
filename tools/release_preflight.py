@@ -24,7 +24,7 @@ for path in (ROOT/'data').rglob('*.json'):
 required=['data/npcs.json','assets/cards/backs/back_default.png']
 for name in required:
     if not (ROOT/name).is_file(): errors.append('Missing required: '+name)
-from settings import MENU_BACKGROUNDS,FELTS,TITLES
+from solitaireplus.app.settings import MENU_BACKGROUNDS,FELTS,TITLES
 missing=[]
 for catalog in (MENU_BACKGROUNDS,FELTS,TITLES):
     for key,item in catalog.items():

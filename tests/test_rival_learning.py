@@ -8,13 +8,13 @@ import unittest
 from collections import deque
 from pathlib import Path
 from unittest.mock import patch
-from poker_learning import new_learning, normalize_learning
-from poker_strategy import PokerTableReads
-from texas_holdem import TexasHoldemGame
-from five_card_draw import FiveCardDrawGame
-from seven_card_stud import SevenCardStudGame
-from npc_personality import npc_identity
-import profile as profiles
+from solitaireplus.games.poker.learning import new_learning, normalize_learning
+from solitaireplus.games.poker.strategy import PokerTableReads
+from solitaireplus.games.poker.holdem import TexasHoldemGame
+from solitaireplus.games.poker.five_card_draw import FiveCardDrawGame
+from solitaireplus.games.poker.seven_card_stud import SevenCardStudGame
+from solitaireplus.npc.personality import npc_identity
+from solitaireplus.profile import saves as profiles
 
 
 def npc(identity):
@@ -121,7 +121,7 @@ class LearningTests(unittest.TestCase):
         bank=new_learning();reads=PokerTableReads();reads.bind_learning(bank,'texas_holdem',{0:'player',1:'rival'})
         reads.observe('bet',0,hand_number=1,stage='river',amount=50,pot=100)
         function=functions['build_profile_save_data']
-        save_nodes=[n for n in function.body if isinstance(n,ast.ImportFrom) and n.module=='poker_learning']
+        save_nodes=[n for n in function.body if isinstance(n,ast.ImportFrom) and n.module in ('poker_learning','solitaireplus.games.poker.learning')]
         save_nodes += [n for n in function.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Subscript) and isinstance(t.slice,ast.Constant) and t.slice.value=='poker_learning' for t in n.targets)]
         env={'profile_data':{},'career_poker_learning':bank}
         exec(compile(ast.Module(body=save_nodes,type_ignores=[]),'actual profile save field','exec'),env)
@@ -129,7 +129,7 @@ class LearningTests(unittest.TestCase):
         self.assertIsNot(env['profile_data']['poker_learning'],bank)
         apply_nodes=[n for n in functions['apply_profile_save_data'].body
                      if (isinstance(n,ast.Global) and 'career_poker_learning' in n.names)
-                     or (isinstance(n,ast.ImportFrom) and n.module=='poker_learning')
+                     or (isinstance(n,ast.ImportFrom) and n.module in ('poker_learning','solitaireplus.games.poker.learning'))
                      or (isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='career_poker_learning' for t in n.targets))]
         self.assertEqual(len(apply_nodes),3)
         env['data']={'poker_learning':bank}

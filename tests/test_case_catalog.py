@@ -3,8 +3,8 @@ import copy,json,random,tempfile,unittest
 from pathlib import Path
 from unittest.mock import patch
 import pygame
-import case_opening as core
-from case_opening_ui import CaseOpeningScreen
+from solitaireplus.career import case_opening as core
+from solitaireplus.career.case_opening_ui import CaseOpeningScreen
 
 class CatalogTests(unittest.TestCase):
  def load(self,data):
@@ -25,7 +25,7 @@ class CatalogTests(unittest.TestCase):
    with self.assertRaises(ValueError):self.load(d)
  def test_custom_fixed_reward(self):
   item=dict(core.ITEMS['cash_pouch'],cash_amount=1234)
-  with patch('case_opening.choose_item',return_value=item):
+  with patch('solitaireplus.career.case_opening.choose_item',return_value=item):
    receipt,wallet=core.purchase(core.new_case_state(),'street',5000)
   self.assertEqual(receipt['amount'],1234);self.assertEqual(wallet,5000-receipt['cost']+1234)
  def test_fourth_case_on_second_shop_page(self):

@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import profile as profiles
+from solitaireplus.profile import saves as profiles
 
 
 class ProfileRecoveryTests(unittest.TestCase):

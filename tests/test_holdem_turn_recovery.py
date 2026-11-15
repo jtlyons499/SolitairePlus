@@ -1,7 +1,7 @@
 """Heads-up all-in blind calls and missing turn owners."""
 import unittest
-from texas_holdem import TexasHoldemGame
-from holdem_turn_flow import repair_betting_turn
+from solitaireplus.games.poker.holdem import TexasHoldemGame
+from solitaireplus.games.poker.turn_flow import repair_betting_turn
 
 class HeadsUpTurnTests(unittest.TestCase):
     def game(self):

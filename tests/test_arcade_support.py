@@ -1,5 +1,5 @@
 from tests.support import locate
-from arcade_support import (
+from solitaireplus.games.arcade.support import (
     ARCADE_PRIZE_CATALOG,
     buy_token_package,
     award_ace_invaders_tickets,
@@ -62,7 +62,7 @@ def test_register_king_pong_result_tracks_stats_and_tickets():
 
 
 def test_arcade_games_are_not_rating_categories():
-    from career_ratings import GAME_CATEGORIES
+    from solitaireplus.career.ratings import GAME_CATEGORIES
 
     for game_id in ("king_pong", "battle_bosses", "ace_invaders", "suit_snake"):
         assert game_id not in GAME_CATEGORIES
@@ -72,7 +72,7 @@ def test_arcade_asset_contract_matches_authored_files():
     from pathlib import Path
 
     main_source = locate.source()
-    pong_source = Path("king_pong.py").read_text(encoding="utf-8")
+    pong_source = Path("solitaireplus/games/arcade/king_pong.py").read_text(encoding="utf-8")
 
     assert '"assets/arcade/bg.png"' in main_source
     assert '"paddle_king_hearts.png"' in pong_source
@@ -86,7 +86,7 @@ def test_king_pong_difficulty_and_ui_contract():
     from pathlib import Path
 
     main_source = locate.source()
-    pong_source = Path("king_pong.py").read_text(encoding="utf-8")
+    pong_source = Path("solitaireplus/games/arcade/king_pong.py").read_text(encoding="utf-8")
 
     assert 'STATE_KING_PONG_OPPONENT_SELECT' in main_source
     assert 'build_king_pong_opponent_choices' in main_source
@@ -133,7 +133,7 @@ def test_king_pong_reuses_five_o_point_sounds_and_pauses_between_points():
     from pathlib import Path
 
     main_source = locate.source()
-    pong_source = Path("king_pong.py").read_text(encoding="utf-8")
+    pong_source = Path("solitaireplus/games/arcade/king_pong.py").read_text(encoding="utf-8")
 
     assert '"assets/sounds/five_o_column_win.wav"' in main_source
     assert '"assets/sounds/five_o_column_loss.wav"' in main_source
@@ -148,7 +148,7 @@ def test_king_pong_reuses_five_o_point_sounds_and_pauses_between_points():
 
 def test_battle_bosses_builds_four_three_npc_difficulty_squads():
     import random
-    from battle_bosses import BATTLE_BOSSES_DIFFICULTIES, build_battle_bosses_choices
+    from solitaireplus.games.arcade.battle_bosses import BATTLE_BOSSES_DIFFICULTIES, build_battle_bosses_choices
 
     npcs = []
     for tier in ("low", "mid", "strong", "elite"):
@@ -172,8 +172,8 @@ def test_battle_bosses_opponent_select_and_playable_arena_are_wired():
     from pathlib import Path
 
     main_source = locate.source()
-    arcade_source = Path("arcade_support.py").read_text(encoding="utf-8")
-    game_source = Path("battle_bosses_game.py").read_text(encoding="utf-8")
+    arcade_source = Path("solitaireplus/games/arcade/support.py").read_text(encoding="utf-8")
+    game_source = Path("solitaireplus/games/arcade/battle_bosses_game.py").read_text(encoding="utf-8")
 
     assert 'STATE_BATTLE_BOSSES_OPPONENT_SELECT' in main_source
     assert 'STATE_BATTLE_BOSSES = "battle_bosses"' in main_source
@@ -221,7 +221,7 @@ def test_king_pong_ai_was_softened_after_2d_movement_feedback():
     import ast
     from pathlib import Path
 
-    tree = ast.parse(Path("king_pong.py").read_text(encoding="utf-8"))
+    tree = ast.parse(Path("solitaireplus/games/arcade/king_pong.py").read_text(encoding="utf-8"))
     assignment = next(
         node for node in tree.body
         if isinstance(node, ast.Assign)
@@ -238,7 +238,7 @@ def test_battle_bosses_ricochet_polish_uses_contact_point_and_optional_sfx():
     from pathlib import Path
 
     main_source = locate.source()
-    game_source = Path("battle_bosses_game.py").read_text(encoding="utf-8")
+    game_source = Path("solitaireplus/games/arcade/battle_bosses_game.py").read_text(encoding="utf-8")
 
     assert 'def _closest_point_on_segment' in game_source
     assert 'safe_center = closest + normal * (contact_radius + 2.5)' in game_source
@@ -257,7 +257,7 @@ def test_battle_bosses_ricochet_polish_uses_contact_point_and_optional_sfx():
 def test_battle_bosses_compact_four_corner_spacing():
     from pathlib import Path
 
-    game_source = Path("battle_bosses_game.py").read_text(encoding="utf-8")
+    game_source = Path("solitaireplus/games/arcade/battle_bosses_game.py").read_text(encoding="utf-8")
     assert "ARENA_RECT = pygame.Rect(320, 170, 726, 450)" in game_source
     assert "SHIELD_RADIUS = 126" in game_source
     assert '"bottom_left": (-65.0, -5.0)' in game_source
@@ -271,7 +271,7 @@ def test_battle_bosses_compact_four_corner_spacing():
 def test_battle_bosses_late_game_pace_corner_rotation_and_shield_wear():
     from pathlib import Path
 
-    game_source = Path("battle_bosses_game.py").read_text(encoding="utf-8")
+    game_source = Path("solitaireplus/games/arcade/battle_bosses_game.py").read_text(encoding="utf-8")
     assert "MIN_SHIELD_LENGTH = 46" in game_source
     assert "SHIELD_WEAR_PER_BLOCK = 3.0" in game_source
     assert 'fort["shield_blocks"] = int(fort.get("shield_blocks", 0)) + 1' in game_source
@@ -284,7 +284,7 @@ def test_battle_bosses_late_game_pace_corner_rotation_and_shield_wear():
 
 def test_battle_bosses_anti_loop_watchdog_and_one_way_shields():
     from pathlib import Path
-    game_source = Path("battle_bosses_game.py").read_text(encoding="utf-8")
+    game_source = Path("solitaireplus/games/arcade/battle_bosses_game.py").read_text(encoding="utf-8")
     assert "LOOP_CONTACT_WINDOW_MS" in game_source
     assert "def _break_ricochet_loop_if_needed(self, now):" in game_source
     assert 'self._record_contact(now, "wall", bounced)' in game_source
@@ -297,10 +297,10 @@ def test_battle_bosses_anti_loop_watchdog_and_one_way_shields():
 def test_ace_invaders_is_playable_unrated_and_removed_from_coming_soon():
     from pathlib import Path
 
-    arcade_source = Path("arcade_support.py").read_text(encoding="utf-8")
+    arcade_source = Path("solitaireplus/games/arcade/support.py").read_text(encoding="utf-8")
     main_source = locate.source()
-    config_source = Path("ace_invaders.py").read_text(encoding="utf-8")
-    game_source = Path("ace_invaders_game.py").read_text(encoding="utf-8")
+    config_source = Path("solitaireplus/games/arcade/ace_invaders.py").read_text(encoding="utf-8")
+    game_source = Path("solitaireplus/games/arcade/ace_invaders_game.py").read_text(encoding="utf-8")
 
     assert 'ARCADE_COMING_SOON_GAME_IDS = set()' in arcade_source
     assert '"ace_invaders"' not in arcade_source.split("ARCADE_COMING_SOON_GAME_IDS", 1)[1].split("ARCADE_TOKEN_PACKAGES", 1)[0]
@@ -356,7 +356,7 @@ def test_ace_invaders_optional_audio_hooks_are_wired():
     from pathlib import Path
 
     main_source = locate.source()
-    game_source = Path("ace_invaders_game.py").read_text(encoding="utf-8")
+    game_source = Path("solitaireplus/games/arcade/ace_invaders_game.py").read_text(encoding="utf-8")
     for sound_name in (
         "ace_invaders_shoot",
         "ace_invaders_enemy_shoot",
@@ -426,7 +426,7 @@ def test_ace_invaders_game_over_flashes_until_exit_and_select_spacing_is_adjuste
     from pathlib import Path
 
     main_source = locate.source()
-    game_source = Path("ace_invaders_game.py").read_text(encoding="utf-8")
+    game_source = Path("solitaireplus/games/arcade/ace_invaders_game.py").read_text(encoding="utf-8")
 
     ace_block = locate.function("draw_ace_invaders_difficulty_select")
     assert "subtitle.get_rect(center=(BASE_WIDTH // 2, 157))" in ace_block
@@ -441,7 +441,7 @@ def test_user_arcade_wording_and_machine_mania_package_are_preserved():
     from pathlib import Path
 
     main_source = locate.source()
-    arcade_source = Path("arcade_support.py").read_text(encoding="utf-8")
+    arcade_source = Path("solitaireplus/games/arcade/support.py").read_text(encoding="utf-8")
 
     assert "Redeem tickets for trophies and exclusive arcade cosmetics." in main_source
     assert '"king_pong": ("Classic Pong.", "First to five wins.")' in main_source
@@ -453,7 +453,7 @@ def test_user_arcade_wording_and_machine_mania_package_are_preserved():
 
 
 def test_suit_snake_sequence_and_mode_foundation():
-    from suit_snake import (
+    from solitaireplus.games.arcade.suit_snake import (
         CARD_SEQUENCE,
         SUIT_SNAKE_MODES,
         SUIT_SNAKE_MOVEMENT_STYLES,
@@ -491,9 +491,9 @@ def test_suit_snake_is_playable_and_wired_into_arcade_night():
     from pathlib import Path
 
     main_source = locate.source()
-    arcade_source = Path("arcade_support.py").read_text(encoding="utf-8")
-    debug_source = Path("debug_menu.py").read_text(encoding="utf-8")
-    game_source = Path("suit_snake_game.py").read_text(encoding="utf-8")
+    arcade_source = Path("solitaireplus/games/arcade/support.py").read_text(encoding="utf-8")
+    debug_source = Path("solitaireplus/debug/menu.py").read_text(encoding="utf-8")
+    game_source = Path("solitaireplus/games/arcade/suit_snake_game.py").read_text(encoding="utf-8")
 
     assert 'ARCADE_COMING_SOON_GAME_IDS = set()' in arcade_source
     assert 'STATE_SUIT_SNAKE_DIFFICULTY_SELECT' in main_source

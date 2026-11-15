@@ -5,10 +5,10 @@ import random
 import unittest
 from pathlib import Path
 import pygame
-from five_o_poker import FiveOPokerGame
-from niche_poker_common import evaluate_five_card_hand, compare_scores
-from texas_holdem import TexasHoldemGame
-from five_o_poker_ui import draw_five_o_poker, get_five_o_action, FIVE_O_NEXT_RECT
+from solitaireplus.games.poker.five_o import FiveOPokerGame
+from solitaireplus.games.poker.niche_common import evaluate_five_card_hand, compare_scores
+from solitaireplus.games.poker.holdem import TexasHoldemGame
+from solitaireplus.games.poker.five_o_ui import draw_five_o_poker, get_five_o_action, FIVE_O_NEXT_RECT
 
 
 class TablePolishTests(unittest.TestCase):

@@ -13,13 +13,13 @@ from unittest.mock import patch
 os.environ.setdefault('SDL_VIDEODRIVER','dummy')
 os.environ.setdefault('SDL_AUDIODRIVER','dummy')
 import pygame
-import profile as profiles
-from cryptid_collection import (new_collection,normalize_collection,deck_errors,
+from solitaireplus.profile import saves as profiles
+from solitaireplus.games.cryptid.collection import (new_collection,normalize_collection,deck_errors,
     award_level_packs,open_pack,save_deck,reward_battle,transaction)
-from cryptid_creatures import CryptidBattle,CryptidCatalog
-from cryptid_creatures_ui import CryptidScreen
-from career_hub_controls import CareerHubControls
-from cryptid_creatures_ai import choose_cryptid_action
+from solitaireplus.games.cryptid.creatures import CryptidBattle,CryptidCatalog
+from solitaireplus.games.cryptid.ui import CryptidScreen
+from solitaireplus.career.hub_controls import CareerHubControls
+from solitaireplus.games.cryptid.ai import choose_cryptid_action
 
 ROOT=Path(__file__).resolve().parents[1]
 

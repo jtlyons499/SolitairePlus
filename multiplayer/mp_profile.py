@@ -12,8 +12,8 @@ from multiplayer_paths import ROOT
 
 
 def catalogs():
-    from settings import MENU_BACKGROUNDS, FELTS, CARD_BACKS, TITLES
-    from achievements import register_optional_cosmetics
+    from solitaireplus.app.settings import MENU_BACKGROUNDS, FELTS, CARD_BACKS, TITLES
+    from solitaireplus.profile.achievements import register_optional_cosmetics
     result = {'background': copy.deepcopy(MENU_BACKGROUNDS), 'felt': copy.deepcopy(FELTS),
               'back': copy.deepcopy(CARD_BACKS)}
     register_optional_cosmetics(result['background'], result['felt'], copy.deepcopy(TITLES))
@@ -119,7 +119,7 @@ class MultiplayerProfile:
         # so the profile preview does not hit disk and decode PNGs every frame.
         if self._avatar_catalog_cache is not None:
             return self._avatar_catalog_cache
-        from profile_avatar_assets import load_avatar_bank, avatar_options
+        from solitaireplus.profile.avatar import load_avatar_bank, avatar_options
         banks={}
         choices={}
         for key,folder in AVATAR_FOLDERS.items():

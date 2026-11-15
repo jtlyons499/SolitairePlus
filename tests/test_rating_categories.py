@@ -2,13 +2,13 @@ import json, random, unittest
 from fractions import Fraction
 from itertools import combinations_with_replacement
 from unittest.mock import patch
-from career_ratings import *
-from career_rating_events import settle_competitive_result, settle_house_result
-from career_npc_development import ensure_npc_development, advance_npc_development
-from score_four import ScoreFourGame
-from score_four_difficulty import puzzle_pool
-from five_o_poker import FiveOPokerGame
-from rating_unlocks import add_rating_catalogs, unlock_ratings, lock_reason
+from solitaireplus.career.ratings import *
+from solitaireplus.career.rating_events import settle_competitive_result, settle_house_result
+from solitaireplus.career.npc_development import ensure_npc_development, advance_npc_development
+from solitaireplus.games.cards.score_four import ScoreFourGame
+from solitaireplus.games.cards.score_four_difficulty import puzzle_pool
+from solitaireplus.games.poker.five_o import FiveOPokerGame
+from solitaireplus.profile.unlocks import add_rating_catalogs, unlock_ratings, lock_reason
 
 class CategoryRatings(unittest.TestCase):
     def test_migration(self):

@@ -4,10 +4,10 @@ from pathlib import Path
 _project_root = str(Path(__file__).resolve().parent.parent)
 if _project_root not in sys.path:
     sys.path.append(_project_root)
-from shared import poker_learning as _implementation
+from solitaireplus.games.poker import learning as _implementation
 
 # Explicit exports allow IDEs to resolve the shared API.
-from shared.poker_learning import (
+from solitaireplus.games.poker.learning import (
     ACTIONS,
     GAMES,
     RivalLearning,

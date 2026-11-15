@@ -6,7 +6,7 @@ import pygame
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from settings import MENU_BACKGROUNDS, FELTS, TITLES
+from solitaireplus.app.settings import MENU_BACKGROUNDS, FELTS, TITLES
 
 
 def audit_catalogs():
