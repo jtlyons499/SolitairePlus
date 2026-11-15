@@ -106,7 +106,8 @@ class CareerRosterSyncTests(unittest.TestCase):
         month = self.state.career_month
 
         def new_month_then_draw():
-            self.legacy.debug_start_next_career_month(save=False)
+            from solitaireplus.debug import actions as debug_actions   # the F10 actions (Phase 10)
+            debug_actions.debug_start_next_career_month(save=False)
             self.draw_hub()
 
         self.assertEqual(self.count_syncs(new_month_then_draw), 1)

@@ -20,22 +20,24 @@ import pygame
 from solitaireplus.menus.achievements_screen import draw_achievement_popup
 from solitaireplus.app import state, state_names
 from solitaireplus import legacy  # noqa: I001 (must come before the modules below)
+from solitaireplus.debug import actions  # noqa: F401 (loaded at start-up, as in main.py: tools find the F10 actions by name)
 from solitaireplus.app import fonts
 from solitaireplus.app import sounds
 from solitaireplus.app import window
 from solitaireplus.menus import main_menu
 from solitaireplus.menus import options_screen
 from solitaireplus.games.arcade import machine_music
+from solitaireplus.games.dead_mans_hand import game_screen
 
 SCREENS = {
     state_names.STATE_DEBUG_POKER_NPC_SELECT: "solitaireplus.debug.poker_select_screen",
-    state_names.STATE_DEBUG_MENU: "solitaireplus.legacy:debug_menu",
+    state_names.STATE_DEBUG_MENU: "solitaireplus.debug.menu_screen",
     state_names.STATE_SPLASH: "solitaireplus.menus.splash",
     state_names.STATE_PROFILE_SELECT: "solitaireplus.profile.profile_select",
     state_names.STATE_MENU: "solitaireplus.menus.main_menu",
     state_names.STATE_MODE_SELECT: "solitaireplus.menus.mode_select",
     state_names.STATE_CASE_OPENING: "solitaireplus.career.case_opening_screen",
-    state_names.STATE_CRYPTID_CREATURES: "solitaireplus.legacy:cryptid_creatures",
+    state_names.STATE_CRYPTID_CREATURES: "solitaireplus.games.cryptid.collection_screen",
     state_names.STATE_FREE_PLAY_SELECT: "solitaireplus.menus.free_play_select",
     state_names.STATE_CAREER_ACTIVITY: "solitaireplus.career.activity_screen",
     state_names.STATE_CAREER_HUB: "solitaireplus.career.hub_screen",
@@ -77,7 +79,7 @@ SCREENS = {
     state_names.STATE_BATTLE_BOSSES: "solitaireplus.games.arcade.machine_screens:battle_bosses",
     state_names.STATE_ACE_INVADERS: "solitaireplus.games.arcade.machine_screens:ace_invaders",
     state_names.STATE_SUIT_SNAKE: "solitaireplus.games.arcade.machine_screens:suit_snake",
-    state_names.STATE_DEAD_MANS_HAND: "solitaireplus.legacy:dead_mans_hand",
+    state_names.STATE_DEAD_MANS_HAND: "solitaireplus.games.dead_mans_hand.game_screen",
     state_names.STATE_CAREER_REAL_ESTATE: "solitaireplus.career.real_estate_screen",
     state_names.STATE_DIFFICULTY: "solitaireplus.menus.difficulty_screen",
     state_names.STATE_OPTIONS: "solitaireplus.menus.options_screen",
@@ -222,13 +224,13 @@ def run():
                     if state.debug_previous_state is not None:
                         state.current_state = state.debug_previous_state
                         if state.current_state == state_names.STATE_DEAD_MANS_HAND:
-                            legacy.dead_mans_hand_game.capture_mouse()
+                            game_screen.dead_mans_hand_game.capture_mouse()
 
                 else:
 
                     state.debug_previous_state = state.current_state
                     if state.current_state == state_names.STATE_DEAD_MANS_HAND:
-                        legacy.dead_mans_hand_game.release_mouse()
+                        game_screen.dead_mans_hand_game.release_mouse()
 
                     state.current_state = state_names.STATE_DEBUG_MENU
 

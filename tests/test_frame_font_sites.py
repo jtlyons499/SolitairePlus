@@ -109,7 +109,8 @@ class LegacyFontSiteTests(unittest.TestCase):
                 leaderboards_screen.draw_career_leaderboards()
 
         def career_event_select():
-            legacy.debug_open_casino_night()
+            from solitaireplus.debug import actions as debug_actions   # the F10 actions (Phase 10)
+            debug_actions.debug_open_casino_night()
             event_select_screen.draw_career_event_select()
 
         def battle_bosses_opponent_select():

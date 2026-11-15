@@ -78,7 +78,8 @@ class BlackjackFontTests(unittest.TestCase):
         cls.ui_text, cls.screen = ui_text, blackjack_screen
         state.game_mouse_pos = None
         state.menu_mouse_pos = None
-        legacy.debug_open_blackjack()
+        from solitaireplus.debug import actions as debug_actions   # the F10 actions (Phase 10)
+        debug_actions.debug_open_blackjack()
         dealer = dict(NPCS[0])
         dealer.update(name=LONG_NAME, hometown=LONG_HOMETOWN, favorite_suit='Spades')
         state.blackjack_dealer_npc = dealer

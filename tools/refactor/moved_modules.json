@@ -27,6 +27,8 @@
  "solitaireplus.games.casino.faro_screen",
  "solitaireplus.games.casino.horse_races_screen",
  "solitaireplus.games.casino.roulette_screen",
+ "solitaireplus.games.cryptid.collection_screen",
+ "solitaireplus.games.dead_mans_hand.game_screen",
  "solitaireplus.games.poker.blind_mans_bluff_screen",
  "solitaireplus.games.poker.five_card_draw_screen",
  "solitaireplus.games.poker.five_o_screen",

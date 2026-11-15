@@ -38,9 +38,12 @@ class DebugMenuEndsFreePlaySandboxTests(unittest.TestCase):
         from solitaireplus.menus import free_play_select
         from solitaireplus.career.events import event_select_screen
         from solitaireplus.debug import menu, game_mode
+        from solitaireplus.debug import actions, menu_screen   # the F10 menu screen and its actions (Phase 10)
+        from solitaireplus.games.dead_mans_hand import game_screen as dead_mans_hand_screen
         cls.legacy, cls.state, cls.state_names = legacy, state, state_names
         cls.career_saving, cls.free_play_select = career_saving, free_play_select
         cls.event_select, cls.menu, cls.game_mode = event_select_screen, menu, game_mode
+        cls.actions, cls.menu_screen, cls.dead_mans_hand_screen = actions, menu_screen, dead_mans_hand_screen
         state.game_mouse_pos = None
         state.menu_mouse_pos = None
         state.current_game_mode = "career"
@@ -84,7 +87,7 @@ class DebugMenuEndsFreePlaySandboxTests(unittest.TestCase):
         state.current_game_mode = "career"
         state.debug_saved_game_mode = None
         state.current_state = self.state_names.STATE_MODE_SELECT
-        self.legacy.dead_mans_hand_game.release_mouse()
+        self.dead_mans_hand_screen.dead_mans_hand_game.release_mouse()
         self.saved_cash.clear()
 
     def start_free_play_cash_game(self):
@@ -101,8 +104,8 @@ class DebugMenuEndsFreePlaySandboxTests(unittest.TestCase):
             state.current_state = self.state_names.STATE_DEBUG_MENU
         self.assertEqual(state.current_state, self.state_names.STATE_DEBUG_MENU)
         state.game_mouse_pos = (10, 10)
-        with patch.object(self.legacy, "get_debug_action", lambda pos: action):
-            self.legacy.loop_event_debug_menu(
+        with patch.object(self.menu_screen, "get_debug_action", lambda pos: action):
+            self.menu_screen.handle_event(
                 pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=state.game_mouse_pos))
 
     def choose_poker_select_back(self):
@@ -154,7 +157,7 @@ class DebugMenuEndsFreePlaySandboxTests(unittest.TestCase):
 
     def test_debug_career_hub_during_free_play_keeps_the_saved_career_cash(self):
         self.start_free_play_cash_game()
-        self.choose_debug_action(self.legacy.ACTION_CAREER_HUB)
+        self.choose_debug_action(self.menu.ACTION_CAREER_HUB)
         self.assertEqual(self.state.current_state, self.state_names.STATE_CAREER_HUB)
         self.assertEqual(self.state.current_game_mode, "career")
         self.assert_real_career_kept()
@@ -163,16 +166,16 @@ class DebugMenuEndsFreePlaySandboxTests(unittest.TestCase):
         # F10 -> a debug game sets current_game_mode to "debug" but the sandbox is still running.
         self.start_free_play_cash_game()
         self.state.current_game_mode = "debug"
-        self.choose_debug_action(self.legacy.ACTION_CAREER_HUB)
+        self.choose_debug_action(self.menu.ACTION_CAREER_HUB)
         self.assertEqual(self.state.current_state, self.state_names.STATE_CAREER_HUB)
         self.assert_real_career_kept()
 
     def test_every_debug_career_jump_ends_the_sandbox(self):
-        legacy = self.legacy
-        for action in (legacy.ACTION_CASUAL_CARDS, legacy.ACTION_POKER_NIGHT, legacy.ACTION_CASINO_NIGHT,
-                       legacy.ACTION_ARCADE_NIGHT, legacy.ACTION_HEAD_TO_HEAD,
-                       legacy.ACTION_ADVANCE_CAREER_DAY, legacy.ACTION_NEW_CAREER_MONTH,
-                       legacy.ACTION_ADD_PROSPECT, legacy.ACTION_ADD_PRODIGY, legacy.ACTION_CAREER_YEAR):
+        menu = self.menu
+        for action in (menu.ACTION_CASUAL_CARDS, menu.ACTION_POKER_NIGHT, menu.ACTION_CASINO_NIGHT,
+                       menu.ACTION_ARCADE_NIGHT, menu.ACTION_HEAD_TO_HEAD,
+                       menu.ACTION_ADVANCE_CAREER_DAY, menu.ACTION_NEW_CAREER_MONTH,
+                       menu.ACTION_ADD_PROSPECT, menu.ACTION_ADD_PRODIGY, menu.ACTION_CAREER_YEAR):
             with self.subTest(action=action):
                 self.reset_to_career()
                 self.start_free_play_cash_game()
@@ -183,7 +186,7 @@ class DebugMenuEndsFreePlaySandboxTests(unittest.TestCase):
     def test_debug_career_hub_outside_free_play_is_unchanged(self):
         entry = {"activity_type": "casino_night", "title": "Casino Night"}
         self.state.career_event_entry = entry
-        self.choose_debug_action(self.legacy.ACTION_CAREER_HUB)
+        self.choose_debug_action(self.menu.ACTION_CAREER_HUB)
         self.assertEqual(self.state.current_state, self.state_names.STATE_CAREER_HUB)
         self.assertEqual(self.state.current_game_mode, "career")
         self.assertIs(self.state.career_event_entry, entry)
@@ -192,11 +195,11 @@ class DebugMenuEndsFreePlaySandboxTests(unittest.TestCase):
     def test_close_and_add_cash_keep_the_sandbox_running(self):
         self.start_free_play_cash_game()
         stake = self.free_play_select.FREE_PLAY_STARTING_CASH
-        self.choose_debug_action(self.legacy.ACTION_ADD_CASH)
+        self.choose_debug_action(self.menu.ACTION_ADD_CASH)
         self.assertEqual(self.state.career_cash, stake + 5000)
         self.assertIsNotNone(self.state.free_play_snapshot)
         self.state.current_state = self.state.debug_previous_state
-        self.choose_debug_action(self.legacy.ACTION_CLOSE)
+        self.choose_debug_action(self.menu.ACTION_CLOSE)
         self.assertEqual(self.state.current_state, self.state_names.STATE_ROULETTE)
         self.assertEqual(self.state.current_game_mode, "free")
         self.assertIsNotNone(self.state.free_play_snapshot)
@@ -205,8 +208,8 @@ class DebugMenuEndsFreePlaySandboxTests(unittest.TestCase):
         # Games and nights too, not only the career jumps: arcade machines, horse races, Five-O,
         # Blind Man's Bluff, the poker tables and the Solitaire challenges all kept the sandbox.
         launches = self.launch_actions()
-        self.assertIn(self.legacy.ACTION_KING_PONG, launches)
-        self.assertIn(self.legacy.ACTION_CHALLENGE_DRAW_3, launches)
+        self.assertIn(self.menu.ACTION_KING_PONG, launches)
+        self.assertIn(self.menu.ACTION_CHALLENGE_DRAW_3, launches)
         for action in launches:
             with self.subTest(action=action):
                 self.reset_to_career()
@@ -216,14 +219,14 @@ class DebugMenuEndsFreePlaySandboxTests(unittest.TestCase):
                 self.assert_sandbox_ended()
 
     def test_debug_game_exit_to_the_event_select_return_saves_the_real_cash(self):
-        legacy = self.legacy
-        for action in (legacy.ACTION_KING_PONG, legacy.ACTION_SUIT_SNAKE, legacy.ACTION_HORSE_RACES,
-                       legacy.ACTION_CHALLENGE_NO_UNDO):
+        menu = self.menu
+        for action in (menu.ACTION_KING_PONG, menu.ACTION_SUIT_SNAKE, menu.ACTION_HORSE_RACES,
+                       menu.ACTION_CHALLENGE_NO_UNDO):
             with self.subTest(action=action):
                 self.reset_to_career()
                 self.start_free_play_cash_game()
                 self.choose_debug_action(action)
-                if action == legacy.ACTION_HORSE_RACES:
+                if action == menu.ACTION_HORSE_RACES:
                     locate.module_defining('finish_horse_races_session').finish_horse_races_session()
                 self.click_event_select_return()
                 self.assertEqual(self.state.current_game_mode, "career")
@@ -236,7 +239,7 @@ class DebugMenuEndsFreePlaySandboxTests(unittest.TestCase):
         self.start_free_play_cash_game()
         self.game_mode.enter_debug_game_mode()   # what a debug launcher does
         self.assertEqual(state.debug_saved_game_mode, "free")
-        self.choose_debug_action(self.legacy.ACTION_CASUAL_CARDS)   # a debug night: keeps "debug"
+        self.choose_debug_action(self.menu.ACTION_CASUAL_CARDS)   # a debug night: keeps "debug"
         self.assertEqual(state.current_game_mode, "debug")
         self.assertEqual(state.debug_saved_game_mode, "career")
         self.click_event_select_return()
@@ -249,7 +252,7 @@ class DebugMenuEndsFreePlaySandboxTests(unittest.TestCase):
         state.current_game_mode = "free"
         self.game_mode.enter_debug_game_mode()
         self.assertIsNone(state.free_play_snapshot)
-        self.assertTrue(self.legacy.debug_end_free_play_sandbox())
+        self.assertTrue(self.actions.debug_end_free_play_sandbox())
         self.assertEqual(state.current_game_mode, "debug")
         self.assertEqual(state.debug_saved_game_mode, "career")
         self.game_mode.end_debug_game_mode()
@@ -258,29 +261,29 @@ class DebugMenuEndsFreePlaySandboxTests(unittest.TestCase):
     def test_close_after_a_launch_that_came_back_to_the_menu_leaves_the_ended_free_play_game(self):
         # The sandbox ended when the poker NPC select / Dead Man's Hand opened, so Close must not
         # put the player back into the Free Play roulette game, now without its sandbox.
-        legacy, state, names = self.legacy, self.state, self.state_names
+        menu, state, names = self.menu, self.state, self.state_names
         self.start_free_play_cash_game()
-        self.choose_debug_action(legacy.ACTION_TEXAS_HOLDEM)
+        self.choose_debug_action(menu.ACTION_TEXAS_HOLDEM)
         self.choose_poker_select_back()
-        self.choose_debug_action(legacy.ACTION_CLOSE, from_hotkey=False)
+        self.choose_debug_action(menu.ACTION_CLOSE, from_hotkey=False)
         self.assertEqual(state.current_state, names.STATE_FREE_PLAY_SELECT)
         self.assertEqual(state.current_game_mode, "career")
         self.assert_real_career_kept()
 
         self.reset_to_career()
         self.start_free_play_cash_game()
-        self.choose_debug_action(legacy.ACTION_DEAD_MANS_HAND)
+        self.choose_debug_action(menu.ACTION_DEAD_MANS_HAND)
         self.assertEqual(state.current_state, names.STATE_DEAD_MANS_HAND)
-        legacy.exit_dead_mans_hand()
-        self.choose_debug_action(legacy.ACTION_CLOSE, from_hotkey=False)
+        self.dead_mans_hand_screen.exit_dead_mans_hand()
+        self.choose_debug_action(menu.ACTION_CLOSE, from_hotkey=False)
         self.assertEqual(state.current_state, names.STATE_FREE_PLAY_SELECT)
         self.assert_real_career_kept()
 
     def test_menu_controls_that_stay_on_the_menu_keep_the_sandbox_running(self):
-        legacy = self.legacy
+        legacy, menu = self.legacy, self.menu
         self.start_free_play_cash_game()
         # (the category is toggled twice: open, then closed again)
-        for action in (legacy.ACTION_ZERO_CASH, legacy.ACTION_ADD_RATING, legacy.ACTION_ADD_XP,
+        for action in (menu.ACTION_ZERO_CASH, menu.ACTION_ADD_RATING, menu.ACTION_ADD_XP,
                        self.menu.ACTION_MINIGAME_CATEGORY_CASINO, self.menu.ACTION_MINIGAME_CATEGORY_CASINO):
             with self.subTest(action=action):
                 self.choose_debug_action(action)
@@ -296,7 +299,7 @@ class DebugMenuEndsFreePlaySandboxTests(unittest.TestCase):
         # Review of B21: "Unlock Next Achievement" keeps the sandbox running and saves; so can a
         # level-up during Free Play. Saving must write the real career, never the sandbox stake.
         self.start_free_play_cash_game()
-        self.choose_debug_action(self.legacy.ACTION_ACHIEVEMENT_TEST)
+        self.choose_debug_action(self.menu.ACTION_ACHIEVEMENT_TEST)
         self.assertIsNotNone(self.state.free_play_snapshot)          # still playing Free Play
         self.career_saving.auto_save_career()
         self.assertTrue(self.saved_cash)

@@ -42,6 +42,8 @@ class DebugNightModeTests(unittest.TestCase):
         cls.legacy, cls.state, cls.names = legacy, state, state_names
         cls.calendar, cls.career_saving = calendar, career_saving
         cls.select, cls.summary = event_select_screen, summary_screen
+        from solitaireplus.debug import actions, menu, menu_screen   # the F10 menu screen and its actions (Phase 10)
+        cls.actions, cls.menu, cls.menu_screen = actions, menu, menu_screen
 
     @classmethod
     def tearDownClass(cls):
@@ -112,8 +114,8 @@ class DebugNightModeTests(unittest.TestCase):
             state.current_state = self.names.STATE_DEBUG_MENU
         self.assertEqual(state.current_state, self.names.STATE_DEBUG_MENU)
         state.game_mouse_pos = (10, 10)
-        with patch.object(self.legacy, 'get_debug_action', lambda pos: action):
-            self.legacy.loop_event_debug_menu(click_event(state.game_mouse_pos))
+        with patch.object(self.menu_screen, 'get_debug_action', lambda pos: action):
+            self.menu_screen.handle_event(click_event(state.game_mouse_pos))
 
     def choose_poker_select_back(self):
         state, legacy = self.state, self.legacy
@@ -143,19 +145,19 @@ class DebugNightModeTests(unittest.TestCase):
                 with self.subTest(launcher=name, previous_mode=previous_mode):
                     self.setUp()
                     self.state.current_game_mode = previous_mode
-                    getattr(self.legacy, name)()
+                    getattr(self.actions, name)()
                     self.end_night()
                     self.assert_career_untouched(previous_mode)
 
     def test_returning_from_a_debug_night_restores_the_game_mode(self):
-        self.legacy.debug_open_arcade_night()
+        self.actions.debug_open_arcade_night()
         self.assertEqual(self.state.current_game_mode, 'debug')
         self.return_to_hub()
         self.assert_career_untouched()
 
     def test_debug_horse_races_session_restores_the_game_mode(self):
-        legacy, state = self.legacy, self.state
-        self.assertTrue(legacy.debug_open_horse_races())
+        actions, state = self.actions, self.state
+        self.assertTrue(actions.debug_open_horse_races())
         self.assertEqual(state.current_game_mode, 'debug')
         self.assertTrue(state.career_event_entry.get('debug'))
         locate.module_defining('finish_horse_races_session').finish_horse_races_session()
@@ -163,9 +165,9 @@ class DebugNightModeTests(unittest.TestCase):
         self.assert_career_untouched()
 
     def test_debug_five_o_poker_session_restores_the_game_mode(self):
-        legacy, state = self.legacy, self.state
+        actions, state = self.actions, self.state
         with patch.object(locate.module_defining('start_five_o_poker_session'), 'start_five_o_poker_session', lambda: True):
-            self.assertTrue(legacy.debug_open_five_o_poker())
+            self.assertTrue(actions.debug_open_five_o_poker())
         self.assertEqual(state.current_game_mode, 'debug')
         self.assertTrue(state.career_event_entry.get('debug'))
         state.current_state = self.names.STATE_CAREER_EVENT_SELECT   # the session ended
@@ -173,28 +175,28 @@ class DebugNightModeTests(unittest.TestCase):
         self.assert_career_untouched()
 
     def test_failed_debug_launch_does_not_leave_debug_mode(self):
-        legacy, state = self.legacy, self.state
+        actions, state = self.actions, self.state
         for name, starter in (('debug_open_five_o_poker', 'start_five_o_poker_session'),
                               ('debug_open_blind_mans_bluff', 'start_blind_mans_bluff_session')):
             with self.subTest(launcher=name):
                 state.current_game_mode = 'career'
                 with patch.object(locate.module_defining(starter), starter, lambda: False):
-                    self.assertFalse(getattr(legacy, name)())
+                    self.assertFalse(getattr(actions, name)())
                 self.assertEqual(state.current_game_mode, 'career')
 
     def test_debug_launcher_inside_a_debug_night_returns_to_the_first_mode(self):
         """Two debug launchers in a row (F10 again during a debug night) still end in the
         mode from before the first one, not in "debug"."""
-        legacy, state = self.legacy, self.state
-        legacy.debug_open_arcade_night()
-        self.assertTrue(legacy.debug_open_horse_races())
+        actions, state = self.actions, self.state
+        actions.debug_open_arcade_night()
+        self.assertTrue(actions.debug_open_horse_races())
         self.assertEqual(state.current_game_mode, 'debug')
         locate.module_defining('finish_horse_races_session').finish_horse_races_session()
         self.end_night()
         self.assert_career_untouched()
 
     def test_every_debug_night_launcher_marks_its_night(self):
-        legacy, state = self.legacy, self.state
+        actions, state = self.actions, self.state
         stubs = {
             'start_crazy_eights_session': lambda: None,
             'start_bango_session': lambda: None,
@@ -221,20 +223,20 @@ class DebugNightModeTests(unittest.TestCase):
             for name in launchers:
                 with self.subTest(launcher=name):
                     state.career_event_entry = None
-                    getattr(legacy, name)()
+                    getattr(actions, name)()
                     self.assertIsInstance(state.career_event_entry, dict)
                     self.assertIs(state.career_event_entry.get('debug'), True)
 
     def test_debug_career_jumps_leave_an_unfinished_debug_night(self):
         """F10 -> Career Hub (or a calendar jump) during a debug night: the real hub must not
         stay in "debug" mode, where real Career nights record nothing."""
-        legacy, state = self.legacy, self.state
-        for action in (legacy.ACTION_CAREER_HUB, legacy.ACTION_ADVANCE_CAREER_DAY,
-                       legacy.ACTION_NEW_CAREER_MONTH, legacy.ACTION_CAREER_YEAR,
-                       legacy.ACTION_ADD_PROSPECT):
+        actions, menu, state = self.actions, self.menu, self.state
+        for action in (menu.ACTION_CAREER_HUB, menu.ACTION_ADVANCE_CAREER_DAY,
+                       menu.ACTION_NEW_CAREER_MONTH, menu.ACTION_CAREER_YEAR,
+                       menu.ACTION_ADD_PROSPECT):
             with self.subTest(action=action):
                 self.setUp()
-                legacy.debug_open_arcade_night()
+                actions.debug_open_arcade_night()
                 self.assertEqual(state.current_game_mode, 'debug')
                 self.choose_debug_action(action)
                 self.assertEqual(state.current_state, self.names.STATE_CAREER_HUB)
@@ -244,10 +246,10 @@ class DebugNightModeTests(unittest.TestCase):
     def test_debug_career_hub_jump_runs_the_hub_in_career_mode(self):
         # A debug session started before any mode was chosen (main menu: mode None) must not
         # leave the hub in a mode that records no results (review of B22).
-        legacy, state = self.legacy, self.state
+        actions, menu, state = self.actions, self.menu, self.state
         state.current_game_mode = None   # nothing chosen yet (game start)
-        self.assertTrue(legacy.debug_open_horse_races())
-        self.choose_debug_action(legacy.ACTION_CAREER_HUB)
+        self.assertTrue(actions.debug_open_horse_races())
+        self.choose_debug_action(menu.ACTION_CAREER_HUB)
         self.assertEqual(state.current_state, self.names.STATE_CAREER_HUB)
         self.assertEqual(state.current_game_mode, 'career')
         self.assertIsNone(state.debug_saved_game_mode)
@@ -264,12 +266,12 @@ class DebugNightModeTests(unittest.TestCase):
     def test_back_from_the_debug_poker_select_keeps_the_real_night(self):
         # Review of B21/B22: opening the poker table picker replaced the night in progress with
         # a debug Poker Night (debug: True, results cleared); Back + Close lost the real night.
-        legacy, state = self.legacy, self.state
+        menu, state = self.menu, self.state
         before = self.real_casino_night()
-        self.choose_debug_action(legacy.ACTION_TEXAS_HOLDEM)
+        self.choose_debug_action(menu.ACTION_TEXAS_HOLDEM)
         self.assertTrue(state.career_event_entry.get('debug'))
         self.choose_poker_select_back()
-        self.choose_debug_action(legacy.ACTION_CLOSE, from_hotkey=False)
+        self.choose_debug_action(menu.ACTION_CLOSE, from_hotkey=False)
         self.assertEqual(state.current_state, self.names.STATE_CAREER_EVENT_SELECT)
         self.assertEqual(state.career_event_entry, before['entry'])
         self.assertEqual(state.career_event_result_log, before['log'])
@@ -278,8 +280,8 @@ class DebugNightModeTests(unittest.TestCase):
         self.assertEqual(state.current_game_mode, 'career')
 
     def test_failed_debug_niche_launch_keeps_the_real_night(self):
-        legacy, state = self.legacy, self.state
-        for launcher in (legacy.debug_open_five_o_poker, legacy.debug_open_blind_mans_bluff):
+        actions, state = self.actions, self.state
+        for launcher in (actions.debug_open_five_o_poker, actions.debug_open_blind_mans_bluff):
             with self.subTest(launcher=launcher.__name__):
                 self.setUp()
                 before = self.real_casino_night()
@@ -291,15 +293,15 @@ class DebugNightModeTests(unittest.TestCase):
                 self.assertEqual(state.current_game_mode, 'career')
 
     def test_back_from_the_debug_poker_select_leaves_its_debug_mode(self):
-        legacy, state = self.legacy, self.state
-        for action in (legacy.ACTION_TEXAS_HOLDEM, legacy.ACTION_FIVE_CARD_DRAW,
-                       legacy.ACTION_SEVEN_CARD_STUD):
+        menu, state = self.menu, self.state
+        for action in (menu.ACTION_TEXAS_HOLDEM, menu.ACTION_FIVE_CARD_DRAW,
+                       menu.ACTION_SEVEN_CARD_STUD):
             with self.subTest(action=action):
                 self.setUp()
                 self.choose_debug_action(action)   # from the Career Hub
                 self.assertEqual(state.current_game_mode, 'debug')
                 self.choose_poker_select_back()
-                self.choose_debug_action(legacy.ACTION_CLOSE, from_hotkey=False)
+                self.choose_debug_action(menu.ACTION_CLOSE, from_hotkey=False)
                 self.assertEqual(state.current_state, self.names.STATE_CAREER_HUB)
                 self.assertEqual(state.current_game_mode, 'career')
                 self.assertIsNone(state.debug_saved_game_mode)
@@ -307,11 +309,11 @@ class DebugNightModeTests(unittest.TestCase):
     def test_back_from_the_debug_poker_select_keeps_an_earlier_debug_session(self):
         """F10 during a debug Horse Races session -> Texas Hold'em -> Back -> Close: the player is
         back in the debug session, which must stay in "debug" mode (no real results)."""
-        legacy, state = self.legacy, self.state
-        self.assertTrue(legacy.debug_open_horse_races())
-        self.choose_debug_action(legacy.ACTION_TEXAS_HOLDEM)
+        actions, menu, state = self.actions, self.menu, self.state
+        self.assertTrue(actions.debug_open_horse_races())
+        self.choose_debug_action(menu.ACTION_TEXAS_HOLDEM)
         self.choose_poker_select_back()
-        self.choose_debug_action(legacy.ACTION_CLOSE, from_hotkey=False)
+        self.choose_debug_action(menu.ACTION_CLOSE, from_hotkey=False)
         self.assertEqual(state.current_state, self.names.STATE_HORSE_RACES)
         self.assertEqual(state.current_game_mode, 'debug')
         locate.module_defining('finish_horse_races_session').finish_horse_races_session()
@@ -321,30 +323,30 @@ class DebugNightModeTests(unittest.TestCase):
     def test_failed_debug_launch_inside_a_debug_session_keeps_its_debug_mode(self):
         """A Five-O / Blind Man's Bluff launch that cannot start (not enough cash) during a debug
         Horse Races session must not drop that session's "debug" mode."""
-        legacy, state = self.legacy, self.state
-        self.assertTrue(legacy.debug_open_horse_races())
-        for action, starter in ((legacy.ACTION_FIVE_O_POKER, 'start_five_o_poker_session'),
-                                (legacy.ACTION_BLIND_MANS_BLUFF, 'start_blind_mans_bluff_session')):
+        actions, menu, state = self.actions, self.menu, self.state
+        self.assertTrue(actions.debug_open_horse_races())
+        for action, starter in ((menu.ACTION_FIVE_O_POKER, 'start_five_o_poker_session'),
+                                (menu.ACTION_BLIND_MANS_BLUFF, 'start_blind_mans_bluff_session')):
             with self.subTest(action=action):
                 with patch.object(locate.module_defining(starter), starter, lambda: False):
                     self.choose_debug_action(action)   # F10 from the horse races
                 self.assertEqual(state.current_state, self.names.STATE_DEBUG_MENU)
                 self.assertEqual(state.current_game_mode, 'debug')
                 self.assertEqual(state.debug_saved_game_mode, 'career')
-                self.choose_debug_action(legacy.ACTION_CLOSE, from_hotkey=False)
+                self.choose_debug_action(menu.ACTION_CLOSE, from_hotkey=False)
                 self.assertEqual(state.current_state, self.names.STATE_HORSE_RACES)
         locate.module_defining('finish_horse_races_session').finish_horse_races_session()
         self.end_night()
         self.assert_career_untouched()
 
     def test_failed_solitaire_challenge_launch_does_not_leave_debug_mode(self):
-        legacy, state = self.legacy, self.state
-        with patch.object(legacy.game, 'set_challenge', lambda challenge_id: False):
-            self.assertFalse(legacy.debug_open_solitaire_challenge('draw_3'))
+        actions, state = self.actions, self.state
+        with patch.object(self.legacy.game, 'set_challenge', lambda challenge_id: False):
+            self.assertFalse(actions.debug_open_solitaire_challenge('draw_3'))
         self.assertEqual(state.current_game_mode, 'career')
-        self.assertTrue(legacy.debug_open_horse_races())
-        with patch.object(legacy.game, 'set_challenge', lambda challenge_id: False):
-            self.assertFalse(legacy.debug_open_solitaire_challenge('draw_3'))
+        self.assertTrue(actions.debug_open_horse_races())
+        with patch.object(self.legacy.game, 'set_challenge', lambda challenge_id: False):
+            self.assertFalse(actions.debug_open_solitaire_challenge('draw_3'))
         self.assertEqual(state.current_game_mode, 'debug')
         locate.module_defining('finish_horse_races_session').finish_horse_races_session()
         self.end_night()

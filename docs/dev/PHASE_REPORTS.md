@@ -915,3 +915,83 @@ still there. The fixes did not touch it.
 11. **N54:** tooling: running `screen_harness.py compare` and `replay.py compare` for the same uncached baseline
     at the same time fails. Both run `git worktree add` for `.harness_out/worktrees/<sha12>`, and the second one stops
     with "already exists". Run them one after the other, or have the harness reuse or lock the worktree.
+
+## Phase 10 (move): Cryptid, Dead Man's Hand, debug
+
+**What moved** (`move.py`, plan from `tools/refactor/specs/phase10.json`; `legacy.py` 6285 → 5340 lines, or
+2936 → 1992 lines on the integration line after Phases 8 and 9):
+- `solitaireplus/games/cryptid/collection_screen.py`: the Cryptid Creatures screen (`handle_event`/`draw`), the
+  `cryptid_screen` engine instance and `leave_career_cryptid`. The Career hub and Free Play select now reach
+  `collection_screen.cryptid_screen`.
+- `solitaireplus/games/dead_mans_hand/game_screen.py`: the Dead Man's Hand screen (`handle_event`/`draw`), the
+  `dead_mans_hand_game` instance, `start_dead_mans_hand` and `exit_dead_mans_hand`. The F10 hotkey in
+  `app/loop.py` releases and recaptures the mouse through `game_screen.dead_mans_hand_game`.
+- `solitaireplus/debug/menu_screen.py`: the F10 debug menu screen (`handle_event`/`draw`, `DRAWS_LATE`). The menu
+  stays public.
+- `solitaireplus/debug/actions.py` (the `actions.py` of the brief's layout, §6.1): what the menu's buttons do.
+  That covers the `debug_open_*` launchers, `debug_prepare_arcade_night`/`debug_prepare_poker_night`,
+  `open_debug_poker_npc_select`, `debug_open_solitaire_challenge`, `debug_set_player_level`,
+  `adjust_debug_ratings`, `debug_unlock_next_achievement`, `debug_end_free_play_sandbox` and the Career calendar
+  jumps (`debug_start_next_career_month`, `debug_add_career_prospect`, `debug_advance_career_year`).
+- The SCREENS registry points `DEBUG_MENU`, `CRYPTID_CREATURES` and `DEAD_MANS_HAND` at their modules. The engine
+  instances are still created at their old place in the start-up order: legacy.py imports the two game modules
+  there, so the seeded random draws don't change.
+
+**Problems and how they were solved:**
+- **Wrong module, and names from other areas.** The prepared spec put `start_dead_mans_hand` in the Dead Man's
+  Hand module, but make_plan sent it to the debug menu: the debug screen's group came later in the spec and
+  overrode the explicit name. The plan also pulled six names into the debug menu: `leave_free_play_game`,
+  `start_crazy_eights_session`, `start_bango_session`, `queue_achievement_popup`, `unlock_achievement_cosmetic`
+  and `maybe_add_monthly_flavor_news`. Their only remaining callers in legacy.py are debug or cryptid code, but
+  other package modules call them too (case opening, Free Play select, event select, leveling, profile select,
+  calendar), or they belong to another area (Phase 8 moves the two session starters). Fix:
+  `tools/refactor/make_plan.py` takes a `"keep"` list (names that stay in legacy.py). Explicit `"names"` now win
+  over screen groups, and a screen-group helper follows its users. Checked: the Phase 7, 8 and 9 specs still give
+  exactly the same plans as before.
+  - At integration, Phases 8 and 9 had already changed make_plan.py. Phase 8 treats a name that another module
+    reaches as `legacy.<name>` as shared, and Phase 9 added its own `"keep"` list. Now there is one `"keep"`
+    implementation, which has this phase's checks. `phase10.json` no longer keeps `start_crazy_eights_session` and
+    `start_bango_session`, because Phase 8 moved them. Checked with the merged make_plan: the Phase 7, 8 and 9 specs
+    give the same plans as on the integration line before. `phase10.json` gives this phase's plan on both `7195fb3`
+    and `54a29ef`.
+- **The debug actions were no longer loaded at start-up.** Once moved, nothing in legacy.py calls the debug
+  actions, so their module would only be imported lazily, the first time the menu handles a click. The harness
+  looks functions up by name among the loaded modules: the `career_event_select`, `career_event_summary`, arcade
+  and Head-to-Head scenes call `debug_open_casino_night`, `debug_open_arcade_night` and `debug_open_head_to_head`
+  before the menu ever opens. Fix: `app/loop.py` imports `solitaireplus.debug.actions` right after `legacy`.
+  This has no side effects: the module holds only defs, and every module it imports eagerly is already loaded by
+  then.
+- **For the integration after Phases 8 and 9:** `debug/actions.py` still calls these through `legacy.`:
+  - Phase 9 moves `open_king_pong_opponent_select`, `open_battle_bosses_opponent_select`,
+    `open_ace_invaders_difficulty_select` and `open_suit_snake_difficulty_select` to
+    `games/arcade/machine_select.py`.
+  - Phase 8 moves `start_crazy_eights_session`, `start_bango_session` and `score_four_game` to
+    `games/cards/crazy_eights_screen.py`, `bango_screen.py` and `score_four_screen.py`.
+
+  Re-point those calls, or re-run this spec on the integrated base. No Phase 8 or 9 code uses a name this phase
+  moves, and no name is in two plans. During integration these seven launchers were re-pointed at the Phase 8 and 9
+  modules (`machine_select.`, `crazy_eights_screen.`, `bango_screen.`, `score_four_screen.score_four_game`, lazy
+  imports in `debug/actions.py`). They now make exactly the calls that Phases 8 and 9 had put in their legacy.py
+  copies.
+- **Tests re-pointed:**
+  - `test_debug_menu_ends_free_play_sandbox` and `test_debug_night_mode` now use `menu_screen.handle_event` (and
+    patch `get_debug_action` there), the launchers in `debug.actions`, the `ACTION_*` constants from
+    `debug.menu`, and the Dead Man's Hand module.
+  - `test_blackjack_fonts`, `test_career_roster_sync` and `test_frame_font_sites` now call the launcher they need
+    from `debug.actions`.
+- **Still in legacy.py from this area:** two start-up state defaults (`state.cryptid_collection_state =
+  new_collection()` and `state.dead_mans_hand_return_state = STATE_DEBUG_MENU`; earlier phases also left theirs
+  in the start-up sequence) and imports that only the moved code used (`CryptidScreen`, `DeadMansHandGame`, the
+  `debug.menu` names). legacy.py would not be empty after Phases 8–10. About 40 shared names remain, plus the
+  import block and the start-up sequence: the Free Play sandbox, the achievement popup, help content, NPC
+  portraits, `game_namespace`, `loop_post_event_updates` and others.
+
+**New findings (not fixed):**
+- `multiplayer/tests/test_standalone.py` saves `../standalone_preview.png`, which is outside the checkout. For
+  worktrees that is `.harness_out/wt/`, a folder all of them share. It failed once ("Couldn't open") while the
+  parallel phases were running their suites, then passed alone and in the full re-run. Phase 12 should point it at
+  a temporary folder, like N35.
+
+**Results:** `screen_harness compare` → `IDENTICAL 64/64 scenes`; `replay compare` → `IDENTICAL 18/18 journeys`
+(baseline `7195fb3`). Tests `PASSED - all non-quarantined tests passed.` Re-checked on the integration line
+against `54a29ef`: `IDENTICAL 64/64 scenes`, `IDENTICAL 18/18 journeys`, tests `PASSED`.

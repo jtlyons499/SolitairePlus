@@ -21,6 +21,7 @@ from solitaireplus.career.activities import night_is_valid, start_night
 from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
+collection_screen = lazy("solitaireplus.games.cryptid.collection_screen")
 news_screen = lazy("solitaireplus.career.news_screen")
 leaderboard_engine = lazy("solitaireplus.career.leaderboard_engine")
 night = lazy("solitaireplus.career.events.night")
@@ -274,7 +275,7 @@ def buy_case_for_screen(case_id):
 
 def start_career_cryptid():
     state.current_game_mode='career'
-    legacy.cryptid_screen.enter_career(NPCS,state.cryptid_collection_state,career_saving.auto_save_career,settle_career_cryptid,
+    collection_screen.cryptid_screen.enter_career(NPCS,state.cryptid_collection_state,career_saving.auto_save_career,settle_career_cryptid,
                                 temporary=legacy.game_namespace().get("guest_mode",False) or legacy.game_namespace().get("current_profile_slot",1) is None)
     state.current_state=state_names.STATE_CRYPTID_CREATURES
 

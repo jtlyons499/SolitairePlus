@@ -17,7 +17,8 @@ A screen module with exactly one screen gets the loop_* functions renamed to han
 late_update / enter / leave. Helpers are added when every user of a helper moves to the same module
 (computed with tools/refactor/areas.py's use graph, repeated until nothing changes). A legacy name that
 another module already reaches as ``legacy.<name>`` is shared and never added as a helper (name it
-explicitly to move it).
+explicitly to move it). A helper that is shared some other way (or that belongs to another area) can
+still look like a screen's own helper: list it under "keep". Explicit "names" win over screen groups.
 """
 from __future__ import annotations
 
@@ -50,7 +51,11 @@ def build(spec: dict) -> dict:
         users[name].add("<other module>")      # a user outside legacy.py: shared, not an exclusive helper
     by_screen = areas.assign(top_names, users, by_screen=True)
     keep = set(spec.get("keep", []))
+    for name in keep:
+        if name not in top_names:
+            raise SystemExit(f"{name}: not a top-level name of legacy.py")
     target_of: dict[str, str] = {}
+    explicit: dict[str, str] = {}
     for target, entry in spec["modules"].items():
         for slug in entry.get("screens", []):
             for name, group in by_screen.items():
@@ -59,7 +64,24 @@ def build(spec: dict) -> dict:
         for name in entry.get("names", []):
             if name not in top_names:
                 raise SystemExit(f"{name}: not a top-level name of legacy.py")
-            target_of[name] = target
+            explicit[name] = target
+    target_of.update(explicit)   # explicit names win over screen groups
+    # A screen-group helper follows its users: it stays in legacy.py if one of them does (a "keep"
+    # name), and goes where they all go if an explicit name took them elsewhere.
+    changed = True
+    while changed:
+        changed = False
+        for name in sorted(target_of):
+            if name in explicit or name.startswith(tuple(PREFIX_RENAMES)):
+                continue
+            owners = {target_of.get(user) for user in users.get(name, set())}
+            new = owners.pop() if len(owners) == 1 else None
+            if new != target_of[name]:
+                if new is None:
+                    del target_of[name]
+                else:
+                    target_of[name] = new
+                changed = True
     # exclusive helpers of explicit names
     changed = True
     while changed:
