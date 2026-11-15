@@ -12,7 +12,7 @@ A game about card games. Dynamic career progression, streamlined multiplayer, in
 
 1. Download `Solitaire-Windows.zip`.
 2. Extract the ZIP to a folder.
-3. Double-click `Simple Solitaire.exe`.
+3. Double-click `SolitairePlus.exe`.
 
 You do **not** need to install Python to use the packaged Windows release.
 Yes, Windows typically will request permission to run the game the very first time, but that's how .exe files work.
@@ -121,22 +121,14 @@ python main.py
 
 ## Building a Windows package locally
 
-Install the project dependencies and PyInstaller:
+Create the project's Python environment once, then run the build script. It installs the pinned
+dependencies, runs all tests and the asset check, and builds the game:
 
-```bash
-python -m pip install -r requirements.txt
-python -m pip install pyinstaller
+```powershell
+py -3.14 -m venv .venv
+.uild_release.ps1
 ```
 
-Optionally generate Windows version metadata, then build:
-
-```bash
-python tools/write_version_info.py
-pyinstaller --clean --noconfirm "Simple Solitaire.spec"
-```
-
-The playable folder will be created at:
-
-```text
-dist/Simple Solitaire/
-```
+The playable folder is created at `dist/SolitairePlus/` and a test ZIP at `release/Solitaire-Windows.zip`.
+Local builds are unsigned test builds. Official releases are made with `tools/release.ps1`
+(see [docs/TESTING.md](docs/TESTING.md) for running the tests on their own).

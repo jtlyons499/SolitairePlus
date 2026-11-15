@@ -1,0 +1,10 @@
+Solitaire+
+==========
+
+1. Extract this ZIP before running the game.
+2. Double-click "SolitairePlus.exe".
+3. Keep the other files and folders beside the EXE.
+
+No separate Python installation is required.
+Your saves are stored in %LOCALAPPDATA%\SimpleSolitaire\saves,
+not in this folder, so deleting this folder does not delete them.

@@ -49,7 +49,7 @@ def bootstrap():
                 import ctypes
                 ctypes.windll.user32.MessageBoxW(None,
                     f'The game encountered an error.\n\nCrash report:\n{logfile}',
-                    'Simple Solitaire',0x10)
+                    'Solitaire+',0x10)
             except Exception:
                 pass
         original(kind,value,trace)

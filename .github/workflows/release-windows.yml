@@ -1,62 +1,108 @@
+# Builds, tests and (for version tags only) publishes Solitaire+ for Windows.
+#
+#   Pull request / push to main -> test + unsigned build (downloadable artifact, kept 14 days)
+#   Push of a tag "vX.Y.Z"      -> test + build + publish a GitHub Release
+#
+# Never create tags by hand: use tools/release.ps1 (see docs/RELEASING.md).
 name: Build Windows Release
 
 on:
   workflow_dispatch:
   pull_request:
-    paths:
-      - "**/*.py"
-      - "requirements.txt"
-      - "Simple Solitaire.spec"
-      - ".github/workflows/release-windows.yml"
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
   push:
     branches:
       - main
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
     tags:
       - "v*"
 
+# Read-only by default. Only the publish job below may write (create the Release).
 permissions:
-  contents: write
+  contents: read
+
+# A newer push to the same branch cancels the older, still-running build. Tag builds are never cancelled.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+env:
+  PYTHON_VERSION: "3.14"
 
 jobs:
-  build-windows:
+  test:
+    name: Unit tests and asset preflight
     runs-on: windows-latest
-
     steps:
       - name: Check out repository
         uses: actions/checkout@v5
 
-      - name: Set up Python 3.14
+      - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.14"
+          python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
 
       - name: Install dependencies
         shell: pwsh
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
-          python -m pip install pyinstaller==6.22.3
+        run: python -m pip install -r requirements.txt
+
+      - name: Check tag matches version.py
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: python tools/release_helpers.py verify-tag "${{ github.ref_name }}"
+
+      # Same command maintainers run locally. Quarantined tests (tests/KNOWN_FAILURES.txt)
+      # are reported but never fail the build; any other failure does.
+      - name: Run unit tests
+        shell: pwsh
+        run: python tools/run_tests.py
+
+      - name: Check game assets (preflight)
+        shell: pwsh
+        run: python tools/release_preflight.py
+
+  build:
+    name: Build Windows package
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        shell: pwsh
+        run: python -m pip install -r requirements.txt -r requirements-build.txt
 
       - name: Generate Windows version metadata
         shell: pwsh
         run: |
-          if ("${{ github.ref_type }}" -eq "tag") {
-            $env:SOLITAIRE_VERSION = "${{ github.ref_name }}"
-          } else {
-            $env:SOLITAIRE_VERSION = "dev-${{ github.run_number }}"
+          # Version always comes from version.py. Non-release builds get a "+ci.N" label
+          # so they can never be mistaken for an official release.
+          if ("${{ github.ref_type }}" -ne "tag") {
+            $env:SOLITAIRE_BUILD_NUMBER = "${{ github.run_number }}"
+            $env:SOLITAIRE_BUILD_SUFFIX = "+ci.${{ github.run_number }}"
           }
           python tools/write_version_info.py
 
       - name: Build with PyInstaller
         shell: pwsh
-        run: |
-          python -m PyInstaller --clean --noconfirm "Simple Solitaire.spec"
+        run: python -m PyInstaller --clean --noconfirm "SolitairePlus.spec"
 
       - name: Verify executable
         shell: pwsh
         run: |
-          $exe = "dist\Simple Solitaire\Simple Solitaire.exe"
+          $exe = "dist\SolitairePlus\SolitairePlus.exe"
           if (-not (Test-Path $exe)) {
             throw "Expected executable was not produced: $exe"
           }
@@ -67,7 +113,7 @@ jobs:
       - name: Scan built executable with Microsoft Defender (if available)
         shell: pwsh
         run: |
-          $exe = (Resolve-Path -LiteralPath "dist\Simple Solitaire\Simple Solitaire.exe").Path
+          $exe = (Resolve-Path -LiteralPath "dist\SolitairePlus\SolitairePlus.exe").Path
           $status = Get-MpComputerStatus -ErrorAction SilentlyContinue
           if ($null -eq $status -or -not $status.AMServiceEnabled -or -not $status.AntivirusEnabled) {
             Write-Warning "Defender is unavailable on this runner. No antivirus scan was performed."
@@ -91,18 +137,9 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path "release\Solitaire-Windows" | Out-Null
-          Copy-Item -Path "dist\Simple Solitaire\*" -Destination "release\Solitaire-Windows" -Recurse -Force
+          Copy-Item -Path "dist\SolitairePlus\*" -Destination "release\Solitaire-Windows" -Recurse -Force
           Copy-Item -Path "README.md" -Destination "release\Solitaire-Windows\README.md" -Force
-          @"
-          Solitaire+
-          ==========
-
-          1. Extract this ZIP before running the game.
-          2. Double-click "Simple Solitaire.exe".
-          3. Keep the other files and folders beside the EXE.
-
-          No separate Python installation is required.
-          "@ | Set-Content -Path "release\Solitaire-Windows\PLAYING.txt" -Encoding UTF8
+          Copy-Item -Path "PLAYING.txt" -Destination "release\Solitaire-Windows\PLAYING.txt" -Force
           Compress-Archive -Path "release\Solitaire-Windows\*" -DestinationPath "Solitaire-Windows.zip" -Force
           $hash = (Get-FileHash -Algorithm SHA256 "Solitaire-Windows.zip").Hash.ToLowerInvariant()
           "$hash  Solitaire-Windows.zip" | Set-Content -Path "Solitaire-Windows.zip.sha256" -Encoding ASCII
@@ -118,11 +155,44 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: Publish GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
+  publish:
+    name: Publish GitHub Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Solitaire-Windows
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Create or update the Release
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           $tag = "${{ github.ref_name }}"
-          gh release create $tag "Solitaire-Windows.zip#Solitaire+ for Windows" "Solitaire-Windows.zip.sha256#SHA-256 checksum" --title "Solitaire+ $tag" --generate-notes
+          $version = $tag.Substring(1)
+          python tools/release_helpers.py notes $version | Set-Content -Path release-notes.md -Encoding UTF8
+          $assets = @("Solitaire-Windows.zip#Solitaire+ for Windows", "Solitaire-Windows.zip.sha256#SHA-256 checksum")
+          # Versions like 0.0.8-beta.1 are published as pre-releases, which the in-game updater ignores.
+          $extra = @()
+          if ($version.Contains("-")) { $extra += "--prerelease" }
+          gh release view $tag --repo "${{ github.repository }}" *> $null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "Release $tag already exists (workflow re-run); replacing its files."
+            gh release upload $tag @assets --clobber --repo "${{ github.repository }}"
+          } else {
+            gh release create $tag @assets --verify-tag --title "Solitaire+ $tag" --notes-file release-notes.md @extra --repo "${{ github.repository }}"
+          }
+          if ($LASTEXITCODE -ne 0) { throw "Publishing the release failed." }

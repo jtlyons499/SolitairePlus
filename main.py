@@ -860,7 +860,8 @@ except (pygame.error, OSError):
 # GAME STATES // CONSTANTS // CAREER CONSTANTS // CAREER STATES // BUILD VERSION
 # ========================================================================================
 
-BUILD_VERSION = "0.0.6"
+# The version lives in version.py (single source of truth). Do not edit here.
+from version import __version__ as BUILD_VERSION
 
 STATE_SPLASH = "splash"
 STATE_MENU = "menu"
