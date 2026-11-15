@@ -13,7 +13,6 @@ from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.profile.unlocks import unlock_ratings
 from solitaireplus.app.lazy import lazy
-leveling = lazy("solitaireplus.profile.leveling")
 legacy = lazy("solitaireplus.legacy")
 window = lazy("solitaireplus.app.window")
 ui_text = lazy("solitaireplus.ui.text")
@@ -94,13 +93,6 @@ CUSTOMIZE_TITLES = "titles"
 CUSTOMIZE_CURSORS = "cursors"
 
 CUSTOMIZE_ITEMS_PER_PAGE = 6
-
-debug_xp_rect = pygame.Rect(
-    20,
-    20,
-    180,
-    45
-)
 
 def refresh_cosmetic_assets():
     assets.background_catalog.refresh()
@@ -648,11 +640,6 @@ def draw_customize_menu():
         page_rect
     )
 
-    buttons.draw_button(
-        debug_xp_rect,
-        "DEBUG +100 XP"
-    )
-
 
 def handle_event(event):
     """Old main-loop event branch for STATE_CUSTOMIZE."""
@@ -663,27 +650,11 @@ def handle_event(event):
             and event.button == 1
     ):
 
-        if debug_xp_rect.collidepoint(
-                state.game_mouse_pos
-        ):
-            result = leveling.add_player_xp(
-                100
-            )
-
-            print(
-                "XP:",
-                result
-            )
-
-            sounds.audio.play_sound(
-                "button_click"
-            )
-
         # ----------------------------
         # Category tabs
         # ----------------------------
 
-        elif customize_backgrounds_rect.collidepoint(
+        if customize_backgrounds_rect.collidepoint(
                 state.game_mouse_pos
         ):
             sounds.audio.play_sound(

@@ -7799,41 +7799,23 @@ def get_profile_avatar():
         pygame.SRCALPHA
     )
 
-    avatar_surface.blit(
-        assets.avatar_bases[
-            state.selected_avatar_base
-        ],
-        (0, 0)
+    # B11: a part that is missing from its bank (for example the "base_01"
+    # fallback when that file is absent) is skipped instead of raising
+    # KeyError; the other layers still draw.
+    layers = (
+        (assets.avatar_bases, state.selected_avatar_base),
+        (assets.avatar_eyes, state.selected_avatar_eyes),
+        (assets.avatar_hair, state.selected_avatar_hair),
+        (assets.avatar_glasses, state.selected_avatar_glasses),
+        (assets.avatar_tops, state.selected_avatar_top),
     )
 
-    avatar_surface.blit(
-        assets.avatar_eyes[
-            state.selected_avatar_eyes
-        ],
-        (0, 0)
-    )
-
-    avatar_surface.blit(
-        assets.avatar_hair[
-            state.selected_avatar_hair
-        ],
-        (0, 0)
-    )
-
-    if state.selected_avatar_glasses is not None:
-        avatar_surface.blit(
-            assets.avatar_glasses[
-                state.selected_avatar_glasses
-            ],
-            (0, 0)
-        )
-
-    avatar_surface.blit(
-        assets.avatar_tops[
-            state.selected_avatar_top
-        ],
-        (0, 0)
-    )
+    for bank, key in layers:
+        if key is None:
+            continue
+        layer = bank.get(key)
+        if layer is not None:
+            avatar_surface.blit(layer, (0, 0))
 
     return avatar_surface
 from solitaireplus.ui import text as ui_text  # start-up code of this module runs here, as it did in main.py

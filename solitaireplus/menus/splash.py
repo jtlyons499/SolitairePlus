@@ -11,6 +11,7 @@ window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 fonts = lazy("solitaireplus.app.fonts")
 assets = lazy("solitaireplus.app.assets")
+options_screen = lazy("solitaireplus.menus.options_screen")
 
 
 # ==================================================
@@ -197,8 +198,12 @@ def handle_event(event):
 
         state.current_state = state_names.STATE_PROFILE_SELECT
 
+        # Keep the music mode the player saved in Options (B14); with nothing saved (first
+        # launch) start Ambient as before. set_music_mode does not restart music that is
+        # already playing in that mode.
         sounds.audio.set_music_mode(
-            "ambient"
+            options_screen.app_settings.get("music_mode")
+            or "ambient"
         )
 
 

@@ -1,0 +1,12 @@
+{"modules": {
+  "solitaireplus/games/poker/holdem_screen.py": {"doc": "Texas Hold'em table and buy-in screens, sessions, showdowns and timed NPC turns (moved out of legacy.py).",
+    "screens": ["texas_holdem", "texas_holdem_buy_in"],
+    "names": ["process_texas_holdem_showdown", "start_texas_holdem_session", "finish_texas_holdem_session"]},
+  "solitaireplus/games/poker/five_card_draw_screen.py": {"doc": "Five-Card Draw table and buy-in screens, sessions and timed NPC turns (moved out of legacy.py).",
+    "screens": ["five_card_draw", "five_card_draw_buy_in"]},
+  "solitaireplus/games/poker/seven_card_stud_screen.py": {"doc": "Seven-Card Stud table and buy-in screens, sessions and timed NPC turns (moved out of legacy.py).",
+    "screens": ["seven_card_stud", "seven_card_stud_buy_in"]},
+  "solitaireplus/games/poker/five_o_screen.py": {"doc": "Five-O Poker screen and sessions (moved out of legacy.py).", "screens": ["five_o_poker"]},
+  "solitaireplus/games/poker/blind_mans_bluff_screen.py": {"doc": "Blind Man's Bluff screen and sessions (moved out of legacy.py).", "screens": ["blind_mans_bluff"]},
+  "solitaireplus/debug/poker_select_screen.py": {"doc": "The F10 menu's poker table opponent picker (moved out of legacy.py).", "screens": ["debug_poker_npc_select"]}
+}}

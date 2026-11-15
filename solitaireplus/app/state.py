@@ -23,6 +23,7 @@ confirm_return_to_menu = False
 game_pause_menu_open = False
 profile_switch_snapshot = None
 current_profile_slot = 1
+profile_chosen = False   # True once a profile (or guest) was picked; until then the slot above is only a default
 guest_mode = False
 profile_creation_mode = False
 pending_profile_slot = None

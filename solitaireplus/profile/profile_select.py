@@ -8,7 +8,6 @@ from solitaireplus.profile.achievements import get_definition as get_achievement
 from solitaireplus.profile.achievements import iter_rewards as iter_achievement_rewards
 from solitaireplus.profile.saves import load_profile
 from solitaireplus.app import paths
-from solitaireplus.profile.saves import profile_exists
 import pygame
 from solitaireplus.app import state
 from solitaireplus.app import state_names
@@ -26,6 +25,7 @@ def finish_profile_selection():
     destination = state.profile_select_return_state
     state.profile_select_return_state = state_names.STATE_MENU
     state.profile_switch_snapshot = None
+    state.profile_chosen = True
     state.profile_name_active = False
     state.profile_country_active = False
     state.profile_age_active = False
@@ -55,6 +55,17 @@ def cancel_career_profile_switch():
     state.pending_profile_slot = None
     state.profile_message = ""
     finish_profile_selection()
+
+
+PROFILE_IN_USE_NOTICE = "This profile is in use. Load another profile first to delete it."
+
+
+def profile_in_use(slot):
+    """True if slot holds the loaded profile (or the one Back to Career restores)."""
+    if state.profile_switch_snapshot is not None and state.profile_switch_snapshot[0] == slot:
+        return True
+    # Before the first pick current_profile_slot is only its start-up default; a guest has no slot.
+    return state.profile_chosen and not state.guest_mode and state.current_profile_slot == slot
 
 favorite_suit_options = [
     "Clubs",
@@ -121,7 +132,34 @@ def sync_achievement_cosmetic_rewards():
 # PROFILE HELPERS
 # ==================================================
 
+# B10: what each slot shows (name, level), read from its save once and kept, because reading,
+# parsing and migrating three saves every frame (and hashing a damaged one) is slow.
+# Read again when the screen is entered and after a profile is saved, created or deleted.
+_slot_display_cache = {}   # slot -> display data
+
+
+def forget_slot_display_data():
+    """Read the save slots again the next time the profile-select screen is drawn."""
+    _slot_display_cache.clear()
+
+
+def enter():
+    """The loop calls this when the profile-select screen opens: show the saves as they are now."""
+    forget_slot_display_data()
+    # Notices explain the last click on this screen; a new visit starts clean.
+    state.profile_select_notice = ""
+
+
 def get_profile_slot_display_data(
+        slot
+):
+    """What a save slot shows on this screen (kept until forget_slot_display_data())."""
+    if slot not in _slot_display_cache:
+        _slot_display_cache[slot] = read_profile_slot_display_data(slot)
+    return _slot_display_cache[slot]
+
+
+def read_profile_slot_display_data(
         slot
 ):
     try:
@@ -314,9 +352,11 @@ def draw_profile_select_screen():
                 )
             )
 
+            # Every existing slot gets a Delete button (drawn below), so keep the
+            # level / "Can't open" text to its left instead of underneath it.
             level_rect = (
                 level_surface.get_rect(
-                    right=rect.right - 20,
+                    right=profile_delete_rects[index].left - 16,
                     centery=rect.centery
                 )
             )
@@ -565,6 +605,7 @@ def handle_event(event):
                 delete_profile(
                     state.profile_delete_slot
                 )
+                forget_slot_display_data()
 
                 state.confirm_delete_profile = False
                 state.profile_delete_slot = None
@@ -594,10 +635,10 @@ def handle_event(event):
         ):
             slot = state.index + 1
 
+            # The Delete buttons drawn are the cached slot data's (B10), so the
+            # click checks the same data instead of the disk.
             if (
-                    profile_exists(slot)
-                    and not (state.profile_switch_snapshot is not None
-                             and state.profile_switch_snapshot[0] == slot)
+                    get_profile_slot_display_data(slot)["exists"]
                     and delete_rect.collidepoint(
                 state.game_mouse_pos
                 )
@@ -606,8 +647,13 @@ def handle_event(event):
                     "button_click"
                 )
 
-                state.profile_delete_slot = slot
-                state.confirm_delete_profile = True
+                if profile_in_use(slot):
+                    # Deleting the loaded save would lose it (or let the next save recreate it).
+                    state.profile_select_notice = PROFILE_IN_USE_NOTICE
+                else:
+                    state.profile_select_notice = ""
+                    state.profile_delete_slot = slot
+                    state.confirm_delete_profile = True
 
                 delete_clicked = True
 

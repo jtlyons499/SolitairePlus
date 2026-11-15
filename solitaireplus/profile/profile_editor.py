@@ -23,6 +23,10 @@ gender_options = [
     "non-binary",
 ]
 
+# save_profile() returns False when the save file is locked and the data went to a recovery copy.
+SAVE_IN_USE_MESSAGE = "Saved to a recovery file (the save is in use). Close other copies of the game."
+SAVE_FAILED_MESSAGE = "Could not save. Check the saves folder and try again."
+
 # ==================================================
 # PROFILE UI
 # ==================================================
@@ -140,9 +144,19 @@ def cycle_option(
         options,
         direction
 ):
-    current_index = options.index(
-        current_value
-    )
+    # B11: with no options there is nothing to pick; keep the current value.
+    if not options:
+        return current_value
+
+    # B11: a value missing from the bank (e.g. the "base_01" fallback when
+    # that file is absent) counts as sitting at index 0, so the step is taken
+    # from the first option instead of raising ValueError.
+    if current_value in options:
+        current_index = options.index(
+            current_value
+        )
+    else:
+        current_index = 0
 
     new_index = (
         current_index + direction
@@ -151,6 +165,16 @@ def cycle_option(
     return options[
         new_index
     ]
+
+def avatar_selector_label(current_value, options):
+    """The "N/M" text beside an avatar part's arrows."""
+    if current_value is None:
+        return "None"
+    if current_value in options:
+        return f"{options.index(current_value) + 1}/{len(options)}"
+    # B11: a saved part that is missing from the bank shows as unknown
+    # instead of crashing the first frame.
+    return f"-/{len(options)}"
 
 profile_avatar_frame_rect = pygame.Rect(
     65,
@@ -473,11 +497,7 @@ def draw_profile_screen():
         buttons.draw_button(avatar_selector_left_rects[index], "<")
         buttons.draw_button(avatar_selector_right_rects[index], ">")
 
-        if current_value is None:
-            display_text = "None"
-        else:
-            current_index = options.index(current_value)
-            display_text = f"{current_index + 1}/{len(options)}"
+        display_text = avatar_selector_label(current_value, options)
 
         value_surface = fonts.difficulty_detail_font.render(
             display_text,
@@ -785,27 +805,48 @@ def handle_event(event):
             state.profile_name_text = state.player_name
 
             if state.profile_creation_mode:
+                previous_slot, previous_guest = state.current_profile_slot, state.guest_mode
                 state.current_profile_slot = state.pending_profile_slot
                 state.guest_mode = False
 
-                save_profile(
-                    save_data.build_profile_save_data(),
-                    state.current_profile_slot
-                )
-
-                state.profile_creation_mode = False
-                state.pending_profile_slot = None
-                state.profile_message = ""
-                sounds.audio.play_sound("button_click")
-                profile_select.finish_profile_selection()
-
-            else:
-                if not state.guest_mode:
-                    save_profile(
+                try:
+                    saved = save_profile(
                         save_data.build_profile_save_data(),
                         state.current_profile_slot
                     )
-                    state.profile_message = f"Profile saved to slot {state.current_profile_slot}."
+                except OSError:
+                    saved = None
+
+                if saved is None:
+                    # Nothing was written (disk full, read-only saves folder...): stay on
+                    # this screen, still creating, so the player can fix it and retry.
+                    state.current_profile_slot, state.guest_mode = previous_slot, previous_guest
+                    state.profile_message = SAVE_FAILED_MESSAGE
+                    sounds.audio.play_sound("button_click")
+                else:
+                    profile_select.forget_slot_display_data()   # B10: the slot now holds this profile
+                    state.profile_creation_mode = False
+                    state.pending_profile_slot = None
+                    state.profile_message = "" if saved else SAVE_IN_USE_MESSAGE
+                    sounds.audio.play_sound("button_click")
+                    profile_select.finish_profile_selection()
+
+            else:
+                if not state.guest_mode:
+                    try:
+                        saved = save_profile(
+                            save_data.build_profile_save_data(),
+                            state.current_profile_slot
+                        )
+                    except OSError:
+                        saved = None
+                    if saved:
+                        state.profile_message = f"Profile saved to slot {state.current_profile_slot}."
+                    elif saved is None:
+                        state.profile_message = SAVE_FAILED_MESSAGE
+                    else:
+                        state.profile_message = SAVE_IN_USE_MESSAGE
+                    profile_select.forget_slot_display_data()   # B10: show the new name / level
                 else:
                     state.profile_message = "Guest mode does not save progress."
 

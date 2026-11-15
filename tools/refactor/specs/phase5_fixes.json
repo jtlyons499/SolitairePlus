@@ -1,0 +1,34 @@
+{
+ "phase": "Phase 5: Career",
+ "layout": "- Phase 5 moved the career screens into solitaireplus/career/ (hub_screen.py, activity_screen.py, jobs_screen.py, real_estate_screen.py, leaderboards_screen.py, leaderboard_bio_screen.py, news_screen.py (+ ensure_career_news, add_career_news), case_opening_screen.py, events/event_select_screen.py, events/event_screen.py, events/summary_screen.py) and the shared career code into career/calendar.py (advance_career_day, ensure_career_schedule ...), career/career_saving.py (auto_save_career), career/rewards.py (award_career_rating, rate_*, award_*_fans ...), career/leaderboard_engine.py (ensure_career_leaderboard, get_career_leaderboard, sync_career_npc_runtime_state ...), career/events/night.py (CAREER_ACTIVITY_*, record_career_event_result ...), career/web_pages.py, career/career_names.py. Older logic modules: career/ratings.py, career/npc_world.py, career/npc_development.py, career/news.py, career/activities.py. The debug menu and the game screens of other areas are still in solitaireplus/legacy.py.",
+ "tasks": [
+  {
+   "key": "B18",
+   "prompt": "Fix B18 (the NPC roster re-syncs several times per frame): draw_career_hub calls ensure_career_leaderboard() and get_career_leaderboard() (which calls ensure again); each runs sync_career_npc_runtime_state, which builds a seeded RNG per NPC and deep-copies templates. The leaderboards screen and rank lookups do the same. Add a 'dirty' flag (in state, or a module-private holder) set whenever the roster or the career date changes (advance day/month/year, NPC added, profile loaded/created, debug changes), and sync only when dirty. Find every place that changes the roster or the date. Test: drawing the hub 10 frames runs the sync at most once; after advancing a day it runs again once."
+  },
+  {
+   "key": "B19",
+   "prompt": "Fix B19 (job switching spams news): choosing a job on the Jobs screen adds a news item on every click. Add news only when the job actually changes, and at most once per career day. Test: clicking the current job adds nothing; switching twice in one day adds one item."
+  },
+  {
+   "key": "B20",
+   "prompt": "Fix B20 (KeyError every frame on bad activity data): code that indexes ['career_activity'] and state['claimed'] (start_career_activity / handle_career_activity and the career-activity screen draw) raises on malformed or missing schedule data. Use .get with defaults and skip a malformed activity safely (no crash, no reward). Test: a schedule day with no 'career_activity' or a non-dict activity does not crash the draw or the handler."
+  },
+  {
+   "key": "B21",
+   "prompt": "Fix B21 (sandbox cash saved into the real profile): the F10 debug menu's 'Career Hub' action (still in solitaireplus/legacy.py loop_event_debug_menu) jumps to the hub during a Free Play sandbox without calling finish_free_play_sandbox, and hub saves then write the sandbox $5,000. Make the debug menu end any active sandbox (finish_free_play_sandbox) before jumping to a career screen (check all its career jumps). Test: starting a Free Play sandbox and choosing debug Career Hub leaves the saved career cash unchanged."
+  },
+  {
+   "key": "B22",
+   "prompt": "Fix B22 (debug launchers leak 'debug' mode): debug_prepare_arcade_night, debug_open_horse_races and debug_open_five_o_poker set current_game_mode = 'debug' and never restore it; the debug Casual Cards and Casino nights lack 'debug': True in their career_event_entry, so ending them advances the real career day. Restore the previous game mode when the debug session/night ends, and mark every debug night with 'debug': True so ending it never advances the real day. Test: a debug night (casual, casino, arcade) does not change the career day, and current_game_mode returns to its previous value afterwards."
+  },
+  {
+   "key": "B23",
+   "prompt": "B23 is a designer decision: NO behaviour change. The monthly NPC rating decline is intended (NPCs age and are replaced). (1) Add a test that pins today's behaviour of career_ratings.simulate_npc_rating_month(..., scale_rewards=True) (solitaireplus/career/ratings.py) for a few fixed seeds/NPCs, so later refactors cannot change it. (2) Simulate 12 months for a young NPC (age <= 22) and a veteran (age >= 35) using the real code path the game uses each month, and report each NPC's rating change (start rating, end rating, change) in your summary - the designer asked for these numbers. Do not change any game code."
+  },
+  {
+   "key": "B12-career",
+   "prompt": "Same bug class as B12 (found by the Phase 3 review): save_career_from_hub (the career hub's Save / Switch Profile, now in solitaireplus/career/career_saving.py or still in legacy.py) calls auto_save_career(), which on save_profile() == False shows 'Save file locked: progress kept in a recovery save...', and then always overwrites that toast with career_hub_controls.show_message('Profile saved to slot N.'). Make auto_save_career report whether the normal save worked (keep its existing toast and OSError behaviour for every other caller) and only show 'Profile saved to slot N.' when it did; when it went to a recovery file, show the same text the Profile screen uses (solitaireplus.profile.profile_editor.SAVE_IN_USE_MESSAGE). Test: with save_profile patched to return False, the hub's message after Save is the recovery message, not 'Profile saved'; with True it is still 'Profile saved to slot N.'."
+  }
+ ]
+}

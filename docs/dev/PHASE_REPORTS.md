@@ -227,3 +227,55 @@ are intended: `menu_hover_after_key__options` (B15: hover kept after a key press
 
 **Results:** `screen_harness compare` → `IDENTICAL 64/64`; `replay compare` → `IDENTICAL 18/18` (baseline
 `2c62abd`). Tests `PASSED`.
+
+## Phase 3 (fix): B7, B9, B10, B11, B12, B13, B14, D1 (Customize)
+
+Fixed by a workflow (`tools/refactor/workflows/phase_fixes.js`): one agent per bug, test first (each new test
+failed on the Phase 3 move commit), each fix checked by an independent adversarial reviewer; the lead fixed what
+the reviews found.
+
+- **B7** — the Recap screen's Yes/No handlers (`profile/recap.py`) extend `level_up_queue` instead of replacing
+  it, so a level-up queued before the recap still shows (first, then the round's). `test_recap_level_up_queue`.
+- **B9** — the profile-select slot's "Level N" / "Can't open" text is right-aligned 16 px left of the slot's
+  Delete button (every slot that shows the text has one). `test_profile_select_layout`.
+- **B10** — the profile-select screen caches each slot's display data (`profile_select._slot_display_cache`, no
+  `global`); `enter()` and every save/delete/create clear it. 10 frames now read each save once (was 30 reads).
+  Review finding fixed: the Delete hit-test uses the same cached data as the drawn buttons (it checked the disk,
+  so a save changed by another copy of the game could make the click and the picture disagree).
+  `test_profile_slot_cache`.
+- **B11** — `cycle_option` treats a value missing from the options as index 0 and returns the value unchanged
+  for an empty list. Review findings fixed: the selector label (`avatar_selector_label`, shows `-/N`) and
+  `legacy.get_profile_avatar` (skips a layer whose picture is missing) crashed on the same missing part before
+  any arrow could be pressed. `test_avatar_cycle_option`.
+- **B12** — the Profile screen shows "Saved to a recovery file (the save is in use). Close other copies of the
+  game." when `save_profile` returns False. Also (review finding): an `OSError` from `save_profile` (disk full,
+  read-only saves folder) no longer crashes the game: "Could not save. Check the saves folder and try again.";
+  while creating a profile the screen stays in creation mode so Save can be retried.
+  `test_profile_save_failed_message`.
+- **B13** — the loaded profile can't be deleted: "This profile is in use. Load another profile first to delete
+  it." (`profile_select.profile_in_use`; `state.profile_chosen` tells the start-up default slot 1 from a real
+  pick; a guest has no slot; the Career switch guard is kept). Review finding fixed: the notice is cleared when
+  the screen opens and when a delete confirmation opens. `test_profile_delete_in_use`.
+- **B14** — leaving the splash screen uses the saved music mode (`app_settings["music_mode"]`), Ambient only when
+  nothing was saved (first launch, as before). `test_splash_music_mode`.
+- **D1 (Customize)** — the "DEBUG +100 XP" button is gone (rect, drawing, click). `test_customize_no_debug_button`.
+
+**Results:** tests `PASSED` (quarantine unchanged; `test_six_clients_and_late_join` passed this run but is flaky,
+left for B67). `screen_harness compare` (baseline `1ddab50`): 60/64 identical; the 4 that differ are intended:
+`menu_customize` (+`__felts`, `__cursors`; D1: the debug button's 180x45 area), `profile_select`,
+`profile_select_delete_confirm`, `profile_select_damaged` (+`__notice`) (B9: level / "Can't open" moved left of
+Delete). `replay compare`: all checkpoint values identical; pixels differ only in `01_create_profile`'s
+profile-select picture (B9).
+
+**New findings (not fixed):**
+- **N8:** the career hub's Save (`save_career_from_hub`) overwrites `auto_save_career`'s "Save file locked" toast
+  with "Profile saved to slot N." (same class as B12). Queued as `B12-career` in the Phase 5 fixes.
+- **N9:** when creating a profile and the save goes to a recovery file, the B12 message is set but never seen:
+  the screen changes straight away and nothing else draws `profile_message` (the old code was silent too).
+- **N10:** before any profile is picked `current_profile_slot` defaults to 1, so an F10 debug career started
+  straight from the start-up profile-select screen auto-saves into slot 1 (debug-only).
+- **N11:** after a Solitaire round with no level-up, "No (deal again)" goes straight back to the table, so a
+  level-up queued earlier waits until the next menu/hub screen (not lost).
+- **N12:** `apply_saved_app_settings` only calls `set_music_mode` when the saved mode differs from the built-in
+  "instrumental", so a saved "ambient" starts during the splash while a saved "instrumental" starts when the
+  splash is left (both end up right).

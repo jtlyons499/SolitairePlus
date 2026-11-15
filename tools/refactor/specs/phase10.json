@@ -1,0 +1,6 @@
+{"modules": {
+  "solitaireplus/games/cryptid/screen.py": {"doc": "Cryptid Creatures screen (moved out of legacy.py).", "screens": ["cryptid_creatures"]},
+  "solitaireplus/games/dead_mans_hand/screen.py": {"doc": "Dead Man's Hand screen (moved out of legacy.py).", "screens": ["dead_mans_hand"],
+    "names": ["start_dead_mans_hand", "exit_dead_mans_hand"]},
+  "solitaireplus/debug/menu_screen.py": {"doc": "The F10 debug menu screen (moved out of legacy.py).", "screens": ["debug_menu"]}
+}}

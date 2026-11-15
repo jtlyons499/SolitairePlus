@@ -26,6 +26,14 @@ How to use this file (maintainers and AI agents):
 - A save whose progression or career section is empty (null) no longer crashes the profile screen.
 - A damaged save file no longer crashes the game on the profile screen. The game opens the previous good copy (a backup is now kept on every save). If no copy is readable, the slot says "Damaged save" and the damaged file is kept so it can be repaired.
 - A save made by a newer version of the game is no longer opened (and silently damaged) by an older version; the slot says "Needs update".
+- Level-up screens earned elsewhere (another game, a battle) are no longer lost when a Solitaire round ends.
+- On the profile screen, a slot's level no longer sits underneath its Delete button.
+- The profile screen no longer re-reads all three save files 60 times a second.
+- A missing avatar picture no longer crashes the profile editor; that part is left out instead.
+- If the profile can't be saved because the save is in use (another copy of the game is open), the Profile screen now says so instead of "Profile saved".
+- You can no longer delete the profile you're playing; the screen asks you to load another profile first.
+- The game no longer switches the music to Ambient after the splash screen when you chose another mode (or Off) in Options.
+- The Customize screen no longer shows a leftover "DEBUG +100 XP" button.
 
 ### Online play
 - Room codes are now 6 letters/digits instead of 5 digits, and guessing other people's room codes is slowed down and then blocked. Old 5-digit codes still work with players who haven't updated.

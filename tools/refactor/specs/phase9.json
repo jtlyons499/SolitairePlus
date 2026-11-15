@@ -1,0 +1,8 @@
+{"modules": {
+  "solitaireplus/games/arcade/hub_screens.py": {"doc": "Arcade night token exchange, prize counter and trophy room (moved out of legacy.py).",
+    "screens": ["arcade_token_exchange", "arcade_prize_counter", "arcade_trophy_room"]},
+  "solitaireplus/games/arcade/machine_select.py": {"doc": "The arcade machines' opponent and difficulty pickers (moved out of legacy.py).",
+    "screens": ["king_pong_opponent_select", "battle_bosses_opponent_select", "ace_invaders_difficulty_select", "suit_snake_difficulty_select"]},
+  "solitaireplus/games/arcade/machine_screens.py": {"doc": "The four arcade machines in play: King Pong, Battle Bosses, Ace Invaders, Suit Snake (moved out of legacy.py).",
+    "screens": ["king_pong", "battle_bosses", "ace_invaders", "suit_snake"]}
+}}

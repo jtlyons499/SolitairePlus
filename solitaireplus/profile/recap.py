@@ -340,7 +340,9 @@ def handle_event(event):
                 "level_up_screens"
             ]
             ):
-                state.level_up_queue = list(
+                # Extend, not replace: level-ups queued before this
+                # recap (other games, battles) must still show (B7).
+                state.level_up_queue.extend(
                     state.last_progression_result[
                         "level_up_screens"
                     ]
@@ -370,7 +372,8 @@ def handle_event(event):
                     state.last_progression_result
                     and state.last_progression_result.get("level_up_screens")
             ):
-                state.level_up_queue = list(
+                # Extend, not replace (B7): keep level-ups queued earlier.
+                state.level_up_queue.extend(
                     state.last_progression_result["level_up_screens"]
                 )
                 level_up.advance_level_up_screen()
