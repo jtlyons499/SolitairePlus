@@ -1,4 +1,9 @@
+from types import SimpleNamespace
+
 import pygame
+
+# Module-private screen state (the open accordion section, the transient message).
+_ui = SimpleNamespace()
 
 
 # ==================================================
@@ -60,6 +65,11 @@ ACTION_LEVEL_6 = "level_6"
 ACTION_LEVEL_10 = "level_10"
 ACTION_LEVEL_MAX = "level_max"
 ACTION_ACHIEVEMENT_TEST = "achievement_test"
+
+# The designer's instant win (was the Solitaire F8 key, D1). Works only when the menu was
+# opened from the Solitaire table; drawn disabled everywhere else.
+ACTION_WIN_SOLITAIRE_ROUND = "win_solitaire_round"
+WIN_SOLITAIRE_ROUND_LABEL = "Win this Solitaire round"
 
 ACTION_CLOSE = "close"
 
@@ -205,12 +215,14 @@ CAREER_HUB_JUMP_ACTIONS = frozenset((
     ACTION_CAREER_YEAR,
 ))
 
-_expanded_minigame_category = None
+_ui.expanded_minigame_category = None
 _ACTION_RECTS = {}
 _CATEGORY_RECTS = {}
 _CHILD_ACTIONS = set()
 
 _CLOSE_RECT = pygame.Rect(533, 704, 300, 48)
+# In the Solitaire column, one empty row below the challenges.
+_WIN_SOLITAIRE_ROUND_RECT = _column_rect(1, len(CHALLENGE_ENTRIES) + 1)
 
 
 def _rebuild_action_rects():
@@ -224,6 +236,7 @@ def _rebuild_action_rects():
 
     for row_index, (action, _label) in enumerate(CHALLENGE_ENTRIES):
         _ACTION_RECTS[action] = _column_rect(1, row_index)
+    _ACTION_RECTS[ACTION_WIN_SOLITAIRE_ROUND] = _WIN_SOLITAIRE_ROUND_RECT
 
     y = _BUTTON_START_Y
     for category_id, category_action, _label, entries in MINIGAME_CATEGORIES:
@@ -237,7 +250,7 @@ def _rebuild_action_rects():
         _ACTION_RECTS[category_action] = category_rect
         y += _BUTTON_HEIGHT + _BUTTON_GAP
 
-        if _expanded_minigame_category == category_id:
+        if _ui.expanded_minigame_category == category_id:
             for action, _entry_label in entries:
                 rect = pygame.Rect(
                     _COLUMN_X[2] + _CHILD_INDENT,
@@ -270,61 +283,55 @@ def is_minigame_category_action(action):
 
 def toggle_minigame_category(action):
     """Expand one Minigames section, collapsing the previously open one."""
-    global _expanded_minigame_category
-
     category_id = _CATEGORY_ACTION_TO_ID.get(action)
     if category_id is None:
         return False
 
-    if _expanded_minigame_category == category_id:
-        _expanded_minigame_category = None
+    if _ui.expanded_minigame_category == category_id:
+        _ui.expanded_minigame_category = None
     else:
-        _expanded_minigame_category = category_id
+        _ui.expanded_minigame_category = category_id
 
     _rebuild_action_rects()
     return True
 
 
 def get_expanded_minigame_category():
-    return _expanded_minigame_category
+    return _ui.expanded_minigame_category
 
 
 # ==================================================
 # TRANSIENT FEEDBACK
 # ==================================================
 
-_debug_message = ""
-_debug_message_started = 0
-_debug_message_duration = 1800
+_ui.debug_message = ""
+_ui.debug_message_started = 0
+_ui.debug_message_duration = 1800
 
 
 def show_debug_message(message, duration=1800):
-    global _debug_message
-    global _debug_message_started
-    global _debug_message_duration
-
-    _debug_message = str(message or "")
-    _debug_message_started = pygame.time.get_ticks()
-    _debug_message_duration = max(250, int(duration))
+    _ui.debug_message = str(message or "")
+    _ui.debug_message_started = pygame.time.get_ticks()
+    _ui.debug_message_duration = max(250, int(duration))
 
 
 def _draw_debug_message(game_surface, font):
-    if not _debug_message:
+    if not _ui.debug_message:
         return
 
-    elapsed = pygame.time.get_ticks() - _debug_message_started
-    if elapsed >= _debug_message_duration:
+    elapsed = pygame.time.get_ticks() - _ui.debug_message_started
+    if elapsed >= _ui.debug_message_duration:
         return
 
-    fade_start = int(_debug_message_duration * 0.58)
+    fade_start = int(_ui.debug_message_duration * 0.58)
     if elapsed <= fade_start:
         alpha = 245
     else:
-        remaining = max(0, _debug_message_duration - elapsed)
-        fade_span = max(1, _debug_message_duration - fade_start)
+        remaining = max(0, _ui.debug_message_duration - elapsed)
+        fade_span = max(1, _ui.debug_message_duration - fade_start)
         alpha = int(245 * (remaining / fade_span))
 
-    text_surface = font.render(_debug_message, True, (255, 240, 185))
+    text_surface = font.render(_ui.debug_message, True, (255, 240, 185))
     box = text_surface.get_rect(center=(683, 662)).inflate(42, 22)
     panel = pygame.Surface(box.size, pygame.SRCALPHA)
     pygame.draw.rect(panel, (20, 22, 26, min(225, alpha)), panel.get_rect(), border_radius=10)
@@ -403,7 +410,7 @@ def _draw_minigame_accordion(
         if category_rect is None:
             continue
 
-        expanded = _expanded_minigame_category == category_id
+        expanded = _ui.expanded_minigame_category == category_id
         marker = "-" if expanded else "+"
         draw_menu_button(
             category_rect,
@@ -426,6 +433,25 @@ def _draw_minigame_accordion(
                 )
 
 
+def _draw_win_solitaire_round_button(
+        game_surface,
+        available,
+        mouse_pos,
+        draw_menu_button,
+        difficulty_detail_font,
+):
+    rect = _WIN_SOLITAIRE_ROUND_RECT
+    if available:
+        draw_menu_button(rect, WIN_SOLITAIRE_ROUND_LABEL, mouse_pos, font=difficulty_detail_font)
+        return
+
+    # Greyed out like the other unavailable buttons (Options: window sizes, Verified Solvable).
+    pygame.draw.rect(game_surface, (72, 76, 74), rect, border_radius=8)
+    pygame.draw.rect(game_surface, (115, 120, 118), rect, 2, border_radius=8)
+    label = difficulty_detail_font.render(WIN_SOLITAIRE_ROUND_LABEL, True, (155, 158, 156))
+    game_surface.blit(label, label.get_rect(center=rect.center))
+
+
 def draw_debug_menu(
         game_surface,
         mouse_pos,
@@ -433,8 +459,11 @@ def draw_debug_menu(
         draw_submenu_title,
         draw_menu_button,
         option_label_font,
-        difficulty_detail_font
+        difficulty_detail_font,
+        solitaire_win_available=False,
 ):
+    """solitaire_win_available: the menu was opened from the Solitaire table, so the
+    'Win this Solitaire round' button works (otherwise it is drawn disabled)."""
     _rebuild_action_rects()
 
     draw_submenu_background(overlay_alpha=145)
@@ -465,6 +494,13 @@ def draw_debug_menu(
         mouse_pos,
         draw_menu_button,
         option_label_font,
+        difficulty_detail_font,
+    )
+    _draw_win_solitaire_round_button(
+        game_surface,
+        solitaire_win_available,
+        mouse_pos,
+        draw_menu_button,
         difficulty_detail_font,
     )
     _draw_minigame_accordion(

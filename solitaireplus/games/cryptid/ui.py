@@ -4,7 +4,7 @@ import textwrap
 import pygame
 
 from solitaireplus.games.cryptid.cards import CryptidCardRenderer, STYLE_COLORS
-from solitaireplus.games.cryptid.creatures import Action, CryptidBattle, CryptidCatalog, DEFENSES, HAND_LIMIT, damage_breakdown
+from solitaireplus.games.cryptid.creatures import Action, CryptidBattle, CryptidCatalog, DEFENSES, HAND_LIMIT, damage_breakdown, opener_error
 from solitaireplus.games.cryptid.ai import choose_cryptid_action
 from solitaireplus.npc.personality import personality_summary
 from solitaireplus.games.cryptid.battle_feedback import BattleFeedback, BattleSounds, snapshot
@@ -62,8 +62,10 @@ class CryptidScreen:
         self.result_claimed = False
         self.next_reward_retry = 0
         self.notice = ""
+        self.start_error = ""  # why the last Start could not open a battle (B60)
 
     def enter(self, npcs=()):
+        self.start_error = ""
         self.career_mode=False
         self.collection=None
         self.collection_view=None
@@ -104,6 +106,15 @@ class CryptidScreen:
             if errors:
                 self.collection_view.message=' '.join(errors)
                 return
+        # A deck that cannot open (fewer than two creatures) shows a message and
+        # changes nothing. Checked without randomness and before the career save,
+        # so the save still comes before the battle build (B60).
+        player_deck=player_cards if player_cards is not None else self.catalog.decks[self.deck_keys[self.deck_index]]['cards']
+        self.start_error=opener_error(self.catalog,(player_deck,self.catalog.decks[opponent_deck]['cards']))
+        if self.start_error:
+            if self.collection_view:self.collection_view.message=self.start_error
+            return
+        if self.career_mode:
             try:
                 transaction(self.collection,lambda:self.collection.update(battle_serial=self.collection['battle_serial']+1),self.persist_collection)
             except OSError as error:
@@ -265,7 +276,8 @@ class CryptidScreen:
             self._text(surface,"8 creature cards  /  22 support and arena",rect.x+20,rect.y+414,19,MUTED)
         self._text(surface,personality_summary(self.npc),46,614,24,MUTED)
         self._button(surface,(443,650,480,60),"Start Practice Battle",("start",),mouse,size=30)
-        self._text(surface,"One active + three Docket slots. Two Focus per turn. Three knockouts to win.",42,731,22,MUTED)
+        if self.start_error:self._text(surface,self.start_error,42,731,22,GOLD)
+        else:self._text(surface,"One active + three Docket slots. Two Focus per turn. Three knockouts to win.",42,731,22,MUTED)
 
     def _library_ids(self):
         return [cid for cid,c in self.catalog.cards.items()

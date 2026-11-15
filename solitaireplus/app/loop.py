@@ -20,7 +20,7 @@ import pygame
 from solitaireplus.menus.achievements_screen import draw_achievement_popup
 from solitaireplus.app import state, state_names
 from solitaireplus import legacy  # noqa: I001 (must come before the modules below)
-from solitaireplus.debug import actions  # noqa: F401 (loaded at start-up, as in main.py: tools find the F10 actions by name)
+from solitaireplus.debug import actions  # loaded at start-up, as in main.py: tools find the F10 actions by name
 from solitaireplus.app import fonts
 from solitaireplus.app import sounds
 from solitaireplus.app import window
@@ -28,6 +28,8 @@ from solitaireplus.menus import main_menu
 from solitaireplus.menus import options_screen
 from solitaireplus.games.arcade import machine_music
 from solitaireplus.games.dead_mans_hand import game_screen
+from solitaireplus.app.lazy import lazy
+five_card_draw_ui = lazy("solitaireplus.games.poker.five_card_draw_ui")
 
 SCREENS = {
     state_names.STATE_DEBUG_POKER_NPC_SELECT: "solitaireplus.debug.poker_select_screen",
@@ -140,6 +142,24 @@ def run_screen_hooks(entered_state):
     return new_state
 
 
+def typing_in_a_text_field():
+    """True while a text field of the current screen has the keyboard focus: the F10 debug menu
+    hotkey then does nothing (D1), and the key goes to the screen like any other key.
+
+    The text fields: the Profile screen's name, country, age, hometown and bio, and the manual
+    bet boxes at the Hold'em and Five-Card Draw tables. (The Cryptid collection's search box has
+    no focus, every key types into it, so it does not hold F10 back.)
+    """
+    if state.current_state == state_names.STATE_PROFILE:
+        return bool(state.profile_name_active or state.profile_country_active or state.profile_age_active
+                    or state.profile_hometown_active or state.profile_bio_active)
+    if state.current_state == state_names.STATE_TEXAS_HOLDEM:
+        return bool(state.holdem_manual_bet_active)
+    if state.current_state == state_names.STATE_FIVE_CARD_DRAW:
+        return bool(five_card_draw_ui.five_card_draw_manual_bet_active())
+    return False
+
+
 def run():
 
     # ==================================================
@@ -213,6 +233,7 @@ def run():
             if (
                     event.type == pygame.KEYDOWN
                     and event.key == pygame.K_F10
+                    and not typing_in_a_text_field()
             ):
 
                 print(
@@ -221,10 +242,7 @@ def run():
 
                 if state.current_state == state_names.STATE_DEBUG_MENU:
 
-                    if state.debug_previous_state is not None:
-                        state.current_state = state.debug_previous_state
-                        if state.current_state == state_names.STATE_DEAD_MANS_HAND:
-                            game_screen.dead_mans_hand_game.capture_mouse()
+                    actions.close_debug_menu()   # the same way back as the menu's Close button (B59)
 
                 else:
 

@@ -995,3 +995,158 @@ still there. The fixes did not touch it.
 **Results:** `screen_harness compare` → `IDENTICAL 64/64 scenes`; `replay compare` → `IDENTICAL 18/18 journeys`
 (baseline `7195fb3`). Tests `PASSED - all non-quarantined tests passed.` Re-checked on the integration line
 against `54a29ef`: `IDENTICAL 64/64 scenes`, `IDENTICAL 18/18 journeys`, tests `PASSED`.
+
+## Phase 10 (fix): B59, B60, B61, D1 (complete), no `global` in the debug code
+
+Fixed by the fix workflow (one agent per item, test first, adversarial review). Two review findings were then
+repaired:
+- B60: a repair workflow, reviewed against the harness renders.
+- D1: the restart-prompt gate, added while finalizing.
+
+Each new test failed on the old code. The reviewers checked this by putting the old code back in a scratch copy.
+
+- **B59** — the F10 hotkey and the menu's Close button now leave the debug menu through one function,
+  `close_debug_menu()` in `debug/actions.py`. It goes back to `state.debug_previous_state`. When that screen is Dead
+  Man's Hand, it also calls `dead_mans_hand_game.capture_mouse()`. With no previous screen the menu stays open.
+  `game_screen` is a lazy import there, so the start-up order is unchanged. Close still plays its click sound. The
+  opening side (release the mouse, remember the screen) stays inline in `app/loop.py`, because only F10 opens the
+  menu. The shared `test_loop_mouse_and_screen_hooks` fake namespace also loads the real `close_debug_menu`.
+  `test_debug_menu_close_recaptures_mouse` (Close back to Dead Man's Hand grabs the mouse, Close to other screens
+  leaves it alone, F10 twice gives release then capture, an AST check that both ways back call the function).
+- **B60** — `games/cryptid/creatures.py` has a new `opener_error(catalog, decks)`. It counts the creatures in both
+  seats' decks without any randomness. A deck with fewer than 2 gets "Your deck / The opponent's deck has N creature
+  card(s); a battle needs at least two to start." Unknown card ids count as non-creatures. `CryptidBattle.__init__`
+  raises `ValueError` with that text before the shuffle, instead of the opener's `StopIteration`.
+  - `CryptidScreen.start_battle` runs the same check after the career deck check and before the career
+    `battle_serial` save. On failure it changes nothing (page, battle, `result_claimed`, `battle_serial`). It shows
+    the message in gold in place of the bottom hint on the practice menu, or in the collection message bar on the
+    career home. `start_error` is cleared on `enter()` and on a good start.
+  - First attempt: the fixer built the battle before the save. Under the harness's shared seed counter that dealt a
+    different career battle (scene `cryptid_creatures` battle shot, journey 14 checkpoint `cryptid_battle`). The
+    repair keeps the original save-then-build order. Both are byte-identical to the baseline again.
+  - Normal play cannot reach this: starter and career decks are validated to exactly 8 creatures.
+  - `test_cryptid_opener` (engine errors for either seat, two creatures still open; practice and career starts show
+    the message and keep `battle_serial`; the message clears; the career save comes before the battle build).
+- **B61** — `games/dead_mans_hand/levels.py` has a new `_reachable_floor(rows, player)`. It flood-fills the floor
+  cells the player can reach, in 4 directions only: the square collision box cannot slip between walls that touch at
+  a corner. `_enemy_spawns` now runs in two passes:
+  - Pass 1 is the old picker, unchanged.
+  - Pass 2 moves only the cards that pass 1 put in an unreachable cell. Each goes to the first reachable cell in its
+    own stride order that keeps the 1.35 spacing.
+
+  So spawns that were already reachable keep their cells. All 10 authored levels give identical enemy tuples, and
+  `LEVEL_VALIDATION_ERRORS` is still `[]`. A random sweep of 20,000 maps found no spawn left unreachable and no
+  reachable spawn moved. `test_dead_mans_hand_spawn_reachability` (a 16x12 map with a sealed 4x4 room: no spawn
+  inside, every spawn reachable, cards already reachable keep their cells, no shared cells, authored levels pinned, a
+  boxed-in player gets none).
+- **D1 (complete)** — three parts:
+  - **The button.** The F10 menu has a "Win this Solitaire round" button (`ACTION_WIN_SOLITAIRE_ROUND`) in the
+    SOLITAIRE CHALLENGES column, one empty row below "All or Nothing". `menu_screen.solitaire_win_available()` is
+    true only when the menu was opened from the Solitaire table (`debug_previous_state == STATE_PLAYING`) and the
+    table's "Restart this hand?" prompt is not open. That prompt swallowed the old F8 key too. This gate comes from
+    a review finding, added while finalizing: before it, the round could be won behind the open prompt, which then
+    sat over the victory animation and came back next round.
+  - **What a click does.** When available, it plays the click, goes back through `close_debug_menu()` and calls
+    `games.solitaire.screen.instant_win_round()` (the old F8 body). Otherwise the button is drawn greyed out (the
+    Options disabled look), and a click does nothing and plays no sound. It is not a launch action, so it keeps a
+    running Free Play sandbox.
+  - **F10 while typing.** F10 is ignored while a text field has the keyboard focus: `app/loop.py`
+    `typing_in_a_text_field()`, keyed on the current screen. That covers the five Profile fields, the Hold'em
+    manual bet box (`state.holdem_manual_bet_active`) and the Five-Card Draw bet box (new public
+    `five_card_draw_manual_bet_active()`, reached through a lazy module). The key then goes to the screen, and the
+    field ignores it.
+  - **Confirmation.** A grep test finds no Solitaire F7/F8, no Hold'em F7/Space/B or `debug_setup_holdem_heads_up`,
+    and no Customize `debug_xp_rect`/"DEBUG +100 XP". It also checks that F10 and F11 are the only function keys
+    bound. In the Phase 10 worktree, Score Four F6 was still in `legacy.loop_event_score_four`, because Phase 8
+    deletes it, so that one check reported a skip. On the integration line Phase 8 is in and no `K_F6` is left. The
+    check now runs and passes, and the temporary skip was taken out of the test during integration.
+  - `test_debug_menu_solitaire_win`, `test_f10_ignored_while_typing`, `test_no_stray_debug_hotkeys`.
+- **N7 (debug)** — the 5 `global` statements in the F10 debug code are gone:
+  - `debug/menu.py` keeps the open Minigames section and the transient message in a module-private
+    `_ui = SimpleNamespace()`.
+  - `debug/poker_select.py` keeps its font cache in `_cache = SimpleNamespace(fonts=None)`.
+
+  Every name was module-private and other modules use only the public functions, so `state.py` is not touched. An
+  AST comparison (holder attributes mapped back to the old names) shows both files are equivalent to the move commit.
+  The poker picker scenes are byte-identical. `test_debug_menu_arcade` now looks for
+  `_ui.expanded_minigame_category = None`. `test_debug_no_globals` (no `global`/`globals()` anywhere in
+  `solitaireplus/debug/`, plus accordion, message and font-cache behaviour).
+
+**Choices made (designer can change them):**
+- B60: the message stays on the practice menu after the player picks another deck, until the next Start or until the
+  screen is entered again.
+- B61: if the player's reachable area holds no candidate cell (all reachable floor is within 3.0 of the start), the
+  level gets no enemies instead of enemies it can never reach. Such a level clears at once (N57). No authored
+  level hits this.
+- D1: the button is shown greyed out, not hidden, when the menu was not opened from the Solitaire table or the
+  restart prompt is open.
+- D1: the Cryptid collection's search box does not hold F10 back. It has no focus state (every key types into it), so
+  blocking F10 there would make the public menu unreachable on those pages.
+- D1: journey `03_solitaire` still wins through the `instant_solitaire_win()` helper (a copy of the F8 body) and not
+  through the new button. A journey that clicks the button would fail when replayed on a baseline without it
+  (N59).
+
+**Results** (integration line): tests `PASSED`. Baseline for both compares: `a710d567dd2913b8758e95cbb776cee2ef9596a2`,
+the integrated Phase 10 move. The Phase 10 worktree gave the same results against `3ce7a33`.
+- `screen_harness compare` → `DIFFERENT: 63/64 scenes identical`. The one difference was opened and is intended:
+  - `debug_menu`, shot `debug_menu.png` (12,472 pixels): the new greyed-out "Win this Solitaire round" button in the
+    SOLITAIRE CHALLENGES column, one empty row below "All or Nothing" (D1). The scene opens the menu from the main
+    menu, so the button is disabled. Nothing else on the menu changed.
+  - `cryptid_creatures` (menu and battle shots), `dmh_dead_mans_hand` and the two poker picker scenes are identical.
+- `replay compare` → `DIFFERENT: 17/18 journeys identical`. Only one screenshot differs; every checkpoint value is
+  identical:
+  - `15_debug_menu_quit` `cp_00_debug_menu` (12,472 pixels): the same greyed-out button (D1).
+  - `14_cryptid_and_dead_mans_hand` is identical. It covers the Cryptid collection, the career battle, Dead Man's
+    Hand start and movement, and it passes through the menu with no checkpoint on it.
+
+Commit `070b45e` in the Phase 10 worktree, cherry-picked onto the integration line.
+
+legacy.py is not empty after this phase: 1992 lines on the integration line (5340 in the Phase 10 checkout). Two
+start-up defaults and a few imports of this area remain, as the move report says. So do the Phase 11 code and the
+shared helpers. The fixes did not touch it.
+
+**New findings (not fixed):**
+1. **N55:** only the way back from the debug menu is shared (B59). The way in (release the Dead Man's Hand
+   mouse, remember the previous screen) is still inline in `app/loop.py` `run()`. A second way to open the menu
+   would need the same release step. An `open_debug_menu()` next to `close_debug_menu()` would close this off.
+2. **N56:** B61 pass 2 can put two enemies in the same cell even when free reachable cells exist. When the 1.35
+   spacing cannot be met, `pick()` falls back to `pool[0]` without checking whether that cell is taken. The old
+   picker had the same fallback, but the smaller reachable pool makes it happen more often. This only happens on
+   maps with a sealed room; no shipped level has one. Example from the review: `_build_map(14, 9, ...)` with player
+   (9.5, 1.5) and salt 14 puts C1 and C2 both at (6.5, 2.5).
+3. **N57:** B61 returns `()` when no candidate cell is reachable. In `DeadMansHandGame.update()`, `all()` over
+   an empty enemy list is true, so such a level clears at once and still pays the 500 + level_index*250 clear bonus.
+   A gentler fallback would place the enemies in reachable cells closer than 3.0. No authored level hits this.
+4. **N58:** `validate_levels()` in `games/dead_mans_hand/levels.py` checks only that enemies are not inside
+   walls, not that they are reachable. A hand-authored enemy list that bypasses `_enemy_spawns` could still be
+   unreachable. Also, `_reachable_floor()` repeats `DeadMansHandGame._reachable_open_cells()` in `game.py` (same
+   4-way flood fill, used for pickups). The two could share one helper.
+5. **N59:** `tools/harness/journeys.py` `03_solitaire` still wins through `instant_solitaire_win()`, which
+   copies the F8 body. The brief (§7, Phase 0, step 0.2, journey 3) wants it to win through the F10 button once D1
+   exists. Switch it once the
+   baseline commit has the button.
+6. **N60:** `README.md` line 81 still says "Press F9 during games of Solitaire to automatically win." It was
+   already wrong (the key was F8, and Phase 4 removed it). It should point to the F10 menu's "Win this Solitaire
+   round" button.
+7. **N61:** `solitaireplus/games/dead_mans_hand/pvp.py` (`DeadMansHandPvPMode`, with relay and room-code text
+   fields) is imported by nothing; only `multiplayer/dead_mans_hand_pvp.py` is used. It looks like dead code, and it
+   has text fields that the D1 F10 guard does not cover.
+8. **N62:** `state.holdem_manual_bet_active` is not cleared when the Hold'em recap overlay opens. If the bet box
+   had the focus then, F10 stays ignored until the box loses focus. This is mostly theoretical: both bet-box click
+   handlers run before every other table click, so the flag normally clears before a hand ends.
+9. **N63:** `Game.debug_auto_solve_state` in `games/solitaire/rules.py` has had no caller since Solitaire F7 was
+   removed.
+10. **N64:** `test_no_stray_debug_hotkeys.test_only_f10_and_f11_are_bound` allows no function key other than
+    F10/F11 anywhere in `main.py` or `solitaireplus/`. Any later legitimate function-key binding must update the
+    test.
+11. **N65:** a `global` statement outside this phase's area remains in `solitaireplus/`:
+    `games/solitaire/race_deals.py` (`_pool`). The end-state checklist wants none. `race_deals.py` belongs to
+    Solitaire (Phase 4, already done), so no remaining phase owns it. The Phase 10 checkout also had some in
+    `games/cards/bango_ui.py` and `crazy_eights_ui.py`, but Phase 8 has removed them on the integration line.
+12. **N66:** a tracked stray copy of `test_dead_mans_hand_weapon_system.py` sits at the repository root, next to
+    `tests/test_dead_mans_hand_weapon_system.py`.
+13. **N67:** two weak spots in the new tests, not defects in the fixes:
+    - `test_debug_menu_close_recaptures_mouse` opens the menu with its own copy of the F10 opening code, not the real
+      loop, so a later change to the opening side would not be caught there.
+    - `test_debug_no_globals`'s "clamped to 250 ms" assertion (`drawn() or elapsed >= 250`) is close to always true.
+      The AST check is the real regression test.

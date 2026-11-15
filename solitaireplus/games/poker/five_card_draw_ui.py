@@ -1372,6 +1372,11 @@ def clear_five_card_draw_manual_bet():
     _ui.draw_manual_bet_active = False
 
 
+def five_card_draw_manual_bet_active():
+    """True while the manual bet box has the keyboard focus (the F10 hotkey then waits, D1)."""
+    return _ui.draw_manual_bet_active
+
+
 def handle_five_card_draw_manual_bet_click(mouse_pos, game):
     if mouse_pos is None:
         return False

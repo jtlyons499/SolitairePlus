@@ -11,7 +11,7 @@ def test_debug_menu_uses_expandable_minigame_categories():
     assert '"Poker"' in source
     assert "def toggle_minigame_category(action):" in source
     assert 'marker = "-" if expanded else "+"' in source
-    assert '_expanded_minigame_category = None' in source
+    assert '_ui.expanded_minigame_category = None' in source
 
 
 def test_arcade_debug_entries_are_available_from_minigame_accordion():

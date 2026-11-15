@@ -40,9 +40,30 @@ def _build_map(width: int, height: int, blocks=()) -> tuple[str, ...]:
     return tuple("".join(row) for row in grid)
 
 
+def _reachable_floor(rows, player) -> set[tuple[int, int]]:
+    """Return the floor cells (x, y) the player can walk to from the start."""
+    sx, sy = int(math.floor(player[0])), int(math.floor(player[1]))
+    if not (0 <= sy < len(rows) and 0 <= sx < len(rows[sy]) and rows[sy][sx] == "."):
+        return set()
+    reachable = {(sx, sy)}
+    pending = [(sx, sy)]
+    while pending:
+        x, y = pending.pop()
+        # Orthogonal steps only: the square collision box cannot slip between
+        # two walls that touch at a corner.
+        for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            if (nx, ny) in reachable or not (0 <= ny < len(rows) and 0 <= nx < len(rows[ny])):
+                continue
+            if rows[ny][nx] == ".":
+                reachable.add((nx, ny))
+                pending.append((nx, ny))
+    return reachable
+
+
 def _enemy_spawns(rows, player, cards, salt=0):
-    """Spread an authored card roster across open floor cells deterministically."""
+    """Spread an authored card roster across reachable floor cells deterministically."""
     px, py, _angle = player
+    reachable = _reachable_floor(rows, player)
     candidates = []
     for y, row in enumerate(rows):
         for x, cell in enumerate(row):
@@ -57,24 +78,36 @@ def _enemy_spawns(rows, player, cards, salt=0):
             spread = ((x * 37 + y * 53 + int(salt) * 97) % 101) / 101.0
             candidates.append((distance + spread * 1.6, cx, cy))
     candidates.sort(reverse=True)
-    if not candidates:
+    if not any((int(cx), int(cy)) in reachable for _score, cx, cy in candidates):
         return ()
 
-    chosen = []
-    for index, card in enumerate(cards):
-        # Walk through the sorted pool at different strides, rejecting points
-        # that would stack cards on top of one another.
+    def is_reachable(spawn):
+        return (int(spawn[1]), int(spawn[2])) in reachable
+
+    def stride(index):
         start = (index * 7 + int(salt) * 3) % len(candidates)
-        selected = None
-        for offset in range(len(candidates)):
-            _score, cx, cy = candidates[(start + offset) % len(candidates)]
-            if all(math.hypot(cx - ox, cy - oy) >= 1.35 for _c, ox, oy in chosen):
-                selected = (str(card), cx, cy)
-                break
-        if selected is None:
-            _score, cx, cy = candidates[start]
-            selected = (str(card), cx, cy)
-        chosen.append(selected)
+        return candidates[start:] + candidates[:start]
+
+    def pick(card, pool, taken):
+        for _score, cx, cy in pool:
+            if all(math.hypot(cx - ox, cy - oy) >= 1.35 for _c, ox, oy in taken):
+                return (str(card), cx, cy)
+        _score, cx, cy = pool[0]
+        return (str(card), cx, cy)
+
+    # Walk through the sorted pool at different strides, rejecting points
+    # that would stack cards on top of one another.
+    chosen = [None] * len(cards)
+    for index, card in enumerate(cards):
+        chosen[index] = pick(card, stride(index), chosen[:index])
+    # B61: a card that landed where the player cannot reach (a sealed-off room)
+    # is moved to a reachable cell; every card that was already reachable keeps
+    # its spot, so connected maps get exactly the same spawns as before.
+    for index, card in enumerate(cards):
+        if not is_reachable(chosen[index]):
+            pool = [entry for entry in stride(index) if is_reachable(entry)]
+            taken = [spawn for other, spawn in enumerate(chosen) if other != index and is_reachable(spawn)]
+            chosen[index] = pick(card, pool, taken)
     return tuple(chosen)
 
 

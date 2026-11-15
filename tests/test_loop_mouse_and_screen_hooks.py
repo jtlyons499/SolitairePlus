@@ -116,6 +116,8 @@ def loop_env(frames, screens_module, screens, current_state, to_game=lambda pos:
         game_surface=pygame.Surface((1366, 768)),
     )
     locate.exec_nodes(nodes, env, filename=str(LOOP_FILE))
+    # F10 on the debug menu goes back through the real close_debug_menu (B59).
+    locate.exec_functions(["close_debug_menu"], env, path="solitaireplus/debug/actions.py")
     return env
 
 

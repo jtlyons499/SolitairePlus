@@ -42,6 +42,7 @@ from solitaireplus.debug.menu import ACTION_SEVEN_CARD_STUD
 from solitaireplus.debug.menu import ACTION_SUB_RATING
 from solitaireplus.debug.menu import ACTION_SUIT_SNAKE
 from solitaireplus.debug.menu import ACTION_TEXAS_HOLDEM
+from solitaireplus.debug.menu import ACTION_WIN_SOLITAIRE_ROUND
 from solitaireplus.debug.menu import ACTION_ZERO_CASH
 from solitaireplus.debug.menu import CAREER_HUB_JUMP_ACTIONS as DEBUG_CAREER_HUB_JUMP_ACTIONS
 from solitaireplus.debug.menu import LAUNCH_ACTIONS as DEBUG_LAUNCH_ACTIONS
@@ -70,6 +71,15 @@ faro_screen = lazy("solitaireplus.games.casino.faro_screen")
 calendar = lazy("solitaireplus.career.calendar")
 buttons = lazy("solitaireplus.ui.buttons")
 blind_mans_bluff_screen = lazy("solitaireplus.games.poker.blind_mans_bluff_screen")
+solitaire_screen = lazy("solitaireplus.games.solitaire.screen")
+
+
+def solitaire_win_available():
+    """The 'Win this Solitaire round' button works only when the menu was opened from the
+    Solitaire table (D1), and not while its 'Restart this hand?' prompt is open (that prompt
+    swallowed the old F8 key too)."""
+    return (state.debug_previous_state == state_names.STATE_PLAYING
+            and not solitaire_screen.solitaire_restart_prompt.open)
 
 
 def handle_event(event):
@@ -182,6 +192,14 @@ def handle_event(event):
             actions.debug_open_solitaire_challenge(
                 "all_or_nothing"
             )
+
+        elif debug_action == ACTION_WIN_SOLITAIRE_ROUND:
+            # The designer's instant win (was the Solitaire F8 key, D1): back to the table, then
+            # win the round. Opened from anywhere else, the button is disabled.
+            if solitaire_win_available():
+                sounds.audio.play_sound("button_click")
+                actions.close_debug_menu()
+                solitaire_screen.instant_win_round()
 
         # ==========================================
         # Minigames
@@ -358,9 +376,7 @@ def handle_event(event):
 
         elif debug_action == ACTION_CLOSE:
             sounds.audio.play_sound("button_click")
-
-            if state.debug_previous_state is not None:
-                state.current_state = state.debug_previous_state
+            actions.close_debug_menu()   # like F10: back, recapturing the mouse in Dead Man's Hand (B59)
 
     return
 
@@ -382,7 +398,9 @@ def draw():
 
         fonts.option_label_font,
 
-        fonts.difficulty_detail_font
+        fonts.difficulty_detail_font,
+
+        solitaire_win_available=solitaire_win_available(),
 
     )
 

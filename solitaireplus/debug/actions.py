@@ -31,6 +31,7 @@ machine_select = lazy("solitaireplus.games.arcade.machine_select")
 leveling = lazy("solitaireplus.profile.leveling")
 leaderboard_engine = lazy("solitaireplus.career.leaderboard_engine")
 horse_races_screen = lazy("solitaireplus.games.casino.horse_races_screen")
+game_screen = lazy("solitaireplus.games.dead_mans_hand.game_screen")
 five_o_screen = lazy("solitaireplus.games.poker.five_o_screen")
 faro_screen = lazy("solitaireplus.games.casino.faro_screen")
 crazy_eights_screen = lazy("solitaireplus.games.cards.crazy_eights_screen")
@@ -467,6 +468,20 @@ def debug_set_player_level(
     )
 
     leveling.sync_unlocks_for_current_level()
+
+
+def close_debug_menu():
+    """Leave the F10 debug menu for the screen it was opened from (state.debug_previous_state).
+
+    The one way back for both the F10 hotkey (app/loop.py) and the menu's Close button (B59):
+    going back to Dead Man's Hand recaptures the mouse that opening the menu released. Without a
+    previous screen the menu stays open.
+    """
+
+    if state.debug_previous_state is not None:
+        state.current_state = state.debug_previous_state
+        if state.current_state == state_names.STATE_DEAD_MANS_HAND:
+            game_screen.dead_mans_hand_game.capture_mouse()
 
 
 def debug_end_free_play_sandbox():

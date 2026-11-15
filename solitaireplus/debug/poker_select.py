@@ -1,4 +1,5 @@
 import random
+from types import SimpleNamespace
 from solitaireplus.npc.personality import personality_summary
 import pygame
 
@@ -24,19 +25,19 @@ SLOT_RECTS = [
 LEFT_RECTS = [pygame.Rect(rect.x + 14, rect.y + 28, 54, 48) for rect in SLOT_RECTS]
 RIGHT_RECTS = [pygame.Rect(rect.right - 68, rect.y + 28, 54, 48) for rect in SLOT_RECTS]
 
-_fonts = None
+# Module-private font cache.
+_cache = SimpleNamespace(fonts=None)
 
 
 def _get_fonts():
-    global _fonts
-    if _fonts is None:
-        _fonts = {
+    if _cache.fonts is None:
+        _cache.fonts = {
             "title": pygame.font.SysFont("cambria", 36, bold=True),
             "large": pygame.font.SysFont("cambria", 23, bold=True),
             "medium": pygame.font.SysFont("cambria", 18, bold=True),
             "small": pygame.font.SysFont("cambria", 14),
         }
-    return _fonts
+    return _cache.fonts
 
 
 def _draw_button(surface, rect, text, mouse_pos, enabled=True, accent=False):

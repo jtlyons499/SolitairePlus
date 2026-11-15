@@ -175,6 +175,21 @@ def damage_values(move, attacker, defender, attacker_card, defender_card, arena=
     return result["ap_loss"],result["hp_loss"]
 
 
+def opener_error(catalog, decks):
+    """Why these two decks (player, opponent) cannot open a battle, or "".
+
+    The opener needs two creatures per seat (one active, one on the Docket).
+    Uses no randomness, so callers can check before saving anything (B60).
+    """
+    for seat, deck in enumerate(decks):
+        creatures = sum(catalog.cards.get(cid, {}).get("kind") == "creature" for cid in deck)
+        if creatures < 2:
+            owner = "Your deck" if seat == 0 else "The opponent's deck"
+            return (f"{owner} has {creatures} creature card(s); "
+                    "a battle needs at least two to start.")
+    return ""
+
+
 class CryptidBattle:
     def __init__(self, catalog=None, player_deck="frontier", npc_deck="mystic_garden", seed=None, player_cards=None):
         self.catalog = catalog or CryptidCatalog()
@@ -185,6 +200,9 @@ class CryptidBattle:
             errors=deck_errors(player_cards,cards=self.catalog)
             if errors:raise ValueError(' '.join(errors))
             self.sides[0].deck=list(player_cards)
+        # Refuse clearly instead of failing with StopIteration (B60).
+        error = opener_error(self.catalog, [side.deck for side in self.sides])
+        if error: raise ValueError(error)
         self.turn = 0
         self.turn_number = 0
         self.winner = None  # 0 human, 1 NPC, 2 simultaneous draw.

@@ -77,6 +77,11 @@ How to use this file (maintainers and AI agents):
 - King Pong: after a point, the next serve now goes to the side that lost the point (it used to go back to the scorer), and pressing Enter during a match no longer forfeits it.
 - Suit Snake: the snake no longer races across the board after a pause or a freeze, and your first-ever game no longer announces "NEW HIGH SCORE!".
 - The arcade machines do less work every frame (fonts and the Ace Invaders background picture are made once).
+- F10 debug menu: the Solitaire F8 instant win is back as a "Win this Solitaire round" button. It works when you open the menu from the Solitaire table and is greyed out everywhere else.
+- F10 debug menu: pressing F10 while typing in a Profile field or in the Hold'em or Five-Card Draw bet box no longer opens the menu.
+- F10 debug menu: closing the menu with its Close button during Dead Man's Hand now hands the mouse back to the game, as F10 already did. Before, mouse look stopped working.
+- Cryptid Creatures: a deck with fewer than two creatures no longer crashes the game. It shows a message and the battle doesn't start. The included and career decks always have eight creatures.
+- Dead Man's Hand: enemies can no longer be placed somewhere you can't walk to. None of the current levels has such a spot.
 
 ### Online play
 - Room codes are now 6 letters/digits instead of 5 digits, and guessing other people's room codes is slowed down and then blocked. Old 5-digit codes still work with players who haven't updated.
