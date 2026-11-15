@@ -38,7 +38,7 @@ class PackagingTests(unittest.TestCase):
 
     def test_version_ships_as_a_loose_file_not_inside_the_game_exe(self):
         spec = (ROOT / "SolitairePlus.spec").read_text(encoding="utf-8")
-        self.assertIn("excludes=['version', 'netservice']", spec)
+        self.assertIn("excludes=['version', 'netservice', 'updater']", spec)
         self.assertIn("(str(project / 'version.py'), '.')", spec)
         self.assertEqual(spec_constant("CONTENTS"), "SolitairePlus_Data")
 

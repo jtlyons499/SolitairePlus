@@ -23,6 +23,7 @@ def write(path: Path, data: bytes) -> Path:
 def fake_dist(folder: Path, exe=b"game-v1", net=b"net-v1", dll=b"dll-v1", asset=b"png-v1") -> Path:
     write(folder / "SolitairePlus.exe", exe)
     write(folder / "SolitaireNet.exe", net)
+    write(folder / "SolitaireUpdater.exe", b"updater-v1")
     write(folder / DATA / "python3.dll", dll)
     write(folder / DATA / "assets" / "cards" / "AS.png", asset)
     write(folder / DATA / "version.py", b'__version__ = "0.0.7"\n')
@@ -118,6 +119,7 @@ class ManifestAndReuseTests(unittest.TestCase):
         manifest = mm.cmd_manifest(dist, self.base / "out" / "manifest.json", "0.0.7",
                                    self.base / "prev.json", self.base / "out")
         self.assertEqual(manifest["delta"]["from"], "0.0.6")
+        self.assertEqual(sorted(manifest["delta"]["paths"]), sorted(["SolitaireNet.exe", f"{DATA}/assets/cards/AS.png", f"{DATA}/assets/new.png"]))
         with zipfile.ZipFile(self.base / "out" / manifest["delta"]["asset"]) as archive:
             self.assertEqual(sorted(archive.namelist()), sorted([
                 "SolitaireNet.exe", f"{DATA}/assets/cards/AS.png", f"{DATA}/assets/new.png"]))

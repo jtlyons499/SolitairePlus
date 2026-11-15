@@ -41,6 +41,11 @@ GitHub Actions is free for public repositories, so this costs nothing.
 | `game` | `tests/` | single-player game code (career, poker, arcade, saves, assets, ...) | `tests/`, then the repository root |
 | `multiplayer` | `multiplayer/tests/` | multiplayer tables, relay server, the game's network client, profiles | `multiplayer/tests/`, `multiplayer/`, then the root |
 
+The updater (`updater/`, built as `SolitaireUpdater.exe`) is tested in the `game` suite by `tests/test_updater.py`
+(planning, downloading, applying, rolling back an update, using fake releases on disk via `file://` URLs) and
+`tests/test_updater_signatures.py` (the real Windows signature check, using a throwaway certificate created in memory;
+skipped on PCs without Windows PowerShell).
+
 The network service (`netservice/`, built as `SolitaireNet.exe`) is tested in the `game` suite by
 `tests/test_netservice.py`, which uses small fake servers on `127.0.0.1` (no internet needed). The real
 game path (game → `SolitaireNet` child process → relay server) is tested in `multiplayer/tests/test_net_client.py`.
@@ -153,6 +158,7 @@ GitHub:
 | Command | What it proves |
 |---|---|
 | `dist\SolitairePlus\SolitaireNet.exe --selftest` | The network service starts, and all its connectors load. |
+| `dist\SolitairePlus\SolitaireUpdater.exe --selftest` | The updater starts, including its window toolkit (exit code 0). |
 | `dist\SolitairePlus\SolitairePlus.exe --multiplayer --selftest --selftest-report report.txt` | Every multiplayer module imports inside the real packaged game. |
 
 Why the second one matters: the files in `multiplayer/` ship as loose `.py` files, so PyInstaller can't see what

@@ -4,9 +4,10 @@
 #
 #   SolitairePlus.exe        the game (also runs the Multiplayer window with --multiplayer)
 #   SolitaireNet.exe         online-play network service (netservice/)
+#   SolitaireUpdater.exe     updater (updater/)
 #   SolitairePlus_Data/      shared Python runtime + assets/, data/, multiplayer/, version.py
 #
-# Both exes share one runtime folder. Each exe only contains its own Python code,
+# All three exes share one runtime folder. Each exe only contains its own Python code,
 # so a change to netservice/ rebuilds SolitaireNet.exe but not the game, and an
 # asset change rebuilds neither (see tools/make_manifest.py).
 #
@@ -66,7 +67,7 @@ game = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=['version', 'netservice'],
+    excludes=['version', 'netservice', 'updater'],
     noarchive=False,
     optimize=0,
 )
@@ -132,6 +133,46 @@ net_exe = EXE(
 )
 
 
+# ----------------------------------------------------------------------------- updater
+# Part of the shared folder on purpose (not a single self-extracting file, and it
+# never runs a copy of itself from %TEMP%): Microsoft Defender flagged that pattern
+# as malware. Files it is using during an update are renamed aside instead.
+upd = Analysis(
+    [str(project / 'updater' / '__main__.py')],
+    pathex=[str(project)],
+    binaries=[],
+    datas=[],
+    hiddenimports=['tkinter', 'tkinter.ttk', 'updater.trusted_publishers'],
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=['pygame', 'version', 'netservice'],
+    noarchive=False,
+    optimize=0,
+)
+upd_pyz = PYZ(upd.pure)
+upd_exe = EXE(
+    upd_pyz,
+    upd.scripts,
+    [],
+    exclude_binaries=True,
+    name='SolitaireUpdater',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=False,
+    console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    contents_directory=CONTENTS,
+    version=optional(project / 'build_version_info_updater.txt'),
+    icon=icon_file,
+)
+
+
 coll = COLLECT(
     game_exe,
     game.binaries,
@@ -139,6 +180,9 @@ coll = COLLECT(
     net_exe,
     net.binaries,
     net.datas,
+    upd_exe,
+    upd.binaries,
+    upd.datas,
     strip=False,
     upx=False,
     upx_exclude=[],

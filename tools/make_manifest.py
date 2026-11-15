@@ -22,6 +22,7 @@ matches the previous release, the previous release's file is reused unchanged.
 Parts ("components") of the install folder:
     game     SolitairePlus.exe         built from the root *.py files and shared/
     net      SolitaireNet.exe          built from netservice/
+    updater  SolitaireUpdater.exe      built from updater/
     runtime  SolitairePlus_Data/*      Python, pygame and other libraries (DLLs, .pyd, base_library.zip)
     content  SolitairePlus_Data/assets, data, multiplayer, version.py   copied straight from the repo
 """
@@ -43,7 +44,7 @@ FULL_ASSET = "Solitaire-Windows.zip"
 MANIFEST_NAMES = {"manifest.json", "manifest.json.p7s"}
 SCHEMA = 1
 
-EXES = {"SolitairePlus.exe": "game", "SolitaireNet.exe": "net"}
+EXES = {"SolitairePlus.exe": "game", "SolitaireNet.exe": "net", "SolitaireUpdater.exe": "updater"}
 CONTENT_PREFIXES = tuple(f"{DATA_DIR}/{folder}/" for folder in ("assets", "data", "multiplayer"))
 CONTENT_FILES = {f"{DATA_DIR}/version.py"}
 
@@ -55,6 +56,7 @@ COMPONENT_INPUTS = {
     # does not need a new game exe.
     "game": (["*.py", "shared/**/*.py", "requirements.txt", *BUILD_TOOLING], {"version.py"}),
     "net": (["netservice/**/*.py", *BUILD_TOOLING], set()),
+    "updater": (["updater/**/*.py", *BUILD_TOOLING], set()),
     "runtime": (["SolitairePlus.spec", "requirements.txt", "requirements-build.txt"], set()),
 }
 REUSABLE = set(COMPONENT_INPUTS)  # "content" is always taken fresh from the repo
@@ -187,7 +189,7 @@ def cmd_manifest(dist: Path, out: Path, version: str, previous_manifest: Path | 
             with zipfile.ZipFile(delta_dir / name, "w", zipfile.ZIP_DEFLATED) as archive:
                 for relpath in changed:
                     archive.write(dist / relpath, relpath)
-            manifest["delta"] = {"from": previous["version"], "asset": name, "files": len(changed)}
+            manifest["delta"] = {"from": previous["version"], "asset": name, "files": len(changed), "paths": changed}
             print(f"Wrote {delta_dir / name} ({len(changed)} file(s))")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(manifest, indent=1, sort_keys=False) + "\n", encoding="utf-8")
@@ -200,7 +202,7 @@ def summarize(changed: list[str], removed: list[str], files: dict, old_version: 
     by_component: dict[str, list[str]] = {}
     for relpath in changed:
         by_component.setdefault(files[relpath]["component"], []).append(relpath)
-    for component in ("game", "net", "runtime", "content", "other"):
+    for component in ("game", "net", "updater", "runtime", "content", "other"):
         items = by_component.get(component, [])
         if items:
             shown = ", ".join(items[:8]) + (" ..." if len(items) > 8 else "")

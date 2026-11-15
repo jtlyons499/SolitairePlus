@@ -36,6 +36,7 @@ VERSION_LINE = re.compile(r"""^__version__\s*=\s*["']([^"']+)["']""", re.MULTILI
 EXES = [
     ("SolitairePlus", "Solitaire+", "version.py", "build_version_info.txt"),
     ("SolitaireNet", "Solitaire+ online play service", "netservice/__init__.py", "build_version_info_net.txt"),
+    ("SolitaireUpdater", "Solitaire+ updater", "updater/__init__.py", "build_version_info_updater.txt"),
 ]
 
 

@@ -19,26 +19,12 @@ ROOT = Path(__file__).resolve().parents[1]
 VERSION_FILE = ROOT / "version.py"
 CHANGELOG = ROOT / "CHANGELOG.md"
 
-SEMVER = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$")
-VERSION_LINE = re.compile(r'^__version__\s*=\s*["\']([^"\']+)["\']', re.MULTILINE)
+VERSION_LINE = re.compile(r"""^__version__\s*=\s*["']([^"']+)["']""", re.MULTILINE)
 UNRELEASED = "## [Unreleased]"
 
-
-def parse(version: str) -> tuple:
-    """Return a sortable key following Semantic Versioning 2.0 precedence rules."""
-    match = SEMVER.match(version)
-    if not match:
-        raise ValueError(f"{version!r} is not a valid version (expected e.g. 0.0.8 or 0.0.8-beta.1)")
-    core = tuple(int(match.group(i)) for i in (1, 2, 3))
-    pre = match.group(4)
-    if pre is None:
-        return core + ((1,),)  # a release sorts after any of its pre-releases
-    parts = tuple((0, int(p), "") if p.isdigit() else (1, 0, p) for p in pre.split("."))
-    return core + ((0,) + parts,)
-
-
-def is_newer(candidate: str, current: str) -> bool:
-    return parse(candidate) > parse(current)
+# One implementation of the version rules, shared with the in-game updater.
+sys.path.insert(0, str(ROOT))
+from updater.versions import is_newer, parse  # noqa: E402
 
 
 def current_version() -> str:

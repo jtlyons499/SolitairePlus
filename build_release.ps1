@@ -6,7 +6,8 @@
   1. Uses the project's .venv Python (create it once: py -3.14 -m venv .venv).
   2. Installs the pinned dependencies (requirements.txt + requirements-build.txt).
   3. Runs all unit tests (tools/run_tests.py) and the asset preflight. Any failure stops the build.
-  4. Writes the Windows version resources and runs PyInstaller (SolitairePlus.exe + SolitaireNet.exe).
+  4. Writes the Windows version resources and runs PyInstaller (SolitairePlus.exe, SolitaireNet.exe,
+     SolitaireUpdater.exe).
   5. Runs the packaged self-tests (every multiplayer module imports; SolitaireNet starts).
   6. Writes manifest.json and puts a playable ZIP in release\Solitaire-Windows.zip.
 
@@ -50,11 +51,15 @@ Invoke-Step "Writing version information" { & $python tools/write_version_info.p
 Invoke-Step "Building with PyInstaller" { & $python -m PyInstaller --noconfirm --clean "SolitairePlus.spec" }
 
 $dist = Join-Path $PSScriptRoot "dist\SolitairePlus"
-foreach ($exe in "SolitairePlus.exe", "SolitaireNet.exe") {
+foreach ($exe in "SolitairePlus.exe", "SolitaireNet.exe", "SolitaireUpdater.exe") {
     if (-not (Test-Path (Join-Path $dist $exe))) { throw "Build did not produce dist\SolitairePlus\$exe" }
 }
 
 Invoke-Step "Self-test: SolitaireNet.exe" { & (Join-Path $dist "SolitaireNet.exe") --selftest }
+Invoke-Step "Self-test: SolitaireUpdater.exe" {
+    $p = Start-Process (Join-Path $dist "SolitaireUpdater.exe") -ArgumentList "--selftest" -Wait -PassThru
+    $global:LASTEXITCODE = $p.ExitCode
+}
 Invoke-Step "Self-test: multiplayer modules in the packaged game" {
     $report = Join-Path $PSScriptRoot "release\selftest-multiplayer.txt"
     New-Item -ItemType Directory -Force -Path (Split-Path $report) | Out-Null

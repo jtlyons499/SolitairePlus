@@ -8,6 +8,13 @@ if "--multiplayer" in _launch_sys.argv:
     run_multiplayer()
     raise SystemExit(0)
 
+# If an update was interrupted (e.g. power cut), let the updater undo it first.
+# It restarts the game afterwards. See update_check.py.
+import update_check
+if update_check.recover_if_needed():
+    raise SystemExit(0)
+update_check.cleanup_leftovers()
+
 from alien_night import STORY as ALIEN_STORY, new_alien_story, refresh_adventure_schedule
 from solitaire_restart import RestartPrompt
 solitaire_restart_prompt = RestartPrompt()
@@ -5602,6 +5609,103 @@ options_back_rect = pygame.Rect(
     300,
     42
 )
+
+# ==================================================
+# UPDATES AND SAVED OPTIONS
+# (update_check.py talks to SolitaireUpdater.exe; app_settings.py stores
+#  Options choices in %LOCALAPPDATA%\SimpleSolitaire\app_settings.json)
+# ==================================================
+
+import app_settings as app_settings_module
+
+app_settings = app_settings_module.AppSettings()
+update_checker = update_check.UpdateChecker()
+update_message = ""
+update_banner_rect = pygame.Rect(946, 688, 400, 54)
+update_now_rect = pygame.Rect(1000, 530, 260, 42)
+update_auto_rect = pygame.Rect(1000, 590, 260, 42)
+
+
+def start_game_update():
+    """Save, open the updater window, and close the game (the updater restarts it)."""
+    global update_message, running
+    if multiplayer_launcher.process is not None and multiplayer_launcher.process.poll() is None:
+        update_message = "Close the Multiplayer window first, then try again."
+        return
+    auto_save_career()
+    app_settings.flush()
+    if update_check.launch_update():
+        running = False
+    else:
+        update_message = "The updater could not be started. Reinstall Solitaire+ to fix this."
+
+
+def handle_update_button():
+    global update_message
+    update_message = ""
+    if update_checker.update_available:
+        start_game_update()
+    else:
+        update_checker.start()
+
+
+def current_app_settings_values():
+    return {
+        "music_mode": audio.music_mode,
+        "music_volume": audio.music_volume,
+        "sfx_volume": audio.sfx_volume,
+        "double_click_mode": game.double_click_mode,
+        "window_size": [WINDOWED_WIDTH, WINDOWED_HEIGHT],
+        "fullscreen": fullscreen_enabled,
+    }
+
+
+def apply_saved_app_settings():
+    """Restore the Options choices from the last session (called once, before the main loop)."""
+    mode = app_settings.get("music_mode")
+    if mode and mode != audio.music_mode:
+        audio.set_music_mode(mode)
+    if app_settings.get("music_volume") is not None:
+        audio.set_music_volume(app_settings.get("music_volume"))
+    if app_settings.get("sfx_volume") is not None:
+        audio.set_sfx_volume(app_settings.get("sfx_volume"))
+    if app_settings.get("double_click_mode"):
+        game.double_click_mode = app_settings.get("double_click_mode")
+    size = app_settings.get("window_size")
+    if size and tuple(size) in RESOLUTION_OPTIONS and tuple(size) != (WINDOWED_WIDTH, WINDOWED_HEIGHT):
+        set_window_size(*size)
+    if app_settings.get("fullscreen"):
+        set_fullscreen_enabled(True)
+
+
+def draw_update_banner():
+    if update_checker.update_available:
+        draw_menu_button(update_banner_rect, f"Update to {update_checker.latest}", menu_mouse_pos,
+                         font=option_value_font)
+    if update_message:
+        text = ui_small_font.render(update_message, True, (255, 200, 150))
+        game_surface.blit(text, text.get_rect(midright=(BASE_WIDTH - 20, update_banner_rect.y - 16)))
+
+
+def draw_update_options_panel():
+    label = option_label_font.render("Updates", True, (255, 255, 255))
+    game_surface.blit(label, (1000, 480))
+    draw_menu_button(update_now_rect, "Update now" if update_checker.update_available else "Check now",
+                     game_mouse_pos, font=option_value_font)
+    auto = app_settings.get("auto_update_check")
+    draw_menu_button(update_auto_rect, f"Auto check: {'On' if auto else 'Off'}", game_mouse_pos,
+                     selected=auto, font=option_value_font)
+    status = update_message or update_checker.status_text()
+    line, y = "", 642
+    for word in status.split():  # wrap to the space right of the other options
+        candidate = f"{line} {word}".strip()
+        if line and ui_small_font.size(candidate)[0] > 340:
+            game_surface.blit(ui_small_font.render(line, True, (220, 220, 220)), (1000, y))
+            line, y = word, y + ui_small_font.get_linesize()
+        else:
+            line = candidate
+    if line:
+        game_surface.blit(ui_small_font.render(line, True, (220, 220, 220)), (1000, y))
 
 # ==================================================
 # CUSTOMIZATION STATE
@@ -22258,6 +22362,8 @@ def draw_main_menu():
         )
     )
 
+    draw_update_banner()
+
 
 # ==================================================
 # OPTIONS MENU
@@ -22748,6 +22854,8 @@ def draw_options_menu():
         selected=fullscreen_enabled,
         font=option_value_font
     )
+
+    draw_update_options_panel()
 
     # ----------------------------
     # Back
@@ -24033,10 +24141,22 @@ def draw_level_up_screen():
 # MAIN LOOP // EVENT STATE CHAIN
 # ==================================================
 
+apply_saved_app_settings()
+if app_settings.get("auto_update_check"):
+    update_checker.start()
+
 running = True
 
 
 while running:
+
+    # Saved Options are written shortly after they change (only while the Options
+    # screen is open, so temporary changes like horse-race music ducking are not saved).
+    update_checker.poll()
+    if current_state == STATE_OPTIONS:
+        app_settings.update(current_app_settings_values())
+    else:
+        app_settings.tick()
 
     # Keep the soundtrack aligned with the active arcade cabinet. Selection,
     # token exchange, prize counter, and the rest of Career use the player's
@@ -24077,6 +24197,7 @@ while running:
             set_fullscreen_enabled(
                 not fullscreen_enabled
             )
+            app_settings.update({"fullscreen": fullscreen_enabled})
             continue
 
         # ==================================================
@@ -24682,6 +24803,10 @@ while running:
                 elif multiplayer_rect.collidepoint(game_mouse_pos):
                     audio.play_sound("button_click")
                     multiplayer_launcher.launch()
+
+                elif update_checker.update_available and update_banner_rect.collidepoint(game_mouse_pos):
+                    audio.play_sound("button_click")
+                    start_game_update()
 
                 elif customize_rect.collidepoint(
                         game_mouse_pos
@@ -29324,6 +29449,19 @@ while running:
                     )
 
                 # ----------------------------
+                # Updates
+                # ----------------------------
+
+                elif update_now_rect.collidepoint(game_mouse_pos):
+                    audio.play_sound("button_click")
+                    handle_update_button()
+
+                elif update_auto_rect.collidepoint(game_mouse_pos):
+                    audio.play_sound("button_click")
+                    app_settings.update({"auto_update_check": not app_settings.get("auto_update_check")})
+                    app_settings.flush()
+
+                # ----------------------------
                 # Resolution
                 # ----------------------------
 
@@ -31873,6 +32011,5 @@ while running:
     )
 
 
+app_settings.flush()
 pygame.quit()
-
-

@@ -102,7 +102,7 @@ jobs:
       - name: Verify executables
         shell: pwsh
         run: |
-          foreach ($exe in "SolitairePlus.exe", "SolitaireNet.exe") {
+          foreach ($exe in "SolitairePlus.exe", "SolitaireNet.exe", "SolitaireUpdater.exe") {
             $path = "dist\SolitairePlus\$exe"
             if (-not (Test-Path $path)) { throw "Expected executable was not produced: $path" }
             Get-Item $path | Format-List Name, Length, LastWriteTime
@@ -116,6 +116,8 @@ jobs:
         run: |
           & "dist\SolitairePlus\SolitaireNet.exe" --selftest
           if ($LASTEXITCODE -ne 0) { throw "SolitaireNet.exe --selftest failed" }
+          $u = Start-Process "dist\SolitairePlus\SolitaireUpdater.exe" -ArgumentList "--selftest" -Wait -PassThru
+          if ($u.ExitCode -ne 0) { throw "SolitaireUpdater.exe --selftest failed" }
           $env:SDL_VIDEODRIVER = "dummy"; $env:SDL_AUDIODRIVER = "dummy"
           $report = Join-Path $PWD "selftest-multiplayer.txt"
           $p = Start-Process "dist\SolitairePlus\SolitairePlus.exe" -ArgumentList "--multiplayer", "--selftest", "--selftest-report", "`"$report`"" -Wait -PassThru
@@ -161,7 +163,7 @@ jobs:
           } else {
             Write-Host "Defender enabled. Scanning $folder"
             Start-MpScan -ScanType CustomScan -ScanPath $folder -ErrorAction Stop
-            foreach ($exe in "SolitairePlus.exe", "SolitaireNet.exe") {
+            foreach ($exe in "SolitairePlus.exe", "SolitaireNet.exe", "SolitaireUpdater.exe") {
               if (-not (Test-Path -LiteralPath (Join-Path $folder $exe))) {
                 throw "Defender removed or quarantined $exe. Stop publication."
               }
