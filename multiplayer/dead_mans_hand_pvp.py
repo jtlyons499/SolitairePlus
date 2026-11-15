@@ -23,7 +23,7 @@ from dead_mans_hand_game import (
     DeadMansHandGame,
 )
 from dead_mans_hand_weapons import WEAPON_DEFINITIONS
-from relay_transport import RelayPeer
+from net_client import open_peer
 from mp_toast import LeaveToast
 
 ARENA_LEVEL_INDEX = 5  # O.K. Corral
@@ -524,7 +524,8 @@ class DeadMansHandPvPMode:
     """Lobby + 1v1 network coordinator embedded in multiplayer/main.py."""
     def __init__(self, name, relay_address, sound=None):
         self.name = (name or "Player")[:24]
-        self.relay_address = relay_address or "tcp://yamanote.proxy.rlwy.net:40274"
+        # Empty means "use the default server" (decided by SolitaireNet.exe, not the game).
+        self.relay_address = relay_address or ""
         self.code = ""
         self.focus = "code"
         self.peer = None
@@ -579,7 +580,7 @@ class DeadMansHandPvPMode:
         self.last_guest_event_seq = 0
         self.game = PvPGame(0 if self.hosting else 1)
         self.game.local_name = self.name
-        self.peer = RelayPeer(self.hosting, self.relay_address, self.name, self.code, version=1)
+        self.peer = open_peer(self.hosting, self.relay_address or None, self.name, self.code, version=1)
         self.status = "Creating duel room…" if self.hosting else "Joining duel room…"
         self.last_sync = 0.0
         pygame.key.stop_text_input()
@@ -952,9 +953,12 @@ class DeadMansHandPvPMode:
         sub = self.small.render("1v1 prototype • First to 5 kills • Host-authoritative hit confirmation", True, (225, 215, 190)); canvas.blit(sub, sub.get_rect(center=(683, 190)))
         canvas.blit(self.small.render("Relay address", True, (235, 225, 200)), (325, 297))
         canvas.blit(self.small.render("Room code", True, (235, 225, 200)), (483, 388))
-        for rect, text, active in ((self.relay_rect, self.relay_address, self.focus == "relay"), (self.code_rect, self.code, self.focus == "code")):
+        relay_placeholder = not self.relay_address and self.focus != "relay"
+        relay_text = "Default server" if relay_placeholder else self.relay_address
+        for rect, text, active, dim in ((self.relay_rect, relay_text, self.focus == "relay", relay_placeholder), (self.code_rect, self.code, self.focus == "code", False)):
             pygame.draw.rect(canvas, (31, 65, 57), rect); pygame.draw.rect(canvas, (221, 183, 91) if active else (103, 142, 126), rect, 2)
-            clip = canvas.get_clip(); canvas.set_clip(rect.inflate(-10, -4)); canvas.blit(self.font.render(text, True, (248, 240, 216)), (rect.x + 12, rect.y + 12)); canvas.set_clip(clip)
+            colour = (150, 165, 155) if dim else (248, 240, 216)
+            clip = canvas.get_clip(); canvas.set_clip(rect.inflate(-10, -4)); canvas.blit(self.font.render(text, True, colour), (rect.x + 12, rect.y + 12)); canvas.set_clip(clip)
         for rect, label in ((self.host_rect, "Host Duel"), (self.join_rect, "Join Duel"), (self.back_rect, "Back")):
             pygame.draw.rect(canvas, (104, 65, 39) if rect.collidepoint(mouse) else (82, 50, 32), rect, border_radius=7); pygame.draw.rect(canvas, (184, 139, 82), rect, 2, border_radius=7)
             img = self.font.render(label, True, (248, 235, 205)); canvas.blit(img, img.get_rect(center=rect.center))

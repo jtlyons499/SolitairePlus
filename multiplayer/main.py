@@ -43,7 +43,8 @@ def main():
     hub = MultiplayerHub(appearance, profile)
 
     saved = connection_settings.load()
-    relay_address = saved.get("relay_address") or "tcp://yamanote.proxy.rlwy.net:40274"
+    # None = the default server, chosen by SolitaireNet.exe (see connection_settings.py).
+    relay_address = saved.get("relay_address") or None
     room_code = ""
     code_active = False
     text_input = TextInput()

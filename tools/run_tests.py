@@ -67,6 +67,10 @@ def child_env() -> dict[str, str]:
     env.setdefault("SDL_VIDEODRIVER", "dummy")   # no real window
     env.setdefault("SDL_AUDIODRIVER", "dummy")   # no real sound device
     env.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
+    # Room/table tests run the network connector in-process instead of starting a
+    # SolitaireNet child process per player (faster, no start-up timing races).
+    # multiplayer/tests/test_net_client.py tests the real child-process path.
+    env["SOLITAIRE_NET_INPROCESS"] = "1"
     env["PYTHONIOENCODING"] = "utf-8"
     env.pop("PYTHONPATH", None)                  # the worker sets sys.path itself
     return env
@@ -150,6 +154,8 @@ def run_suite(name: str, known: dict[str, str], skip_quarantined: bool) -> tuple
         for test_id in sorted(t for t in known if t.startswith(module + ".") and t not in hanging):
             if test_id in failed:
                 report.append(f"  still fails {name}:{test_id}  ({known[test_id]})")
+            elif known[test_id].upper().startswith("FLAKY"):
+                report.append(f"  passed      {name}:{test_id}  (flaky: passing once proves nothing)")
             else:
                 report.append(f"  NOW PASSES  {name}:{test_id} -> remove it from tests/KNOWN_FAILURES.txt")
         if new_failures:

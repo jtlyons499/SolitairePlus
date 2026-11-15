@@ -1,97 +1,76 @@
-"""Threaded room-code connection, optionally protected by verified TLS."""
-import json
+"""In-process connection, kept for tests and the old LAN-era OnlineTable.
+
+The real game does not use this: online play goes through SolitaireNet.exe
+via net_client.open_peer(). This wrapper runs the SAME connector code
+(netservice/connectors/) on a background thread inside the current process,
+so tests can exercise room logic without starting a child process for every
+player. tools/run_tests.py turns this on by setting SOLITAIRE_NET_INPROCESS=1;
+the child-process path has its own tests (multiplayer/tests/test_net_client.py).
+
+Interface (unchanged from the old RelayPeer): send(dict) -> bool, inbox
+(queue.Queue), code, close().
+"""
+import asyncio
 import queue
-import socket
-import ssl
+import sys
 import threading
-import time
-from lan_transport import MAX_LINE
+from pathlib import Path
+
+_ROOT = str(Path(__file__).resolve().parent.parent)
+if _ROOT not in sys.path:
+    sys.path.append(_ROOT)
+
+from netservice import connectors  # noqa: E402
+
 
 class RelayPeer:
-    def __init__(self, hosting, address, name, code='',version=1):
+    def __init__(self, hosting, address, name, code='', version=1):
         self.version = version
         self.hosting = hosting
         self.address = address
         self.name = name
-        self.code = code.strip().upper()
+        self.code = (code or '').strip().upper()
         self.inbox = queue.Queue()
-        self.outbox = queue.Queue(maxsize=32)
         self.closed = threading.Event()
-        self.socket = None
-        self.thread = threading.Thread(target=self.run, daemon=True)
+        self._loop = asyncio.new_event_loop()
+        self._connection = None
+        self._ready = threading.Event()
+        self.thread = threading.Thread(target=self._run, daemon=True)
         self.thread.start()
+        self._ready.wait(5)
+
+    def _set_code(self, code):
+        self.code = code
+
+    def _run(self):
+        asyncio.set_event_loop(self._loop)
+        try:
+            try:
+                self._connection = connectors.create(
+                    self.address, hosting=self.hosting, name=self.name, code=self.code,
+                    room_version=self.version, deliver=self.inbox.put, set_code=self._set_code)
+            except ValueError as error:
+                self.inbox.put({'type': 'disconnected', 'text': str(error)[:100]})
+                return
+            self._ready.set()
+            self._loop.run_until_complete(self._connection.run())
+        finally:
+            self._ready.set()
+            self.closed.set()
+            self._loop.close()
 
     def send(self, message):
+        if self.closed.is_set() or self._connection is None:
+            return False
         try:
-            self.outbox.put_nowait(message)
+            self._loop.call_soon_threadsafe(self._connection.send, message)
             return True
-        except queue.Full:
+        except RuntimeError:  # loop already finished
             return False
 
     def close(self):
-        self.closed.set()
-        if self.socket:
+        if self._connection is not None and not self.closed.is_set():
             try:
-                self.socket.shutdown(socket.SHUT_RDWR)
-            except OSError:
+                self._loop.call_soon_threadsafe(self._connection.close)
+            except RuntimeError:
                 pass
-            self.socket.close()
-
-    def run(self):
-        try:
-            address = self.address.strip()
-            secure = address.startswith('tls://')
-            address = address.removeprefix('tls://').removeprefix('tcp://')
-            host, separator, port = address.rpartition(':')
-            if not separator:
-                host, port = address, '50008'
-            self.socket = socket.create_connection((host, int(port)), timeout=8)
-            if secure:
-                self.socket = ssl.create_default_context().wrap_socket(self.socket, server_hostname=host)
-            self.send({'type': 'create' if self.hosting else 'join', 'version': self.version, 'code': self.code, 'name': self.name})
-            self.socket.settimeout(.05)
-            pending = b''
-            last_ping = time.monotonic()
-            while not self.closed.is_set():
-                if time.monotonic() - last_ping > 20:
-                    self.send({'type': 'ping'})
-                    last_ping = time.monotonic()
-                while not self.outbox.empty():
-                    payload = (json.dumps(self.outbox.get_nowait(), separators=(',', ':')) + '\n').encode()
-                    if len(payload) > MAX_LINE:
-                        raise ValueError('Message too large')
-                    self.socket.settimeout(5)
-                    self.socket.sendall(payload)
-                    self.socket.settimeout(.05)
-                try:
-                    chunk = self.socket.recv(8192)
-                    if not chunk:
-                        raise ConnectionError('Relay disconnected')
-                    pending += chunk
-                    while b'\n' in pending:
-                        raw, pending = pending.split(b'\n', 1)
-                        if len(raw) > MAX_LINE:
-                            raise ValueError('Message too large')
-                        message = json.loads(raw)
-                        if not isinstance(message, dict):
-                            raise ValueError('Invalid relay message')
-                        kind = message.get('type')
-                        if kind == 'room':
-                            self.code = message['code']
-                            self.inbox.put({'type': 'status', 'text': 'Room ' + self.code + ' • Waiting for friend'})
-                            if self.version == 2:self.inbox.put(message)
-                        elif kind == 'paired':
-                            self.send({'type': 'hello', 'version': 1, 'name': self.name})
-                        elif kind == 'error':
-                            raise ConnectionError(message.get('text', 'Relay error'))
-                        elif kind != 'pong':
-                            self.inbox.put(message)
-                    if len(pending) > MAX_LINE:
-                        raise ValueError('Message too large')
-                except socket.timeout:
-                    pass
-        except (OSError, ValueError, UnicodeError) as error:
-            if not self.closed.is_set():
-                self.inbox.put({'type': 'disconnected', 'text': str(error)[:100]})
-        finally:
-            self.close()

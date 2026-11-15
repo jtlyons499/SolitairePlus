@@ -39,7 +39,11 @@ GitHub Actions is free for public repositories, so this costs nothing.
 | Suite name | Folder | Tests | Import path |
 |---|---|---|---|
 | `game` | `tests/` | single-player game code (career, poker, arcade, saves, assets, ...) | `tests/`, then the repository root |
-| `multiplayer` | `multiplayer/tests/` | multiplayer tables, relay server and transport, profiles | `multiplayer/tests/`, `multiplayer/`, then the root |
+| `multiplayer` | `multiplayer/tests/` | multiplayer tables, relay server, the game's network client, profiles | `multiplayer/tests/`, `multiplayer/`, then the root |
+
+The network service (`netservice/`, built as `SolitaireNet.exe`) is tested in the `game` suite by
+`tests/test_netservice.py`, which uses small fake servers on `127.0.0.1` (no internet needed). The real
+game path (game → `SolitaireNet` child process → relay server) is tested in `multiplayer/tests/test_net_client.py`.
 
 The multiplayer suite **must** have `multiplayer/` ahead of the root on the import path. `multiplayer/` contains
 its own versions of some modules (for example `texas_holdem.py`), and those must win. The runner handles this; don't
@@ -68,14 +72,18 @@ import path and starts pygame headless:
    instead of freezing everything.
 2. Starts pygame in **headless mode** (`SDL_VIDEODRIVER=dummy`, `SDL_AUDIODRIVER=dummy`) before tests run, the same
    way the game does at startup. No window opens and no sound plays.
-3. Treats tests listed in `tests/KNOWN_FAILURES.txt` as **quarantined**: they still run, and their results are
+3. Sets `SOLITAIRE_NET_INPROCESS=1`. Room and table tests then run the network connector code **inside** the test
+   process instead of starting a `SolitaireNet` child process for every simulated player. That's faster and avoids
+   start-up timing races. Only `test_net_client.py` starts real child processes, which is what the game does.
+4. Treats tests listed in `tests/KNOWN_FAILURES.txt` as **quarantined**: they still run, and their results are
    reported, but they never make the run fail.
-4. Exits with code `0` only when every non-quarantined test passed. The release scripts and GitHub check this
+5. Exits with code `0` only when every non-quarantined test passed. The release scripts and GitHub check this
    exit code.
 
 ## Quarantined tests (`tests/KNOWN_FAILURES.txt`)
 
-When automated testing was switched on (November 2026), 14 tests were **already broken on `main`**. Most were
+When automated testing was switched on (November 2026), 14 tests were **already broken on `main`**, and one more
+(`test_relay...test_online_table_hand`) was found to fail about 1 run in 5. Most were
 outdated tests rather than game bugs: they expected older menus or numbers, or wrote images to a folder that only
 existed on the original author's AI tool. So that releases weren't blocked from day one, each one is listed in
 `tests/KNOWN_FAILURES.txt` with a one-line reason.
@@ -92,7 +100,8 @@ Rules for the list:
 * **Never add a test to the list just to get a release through.** A new failure means something broke.
 * If the runner says **NOW PASSES**, delete that line from the file.
 * Each line is `suite:module.Class.test_name   # reason`. A reason starting with `HANGS` means the test is run alone
-  with a 30-second limit instead of inside its file.
+  with a 30-second limit instead of inside its file. A reason starting with `FLAKY` means it fails only some of the
+  time, so one pass doesn't prove it's fixed. The runner prints `passed (flaky...)` instead of `NOW PASSES`.
 * `multiplayer:test_six_seat.SixRelayTests.test_six_clients_and_late_join` **may be a real bug** (six-seat late
   joiners). The designer should look at it.
 

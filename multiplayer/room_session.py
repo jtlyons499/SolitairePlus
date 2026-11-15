@@ -4,7 +4,7 @@ import uuid
 from mp_profile import clean_public, winning_xp
 from lan_protocol import ClientGame
 from lan_session import clean_name
-from relay_transport import RelayPeer
+from net_client import open_peer
 from room_table import RoomAuthority
 from party_authority import make_party_authority
 
@@ -20,7 +20,7 @@ class RoomTable:
         self.profile=profile;self.public_profiles={};self.session_id=str(uuid.uuid4());self.reward_hand=0;self.participants={};self.awards={};self.profile_sent=False;self.public_log=[];self.log_hand=0;self.log_actions=[];self.log_stage=None;self.notices_seen=0;self.last_payout=None;self.payout_history=[]
         if profile:self.public_profiles[0]=profile.public() if hosting else {}
         self.name=clean_name(name);self.hosting=hosting;self.identity=0 if hosting else None;self.mode=mode if hosting else None
-        self.peer=RelayPeer(hosting,address,self.name,code,version=2)
+        self.peer=open_peer(hosting,address,self.name,code,version=2)
         self.authority=(RoomAuthority(self.name) if mode in (None,'holdem') else make_party_authority(mode,self.name)) if hosting else None
         self.game=ClientGame();self.message={'type':'connecting'};self.status='Connecting to relay…';self.failed=False;self.last_sent=-1;self.pending=False;self.leave_notice='';self.leave_notice_seq=0;self.chat_messages=[];self.chat_seq=0
     @property

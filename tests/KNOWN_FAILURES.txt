@@ -1,9 +1,8 @@
 # Known-broken tests ("quarantine list")
 #
-# Every test below was ALREADY failing or hanging on main on 2026-11-14,
-# before tools/run_tests.py existed. tools/run_tests.py leaves them out of the
-# normal run so they do not block releases. It runs them separately and
-# reports whether each one still fails. It never stops a release because of them.
+# Every test below was ALREADY failing (always or sometimes) on main on
+# 2026-11-14, before tools/run_tests.py existed. The runner still runs them and
+# reports whether each one still fails, but never stops a release because of them.
 #
 # Rules:
 #   * Never add a test here just to make a release pass. A NEW failure means
@@ -12,6 +11,8 @@
 #     "NOW PASSES" when a listed test starts passing.
 #   * Format:  suite:module.Class.test_name   # short reason
 #     suite is "game" (tests/) or "multiplayer" (multiplayer/tests/).
+#     A reason starting with HANGS = run alone with a short time limit.
+#     A reason starting with FLAKY = fails only sometimes; a single pass is not a fix.
 #
 # Fixing these is on the future refactor sprint list (see AGENTS.md).
 
@@ -35,6 +36,9 @@ multiplayer:test_menu_followup.MenuFollowupTests.test_lobby_quit_button_ends_the
 multiplayer:test_menu_followup.MenuFollowupTests.test_practice_does_not_draw_its_own_options_exit_buttons   # standalone_view passes show_utility_buttons, which draw_texas_holdem no longer accepts (Practice table is unreachable since Practice was removed)
 multiplayer:test_table_flow.FlowTests.test_last_payout_survives_new_hand   # RoomTable built without the newer 'mode' attribute
 multiplayer:test_table_polish.PolishTests.test_local_animation_never_mutates_game_and_sound_edges_once   # fake game object lacks player_action_text
+
+# --- Intermittent (timing-dependent) - fails some runs, passes others
+multiplayer:test_relay.RelayTests.test_online_table_hand   # FLAKY: ~3 in 15 runs on unmodified main (2026-11-14); old LAN-era OnlineTable, unreachable in the shipped game
 
 # --- POSSIBLY A REAL BUG - ask the designer: six-seat late joiners
 multiplayer:test_six_seat.SixRelayTests.test_six_clients_and_late_join   # expects 6 seated humans after late joins, gets 3

@@ -14,6 +14,9 @@ How to use this file (maintainers and AI agents):
 - The game's version number now comes from one place (`version.py`), so the in-game version always matches the GitHub release.
 - The game program is now called `SolitairePlus.exe` (was `Simple Solitaire.exe`). Saves are not affected.
 - Unit tests now run automatically before every release, both on the maintainer's PC (`tools/release.ps1`) and on GitHub.
+- Online play now runs through a small separate program, `SolitaireNet.exe`, so connection fixes and new connection types can ship without changing the game itself.
+- Online games now notice a dead connection (no reply for 45 seconds) instead of waiting forever, and a malformed server reply no longer leaves the game stuck on "Waiting for friend".
+- The game no longer remembers the default server address as if you had chosen it, so moving the server to a new address won't strand anyone.
 
 ## [0.0.6b] - 2026-11-02
 
