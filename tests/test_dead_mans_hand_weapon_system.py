@@ -16,7 +16,7 @@ def test_dead_mans_hand_sfx_live_in_dedicated_folder():
         "scar20_shot.wav", "scar20_reload.wav", "weapon_pickup.wav",
         "enemy_hit.wav", "enemy_down.wav", "player_hit.wav", "player_down.wav",
     ):
-        assert f"assets/sounds/dead_mans_hand/{filename}" in source
+        assert f'paths.asset("sounds/dead_mans_hand/{filename}")' in source
 
 
 def test_weapon_roster_and_core_behavior():

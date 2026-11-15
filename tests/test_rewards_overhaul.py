@@ -99,15 +99,16 @@ def test_main_wires_paged_counter_custom_buttons_and_cursor_ownership():
     for filename in (
         "continue.png", "redeem_tickets.png", "trophy_room.png", "back_to_prize_counter.png"
     ):
-        assert f"assets/arcade/ui/{filename}" in source
+        assert f'paths.asset("arcade/ui/{filename}")' in source
     assert "ARCADE_PRIZES_PER_PAGE = 4" in source
     assert 'cosmetics[\n        "unlocked_cursors"\n    ]' in source
     assert "redeem_arcade_prize_for_career" in source
 
 
-def _extract_function(name):
+def _extract_function(name, env):
     import ast
     node = locate.function_node(name)
+    locate.namespace(env, [node])
     return compile(ast.Module(body=[node], type_ignores=[]), f"extracted {name}", "exec")
 
 
@@ -134,7 +135,7 @@ def test_case_transaction_unlocks_non_felt_cosmetics_and_rolls_back_atomically()
         "CASE_ITEMS": ITEMS,
         "auto_save_career": lambda: None,
     }
-    exec(_extract_function("buy_case_for_screen"), env)
+    exec(_extract_function("buy_case_for_screen", env), env)
 
     with patch("solitaireplus.career.case_opening.choose_item", return_value=ITEMS["case_garden_gnomes"]):
         env["buy_case_for_screen"]("prestige")
@@ -174,7 +175,7 @@ def test_arcade_cosmetic_redeem_unlocks_customize_reward():
         "unlocked_cursors": {"cursor"},
         "auto_save_career": lambda: None,
     }
-    exec(_extract_function("redeem_arcade_prize_for_career"), env)
+    exec(_extract_function("redeem_arcade_prize_for_career", env), env)
     success, _message, awarded = env["redeem_arcade_prize_for_career"](prize["id"])
     assert success is True
     assert awarded["name"] == "Joystick"

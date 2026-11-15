@@ -113,7 +113,7 @@ class LearningTests(unittest.TestCase):
             binding=next(n for n in function.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Attribute) and t.attr=='learning_store' for t in n.targets))
             program=compile(ast.Module(body=[binding],type_ignores=[]),'production learning binding','exec')
             bank=new_learning();game=cls()
-            env={key+'_game':game,'current_game_mode':'career','career_poker_learning':bank}
+            env=locate.namespace({key+'_game':game,'current_game_mode':'career','career_poker_learning':bank},[binding])
             exec(program,env);self.assertIs(game.learning_store,bank)
             env['current_game_mode']='free';exec(program,env);self.assertIsNone(game.learning_store)
         # Execute the production profile field handling. Loading an old second
@@ -123,16 +123,18 @@ class LearningTests(unittest.TestCase):
         function=functions['build_profile_save_data']
         save_nodes=[n for n in function.body if isinstance(n,ast.ImportFrom) and n.module in ('poker_learning','solitaireplus.games.poker.learning')]
         save_nodes += [n for n in function.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Subscript) and isinstance(t.slice,ast.Constant) and t.slice.value=='poker_learning' for t in n.targets)]
-        env={'profile_data':{},'career_poker_learning':bank}
+        env=locate.namespace({'profile_data':{},'career_poker_learning':bank},save_nodes)
         exec(compile(ast.Module(body=save_nodes,type_ignores=[]),'actual profile save field','exec'),env)
         self.assertEqual(env['profile_data']['poker_learning'],bank)
         self.assertIsNot(env['profile_data']['poker_learning'],bank)
+        # The old 'global career_poker_learning' is gone: the load now writes
+        # state.career_poker_learning, so the field handling is the import plus that assignment.
         apply_nodes=[n for n in functions['apply_profile_save_data'].body
-                     if (isinstance(n,ast.Global) and 'career_poker_learning' in n.names)
-                     or (isinstance(n,ast.ImportFrom) and n.module in ('poker_learning','solitaireplus.games.poker.learning'))
-                     or (isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='career_poker_learning' for t in n.targets))]
-        self.assertEqual(len(apply_nodes),3)
+                     if (isinstance(n,ast.ImportFrom) and n.module in ('poker_learning','solitaireplus.games.poker.learning'))
+                     or (isinstance(n,ast.Assign) and any(isinstance(t,ast.Attribute) and isinstance(t.value,ast.Name) and t.value.id=='state' and t.attr=='career_poker_learning' for t in n.targets))]
+        self.assertEqual(len(apply_nodes),2)
         env['data']={'poker_learning':bank}
+        locate.namespace(env,apply_nodes)
         program=compile(ast.Module(body=apply_nodes,type_ignores=[]),'actual profile load field','exec')
         exec(program,env);self.assertEqual(env['career_poker_learning'],bank)
         env['data']={};exec(program,env);self.assertEqual(env['career_poker_learning'],new_learning())

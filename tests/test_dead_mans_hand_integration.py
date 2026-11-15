@@ -15,8 +15,8 @@ def test_main_has_isolated_dead_mans_hand_state_and_launcher():
     source = locate.source()
     assert 'STATE_DEAD_MANS_HAND = "dead_mans_hand"' in source
     assert 'def start_dead_mans_hand(return_state=None):' in source
-    assert 'start_dead_mans_hand(return_state=STATE_DEBUG_MENU)' in source
-    assert 'dead_mans_hand_game.draw(game_surface)' in source
+    assert 'start_dead_mans_hand(return_state=state_names.STATE_DEBUG_MENU)' in source
+    assert 'dead_mans_hand_game.draw(window.game_surface)' in source
 
 
 def test_dead_mans_hand_not_attached_to_existing_night_framework():

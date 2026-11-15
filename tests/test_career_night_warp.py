@@ -40,6 +40,6 @@ class NightWarpTests(unittest.TestCase):
   controls.draw_time_warp(out,header,draw,controls.font)
   self.assertEqual(len(controls.warp_choices),5);self.assertEqual(controls.get_action(controls.warp_choices[60].center),'warp:60');self.assertFalse(controls.warp_open);pygame.quit()
  def test_production_entry_restore_and_return_save_hooks(self):
-  s=locate.source();self.assertIn('if not restore_event_progress(career_event_entry, globals()):',s)
-  select=s[s.index('elif current_state == STATE_CAREER_EVENT_SELECT:'):s.index('elif current_state == STATE_CAREER_REAL_ESTATE:',s.index('elif current_state == STATE_CAREER_EVENT_SELECT:'))]
-  self.assertIn('store_event_progress(career_event_entry, globals())',select)
+  s=locate.source();self.assertIn('if not restore_event_progress(state.career_event_entry, game_namespace()):',s)
+  select=locate.function('loop_event_career_event_select')
+  self.assertIn('store_event_progress(state.career_event_entry, game_namespace())',select)

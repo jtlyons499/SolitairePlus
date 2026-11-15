@@ -38,7 +38,7 @@ def world(seed=42, base=None, year=2026, month=1):
 
 def main_functions(names, values):
     nodes = locate.function_nodes(*names)
-    namespace = dict(values)
+    namespace = locate.namespace(dict(values), nodes)
     exec(compile(ast.Module(body=nodes, type_ignores=[]), "main NPC integration", "exec"), namespace)
     return namespace
 

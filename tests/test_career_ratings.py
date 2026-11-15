@@ -41,6 +41,7 @@ def main_functions(*names, **values):
                      record_result=record_result, elo_delta=elo_delta,
                      sync_career_npc_runtime_state=lambda: None)
     namespace.update(values)
+    locate.namespace(namespace, nodes)
     exec(compile(ast.Module(body=nodes, type_ignores=[]), "main rating integration", "exec"), namespace)
     return namespace
 

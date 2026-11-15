@@ -39,6 +39,7 @@ class ReadabilityTests(unittest.TestCase):
         restore_event_progress(entry,namespace)
         function=locate.function_node('build_career_event_summary')
         namespace['_build_career_event_summary']=lambda:namespace.update(career_event_summary_lines=['Night completed.','Current Rating: 1040.4','Current Fans: 17'])
+        locate.namespace(namespace,[function])
         exec(compile(ast.Module(body=[function],type_ignores=[]),'night summary','exec'),namespace)
         namespace['build_career_event_summary']()
         self.assertIn('Global Rating: 1,040 (+40)',namespace['career_event_summary_lines'])

@@ -74,7 +74,7 @@ def test_arcade_asset_contract_matches_authored_files():
     main_source = locate.source()
     pong_source = Path("solitaireplus/games/arcade/king_pong.py").read_text(encoding="utf-8")
 
-    assert '"assets/arcade/bg.png"' in main_source
+    assert 'str(paths.asset("arcade/bg.png"))' in main_source
     assert '"paddle_king_hearts.png"' in pong_source
     assert '"paddle_king_spades.png"' in pong_source
     assert '"chip_ball.png"' in pong_source
@@ -126,7 +126,7 @@ def test_king_pong_tokens_are_spent_only_when_match_starts():
     assert 'start_king_pong_session()' not in tile_branch
 
     start_block = locate.function("start_king_pong_session")
-    assert 'spend_tokens(arcade_state, token_cost)' in start_block
+    assert 'spend_tokens(state.arcade_state, token_cost)' in start_block
 
 
 def test_king_pong_reuses_five_o_point_sounds_and_pauses_between_points():
@@ -135,8 +135,8 @@ def test_king_pong_reuses_five_o_point_sounds_and_pauses_between_points():
     main_source = locate.source()
     pong_source = Path("solitaireplus/games/arcade/king_pong.py").read_text(encoding="utf-8")
 
-    assert '"assets/sounds/five_o_column_win.wav"' in main_source
-    assert '"assets/sounds/five_o_column_loss.wav"' in main_source
+    assert 'str(paths.asset("sounds/five_o_column_win.wav"))' in main_source
+    assert 'str(paths.asset("sounds/five_o_column_loss.wav"))' in main_source
     assert '"five_o_column_win"' in main_source
     assert '"five_o_column_loss"' in main_source
     assert 'point_event = king_pong_game.pop_point_event()' in main_source
@@ -181,7 +181,7 @@ def test_battle_bosses_opponent_select_and_playable_arena_are_wired():
     assert 'draw_battle_bosses_opponent_select()' in main_source
     assert '"Reroll Rivals"' in main_source
     assert 'start_battle_bosses_session()' in main_source
-    assert 'spend_tokens(arcade_state, token_cost)' in locate.function("start_battle_bosses_session")
+    assert 'spend_tokens(state.arcade_state, token_cost)' in locate.function("start_battle_bosses_session")
     assert 'battle_bosses_game.update' in main_source
     assert '"joker_ball.png"' in game_source
     assert 'A/D or Left/Right moves your shield.' in game_source
@@ -205,16 +205,16 @@ def test_arcade_night_action_buttons_use_authored_pngs_with_fallbacks():
     from pathlib import Path
 
     main_source = locate.source()
-    assert '"buy_tokens": "assets/arcade/ui/buy_tokens.png"' in main_source
-    assert '"prize_counter": "assets/arcade/ui/prize_counter.png"' in main_source
-    assert '"return": "assets/arcade/ui/return.png"' in main_source
-    assert '"end": "assets/arcade/ui/end_night.png"' in main_source
+    assert '"buy_tokens": str(paths.asset("arcade/ui/buy_tokens.png"))' in main_source
+    assert '"prize_counter": str(paths.asset("arcade/ui/prize_counter.png"))' in main_source
+    assert '"return": str(paths.asset("arcade/ui/return.png"))' in main_source
+    assert '"end": str(paths.asset("arcade/ui/end_night.png"))' in main_source
     assert 'def draw_arcade_action_image_button' in main_source
     assert 'def get_cover_scaled_ui_asset' in main_source
     assert 'draw_arcade_action_image_button(' in main_source
     assert 'arcade_machine_prize_counter_rect' in main_source
-    assert 'assets/arcade/ui/background.png' in main_source
-    assert 'assets/arcade/ui/title.png' in main_source
+    assert 'paths.asset("arcade/ui/background.png")' in main_source
+    assert 'paths.asset("arcade/ui/title.png")' in main_source
 
 
 def test_king_pong_ai_was_softened_after_2d_movement_feedback():
@@ -393,8 +393,8 @@ def test_arcade_setup_controls_use_shared_authored_png_buttons():
     from pathlib import Path
 
     main_source = locate.source()
-    assert '"back": "assets/arcade/ui/back.png"' in main_source
-    assert '"play_tokens": "assets/arcade/ui/play_tokens.png"' in main_source
+    assert '"back": str(paths.asset("arcade/ui/back.png"))' in main_source
+    assert '"play_tokens": str(paths.asset("arcade/ui/play_tokens.png"))' in main_source
     assert 'badge_text=f"{token_cost} TOKENS"' in main_source
     assert 'badge_text=f"{battle_cost} TOKENS"' in main_source
     assert 'badge_center = (rect.centerx, rect.top - 11)' in main_source

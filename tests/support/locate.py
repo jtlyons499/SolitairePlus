@@ -109,11 +109,63 @@ def compile_functions(*names: str, filename: str = "located functions", path=Non
     return compile(module, filename, "exec")
 
 
+# Module aliases that game code uses for shared state and for code moved out of main.py
+# (``state.career_cash``, ``fonts.option_label_font``, ``legacy.auto_save_career()`` ...).
+MODULE_ALIASES = {"state", "state_names", "legacy", "sounds", "window", "assets", "fonts", "cursors",
+                  "buttons", "ui_text", "panels", "backgrounds"}
+
+
+class EnvModule:
+    """Stands in for a game module inside a fake namespace: attribute access reads and writes the
+    namespace dict itself, so ``state.career_cash += 5`` changes ``env["career_cash"]``."""
+
+    def __init__(self, env: dict):
+        object.__setattr__(self, "_env", env)
+
+    def __getattr__(self, name):
+        try:
+            return self._env[name]
+        except KeyError:
+            raise AttributeError(name) from None
+
+    def __setattr__(self, name, value):
+        self._env[name] = value
+
+
+def namespace(env: dict, nodes=()) -> dict:
+    """Make ``env`` usable as the fake global namespace of game code.
+
+    For every module alias the given AST nodes use (``state.x``, ``fonts.y`` ...) and that env does
+    not define itself, env gets an EnvModule backed by env, so tests keep writing plain names
+    (``env["career_cash"]``) whether the code says ``career_cash`` or ``state.career_cash``. The
+    old ``globals()`` calls became ``game_namespace()``; that returns env.
+    """
+    used = {node.value.id for root in nodes for node in ast.walk(root)
+            if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name)}
+    called = {node.func.id for root in nodes for node in ast.walk(root)
+              if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)}
+    for alias in (used & MODULE_ALIASES) - set(env):
+        env[alias] = EnvModule(env)
+    if "game_namespace" in called and "game_namespace" not in env:
+        env["game_namespace"] = lambda: env
+    return env
+
+
 def exec_functions(names: Iterable[str], env: dict, filename: str = "located functions", path=None) -> dict:
     """Define the named functions inside ``env`` (a fake global namespace) and return env."""
     if isinstance(names, str):
         names = [names]
-    exec(compile_functions(*names, filename=filename, path=path), env)
+    nodes = function_nodes(*names, path=path)
+    namespace(env, nodes)
+    exec(compile(ast.Module(body=nodes, type_ignores=[]), filename, "exec"), env)
+    return env
+
+
+def exec_nodes(nodes, env: dict, filename: str = "located code") -> dict:
+    """Exec arbitrary located AST statements (e.g. one branch of a function) in a fake namespace."""
+    nodes = list(nodes)
+    namespace(env, nodes)
+    exec(compile(ast.Module(body=nodes, type_ignores=[]), filename, "exec"), env)
     return env
 
 

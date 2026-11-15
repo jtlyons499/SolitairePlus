@@ -85,6 +85,38 @@ class AssetPathRewriter(cst.CSTTransformer):
         args = [_string_with(updated, rest)] if rest else []
         return _str_call(_helper_call(helper, args))
 
+    def visit_ConcatenatedString(self, node):
+        # "assets/career/residences/" "dingy_apartment.png": handled as one string below
+        if self._concat_value(node) is not None:
+            for part in self._concat_parts(node):
+                self._handled.add(id(part))
+        return True
+
+    def leave_ConcatenatedString(self, original, updated):
+        value = self._concat_value(original)
+        if value is None:
+            return updated
+        helper, rest = _split_literal(value)
+        self.changes += 1
+        first = self._concat_parts(original)[0]
+        return _str_call(_helper_call(helper, [_string_with(first, rest)] if rest else []))
+
+    def _concat_parts(self, node):
+        parts = []
+        for side in (node.left, node.right):
+            if isinstance(side, cst.ConcatenatedString):
+                parts += self._concat_parts(side)
+            else:
+                parts.append(side)
+        return parts
+
+    def _concat_value(self, node):
+        parts = self._concat_parts(node)
+        if not all(isinstance(p, cst.SimpleString) and "b" not in p.prefix.lower() for p in parts):
+            return None
+        value = "".join(p.evaluated_value for p in parts)
+        return value if _split_literal(value) else None
+
     def visit_FormattedString(self, node):
         return True
 

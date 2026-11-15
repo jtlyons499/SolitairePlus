@@ -55,6 +55,11 @@ moving into the `solitaireplus/` package. Use the code locator instead: `from te
 `locate.source()`. It searches `main.py` and `solitaireplus/**/*.py`; see the docstring in
 `tests/support/locate.py`.
 
+Moved game code reads shared variables as `state.career_cash` (and constants as `fonts.x`, `legacy.y`, ...).
+`locate.exec_functions` and `locate.exec_nodes` make a fake namespace work anyway: each module alias the code uses
+becomes a stand-in object backed by the env dict, so a test still sets and checks `env["career_cash"]`. Tests that
+compile AST nodes themselves call `locate.namespace(env, nodes)` first.
+
 The updater (`updater/`, built as `SolitaireUpdater.exe`) is tested in the `game` suite by `tests/test_updater.py`
 (planning, downloading, applying, rolling back an update, using fake releases on disk via `file://` URLs) and
 `tests/test_updater_signatures.py` (the real Windows signature check, using a throwaway certificate created in memory;

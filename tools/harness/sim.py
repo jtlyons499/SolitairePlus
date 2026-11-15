@@ -14,6 +14,7 @@ import secrets
 import sys
 import time
 import traceback
+import types
 from pathlib import Path
 
 import pygame
@@ -239,7 +240,10 @@ class Probe:
 
     def get(self, name, *default):
         for space in self.spaces():
-            if name in space:
+            # skip sub-modules and module aliases (e.g. the package attribute
+            # solitaireplus.games.dead_mans_hand.game when a script asks for the `game` object)
+            if name in space and not isinstance(space[name], types.ModuleType) \
+                    and type(space[name]).__name__ != "LazyModule":
                 return space[name]
         if default:
             return default[0]
@@ -247,7 +251,7 @@ class Probe:
 
     def set(self, name, value):
         for space in self.spaces():
-            if name in space:
+            if name in space and not isinstance(space[name], types.ModuleType):
                 space[name] = value
                 return
         raise KeyError(f"cannot set {name!r}: the game has no variable with that name")

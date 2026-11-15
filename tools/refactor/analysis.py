@@ -142,7 +142,8 @@ class _Collector(cst.CSTVisitor):
 
 def is_declared_global(scope, name) -> bool:
     while scope is not None and not isinstance(scope, GlobalScope):
-        if isinstance(scope, FunctionScope) and name in getattr(scope, "_globals", ()):
+        overwrites = getattr(scope, "_scope_overwrites", {})   # libcst records `global x` here
+        if isinstance(scope, FunctionScope) and isinstance(overwrites.get(name), GlobalScope):
             return True
         if isinstance(scope, FunctionScope) and name in scope.assignments:
             # a real local binding in this function

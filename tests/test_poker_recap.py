@@ -69,13 +69,14 @@ class RecapTests(unittest.TestCase):
             condition=ast.unparse(node.test)
             if condition=='getattr(texas_holdem_game, \'recap_open\', False)' and any(isinstance(x,ast.Assign) for x in node.body):
                 branches.append(node)
-            elif 'texas_holdem_next_hand_at == 0' in condition and 'is_holdem_auto_deal_enabled()' in condition:
+            elif 'state.texas_holdem_next_hand_at == 0' in condition and 'is_holdem_auto_deal_enabled()' in condition:
                 branches.append(node)
         self.assertEqual(len(branches),2)
         branches.sort(key=lambda n:n.lineno)
         program=compile(ast.Module(body=branches,type_ignores=[]),'real recap timer gates','exec')
         g=showdown_game();env=dict(texas_holdem_game=g,texas_holdem_next_hand_at=500,texas_holdem_session_end_at=800,
                                  now=10000,is_holdem_auto_deal_enabled=lambda:True,get_holdem_next_hand_delay=lambda:15000)
+        locate.namespace(env,branches)
         exec(program,env)
         self.assertEqual((env['texas_holdem_next_hand_at'],env['texas_holdem_session_end_at']),(500,800))
         handle_recap_action(g,'recap_open')
@@ -104,6 +105,7 @@ class RecapTests(unittest.TestCase):
                  audio=SimpleNamespace(play_sound=no_op),pygame=SimpleNamespace(time=SimpleNamespace(get_ticks=lambda:50)),
                  record_poker_showdown=no_op,generate_showdown_chat=lambda game:[],post_texas_holdem_chat=no_op,
                  award_fans_for_rating_win=lambda *a:0,process_achievement_event=lambda name,**data:events.append(name))
+        locate.namespace(env,[function])
         exec(compile(ast.Module(body=[function],type_ignores=[]),'actual table clear hook','exec'),env)
         env['process_texas_holdem_showdown']();env['process_texas_holdem_showdown']()
         self.assertEqual(events,['poker_table_clear'])

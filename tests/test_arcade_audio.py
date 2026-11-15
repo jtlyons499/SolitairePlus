@@ -6,9 +6,10 @@ def test_ambient_playlist_auto_discovers_drop_in_tracks():
     main_source = locate.source()
 
     assert 'discover_music_files(' in main_source
-    assert '"assets/music",' in main_source
+    assert 'str(paths.asset("music")),' in main_source
     assert '"ambient_",' in main_source
     assert '"assets/music/ambient_05' not in main_source
+    assert 'paths.asset("music/ambient_05' not in main_source
 
 
 def test_arcade_cabinets_have_optional_individual_music_hooks():
@@ -23,7 +24,7 @@ def test_arcade_cabinets_have_optional_individual_music_hooks():
     ):
         assert f'"{game_id}"' in main_source
 
-    assert '"assets/music/arcade"' in main_source
+    assert 'paths.asset("music/arcade")' in main_source
     assert 'sync_machine_music(' in main_source
     assert 'sync_machine_music' in audio_source
     assert 'loops=-1' in audio_source
@@ -43,8 +44,8 @@ def test_placeholder_machine_music_defaults_off_and_requires_opt_in():
     main_source = locate.source()
 
     assert "arcade_placeholder_music_enabled = False" in main_source
-    assert 'Placeholder Music: {\'On\' if arcade_placeholder_music_enabled else \'Off\'}' in main_source
-    assert "if arcade_placeholder_music_enabled" in main_source
+    assert 'Placeholder Music: {\'On\' if state.arcade_placeholder_music_enabled else \'Off\'}' in main_source
+    assert "if state.arcade_placeholder_music_enabled" in main_source
     assert "arcade_placeholder_music_toggle_rect" in main_source
 
 
@@ -61,8 +62,8 @@ def test_bad_music_files_are_skipped_instead_of_crashing_playlist():
 def test_arcade_custom_reroll_and_quit_assets_are_wired():
     main_source = locate.source()
 
-    assert '"reroll_rivals": "assets/arcade/ui/reroll_rivals.png"' in main_source
-    assert '"quit": "assets/arcade/ui/quit.png"' in main_source
+    assert '"reroll_rivals": str(paths.asset("arcade/ui/reroll_rivals.png"))' in main_source
+    assert '"quit": str(paths.asset("arcade/ui/quit.png"))' in main_source
     assert '"reroll_rivals",\n        "Reroll Rivals"' in main_source
     assert main_source.count('\n        "quit",\n        "Quit",') >= 4
     assert "suit_snake_quit_rect = pygame.Rect(1155, 660, 190, 50)" in main_source

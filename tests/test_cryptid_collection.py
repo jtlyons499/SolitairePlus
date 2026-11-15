@@ -27,6 +27,7 @@ ROOT=Path(__file__).resolve().parents[1]
 def main_functions(names,env):
     nodes=locate.function_nodes(*names)
     assert len(nodes)==len(names)
+    locate.namespace(env,nodes)
     exec(compile(ast.Module(body=nodes,type_ignores=[]),'main orchestration','exec'),env)
     return env
 

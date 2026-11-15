@@ -42,6 +42,7 @@ class PortraitUiTests(unittest.TestCase):
         env = dict(game_surface=values[0], NPC_PORTRAIT_STYLES=values[1],
                    get_npc_portrait_surface=values[2], score_four_score_font=values[3],
                    draw_framed_npc_portrait=lambda *args: seen.append(args))
+        locate.namespace(env, [node])
         exec(compile(ast.Module(body=[node], type_ignores=[]), 'integration', 'exec'), env)
         npc = {'name': 'Bert'};rect = pygame.Rect(0, 0, 50, 50)
         env['draw_npc_portrait'](npc, rect, 'holdem')

@@ -57,6 +57,7 @@ class CaseTests(unittest.TestCase):
            career_ratings=make_player_rating_bundle(1000),career_rating=1000,career_fans=50,
            unlocked_menu_backgrounds=set(),unlocked_felts=set(),unlocked_titles=set(),unlocked_cursors=set(),CASE_ITEMS=ITEMS,
            purchase_loot_case=purchase,apply_rating_change=apply_rating_change,clamp_fans=lambda n:max(0,n),auto_save_career=save)
+  locate.namespace(env,[fn])
   exec(compile(ast.Module(body=[fn],type_ignores=[]),'actual case transaction','exec'),env);return env
  def test_save_failure_rolls_back_cash_ratings_fans_and_cosmetics(self):
   for identity in ('cash_vault','rating_blackjack','fan_club','midnight_felt'):

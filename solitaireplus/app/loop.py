@@ -1,0 +1,266 @@
+"""The main loop and the screen registry (the old `while running:` loop of main.py).
+
+Each frame: poll the update check and settings, sync audio, handle events (global keys,
+mouse mapping, then the current screen), run per-frame updates, draw the current screen,
+then overlays, then present. The order is exactly the old loop's order.
+
+SCREENS maps a screen name to the code that runs it: "package.module" for a screen module
+(functions handle_event(event), draw(), and optionally update() and late_update()), or
+"solitaireplus.legacy:<screen>" for screens still in solitaireplus/legacy.py.
+"""
+import importlib
+import pygame
+from solitaireplus.menus.achievements_screen import draw_achievement_popup
+from solitaireplus.app import state, state_names
+from solitaireplus import legacy  # noqa: I001 (must come before the modules below)
+from solitaireplus.app import fonts
+from solitaireplus.app import sounds
+from solitaireplus.app import window
+
+SCREENS = {
+    state_names.STATE_DEBUG_POKER_NPC_SELECT: "solitaireplus.legacy:debug_poker_npc_select",
+    state_names.STATE_DEBUG_MENU: "solitaireplus.legacy:debug_menu",
+    state_names.STATE_SPLASH: "solitaireplus.legacy:splash",
+    state_names.STATE_PROFILE_SELECT: "solitaireplus.legacy:profile_select",
+    state_names.STATE_MENU: "solitaireplus.legacy:menu",
+    state_names.STATE_MODE_SELECT: "solitaireplus.legacy:mode_select",
+    state_names.STATE_CASE_OPENING: "solitaireplus.legacy:case_opening",
+    state_names.STATE_CRYPTID_CREATURES: "solitaireplus.legacy:cryptid_creatures",
+    state_names.STATE_FREE_PLAY_SELECT: "solitaireplus.legacy:free_play_select",
+    state_names.STATE_CAREER_ACTIVITY: "solitaireplus.legacy:career_activity",
+    state_names.STATE_CAREER_HUB: "solitaireplus.legacy:career_hub",
+    state_names.STATE_SCORE_FOUR_MODE_SELECT: "solitaireplus.legacy:score_four_mode_select",
+    state_names.STATE_SCORE_FOUR_OPPONENT_SELECT: "solitaireplus.legacy:score_four_opponent_select",
+    state_names.STATE_SEVEN_CARD_STUD_BUY_IN: "solitaireplus.legacy:seven_card_stud_buy_in",
+    state_names.STATE_SEVEN_CARD_STUD: "solitaireplus.legacy:seven_card_stud",
+    state_names.STATE_FIVE_CARD_DRAW_BUY_IN: "solitaireplus.legacy:five_card_draw_buy_in",
+    state_names.STATE_FIVE_CARD_DRAW: "solitaireplus.legacy:five_card_draw",
+    state_names.STATE_TEXAS_HOLDEM_BUY_IN: "solitaireplus.legacy:texas_holdem_buy_in",
+    state_names.STATE_TEXAS_HOLDEM: "solitaireplus.legacy:texas_holdem",
+    state_names.STATE_BLACKJACK_BET: "solitaireplus.legacy:blackjack_bet",
+    state_names.STATE_BLACKJACK: "solitaireplus.legacy:blackjack",
+    state_names.STATE_ROULETTE: "solitaireplus.legacy:roulette",
+    state_names.STATE_HORSE_RACES: "solitaireplus.legacy:horse_races",
+    state_names.STATE_FARO: "solitaireplus.legacy:faro",
+    state_names.STATE_FIVE_O_POKER: "solitaireplus.legacy:five_o_poker",
+    state_names.STATE_BLIND_MANS_BLUFF: "solitaireplus.legacy:blind_mans_bluff",
+    state_names.STATE_CRAZY_EIGHTS: "solitaireplus.legacy:crazy_eights",
+    state_names.STATE_BANGO: "solitaireplus.legacy:bango",
+    state_names.STATE_SCORE_FOUR: "solitaireplus.legacy:score_four",
+    state_names.STATE_ACHIEVEMENTS: "solitaireplus.legacy:achievements",
+    state_names.STATE_HOW_TO_PLAY: "solitaireplus.legacy:how_to_play",
+    state_names.STATE_CAREER_JOBS: "solitaireplus.legacy:career_jobs",
+    state_names.STATE_CAREER_LEADERBOARD_BIO: "solitaireplus.legacy:career_leaderboard_bio",
+    state_names.STATE_CAREER_LEADERBOARDS: "solitaireplus.legacy:career_leaderboards",
+    state_names.STATE_CAREER_NEWS: "solitaireplus.legacy:career_news",
+    state_names.STATE_CAREER_EVENT: "solitaireplus.legacy:career_event",
+    state_names.STATE_CAREER_EVENT_SUMMARY: "solitaireplus.legacy:career_event_summary",
+    state_names.STATE_CAREER_EVENT_SELECT: "solitaireplus.legacy:career_event_select",
+    state_names.STATE_KING_PONG_OPPONENT_SELECT: "solitaireplus.legacy:king_pong_opponent_select",
+    state_names.STATE_BATTLE_BOSSES_OPPONENT_SELECT: "solitaireplus.legacy:battle_bosses_opponent_select",
+    state_names.STATE_ACE_INVADERS_DIFFICULTY_SELECT: "solitaireplus.legacy:ace_invaders_difficulty_select",
+    state_names.STATE_SUIT_SNAKE_DIFFICULTY_SELECT: "solitaireplus.legacy:suit_snake_difficulty_select",
+    state_names.STATE_ARCADE_TOKEN_EXCHANGE: "solitaireplus.legacy:arcade_token_exchange",
+    state_names.STATE_ARCADE_PRIZE_COUNTER: "solitaireplus.legacy:arcade_prize_counter",
+    state_names.STATE_ARCADE_TROPHY_ROOM: "solitaireplus.legacy:arcade_trophy_room",
+    state_names.STATE_KING_PONG: "solitaireplus.legacy:king_pong",
+    state_names.STATE_BATTLE_BOSSES: "solitaireplus.legacy:battle_bosses",
+    state_names.STATE_ACE_INVADERS: "solitaireplus.legacy:ace_invaders",
+    state_names.STATE_SUIT_SNAKE: "solitaireplus.legacy:suit_snake",
+    state_names.STATE_DEAD_MANS_HAND: "solitaireplus.legacy:dead_mans_hand",
+    state_names.STATE_CAREER_REAL_ESTATE: "solitaireplus.legacy:career_real_estate",
+    state_names.STATE_DIFFICULTY: "solitaireplus.legacy:difficulty",
+    state_names.STATE_OPTIONS: "solitaireplus.legacy:options",
+    state_names.STATE_CUSTOMIZE: "solitaireplus.legacy:customize",
+    state_names.STATE_RECAP: "solitaireplus.legacy:recap",
+    state_names.STATE_LEVEL_UP: "solitaireplus.legacy:level_up",
+    state_names.STATE_PROFILE: "solitaireplus.legacy:profile",
+    state_names.STATE_PLAYING: "solitaireplus.legacy:playing",
+}
+
+# Screens the old loop drew in its second draw chain, after the timed poker turns. That chain
+# looked at current_state again, which the first chain may have changed.
+DRAWN_LATE = {state_names.STATE_DEBUG_POKER_NPC_SELECT, state_names.STATE_DEBUG_MENU, state_names.STATE_LEVEL_UP, state_names.STATE_PLAYING}
+
+
+class _LegacyScreen:
+    """A screen whose code is still in solitaireplus/legacy.py (loop_event_<screen>, loop_draw_<screen>, ...)."""
+
+    def __init__(self, module, slug, draws_late):
+        self.handle_event = getattr(module, f"loop_event_{slug}", None)
+        self.draw = getattr(module, f"loop_draw_{slug}", None)
+        self.late_update = getattr(module, f"loop_late_{slug}", None)
+        self.update = None
+        self.DRAWS_LATE = draws_late
+
+
+_loaded = {}
+
+
+def screen_for(name):
+    """The screen object for a screen name (None for a name without code)."""
+    if name not in _loaded:
+        target = SCREENS.get(name)
+        if target is None:
+            _loaded[name] = None
+        elif ":" in target:
+            module_name, slug = target.split(":", 1)
+            _loaded[name] = _LegacyScreen(importlib.import_module(module_name), slug, name in DRAWN_LATE)
+        else:
+            _loaded[name] = importlib.import_module(target)
+    return _loaded[name]
+
+
+def run():
+
+    # ==================================================
+    # MAIN LOOP // EVENT STATE CHAIN
+    # ==================================================
+
+    legacy.apply_saved_app_settings()
+    if legacy.app_settings.get("auto_update_check"):
+        legacy.update_checker.start()
+
+    state.running = True
+
+    while state.running:
+
+        # Saved Options are written shortly after they change (only while the Options
+        # screen is open, so temporary changes like horse-race music ducking are not saved).
+        legacy.update_checker.poll()
+        if state.current_state == state_names.STATE_OPTIONS:
+            legacy.app_settings.update(legacy.current_app_settings_values())
+        else:
+            legacy.app_settings.tick()
+
+        # Keep the soundtrack aligned with the active arcade cabinet. Selection,
+        # token exchange, prize counter, and the rest of Career use the player's
+        # normal Instrumental/Ambient choice; only live machine gameplay overrides
+        # it when that cabinet has a custom track installed.
+        active_machine_track = (
+            legacy.ARCADE_MACHINE_MUSIC_BY_STATE.get(state.current_state)
+            if state.arcade_placeholder_music_enabled
+            else None
+        )
+        sounds.audio.sync_machine_music(
+            state.current_state if active_machine_track else None,
+            active_machine_track,
+        )
+        sounds.audio.update()
+
+        for event in pygame.event.get():
+
+            if event.type == pygame.QUIT:
+                state.running = False
+
+            sounds.audio.handle_event(
+                event
+            )
+
+            # ==================================================
+            # GLOBAL FULLSCREEN HOTKEY
+            # ==================================================
+
+            if (
+                    event.type == pygame.KEYDOWN
+                    and event.key == pygame.K_F11
+            ):
+                window.set_fullscreen_enabled(
+                    not state.fullscreen_enabled
+                )
+                legacy.app_settings.update({"fullscreen": state.fullscreen_enabled})
+                continue
+
+            # ==================================================
+            # GLOBAL DEBUG MENU HOTKEY
+            # ==================================================
+
+            if (
+                    event.type == pygame.KEYDOWN
+                    and event.key == pygame.K_F10
+            ):
+
+                print(
+                    "F10 DEBUG MENU"
+                )
+
+                if state.current_state == state_names.STATE_DEBUG_MENU:
+
+                    if state.debug_previous_state is not None:
+                        state.current_state = state.debug_previous_state
+                        if state.current_state == state_names.STATE_DEAD_MANS_HAND:
+                            legacy.dead_mans_hand_game.capture_mouse()
+
+                else:
+
+                    state.debug_previous_state = state.current_state
+                    if state.current_state == state_names.STATE_DEAD_MANS_HAND:
+                        legacy.dead_mans_hand_game.release_mouse()
+
+                    state.current_state = state_names.STATE_DEBUG_MENU
+
+                continue
+
+            state.game_mouse_pos = None
+
+            if hasattr(
+                event,
+                "pos"
+            ):
+                state.game_mouse_pos = (
+                    window.window_to_game_coords(
+                        event.pos
+                    )
+                )
+
+            if state.game_mouse_pos is not None:
+                state.menu_mouse_pos = state.game_mouse_pos
+
+            screen = screen_for(state.current_state)
+            if screen is not None and screen.handle_event is not None:
+                screen.handle_event(event)
+
+        legacy.loop_post_event_updates()
+
+        # First draw chain: per-frame update, then draw.
+        screen = screen_for(state.current_state)
+        if screen is not None:
+            if getattr(screen, "update", None) is not None:
+                screen.update(pygame.time.get_ticks())
+            if getattr(screen, "draw", None) is not None and not getattr(screen, "DRAWS_LATE", False):
+                screen.draw()
+
+        # Second draw chain (looks at current_state again): timed poker turns, and the screens
+        # that are drawn late (debug menus, level-up, Solitaire).
+        screen = screen_for(state.current_state)
+        if screen is not None:
+            if getattr(screen, "late_update", None) is not None:
+                screen.late_update()
+            elif getattr(screen, "draw", None) is not None and getattr(screen, "DRAWS_LATE", False):
+                screen.draw()
+
+
+        legacy.update_achievement_popup()
+        if state.achievement_popup_current is not None:
+            draw_achievement_popup(
+                window.game_surface,
+                state.achievement_popup_current,
+                pygame.time.get_ticks() - state.achievement_popup_started,
+                state.achievement_popup_fans,
+                state.achievement_popup_cosmetic,
+                fonts.option_label_font,
+                fonts.difficulty_detail_font,
+            )
+
+        window.present()
+
+
+
+        window.clock.tick(
+            window.FPS
+        )
+
+
+
+    legacy.app_settings.flush()
+    pygame.quit()
