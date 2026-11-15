@@ -123,7 +123,11 @@ class LearningTests(unittest.TestCase):
         function=functions['build_profile_save_data']
         save_nodes=[n for n in function.body if isinstance(n,ast.ImportFrom) and n.module in ('poker_learning','solitaireplus.games.poker.learning')]
         save_nodes += [n for n in function.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Subscript) and isinstance(t.slice,ast.Constant) and t.slice.value=='poker_learning' for t in n.targets)]
-        env=locate.namespace({'profile_data':{},'career_poker_learning':bank},save_nodes)
+        # The moved save code (solitaireplus/profile/save_data.py) reads the game namespace through
+        # legacy.game_namespace(); legacy is an env-backed stand-in, so env supplies that call itself.
+        env={'profile_data':{},'career_poker_learning':bank}
+        env['game_namespace']=lambda: env
+        env=locate.namespace(env,save_nodes)
         exec(compile(ast.Module(body=save_nodes,type_ignores=[]),'actual profile save field','exec'),env)
         self.assertEqual(env['profile_data']['poker_learning'],bank)
         self.assertIsNot(env['profile_data']['poker_learning'],bank)

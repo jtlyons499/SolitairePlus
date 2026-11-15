@@ -307,6 +307,8 @@ class CryptidUiTests(unittest.TestCase):
                  free_play_achievement_fans_earned=0,cryptid_screen=screen,NPCS=screen.npcs,
                  STATE_CRYPTID_CREATURES="cryptid_creatures",STATE_FREE_PLAY_SELECT="free_play_select")
         original=copy.deepcopy(career)
+        # The moved Free Play code calls legacy.game_namespace() (formerly a bare game_namespace() call).
+        env["game_namespace"]=lambda:env
         locate.namespace(env,nodes)
         exec(compile(ast.Module(body=nodes,type_ignores=[]),"production Free Play","exec"),env)
         self.assertTrue(env["start_free_play_game"]("cryptid_creatures"))

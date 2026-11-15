@@ -1,0 +1,171 @@
+{
+ "modules": {
+  "solitaireplus/career/hub_screen.py": {
+   "doc": "Career hub screen: calendar, toolbar, day actions (moved out of legacy.py).",
+   "screens": [
+    "career_hub"
+   ]
+  },
+  "solitaireplus/career/activity_screen.py": {
+   "doc": "Career story activities screen (Bigfoot / Alien nights) (moved out of legacy.py).",
+   "screens": [
+    "career_activity"
+   ]
+  },
+  "solitaireplus/career/jobs_screen.py": {
+   "doc": "Career jobs screen (moved out of legacy.py).",
+   "screens": [
+    "career_jobs"
+   ]
+  },
+  "solitaireplus/career/real_estate_screen.py": {
+   "doc": "Career real-estate screen (moved out of legacy.py).",
+   "screens": [
+    "career_real_estate"
+   ]
+  },
+  "solitaireplus/career/leaderboards_screen.py": {
+   "doc": "Career leaderboards screen (moved out of legacy.py).",
+   "screens": [
+    "career_leaderboards"
+   ]
+  },
+  "solitaireplus/career/leaderboard_bio_screen.py": {
+   "doc": "Career leaderboard biography screen (moved out of legacy.py).",
+   "screens": [
+    "career_leaderboard_bio"
+   ]
+  },
+  "solitaireplus/career/news_screen.py": {
+   "doc": "Career news screen (moved out of legacy.py).",
+   "screens": [
+    "career_news"
+   ],
+   "names": [
+    "ensure_career_news",
+    "get_career_news_date",
+    "add_career_news"
+   ]
+  },
+  "solitaireplus/career/events/event_select_screen.py": {
+   "doc": "Career event-night game selection screen (moved out of legacy.py).",
+   "screens": [
+    "career_event_select"
+   ]
+  },
+  "solitaireplus/career/events/event_screen.py": {
+   "doc": "Career event screen: press interviews and autographs (moved out of legacy.py).",
+   "screens": [
+    "career_event"
+   ],
+   "names": [
+    "career_autograph_event"
+   ]
+  },
+  "solitaireplus/career/events/summary_screen.py": {
+   "doc": "Career event-night summary screen (moved out of legacy.py).",
+   "screens": [
+    "career_event_summary"
+   ]
+  },
+  "solitaireplus/career/case_opening_screen.py": {
+   "doc": "Case opening screen (moved out of legacy.py).",
+   "screens": [
+    "case_opening"
+   ],
+   "names": [
+    "case_screen"
+   ]
+  },
+  "solitaireplus/career/web_pages.py": {
+   "doc": "The career 'web browser' look shared by the jobs, real-estate and news pages (moved out of legacy.py).",
+   "names": [
+    "CAREER_BROWSER_HEADER_HEIGHT",
+    "draw_career_browser_header",
+    "get_career_web_image",
+    "career_web_image_cache",
+    "career_subpage_back_rect"
+   ]
+  },
+  "solitaireplus/career/career_names.py": {
+   "doc": "Display names for jobs, homes and months (moved out of legacy.py).",
+   "names": [
+    "CAREER_JOBS",
+    "CAREER_JOB_NAMES",
+    "CAREER_MONTH_NAMES",
+    "CAREER_RESIDENCE_NAMES",
+    "get_career_job_name",
+    "get_career_residence_name"
+   ]
+  },
+  "solitaireplus/career/calendar.py": {
+   "doc": "The career calendar: days, weeks, the schedule and moving to the next day (moved out of legacy.py).",
+   "names": [
+    "advance_career_day",
+    "ensure_career_schedule",
+    "build_default_career_schedule",
+    "CAREER_WEEKDAY_NAMES",
+    "get_career_weekday_name",
+    "reset_career_hub_runtime",
+    "get_career_work_activity_name"
+   ]
+  },
+  "solitaireplus/career/career_saving.py": {
+   "doc": "Saving career progress (moved out of legacy.py).",
+   "names": [
+    "auto_save_career",
+    "save_career_from_hub"
+   ]
+  },
+  "solitaireplus/career/rewards.py": {
+   "doc": "Career ratings and fans earned from games (moved out of legacy.py).",
+   "names": [
+    "award_career_rating",
+    "rate_competitive_game",
+    "rate_house_game",
+    "rate_poker_cash_out",
+    "award_career_fans",
+    "award_fans_for_cash_win",
+    "award_fans_for_rating_win",
+    "check_player_rating_world_reactions",
+    "grant_rating_cosmetics",
+    "preview_competitive_rating"
+   ]
+  },
+  "solitaireplus/career/leaderboard_engine.py": {
+   "doc": "The career leaderboard and NPC roster kept in step with the calendar (moved out of legacy.py).",
+   "names": [
+    "ensure_career_leaderboard",
+    "get_career_leaderboard",
+    "sync_career_npc_runtime_state",
+    "update_career_leaderboard_ratings",
+    "get_player_leaderboard_rank",
+    "CAREER_LEADERBOARD_PLAYERS",
+    "add_monthly_leaderboard_news"
+   ]
+  },
+  "solitaireplus/career/events/night.py": {
+   "doc": "Career event nights: activity kinds, the games of each night, results and session totals (moved out of legacy.py).",
+   "names": [
+    "CAREER_ACTIVITY_ARCADE_NIGHT",
+    "CAREER_ACTIVITY_CASINO_NIGHT",
+    "CAREER_ACTIVITY_CASUAL_CARDS",
+    "CAREER_ACTIVITY_CHALLENGE",
+    "CAREER_ACTIVITY_EVENT",
+    "CAREER_ACTIVITY_NICHE_NIGHT",
+    "CAREER_ACTIVITY_POKER_NIGHT",
+    "CAREER_ACTIVITY_ROUND",
+    "CAREER_ACTIVITY_WORK",
+    "CAREER_CHALLENGES",
+    "CAREER_EVENT_GAMES",
+    "CAREER_EVENT_NAMES",
+    "CAREER_WORK_ACTIVITIES",
+    "record_career_event_result",
+    "reset_career_event_result_log",
+    "reset_career_event_session_totals",
+    "_build_career_event_summary",
+    "build_career_event_summary"
+   ]
+  }
+ }
+}

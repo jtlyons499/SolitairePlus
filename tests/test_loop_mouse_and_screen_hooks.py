@@ -1,7 +1,7 @@
 """The main loop's mouse position for drawing (B15) and its screen enter/leave hooks (B16).
 
-The real loop (solitaireplus/app/loop.py) and the real Options event code (solitaireplus/legacy.py)
-run here in a fake namespace (tests/support/locate.py), so the game is never started. A fake pygame
+The real loop (solitaireplus/app/loop.py) and the real Options event code
+(solitaireplus/menus/options_screen.py) run here in a fake namespace (tests/support/locate.py), so the game is never started. A fake pygame
 plays a scripted list of frames; each frame is where the mouse is plus the events of that frame.
 """
 import ast
@@ -19,7 +19,8 @@ from solitaireplus.app import state_names
 from tests.support import locate
 
 LOOP_FILE = locate.ROOT / "solitaireplus" / "app" / "loop.py"
-LEGACY_FILE = "solitaireplus/legacy.py"
+OPTIONS_FILE = "solitaireplus/menus/options_screen.py"
+OPTIONS_MODULE = "solitaireplus.menus.options_screen"
 
 
 # ------------------------------------------------------------------ fakes
@@ -63,8 +64,10 @@ class FakeAudio(Anything):
 def loop_env(frames, screens_module, screens, current_state, to_game=lambda pos: tuple(pos)):
     """A namespace that runs loop.run() for the given frames, then stops.
 
-    screens maps a screen name to its slug; screens_module holds the loop_<kind>_<slug> functions
-    (None: the namespace itself, like solitaireplus.legacy for the real legacy screens)."""
+    screens maps a screen name to its slug (a screen still in legacy: screens_module holds its
+    loop_<kind>_<slug> functions) or to a dotted module name (a screen module, like the real
+    SCREENS entries without ":": screens_module holds its handle_event/draw/enter/leave).
+    screens_module None: the namespace itself, like solitaireplus.legacy for the real legacy screens."""
     fake = FakePygame(frames)
     env = {}
     if screens_module is None:
@@ -81,7 +84,7 @@ def loop_env(frames, screens_module, screens, current_state, to_game=lambda pos:
     env.update(
         pygame=fake,
         importlib=types.SimpleNamespace(import_module=lambda name: screens_module),
-        SCREENS={name: f"screens:{slug}" for name, slug in screens.items()},
+        SCREENS={name: slug if "." in slug else f"screens:{slug}" for name, slug in screens.items()},
         DRAWN_LATE=set(),
         _loaded={},
         draw_achievement_popup=lambda *args: None,
@@ -132,12 +135,12 @@ def key(kind, key_code):
     return pygame.event.Event(kind, key=key_code, mod=0, unicode="")
 
 
-def defined(*names):
-    """The names that legacy.py defines (a screen without a hook simply has none)."""
+def defined(*names, path=OPTIONS_FILE):
+    """The names that the screen's file defines (a screen without a hook simply has none)."""
     found = []
     for name in names:
         try:
-            locate.function_node(name, path=LEGACY_FILE)
+            locate.function_node(name, path=path)
         except LookupError:
             continue
         found.append(name)
@@ -290,11 +293,11 @@ class ScreenEnterAndLeaveHooks(unittest.TestCase):
 
     def test_options_enter_and_leave_reset_the_slider_drags(self):
         env = {"music_slider_dragging": True, "sfx_slider_dragging": True}
-        locate.exec_functions(["loop_enter_options", "loop_leave_options"], env, path=LEGACY_FILE)
-        env["loop_enter_options"]()
+        locate.exec_functions(["enter", "leave"], env, path=OPTIONS_FILE)
+        env["enter"]()
         self.assertEqual((env["music_slider_dragging"], env["sfx_slider_dragging"]), (False, False))
         env.update(music_slider_dragging=True, sfx_slider_dragging=True)
-        env["loop_leave_options"]()
+        env["leave"]()
         self.assertEqual((env["music_slider_dragging"], env["sfx_slider_dragging"]), (False, False))
 
     def test_volume_unchanged_after_leaving_options_mid_drag(self):
@@ -307,7 +310,9 @@ class ScreenEnterAndLeaveHooks(unittest.TestCase):
             ((700, 500), [key(pygame.KEYDOWN, pygame.K_F10)]),                  # back to Options
             ((860, 310), [mouse_motion((860, 310))]),                           # move over the slider
         ]
-        env = loop_env(frames, None, {state_names.STATE_OPTIONS: "options",
+        # Options is a screen module (its functions are defined in the namespace below); the
+        # debug menu is still a legacy screen.
+        env = loop_env(frames, None, {state_names.STATE_OPTIONS: OPTIONS_MODULE,
                                       state_names.STATE_DEBUG_MENU: "debug_menu"},
                        state_names.STATE_OPTIONS)
         env.update(
@@ -319,8 +324,7 @@ class ScreenEnterAndLeaveHooks(unittest.TestCase):
             music_slider_rect=slider,
             sfx_slider_rect=pygame.Rect(500, 400, 400, 20),
         )
-        locate.exec_functions(["loop_event_options", *defined("loop_enter_options", "loop_leave_options")],
-                              env, path=LEGACY_FILE)
+        locate.exec_functions(["handle_event", *defined("enter", "leave")], env, path=OPTIONS_FILE)
         run_loop(env)
 
         self.assertEqual(env["audio"].music_volumes, [0.25])

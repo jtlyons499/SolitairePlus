@@ -1,0 +1,14 @@
+[
+ "solitaireplus.menus.customize",
+ "solitaireplus.menus.difficulty_screen",
+ "solitaireplus.menus.free_play_select",
+ "solitaireplus.menus.help_screen",
+ "solitaireplus.menus.main_menu",
+ "solitaireplus.menus.mode_select",
+ "solitaireplus.menus.options_screen",
+ "solitaireplus.profile.level_up",
+ "solitaireplus.profile.leveling",
+ "solitaireplus.profile.profile_editor",
+ "solitaireplus.profile.profile_select",
+ "solitaireplus.profile.recap"
+]

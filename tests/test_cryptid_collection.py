@@ -133,10 +133,13 @@ class CollectionTests(unittest.TestCase):
             self.assertFalse(list(Path(folder).glob('*.tmp')))
 
     def test_real_xp_path_grants_and_displays_packs_on_each_level(self):
-        env=main_functions({'add_player_xp','get_level_from_xp','get_next_level_xp'},
-            dict(player_xp=0,player_level=1,player_xp_to_next=100,
+        env=dict(player_xp=0,player_level=1,player_xp_to_next=100,
                  LEVEL_XP_THRESHOLDS={1:0,2:100,3:200},cryptid_collection_state=self.state,
-                 unlock_rewards_for_level=lambda level:[]))
+                 unlock_rewards_for_level=lambda level:[])
+        # Moved add_player_xp (profile/leveling.py) calls legacy.game_namespace(); the fake
+        # namespace is env itself, as game_namespace() returned it before the move.
+        env['game_namespace']=lambda:env
+        main_functions({'add_player_xp','get_level_from_xp','get_next_level_xp'},env)
         result=env['add_player_xp'](250)
         self.assertEqual(self.state['packs']['creature'],6)
         self.assertEqual([s['unlocks'] for s in result['level_up_screens']],[[('cryptid_pack','2')],[('cryptid_pack','2')]])

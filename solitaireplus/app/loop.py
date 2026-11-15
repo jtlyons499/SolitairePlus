@@ -23,17 +23,19 @@ from solitaireplus import legacy  # noqa: I001 (must come before the modules bel
 from solitaireplus.app import fonts
 from solitaireplus.app import sounds
 from solitaireplus.app import window
+from solitaireplus.menus import main_menu
+from solitaireplus.menus import options_screen
 
 SCREENS = {
     state_names.STATE_DEBUG_POKER_NPC_SELECT: "solitaireplus.legacy:debug_poker_npc_select",
     state_names.STATE_DEBUG_MENU: "solitaireplus.legacy:debug_menu",
-    state_names.STATE_SPLASH: "solitaireplus.legacy:splash",
-    state_names.STATE_PROFILE_SELECT: "solitaireplus.legacy:profile_select",
-    state_names.STATE_MENU: "solitaireplus.legacy:menu",
-    state_names.STATE_MODE_SELECT: "solitaireplus.legacy:mode_select",
+    state_names.STATE_SPLASH: "solitaireplus.menus.splash",
+    state_names.STATE_PROFILE_SELECT: "solitaireplus.profile.profile_select",
+    state_names.STATE_MENU: "solitaireplus.menus.main_menu",
+    state_names.STATE_MODE_SELECT: "solitaireplus.menus.mode_select",
     state_names.STATE_CASE_OPENING: "solitaireplus.legacy:case_opening",
     state_names.STATE_CRYPTID_CREATURES: "solitaireplus.legacy:cryptid_creatures",
-    state_names.STATE_FREE_PLAY_SELECT: "solitaireplus.legacy:free_play_select",
+    state_names.STATE_FREE_PLAY_SELECT: "solitaireplus.menus.free_play_select",
     state_names.STATE_CAREER_ACTIVITY: "solitaireplus.legacy:career_activity",
     state_names.STATE_CAREER_HUB: "solitaireplus.legacy:career_hub",
     state_names.STATE_SCORE_FOUR_MODE_SELECT: "solitaireplus.legacy:score_four_mode_select",
@@ -54,8 +56,8 @@ SCREENS = {
     state_names.STATE_CRAZY_EIGHTS: "solitaireplus.legacy:crazy_eights",
     state_names.STATE_BANGO: "solitaireplus.legacy:bango",
     state_names.STATE_SCORE_FOUR: "solitaireplus.legacy:score_four",
-    state_names.STATE_ACHIEVEMENTS: "solitaireplus.legacy:achievements",
-    state_names.STATE_HOW_TO_PLAY: "solitaireplus.legacy:how_to_play",
+    state_names.STATE_ACHIEVEMENTS: "solitaireplus.menus.achievements_screen",
+    state_names.STATE_HOW_TO_PLAY: "solitaireplus.menus.help_screen",
     state_names.STATE_CAREER_JOBS: "solitaireplus.legacy:career_jobs",
     state_names.STATE_CAREER_LEADERBOARD_BIO: "solitaireplus.legacy:career_leaderboard_bio",
     state_names.STATE_CAREER_LEADERBOARDS: "solitaireplus.legacy:career_leaderboards",
@@ -76,12 +78,12 @@ SCREENS = {
     state_names.STATE_SUIT_SNAKE: "solitaireplus.legacy:suit_snake",
     state_names.STATE_DEAD_MANS_HAND: "solitaireplus.legacy:dead_mans_hand",
     state_names.STATE_CAREER_REAL_ESTATE: "solitaireplus.legacy:career_real_estate",
-    state_names.STATE_DIFFICULTY: "solitaireplus.legacy:difficulty",
-    state_names.STATE_OPTIONS: "solitaireplus.legacy:options",
-    state_names.STATE_CUSTOMIZE: "solitaireplus.legacy:customize",
-    state_names.STATE_RECAP: "solitaireplus.legacy:recap",
-    state_names.STATE_LEVEL_UP: "solitaireplus.legacy:level_up",
-    state_names.STATE_PROFILE: "solitaireplus.legacy:profile",
+    state_names.STATE_DIFFICULTY: "solitaireplus.menus.difficulty_screen",
+    state_names.STATE_OPTIONS: "solitaireplus.menus.options_screen",
+    state_names.STATE_CUSTOMIZE: "solitaireplus.menus.customize",
+    state_names.STATE_RECAP: "solitaireplus.profile.recap",
+    state_names.STATE_LEVEL_UP: "solitaireplus.profile.level_up",
+    state_names.STATE_PROFILE: "solitaireplus.profile.profile_editor",
     state_names.STATE_PLAYING: "solitaireplus.legacy:playing",
 }
 
@@ -141,9 +143,9 @@ def run():
     # MAIN LOOP // EVENT STATE CHAIN
     # ==================================================
 
-    legacy.apply_saved_app_settings()
-    if legacy.app_settings.get("auto_update_check"):
-        legacy.update_checker.start()
+    options_screen.apply_saved_app_settings()
+    if options_screen.app_settings.get("auto_update_check"):
+        main_menu.update_checker.start()
 
     state.running = True
     entered_state = None   # the screen whose enter() ran last (the first frame enters the first screen)
@@ -157,11 +159,11 @@ def run():
 
         # Saved Options are written shortly after they change (only while the Options
         # screen is open, so temporary changes like horse-race music ducking are not saved).
-        legacy.update_checker.poll()
+        main_menu.update_checker.poll()
         if state.current_state == state_names.STATE_OPTIONS:
-            legacy.app_settings.update(legacy.current_app_settings_values())
+            options_screen.app_settings.update(options_screen.current_app_settings_values())
         else:
-            legacy.app_settings.tick()
+            options_screen.app_settings.tick()
 
         # Keep the soundtrack aligned with the active arcade cabinet. Selection,
         # token exchange, prize counter, and the rest of Career use the player's
@@ -198,7 +200,7 @@ def run():
                 window.set_fullscreen_enabled(
                     not state.fullscreen_enabled
                 )
-                legacy.app_settings.update({"fullscreen": state.fullscreen_enabled})
+                options_screen.app_settings.update({"fullscreen": state.fullscreen_enabled})
                 continue
 
             # ==================================================
@@ -316,5 +318,5 @@ def run():
 
 
 
-    legacy.app_settings.flush()
+    options_screen.app_settings.flush()
     pygame.quit()

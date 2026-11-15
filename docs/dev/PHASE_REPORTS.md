@@ -205,3 +205,25 @@ are intended: `menu_hover_after_key__options` (B15: hover kept after a key press
   table UIs' animation caches); the brief's end-state checklist forbids them, so they go during the area
   phases (poker in Phase 7) or Phase 12.
 - `multiplayer/audio.py` has the same double-advance as B62, but nothing imports it (dead code, Phase 11).
+
+## Phase 3 (move): menus and profile
+
+**What moved** (`tools/refactor/move.py` with the plan from `tools/refactor/specs/phase3.json`; `legacy.py`
+29,242 → 22,065 lines):
+- `solitaireplus/menus/`: `splash.py`, `main_menu.py` (+ update checker, update start, multiplayer launcher),
+  `mode_select.py`, `free_play_select.py`, `difficulty_screen.py`, `help_screen.py`, `achievements_screen.py`
+  (the Achievements screen handlers joined the existing module), `options_screen.py` (+ the app settings it
+  saves), `customize.py`.
+- `solitaireplus/profile/`: `profile_select.py` (+ `finish_profile_selection`), `profile_editor.py`,
+  `recap.py`, `level_up.py` (+ the level-up queue), `leveling.py` (XP, levels, round rewards, unlocks by level,
+  achievement events), `save_data.py` (fresh profile, building and applying save data).
+- Each screen module exposes `handle_event`/`draw` (Options also `enter`/`leave`; Level-up `DRAWS_LATE`); the
+  SCREENS registry points at the modules. A screen's exclusive helpers, rects and constants moved with it.
+- Module names avoid clashes with local variables (`options_screen`, `difficulty_screen`, `help_screen`,
+  `leveling`, `save_data`): the mover now refuses any alias that some function also uses as a local name, and
+  turns an import of a name from the target module itself into a plain alias assignment.
+- `tests/support/locate.py` treats every package module name as a possible alias in fake namespaces; 6 test
+  files re-pointed at the new modules (workflow with an independent review of each diff).
+
+**Results:** `screen_harness compare` → `IDENTICAL 64/64`; `replay compare` → `IDENTICAL 18/18` (baseline
+`2c62abd`). Tests `PASSED`.

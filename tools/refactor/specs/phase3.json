@@ -1,0 +1,120 @@
+{
+ "modules": {
+  "solitaireplus/menus/splash.py": {
+   "doc": "Splash screen (moved out of legacy.py).",
+   "screens": [
+    "splash"
+   ]
+  },
+  "solitaireplus/menus/main_menu.py": {
+   "doc": "Main menu, the update banner and the multiplayer launcher button (moved out of legacy.py).",
+   "screens": [
+    "menu"
+   ],
+   "names": [
+    "multiplayer_launcher",
+    "start_game_update",
+    "update_checker"
+   ]
+  },
+  "solitaireplus/menus/mode_select.py": {
+   "doc": "Free Play / Career choice screen (moved out of legacy.py).",
+   "screens": [
+    "mode_select"
+   ]
+  },
+  "solitaireplus/menus/free_play_select.py": {
+   "doc": "Free Play game grid (moved out of legacy.py).",
+   "screens": [
+    "free_play_select"
+   ]
+  },
+  "solitaireplus/menus/difficulty_screen.py": {
+   "doc": "Solitaire difficulty screen (moved out of legacy.py).",
+   "screens": [
+    "difficulty"
+   ]
+  },
+  "solitaireplus/menus/help_screen.py": {
+   "doc": "How to Play screen (moved out of legacy.py).",
+   "screens": [
+    "how_to_play"
+   ]
+  },
+  "solitaireplus/menus/achievements_screen.py": {
+   "doc": "",
+   "screens": [
+    "achievements"
+   ]
+  },
+  "solitaireplus/menus/options_screen.py": {
+   "doc": "Options screen and the app settings it saves (moved out of legacy.py).",
+   "screens": [
+    "options"
+   ],
+   "names": [
+    "app_settings",
+    "apply_saved_app_settings",
+    "current_app_settings_values"
+   ]
+  },
+  "solitaireplus/menus/customize.py": {
+   "doc": "Customize screen: backgrounds, felts, card backs, titles, cursors (moved out of legacy.py).",
+   "screens": [
+    "customize"
+   ]
+  },
+  "solitaireplus/profile/profile_select.py": {
+   "doc": "Profile slot screen (moved out of legacy.py).",
+   "screens": [
+    "profile_select"
+   ],
+   "names": [
+    "finish_profile_selection",
+    "favorite_suit_options"
+   ]
+  },
+  "solitaireplus/profile/profile_editor.py": {
+   "doc": "Profile editing / creation screen (moved out of legacy.py).",
+   "screens": [
+    "profile"
+   ]
+  },
+  "solitaireplus/profile/recap.py": {
+   "doc": "Solitaire round recap screen (moved out of legacy.py).",
+   "screens": [
+    "recap"
+   ]
+  },
+  "solitaireplus/profile/level_up.py": {
+   "doc": "Level-up screen (moved out of legacy.py).",
+   "screens": [
+    "level_up"
+   ],
+   "names": [
+    "advance_level_up_screen"
+   ]
+  },
+  "solitaireplus/profile/leveling.py": {
+   "doc": "Player progression: XP and levels, round rewards, unlocks by level, achievement events and popups (moved out of legacy.py).",
+   "names": [
+    "add_player_xp",
+    "get_level_from_xp",
+    "get_next_level_xp",
+    "apply_round_rewards",
+    "sync_unlocks_for_current_level",
+    "award_game_xp",
+    "process_achievement_event",
+    "award_achievement_fans"
+   ]
+  },
+  "solitaireplus/profile/save_data.py": {
+   "doc": "Building a save from the game's state and putting a loaded save back into it (moved out of legacy.py).",
+   "names": [
+    "apply_fresh_profile",
+    "build_profile_save_data",
+    "apply_profile_save_data"
+   ]
+  }
+ }
+}

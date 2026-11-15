@@ -39,6 +39,9 @@ def world(seed=42, base=None, year=2026, month=1):
 def main_functions(names, values):
     nodes = locate.function_nodes(*names)
     namespace = locate.namespace(dict(values), nodes)
+    # Moved code reaches the old globals() through legacy.game_namespace(); the fake legacy module
+    # reads env, so env itself must answer it.
+    namespace.setdefault("game_namespace", lambda: namespace)
     exec(compile(ast.Module(body=nodes, type_ignores=[]), "main NPC integration", "exec"), namespace)
     return namespace
 

@@ -9,6 +9,14 @@ from solitaireplus.profile.achievements import (
     get_progress_text,
     get_unlock_count,
 )
+from solitaireplus.app import state
+from solitaireplus.app import state_names
+from solitaireplus.app.lazy import lazy
+window = lazy("solitaireplus.app.window")
+sounds = lazy("solitaireplus.app.sounds")
+panels = lazy("solitaireplus.ui.panels")
+fonts = lazy("solitaireplus.app.fonts")
+buttons = lazy("solitaireplus.ui.buttons")
 
 
 BACK_RECT = pygame.Rect(1060, 680, 240, 50)
@@ -268,3 +276,41 @@ def draw_achievement_popup(
         surface.set_alpha(alpha)
         game_surface.blit(surface, (frame_rect.x + 132, y))
         y += surface.get_height() + 6
+
+
+ACHIEVEMENTS_BACK_RECT = BACK_RECT
+clamp_achievements_scroll = clamp_scroll
+
+def handle_event(event):
+    """Old main-loop event branch for STATE_ACHIEVEMENTS."""
+
+    if event.type == pygame.MOUSEWHEEL:
+        state.achievements_scroll_y = clamp_achievements_scroll(
+            state.achievements_scroll_y - event.y * 78
+        )
+
+    elif (
+            event.type == pygame.MOUSEBUTTONDOWN
+            and event.button == 1
+            and state.game_mouse_pos is not None
+            and ACHIEVEMENTS_BACK_RECT.collidepoint(state.game_mouse_pos)
+    ):
+        sounds.audio.play_sound("button_click")
+        state.current_state = state_names.STATE_MENU
+
+
+def draw():
+    """Old draw-chain branch for STATE_ACHIEVEMENTS."""
+
+    draw_achievements_screen(
+        window.game_surface,
+        state.game_mouse_pos,
+        state.achievement_state,
+        state.achievements_scroll_y,
+        panels.draw_submenu_background,
+        panels.draw_submenu_title,
+        buttons.draw_menu_button,
+        fonts.options_title_font,
+        fonts.option_label_font,
+        fonts.difficulty_detail_font,
+    )

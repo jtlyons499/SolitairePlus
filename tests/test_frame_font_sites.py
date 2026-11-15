@@ -71,6 +71,8 @@ class LegacyFontSiteTests(unittest.TestCase):
 
     def screens(self):
         legacy, state = self.legacy, self.state
+        from solitaireplus.menus import customize
+        from solitaireplus.profile import profile_editor
 
         def score_four_opponent_select():
             if not state.score_four_opponent_choices:
@@ -111,8 +113,8 @@ class LegacyFontSiteTests(unittest.TestCase):
             'draw_career_leaderboards': career_leaderboards,
             'draw_career_event_select': career_event_select,
             'draw_battle_bosses_opponent_select': battle_bosses_opponent_select,
-            'draw_customize_menu': legacy.draw_customize_menu,
-            'draw_profile_screen': legacy.draw_profile_screen,
+            'draw_customize_menu': customize.draw_customize_menu,
+            'draw_profile_screen': profile_editor.draw_profile_screen,
         }
 
     def test_screens_build_their_fonts_only_once(self):

@@ -1,0 +1,11 @@
+{"modules": {
+  "solitaireplus/games/solitaire/screen.py": {
+    "doc": "The Solitaire table screen: the game, its buttons, pause menu, return confirmation and the per-frame round and Head-to-Head updates (moved out of legacy.py).",
+    "screens": ["playing"],
+    "names": ["update_solitaire_round"]
+  },
+  "solitaireplus/games/solitaire/head_to_head_screen.py": {
+    "doc": "Head-to-Head races: starting, finishing and restoring the player's Solitaire settings (moved out of legacy.py).",
+    "names": ["start_head_to_head_event", "finish_head_to_head_race", "restore_head_to_head_game_settings"]
+  }
+}}

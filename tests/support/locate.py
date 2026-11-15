@@ -113,6 +113,9 @@ def compile_functions(*names: str, filename: str = "located functions", path=Non
 # (``state.career_cash``, ``fonts.option_label_font``, ``legacy.auto_save_career()`` ...).
 MODULE_ALIASES = {"state", "state_names", "legacy", "sounds", "window", "assets", "fonts", "cursors",
                   "buttons", "ui_text", "panels", "backgrounds"}
+# Every module of the package can be an alias once code moves into it (leveling.add_player_xp ...).
+MODULE_ALIASES |= {path.stem for path in (ROOT / "solitaireplus").rglob("*.py")
+                   if path.stem != "__init__" and "__pycache__" not in path.parts}
 
 
 class EnvModule:
@@ -126,6 +129,8 @@ class EnvModule:
         try:
             return self._env[name]
         except KeyError:
+            if name == "game_namespace":          # legacy.game_namespace(): the old globals(), i.e. env
+                return lambda: self._env
             raise AttributeError(name) from None
 
     def __setattr__(self, name, value):
