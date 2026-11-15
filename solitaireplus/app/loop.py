@@ -313,9 +313,10 @@ def run():
 
 
 
-        window.clock.tick(
+        # The arcade machines move by the real length of the frame (B49).
+        state.frame_dt = window.clock.tick(
             window.FPS
-        )
+        ) / 1000.0
 
 
 

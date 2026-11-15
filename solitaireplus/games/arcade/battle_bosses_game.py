@@ -7,6 +7,7 @@ NPC rivals.
 """
 from __future__ import annotations
 from solitaireplus.app import paths
+from solitaireplus.ui import text as ui_text
 
 import math
 import os
@@ -635,7 +636,7 @@ class BattleBossesGame:
         center = self.ball_rect.center
         pygame.draw.ellipse(surface, (246, 243, 226), self.ball_rect)
         pygame.draw.ellipse(surface, (224, 65, 83), self.ball_rect, 2)
-        font = pygame.font.Font(None, 22)
+        font = ui_text.get_font(None, 22)   # shared cache: never build a font per frame (B58)
         joker = font.render("J", True, (34, 34, 40))
         surface.blit(joker, joker.get_rect(center=center))
 
@@ -681,7 +682,7 @@ class BattleBossesGame:
 
         if portrait is None:
             suit = "H" if fort["index"] == 0 else ("S", "D", "C")[(fort["index"] - 1) % 3]
-            font = pygame.font.Font(None, 36)
+            font = ui_text.get_font(None, 36)   # shared cache (B58)
             color = (224, 72, 88) if suit in ("H", "D") else (230, 232, 235)
             rendered = font.render(suit, True, color)
             surface.blit(rendered, rendered.get_rect(center=rect.center))

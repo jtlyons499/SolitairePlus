@@ -77,6 +77,7 @@ def loop_env(frames, screens_module, screens, current_state, to_game=lambda pos:
         fake.frame += 1
         if fake.frame >= len(fake.frames):
             env["running"] = False
+        return 16                         # milliseconds, like pygame.time.Clock.tick
 
     nodes = [node for node in ast.parse(LOOP_FILE.read_text(encoding="utf-8")).body
              if isinstance(node, (ast.FunctionDef, ast.ClassDef))]

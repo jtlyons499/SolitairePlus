@@ -227,6 +227,7 @@ menu_mouse_pos = (
     0
 )
 mouse_pos = None   # the mouse in game coordinates this frame (set by the main loop before drawing)
+frame_dt = 1 / 60   # seconds the last frame took (what window.clock.tick returned; set by the main loop)
 
 # Set during start-up:
 

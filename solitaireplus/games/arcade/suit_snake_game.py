@@ -25,6 +25,7 @@ from solitaireplus.games.arcade.suit_snake import (
     get_suit_snake_movement_style,
     sequence_card,
 )
+from solitaireplus.ui import text as ui_text
 
 
 ASSET_ROOT = str(paths.asset("arcade", "suit_snake"))
@@ -297,9 +298,11 @@ class SuitSnakeGame:
             self._queue_sound("suit_snake_collect")
 
         if self.score > self.high_score:
+            # Like Ace Invaders: only a previous score above 0 can be beaten.
             if (
                 self.high_score == self.starting_high_score
                 and self.score > self.starting_high_score
+                and self.starting_high_score > 0
             ):
                 self.new_high_score = True
             self.high_score = self.score
@@ -381,12 +384,17 @@ class SuitSnakeGame:
 
         step_ms = max(55, int(self.mode_config.get("step_ms", 165)))
         # Catch up at most two cells after a frame hitch.
-        steps_due = min(2, max(0, (now - self._last_step_at) // step_ms))
+        steps_owed = max(0, (now - self._last_step_at) // step_ms)
+        steps_due = min(2, steps_owed)
         for _ in range(int(steps_due)):
             self._last_step_at += step_ms
             self._step(step_time=self._last_step_at)
             if self.finished:
                 break
+        if steps_owed > steps_due:
+            # B50: drop the rest of a long gap (a pause or a big hitch) so
+            # the following frames don't keep stepping twice to pay it off.
+            self._last_step_at = now
 
     @property
     def accuracy_percent(self):
@@ -497,15 +505,18 @@ class SuitSnakeGame:
 
         suit_color = SUIT_COLORS.get(suit, (28, 32, 38))
         symbol = SUIT_SYMBOLS.get(suit, "?")
-        rank_font = pygame.font.SysFont(
+        # B51: shared cached fonts (these were built anew for every token, every frame).
+        rank_font = ui_text.get_font(
             None,
             14 if rect.width < 30 or len(str(rank)) > 1 else 17,
             bold=True,
+            sysfont=True,
         )
-        suit_font = pygame.font.SysFont(
+        suit_font = ui_text.get_font(
             None,
             14 if rect.width < 30 else 16,
             bold=True,
+            sysfont=True,
         )
 
         rank_surface = rank_font.render(str(rank), True, suit_color)

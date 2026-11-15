@@ -12,6 +12,7 @@ import random
 import pygame
 
 from solitaireplus.games.arcade.ace_invaders import ACE_INVADERS_DIFFICULTIES, get_ace_invaders_difficulty
+from solitaireplus.games.arcade.motion import move_rect
 
 
 ASSET_ROOT = str(paths.asset("arcade", "ace_invaders"))
@@ -64,6 +65,9 @@ class AceInvadersGame:
         self.ticket_multiplier = 1.0
 
         self.player_rect = pygame.Rect(0, 0, *PLAYER_SIZE)
+        # Float top-left behind player_rect (B54; see move_rect). Enemies and
+        # bullets keep theirs in their dicts under "pos".
+        self._player_pos = None
         self.player_bullets = []
         self.enemy_bullets = []
         self.enemies = []
@@ -280,7 +284,11 @@ class AceInvadersGame:
         )
         self.player_bullets.append({"rect": rect, "vy": -PLAYER_BULLET_SPEED})
         self._last_player_shot_at = now
-        self.shots_fired += 1
+        # Shots during the wave-break pause can never hit anything (the bullets
+        # are frozen and cleared when the next wave spawns), so they do not
+        # count against accuracy (B55).
+        if not self._wave_resume_at:
+            self.shots_fired += 1
         self._queue_sound("ace_invaders_shoot")
 
     def _bottom_shooters(self):
@@ -393,13 +401,13 @@ class AceInvadersGame:
                 enemy["rect"].y += drop
         else:
             for enemy in self.enemies:
-                enemy["rect"].x += int(round(dx))
+                enemy["pos"] = move_rect(enemy["rect"], enemy.get("pos"), dx, 0.0)
 
     def _update_bullets(self, dt, now):
-        for bullet in self.player_bullets:
-            bullet["rect"].y += int(round(bullet["vy"] * dt))
-        for bullet in self.enemy_bullets:
-            bullet["rect"].y += int(round(bullet["vy"] * dt))
+        for bullet in self.player_bullets + self.enemy_bullets:
+            bullet["pos"] = move_rect(
+                bullet["rect"], bullet.get("pos"), 0.0, bullet["vy"] * dt,
+            )
 
         self.player_bullets = [
             bullet for bullet in self.player_bullets
@@ -483,7 +491,9 @@ class AceInvadersGame:
         if pressed_keys[pygame.K_d] or pressed_keys[pygame.K_RIGHT]:
             move += 1
 
-        self.player_rect.x += int(round(move * PLAYER_SPEED * dt))
+        self._player_pos = move_rect(
+            self.player_rect, self._player_pos, move * PLAYER_SPEED * dt, 0.0,
+        )
         self.player_rect.left = max(PLAYFIELD_RECT.left + 14, self.player_rect.left)
         self.player_rect.right = min(PLAYFIELD_RECT.right - 14, self.player_rect.right)
 
@@ -552,13 +562,24 @@ class AceInvadersGame:
         self._asset_cache[cache_key] = fitted
         return fitted
 
+    def _scaled_background(self, size):
+        # Scaled once per target size, like _fit_image (B52: it was smoothscaled every frame).
+        path = os.path.join(ASSET_ROOT, "background.png")
+        source = self._load_image(path)
+        if source is None:
+            path = ARCADE_BACKGROUND
+            source = self._load_image(path)
+        if source is None:
+            return None
+        cache_key = ("scaled_background", path, tuple(size))
+        if cache_key not in self._asset_cache:
+            self._asset_cache[cache_key] = pygame.transform.smoothscale(source, tuple(size))
+        return self._asset_cache[cache_key]
+
     def _draw_background(self, surface):
-        background = self._load_image(os.path.join(ASSET_ROOT, "background.png"))
-        if background is None:
-            background = self._load_image(ARCADE_BACKGROUND)
+        background = self._scaled_background(surface.get_size())
 
         if background is not None:
-            background = pygame.transform.smoothscale(background, surface.get_size())
             surface.blit(background, (0, 0))
             veil = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
             veil.fill((3, 7, 18, 92))

@@ -806,3 +806,112 @@ Dead Man's Hand, debug) code and the shared names are still in this copy.
 **Results:** `screen_harness compare` → `IDENTICAL 64/64 scenes`; `replay compare` → `IDENTICAL 18/18 journeys`
 (baseline `7195fb3`; incl. the 7 arcade scenes and the 4 `13_arcade_*` journeys). Tests: `PASSED - all
 non-quarantined tests passed.` Commit `8a0775b`.
+
+## Phase 9 (fix): B49, B50, B51, B52, B53, B54, B55, B56, B57, B58
+
+Fixed by the fix workflow (one agent per bug, test first, adversarial review). Every review passed and no repair
+was needed. Each new test failed on the old code; the reviewers checked this by putting the old code back in a
+scratch copy.
+
+- **B49** — the four machines move by the real frame time instead of a fixed 1/60 s. `app/loop.py` stores what
+  `window.clock.tick` returned, in seconds, in the new `state.frame_dt` (one statement; the frame order is the same).
+  `machine_screens.machine_frame_dt()` caps it at `MACHINE_MAX_FRAME_DT = 1/20` s, and the four `loop_draw_*`
+  branches pass it to `update()`. The shared `test_loop_mouse_and_screen_hooks` fake clock now returns 16 ms, as
+  pygame's `Clock.tick` does. `test_arcade_frame_time` (one 1/30 s frame equals two 1/60 s frames for each machine;
+  a 0.5 s hitch counts as 1/20 s; the loop stores each tick in seconds).
+- **B50** — Suit Snake still catches up at most 2 cells after a gap. When more steps were owed, `_last_step_at` now
+  jumps to `now`, so the next frames step at the normal rate instead of stepping twice until the gap is paid off.
+  `test_suit_snake_pause_catchup`.
+- **B51** — `SuitSnakeGame._draw_card_token` gets its rank and suit fonts from `ui_text.get_font(..., sysfont=True)`
+  instead of building 2 `SysFont`s per token per frame (a 40-card snake built 82 per frame). Same sizes,
+  pixel-identical. `test_suit_snake_font_cache`.
+- **B52** — Ace Invaders scales its background once per target size (`AceInvadersGame._scaled_background`, kept in
+  `_asset_cache` like `_fit_image`) instead of every frame. Pixel-identical. `test_ace_invaders_background_cache`.
+- **B53** — King Pong serves toward the side that gave up the point (`_pending_serve_to_player = not player_scored`).
+  The first serve of a match is still random. `test_king_pong_serve`.
+- **B54** — King Pong (both paddles, ball) and Ace Invaders (ship, formation, bullets) keep float positions. The new
+  `games/arcade/motion.py` `move_rect()` keeps the exact top-left in a `Vector2` and copies the rounded value into
+  the Rect used for drawing and collisions. When other code places a Rect directly (resets, zone clamps, bounces,
+  the formation drop), that axis starts again from the Rect, so that code did not change. `test_arcade_subpixel_motion`.
+- **B55** — shots fired during the Ace Invaders wave-break pause no longer count toward `shots_fired`/accuracy. That
+  includes the spawn frame, whose bullet the new wave clears. Firing itself still works as before.
+  `test_ace_invaders_wave_break_accuracy`. The accuracy is not shown on screen: it only goes into the career event
+  result log.
+- **B56** — in King Pong, Enter (and keypad Enter) only leaves once the match is finished, like the other machines.
+  Escape and the Quit button still forfeit mid-match, and Space still starts a rematch. `test_king_pong_enter_key`.
+- **B57** — Suit Snake sets "NEW HIGH SCORE!" only when a previous high score above 0 is beaten, like Ace Invaders.
+  The HIGH display and the saved best score do not change. `test_suit_snake_high_score`.
+- **B58** — Battle Bosses' fallback "J" on the ball (`_draw_ball`) and the fallback suit letter on a fort with no
+  portrait (`_draw_portrait`, a second per-frame font in the same draw) use `ui_text.get_font`. Pixel-identical.
+  `test_battle_bosses_font_cache`.
+
+**Choices made (designer can change them):**
+- B55: the sprint default. Shots during the break don't count, and firing during the break is still allowed.
+- B50: the rest of a gap is dropped only when more than 2 steps were owed. The brief's literal wording would also
+  throw away the leftover time after an ordinary 2-step hitch. Gaps of 2 steps or less keep their exact cadence.
+- B49: `state.frame_dt` holds the raw frame time. The 1/20 s cap is applied where the value goes to the machines,
+  as Dead Man's Hand does with `window.clock.get_time()`. Suit Snake gets the value too, but it steps by the clock, so
+  it behaves the same.
+- B57: a missing or invalid saved score counts as "no previous score". A real previous score of 0 also counts as
+  none, because the brief asks for "a previous score above 0".
+- B54: only the two engines the brief names. Battle Bosses rounds its ball the same way (N44 below).
+
+**Results:** tests `PASSED`. Baseline for both compares: `8a0775bb86704ef441b27ccd7450f9a3370b280e`.
+- `screen_harness compare` → `DIFFERENT: 62/64 scenes identical`. Each difference was opened and is intended:
+  - `arcade_king_pong`, shot `arcade_king_pong.png`: the ball and the rival paddle are a few pixels away from where
+    they were (B54 sub-pixel motion, B49 frame time).
+  - `arcade_ace_invaders`, shot `arcade_ace_invaders.png`: the CASUAL formation is about 12 px further left. Before,
+    its 0.9 px per frame was rounded up to 1. Because of the shifted positions there is one more kill (SCORE/HIGH 30
+    instead of 20), and the bullets, two shield blocks and the ship differ slightly (B54, B49).
+  - Both select shots and every other arcade scene (hub, Battle Bosses, Suit Snake) are identical.
+- `replay compare` → `DIFFERENT: 15/18 journeys identical`. Only screenshots differ, and every checkpoint value is
+  identical:
+  - `13_arcade_king_pong` `cp_01_after_five_seconds`: the rally plays out differently. At 5 s the score is 0–0
+    instead of 0–1, and the ball and rival paddle are elsewhere (B49, B54). No point is scored in this window, so
+    B53's serve direction does not show here.
+  - `13_arcade_battle_bosses` `cp_01_after_five_seconds`: the ball and the three rival shields are elsewhere (B49).
+    The player's shield is unchanged.
+  - `13_arcade_ace_invaders` `cp_01_after_five_seconds`: the formation, ship, bullets and two shield blocks are in
+    different places (B54, B49). Score and lives are the same.
+  - `machine_started` and the whole `13_arcade_suit_snake` journey are identical.
+
+Commit `fde74a4`.
+
+legacy.py is not empty after this phase (4087 lines). The Phase 8 and Phase 10 code and the shared helpers are
+still there. The fixes did not touch it.
+
+**New findings (not fixed):**
+1. **N44:** Battle Bosses still rounds its ball to whole pixels on every collision sub-step
+   (`battle_bosses_game.py` `update`: `self.ball_rect.x += int(round(self.ball_velocity.x * step_dt))`, same for y).
+   This is the B54 speed loss, worse because it happens per sub-step. Now that B49 passes the real (uneven) frame
+   time, the ball speed varies slightly from frame to frame. `motion.move_rect` would fix it.
+2. **N45:** Dead Man's Hand (legacy.py, Phase 10 area) reads `window.clock.get_time()` for its own dt. It could
+   use `state.frame_dt` now. Not a bug.
+3. **N46:** Suit Snake Smooth Movement: after a clamped long gap (B50), the last catch-up step's render start
+   time is in the past. So the snake snaps to its cell, then sits still for one step instead of gliding. Cosmetic.
+4. **N47:** Ace Invaders `_draw_background` still builds and fills a full-screen SRCALPHA veil every frame. It
+   could be cached per size with the same pixels.
+5. **N48:** `assets/arcade/bg.png` has never been in git, yet `ace_invaders_game.ARCADE_BACKGROUND`,
+   `battle_bosses_game`/`king_pong` `ARCADE_BACKGROUND_PATH`, `suit_snake_game.ARCADE_BACKGROUND` and
+   `hub_screens.draw_arcade_page_background` point at it. Ace Invaders, Battle Bosses and Suit Snake try their own
+   `background.png` first. King Pong and the arcade hub pages have no other picture, so they always draw a plain
+   fill. Either add the picture or remove the dead path.
+6. **N49:** Ace Invaders builds `pygame.font.Font(None, 34)` for each enemy on every frame when the enemy art
+   fails to load (`ace_invaders_game.py`, the enemy fallback in `draw`, about line 611). This only happens on the
+   fallback path.
+7. **N50:** other per-frame work in the machines: Battle Bosses `_draw_portrait` and King Pong's NPC portrait
+   (`king_pong.py` about line 561) smoothscale and ellipse-mask the portrait every frame. Battle Bosses `draw()` also
+   allocates a full-screen shade, a header panel, an arena surface and four status plates every frame.
+8. **N51:** Ace Invaders: during the wave break the player can still fire and hear the shoot sound, but the
+   bullets stay frozen and vanish when the next wave spawns (kept per the B55 default). Blocking fire during the
+   break might feel better. Shots still in flight when a wave ends or a life is lost also count without being able
+   to hit (outside B55's definition).
+9. **N52:** `state.arcade_state` is not declared in `solitaireplus/app/state.py`. It only exists once something
+   assigns it, so a test that reaches a `claim_*_result`/`start_*_session` without setting it gets an AttributeError.
+10. **N53:** the Ace Invaders game-over footer works out "NEW HIGH SCORE!" itself (`score >= high_score and
+    score > starting_high_score`, `ace_invaders_game.py` `draw`, about line 747). It ignores `new_high_score` and the
+    `starting_high_score > 0` guard, so a first-ever Ace Invaders game still shows it (the B57 problem, in the
+    reference machine's footer).
+11. **N54:** tooling: running `screen_harness.py compare` and `replay.py compare` for the same uncached baseline
+    at the same time fails. Both run `git worktree add` for `.harness_out/worktrees/<sha12>`, and the second one stops
+    with "already exists". Run them one after the other, or have the harness reuse or lock the worktree.

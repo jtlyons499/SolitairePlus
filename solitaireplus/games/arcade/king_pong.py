@@ -7,6 +7,8 @@ import random
 
 import pygame
 
+from solitaireplus.games.arcade.motion import move_rect
+
 
 ASSET_ROOT = str(paths.asset("arcade", "king_pong"))
 ARCADE_BACKGROUND_PATH = str(paths.asset("arcade", "bg.png"))
@@ -97,6 +99,11 @@ class KingPongGame:
         self._pending_serve_to_player = None
         self._asset_cache = {}
         self._scaled_cache = {}
+        # Float top-left positions behind the paddle and ball Rects, so speeds
+        # are not rounded to whole pixels every frame (B54; see move_rect).
+        self._player_pos = None
+        self._opponent_pos = None
+        self._ball_pos = None
         self.reset_positions()
 
     @property
@@ -309,8 +316,9 @@ class KingPongGame:
             * diagonal_scale
             * dt
         )
-        self.player_paddle.x += int(round(player_dx))
-        self.player_paddle.y += int(round(player_dy))
+        self._player_pos = move_rect(
+            self.player_paddle, self._player_pos, player_dx, player_dy,
+        )
         self._player_motion_x = (player_dx / dt) if dt > 0 else 0.0
         self._clamp_paddle_to_zone(self.player_paddle, self._player_zone())
 
@@ -326,7 +334,9 @@ class KingPongGame:
             npc_dy = npc_speed * dt
         elif target_y < self.opponent_paddle.centery - deadzone:
             npc_dy = -npc_speed * dt
-        self.opponent_paddle.y += int(round(npc_dy))
+        self._opponent_pos = move_rect(
+            self.opponent_paddle, self._opponent_pos, 0.0, npc_dy,
+        )
 
         # The rival can also move forward/back within its own side. Better
         # difficulties challenge the chip farther from their goal line.
@@ -347,12 +357,18 @@ class KingPongGame:
             npc_dx = min(npc_horizontal_speed * dt, target_x - self.opponent_paddle.x)
         elif target_x < self.opponent_paddle.x - deadzone:
             npc_dx = -min(npc_horizontal_speed * dt, self.opponent_paddle.x - target_x)
-        self.opponent_paddle.x += int(round(npc_dx))
+        self._opponent_pos = move_rect(
+            self.opponent_paddle, self._opponent_pos, npc_dx, 0.0,
+        )
         self._opponent_motion_x = (npc_dx / dt) if dt > 0 else 0.0
         self._clamp_paddle_to_zone(self.opponent_paddle, opponent_zone)
 
-        self.ball_rect.x += int(round(self._ball_velocity.x * dt))
-        self.ball_rect.y += int(round(self._ball_velocity.y * dt))
+        self._ball_pos = move_rect(
+            self.ball_rect,
+            self._ball_pos,
+            self._ball_velocity.x * dt,
+            self._ball_velocity.y * dt,
+        )
 
         if self.ball_rect.top <= self.playfield.top + 5:
             self.ball_rect.top = self.playfield.top + 5
@@ -438,7 +454,7 @@ class KingPongGame:
         self._last_scorer = scorer
         self._flash_until = pygame.time.get_ticks() + self.POINT_PAUSE_MS
         self._ball_velocity.update(0, 0)
-        self._pending_serve_to_player = bool(player_scored)
+        self._pending_serve_to_player = not player_scored
         self._serve_resume_at = pygame.time.get_ticks() + self.POINT_PAUSE_MS
 
     def _draw_score(self, surface, score, box, fallback_font):

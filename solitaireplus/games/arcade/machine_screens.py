@@ -487,9 +487,8 @@ def loop_event_king_pong(event):
                 king_pong_game.forfeit()
             finish_king_pong_session()
         elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-            if not king_pong_game.finished:
-                king_pong_game.forfeit()
-            finish_king_pong_session()
+            if king_pong_game.finished:
+                finish_king_pong_session()
         elif event.key == pygame.K_SPACE and king_pong_game.finished:
             start_king_pong_session()
 
@@ -575,10 +574,18 @@ def loop_event_suit_snake(event):
             finish_suit_snake_session()
 
 
+MACHINE_MAX_FRAME_DT = 1 / 20   # a longer frame (a hitch) moves a machine as if it took 1/20 s
+
+
+def machine_frame_dt():
+    """The real length of the last frame in seconds (state.frame_dt), capped at 1/20 s (B49)."""
+    return min(max(0.0, state.frame_dt), MACHINE_MAX_FRAME_DT)
+
+
 def loop_draw_king_pong():
     """Old draw-chain branch for STATE_KING_PONG."""
 
-    king_pong_game.update(1.0 / 60.0, pygame.key.get_pressed())
+    king_pong_game.update(machine_frame_dt(), pygame.key.get_pressed())
     while True:
         point_event = king_pong_game.pop_point_event()
         if point_event is None:
@@ -596,7 +603,7 @@ def loop_draw_king_pong():
 def loop_draw_battle_bosses():
     """Old draw-chain branch for STATE_BATTLE_BOSSES."""
 
-    battle_bosses_game.update(1.0 / 60.0, pygame.key.get_pressed())
+    battle_bosses_game.update(machine_frame_dt(), pygame.key.get_pressed())
     for battle_sound_event in battle_bosses_game.pop_sound_events():
         sounds.audio.play_sound(battle_sound_event)
     if battle_bosses_game.finished:
@@ -607,7 +614,7 @@ def loop_draw_battle_bosses():
 def loop_draw_ace_invaders():
     """Old draw-chain branch for STATE_ACE_INVADERS."""
 
-    ace_invaders_game.update(1.0 / 60.0, pygame.key.get_pressed())
+    ace_invaders_game.update(machine_frame_dt(), pygame.key.get_pressed())
     for ace_sound_event in ace_invaders_game.pop_sound_events():
         sounds.audio.play_sound(ace_sound_event)
     if ace_invaders_game.finished:
@@ -618,7 +625,7 @@ def loop_draw_ace_invaders():
 def loop_draw_suit_snake():
     """Old draw-chain branch for STATE_SUIT_SNAKE."""
 
-    suit_snake_game.update(1.0 / 60.0, pygame.key.get_pressed())
+    suit_snake_game.update(machine_frame_dt(), pygame.key.get_pressed())
     for suit_snake_sound_event in suit_snake_game.pop_sound_events():
         sounds.audio.play_sound(suit_snake_sound_event)
     if suit_snake_game.finished:

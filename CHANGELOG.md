@@ -73,6 +73,10 @@ How to use this file (maintainers and AI agents):
 - Crazy Eights: after drawing a card you can play, you can now keep it and pass (new Pass button); only the card you drew can be played that turn.
 - Score Four: asking for a hint on a puzzle that can't make 24 now says "No hint" instead of freezing and then crashing the game.
 - Removed the Score Four F6 debug key.
+- King Pong, Battle Bosses and Ace Invaders no longer run in slow motion on a computer that can't keep up 60 frames a second. In King Pong and Ace Invaders the ball, paddles, ship, invaders and bullets now move at their real speed (some were up to 17% too slow or too fast).
+- King Pong: after a point, the next serve now goes to the side that lost the point (it used to go back to the scorer), and pressing Enter during a match no longer forfeits it.
+- Suit Snake: the snake no longer races across the board after a pause or a freeze, and your first-ever game no longer announces "NEW HIGH SCORE!".
+- The arcade machines do less work every frame (fonts and the Ace Invaders background picture are made once).
 
 ### Online play
 - Room codes are now 6 letters/digits instead of 5 digits, and guessing other people's room codes is slowed down and then blocked. Old 5-digit codes still work with players who haven't updated.
