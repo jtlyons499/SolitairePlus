@@ -750,3 +750,59 @@ still not be empty after this phase, and this fix only touched its Crazy Eights 
   `hint_used`. Nothing reads `hint_used` today, but a future no-hint bonus must decide whether that counts.
 - **N43:** the Crazy Eights hand highlight's switch to `is_player_card_playable` has no test of its own. It
   looks the same in real play, because before B47 no other card could become playable after a draw.
+
+## Phase 9 (move): Arcade
+
+**What moved** (`move.py`, plan from `tools/refactor/specs/phase9.json`; `legacy.py` 6285 → 4087 lines), into
+`solitaireplus/games/arcade/`:
+- `hub_screens.py`: the token exchange, prize counter and trophy room screens (`loop_event_`/`loop_draw_`
+  per screen), their rects (incl. `arcade_token_package_rects` and the start-up loop that fills it),
+  `set_arcade_status_message`, `open_arcade_token_exchange`, `redeem_arcade_prize_for_career`, the arcade
+  action-button art (`ARCADE_ACTION_BUTTON_ASSET_PATHS`, `draw_arcade_action_image_button`) and
+  `draw_arcade_page_background`.
+- `machine_select.py`: the King Pong and Battle Bosses opponent pickers and the Ace Invaders and Suit Snake
+  difficulty pickers, with their `open_*`, `build_*` and `get_selected_*` helpers (incl. the unused
+  `get_selected_suit_snake_difficulty`) and rects.
+- `machine_screens.py`: the four machines in play, their engine instances, the start/claim/finish session
+  functions, the draw functions and the quit/return rects. The machines' `update(1/60, ...)` calls are in
+  their `loop_draw_` functions, as in the old draw chain.
+- `machine_music.py`: `ARCADE_MACHINE_MUSIC_BY_STATE`, read by the main loop.
+
+The modules hold several screens each, so the `loop_event_*`/`loop_draw_*` names stay and `app/loop.py`
+registers them as `module:screen`. The career arcade night select (`event_select_screen.py`) and the F10
+arcade launchers (still in legacy.py, Phase 10) call the new modules.
+
+**Problems and how they were solved:**
+- The prepared spec put `ARCADE_MACHINE_MUSIC_BY_STATE` into `machine_screens`. It is defined early in
+  start-up (old line 573, the engines at 1356), so legacy.py would have imported the module there and
+  created the four engines early. `KingPongGame()` draws from the global random generator in
+  `reset_positions()`, so this would have moved the seeded random draws of later games. Fixed before the
+  move: the table has its own module (`machine_music.py`), as `career/training.py` was in Phase 7. The
+  engines are still created at the old place.
+- The planner only sees users inside legacy.py, so it would have moved `get_profile_avatar` into
+  `machine_screens` (career hub, career events, leaderboard bio and profile editor call it too) and
+  `get_cover_scaled_ui_asset` into `hub_screens` (it shares the event-UI image cache with
+  `get_event_ui_asset`, which career's event select uses). Both stay in legacy.py with the shared
+  helpers. `make_plan.py` gained an optional `"keep"` list in the spec for names that stay in legacy.py.
+- `arcade_token_package_rects` is filled by a bare start-up loop, which the planner doesn't pick up. It is
+  now listed under `names`, and the loop under `statements` (the first spec to use them). The loop's
+  `row`/`column` become module names of `hub_screens` (nothing reads them).
+- `phase9_fixes.json`'s layout note now also names `machine_music.py` and the shared helpers that stay in
+  legacy.py.
+
+**Tests re-pointed:** `test_frame_font_sites` draws the Battle Bosses picker through `machine_select`. The
+import is inside that test's helper, so the shared `screens()` import line is unchanged for the other
+phases. The other arcade tests (`test_arcade_support`, `test_arcade_audio`, `test_loop_mouse_and_screen_hooks`,
+`test_rewards_overhaul` and others) find the code through `tests/support/locate.py` and passed unchanged.
+
+**Left in legacy.py from this area:** nothing arcade-only. Still there: `get_profile_avatar`,
+`get_event_ui_asset` with `_event_ui_asset_cache`, and `get_cover_scaled_ui_asset` (shared with
+career/profile, see above), the F10 arcade launchers (`debug_prepare_arcade_night`, `debug_open_arcade_night`,
+`debug_open_king_pong` … `debug_open_suit_snake`; Phase 10), and the career event counters
+`career_event_start_arcade_tokens`/`_tickets` (read through `game_namespace()` by `career/events/night.py`
+and `career/event_progress.py`). legacy.py is not empty: the Phase 8 (casual cards) and Phase 10 (cryptid,
+Dead Man's Hand, debug) code and the shared names are still in this copy.
+
+**Results:** `screen_harness compare` → `IDENTICAL 64/64 scenes`; `replay compare` → `IDENTICAL 18/18 journeys`
+(baseline `7195fb3`; incl. the 7 arcade scenes and the 4 `13_arcade_*` journeys). Tests: `PASSED - all
+non-quarantined tests passed.` Commit `8a0775b`.

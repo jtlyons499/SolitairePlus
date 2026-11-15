@@ -25,6 +25,7 @@ from solitaireplus.app import sounds
 from solitaireplus.app import window
 from solitaireplus.menus import main_menu
 from solitaireplus.menus import options_screen
+from solitaireplus.games.arcade import machine_music
 
 SCREENS = {
     state_names.STATE_DEBUG_POKER_NPC_SELECT: "solitaireplus.debug.poker_select_screen",
@@ -65,17 +66,17 @@ SCREENS = {
     state_names.STATE_CAREER_EVENT: "solitaireplus.career.events.event_screen",
     state_names.STATE_CAREER_EVENT_SUMMARY: "solitaireplus.career.events.summary_screen",
     state_names.STATE_CAREER_EVENT_SELECT: "solitaireplus.career.events.event_select_screen",
-    state_names.STATE_KING_PONG_OPPONENT_SELECT: "solitaireplus.legacy:king_pong_opponent_select",
-    state_names.STATE_BATTLE_BOSSES_OPPONENT_SELECT: "solitaireplus.legacy:battle_bosses_opponent_select",
-    state_names.STATE_ACE_INVADERS_DIFFICULTY_SELECT: "solitaireplus.legacy:ace_invaders_difficulty_select",
-    state_names.STATE_SUIT_SNAKE_DIFFICULTY_SELECT: "solitaireplus.legacy:suit_snake_difficulty_select",
-    state_names.STATE_ARCADE_TOKEN_EXCHANGE: "solitaireplus.legacy:arcade_token_exchange",
-    state_names.STATE_ARCADE_PRIZE_COUNTER: "solitaireplus.legacy:arcade_prize_counter",
-    state_names.STATE_ARCADE_TROPHY_ROOM: "solitaireplus.legacy:arcade_trophy_room",
-    state_names.STATE_KING_PONG: "solitaireplus.legacy:king_pong",
-    state_names.STATE_BATTLE_BOSSES: "solitaireplus.legacy:battle_bosses",
-    state_names.STATE_ACE_INVADERS: "solitaireplus.legacy:ace_invaders",
-    state_names.STATE_SUIT_SNAKE: "solitaireplus.legacy:suit_snake",
+    state_names.STATE_KING_PONG_OPPONENT_SELECT: "solitaireplus.games.arcade.machine_select:king_pong_opponent_select",
+    state_names.STATE_BATTLE_BOSSES_OPPONENT_SELECT: "solitaireplus.games.arcade.machine_select:battle_bosses_opponent_select",
+    state_names.STATE_ACE_INVADERS_DIFFICULTY_SELECT: "solitaireplus.games.arcade.machine_select:ace_invaders_difficulty_select",
+    state_names.STATE_SUIT_SNAKE_DIFFICULTY_SELECT: "solitaireplus.games.arcade.machine_select:suit_snake_difficulty_select",
+    state_names.STATE_ARCADE_TOKEN_EXCHANGE: "solitaireplus.games.arcade.hub_screens:arcade_token_exchange",
+    state_names.STATE_ARCADE_PRIZE_COUNTER: "solitaireplus.games.arcade.hub_screens:arcade_prize_counter",
+    state_names.STATE_ARCADE_TROPHY_ROOM: "solitaireplus.games.arcade.hub_screens:arcade_trophy_room",
+    state_names.STATE_KING_PONG: "solitaireplus.games.arcade.machine_screens:king_pong",
+    state_names.STATE_BATTLE_BOSSES: "solitaireplus.games.arcade.machine_screens:battle_bosses",
+    state_names.STATE_ACE_INVADERS: "solitaireplus.games.arcade.machine_screens:ace_invaders",
+    state_names.STATE_SUIT_SNAKE: "solitaireplus.games.arcade.machine_screens:suit_snake",
     state_names.STATE_DEAD_MANS_HAND: "solitaireplus.legacy:dead_mans_hand",
     state_names.STATE_CAREER_REAL_ESTATE: "solitaireplus.career.real_estate_screen",
     state_names.STATE_DIFFICULTY: "solitaireplus.menus.difficulty_screen",
@@ -170,7 +171,7 @@ def run():
         # normal Instrumental/Ambient choice; only live machine gameplay overrides
         # it when that cabinet has a custom track installed.
         active_machine_track = (
-            legacy.ARCADE_MACHINE_MUSIC_BY_STATE.get(state.current_state)
+            machine_music.ARCADE_MACHINE_MUSIC_BY_STATE.get(state.current_state)
             if state.arcade_placeholder_music_enabled
             else None
         )

@@ -12,7 +12,11 @@
     "open_arcade_token_exchange",
     "ARCADE_ACTION_BUTTON_ASSET_PATHS",
     "draw_arcade_action_image_button",
-    "draw_arcade_page_background"
+    "draw_arcade_page_background",
+    "arcade_token_package_rects"
+   ],
+   "statements": [
+    "for state.package_index in range(len(ARCADE_TOKEN_PACKAGES)):"
    ]
   },
   "solitaireplus/games/arcade/machine_select.py": {
@@ -32,6 +36,7 @@
     "get_selected_ace_invaders_difficulty",
     "open_suit_snake_difficulty_select",
     "get_selected_suit_snake_mode",
+    "get_selected_suit_snake_difficulty",
     "get_selected_battle_bosses_choice",
     "get_selected_king_pong_choice"
    ]
@@ -52,9 +57,18 @@
     "king_pong_game",
     "battle_bosses_game",
     "ace_invaders_game",
-    "suit_snake_game",
+    "suit_snake_game"
+   ]
+  },
+  "solitaireplus/games/arcade/machine_music.py": {
+   "doc": "Which music track each arcade machine plays (read by the main loop; moved out of legacy.py).",
+   "names": [
     "ARCADE_MACHINE_MUSIC_BY_STATE"
    ]
   }
- }
+ },
+ "keep": [
+  "get_profile_avatar",
+  "get_cover_scaled_ui_asset"
+ ]
 }

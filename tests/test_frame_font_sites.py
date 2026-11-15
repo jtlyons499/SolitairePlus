@@ -113,9 +113,10 @@ class LegacyFontSiteTests(unittest.TestCase):
             event_select_screen.draw_career_event_select()
 
         def battle_bosses_opponent_select():
+            from solitaireplus.games.arcade import machine_select
             if not state.battle_bosses_opponent_choices:
-                state.battle_bosses_opponent_choices = legacy.build_battle_bosses_opponent_choices()
-            legacy.draw_battle_bosses_opponent_select()
+                state.battle_bosses_opponent_choices = machine_select.build_battle_bosses_opponent_choices()
+            machine_select.draw_battle_bosses_opponent_select()
 
         return {
             'draw_score_four_opponent_select': score_four_opponent_select,

@@ -9,7 +9,9 @@ SPEC.json:
             "screens": ["options"],                  # screen slugs: their loop_* functions + exclusive helpers
             "names": ["app_settings", "apply_saved_app_settings"],   # extra names (+ their exclusive helpers)
             "statements": []                          # bare start-up statements, by first line
-        }, ...}}
+        }, ...},
+     "keep": ["get_profile_avatar"]}                  # optional: names that stay in legacy.py even when
+                                                      # every legacy user moves (shared with moved modules)
 
 A screen module with exactly one screen gets the loop_* functions renamed to handle_event / draw /
 late_update / enter / leave. Helpers are added when every user of a helper moves to the same module
@@ -47,11 +49,12 @@ def build(spec: dict) -> dict:
     for name in external_names(top_names):
         users[name].add("<other module>")      # a user outside legacy.py: shared, not an exclusive helper
     by_screen = areas.assign(top_names, users, by_screen=True)
+    keep = set(spec.get("keep", []))
     target_of: dict[str, str] = {}
     for target, entry in spec["modules"].items():
         for slug in entry.get("screens", []):
             for name, group in by_screen.items():
-                if group == slug:
+                if group == slug and name not in keep:
                     target_of[name] = target
         for name in entry.get("names", []):
             if name not in top_names:
@@ -62,7 +65,7 @@ def build(spec: dict) -> dict:
     while changed:
         changed = False
         for name in top_names:
-            if name in target_of:
+            if name in target_of or name in keep:
                 continue
             user_set = users.get(name, set())
             if not user_set or "<module>" in user_set:

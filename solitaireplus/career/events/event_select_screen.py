@@ -20,6 +20,8 @@ from solitaireplus.debug.game_mode import end_debug_game_mode
 from solitaireplus.app.lazy import lazy
 crazy_eights_screen = lazy("solitaireplus.games.cards.crazy_eights_screen")
 bango_screen = lazy("solitaireplus.games.cards.bango_screen")
+machine_select = lazy("solitaireplus.games.arcade.machine_select")
+hub_screens = lazy("solitaireplus.games.arcade.hub_screens")
 five_o_screen = lazy("solitaireplus.games.poker.five_o_screen")
 blind_mans_bluff_screen = lazy("solitaireplus.games.poker.blind_mans_bluff_screen")
 roulette_screen = lazy("solitaireplus.games.casino.roulette_screen")
@@ -499,13 +501,13 @@ def draw_arcade_night_select():
     # Arcade Night action controls are all authored PNG buttons. The loader
     # preserves aspect ratio with a center crop and falls back to the generic
     # renderer until the corresponding artwork exists.
-    legacy.draw_arcade_action_image_button(
+    hub_screens.draw_arcade_action_image_button(
         arcade_machine_buy_tokens_rect,
         "buy_tokens",
         "Buy Tokens",
         enabled=True,
     )
-    legacy.draw_arcade_action_image_button(
+    hub_screens.draw_arcade_action_image_button(
         arcade_machine_prize_counter_rect,
         "prize_counter",
         "Prize Counter",
@@ -515,13 +517,13 @@ def draw_arcade_night_select():
     career_event_card_rects.append((arcade_machine_buy_tokens_rect, "token_exchange"))
     career_event_card_rects.append((arcade_machine_prize_counter_rect, "prize_counter"))
 
-    legacy.draw_arcade_action_image_button(
+    hub_screens.draw_arcade_action_image_button(
         career_event_return_rect,
         "return",
         "Return",
         enabled=True,
     )
-    legacy.draw_arcade_action_image_button(
+    hub_screens.draw_arcade_action_image_button(
         career_event_end_rect,
         "end",
         "End Arcade Night",
@@ -800,7 +802,7 @@ def handle_event(event):
             state.arcade_placeholder_music_enabled = not state.arcade_placeholder_music_enabled
             sounds.audio.play_sound("button_click")
             game_clicked = True
-            legacy.set_arcade_status_message(
+            hub_screens.set_arcade_status_message(
                 "Placeholder arcade music enabled."
                 if state.arcade_placeholder_music_enabled
                 else "Placeholder arcade music disabled."
@@ -820,7 +822,7 @@ def handle_event(event):
                         and game_id in ARCADE_COMING_SOON_GAME_IDS
                 ):
                     sounds.audio.play_sound("button_click")
-                    legacy.set_arcade_status_message(f"{ARCADE_MACHINE_NAMES.get(game_id, game_id)} is coming soon.")
+                    hub_screens.set_arcade_status_message(f"{ARCADE_MACHINE_NAMES.get(game_id, game_id)} is coming soon.")
                     break
 
                 sounds.audio.play_sound("button_click")
@@ -871,19 +873,19 @@ def handle_event(event):
                     state.current_state = state_names.STATE_FIVE_CARD_DRAW_BUY_IN
 
                 elif game_id == "king_pong":
-                    legacy.open_king_pong_opponent_select(refresh=True)
+                    machine_select.open_king_pong_opponent_select(refresh=True)
 
                 elif game_id == "battle_bosses":
-                    legacy.open_battle_bosses_opponent_select(refresh=True)
+                    machine_select.open_battle_bosses_opponent_select(refresh=True)
 
                 elif game_id == "ace_invaders":
-                    legacy.open_ace_invaders_difficulty_select(reset_selection=True)
+                    machine_select.open_ace_invaders_difficulty_select(reset_selection=True)
 
                 elif game_id == "suit_snake":
-                    legacy.open_suit_snake_difficulty_select(reset_selection=True)
+                    machine_select.open_suit_snake_difficulty_select(reset_selection=True)
 
                 elif game_id == "token_exchange":
-                    legacy.open_arcade_token_exchange()
+                    hub_screens.open_arcade_token_exchange()
 
                 elif game_id == "prize_counter":
                     state.arcade_selected_prize_index = 0
