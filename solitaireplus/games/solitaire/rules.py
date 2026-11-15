@@ -163,6 +163,8 @@ class Game:
         self.auto_solve_delay_ms = 140
         self.auto_solve_steps = 0
         self.auto_solve_max_steps = 500
+        # (cards left in stock + waste, cards on foundations) at the last recycle
+        self.auto_solve_recycle_signature = None
 
         # ----------------------------
         # Difficulty
@@ -445,6 +447,9 @@ class Game:
         self.stock = stock
         self.race_deal_metadata = metadata
         self.deal_status = "race_verified"
+        # new_game() snapshotted the random deal it built; Restart must reproduce the race deal.
+        from solitaireplus.games.solitaire.restart import capture_deal
+        capture_deal(self)
 
     def new_game(self, play_shuffle=True):
         deck = create_deck()
@@ -675,6 +680,24 @@ class Game:
             "card": card,
             "start_ticks": pygame.time.get_ticks(),
         }
+
+    def is_flip_animating(self):
+        # Normally the renderer clears a finished flip when it draws the
+        # card. Clear it here too, so code that runs between frames (auto-
+        # solve) does not wait on a flip that has already ended.
+        if self.flip_animation is None:
+            return False
+
+        elapsed = (
+                pygame.time.get_ticks()
+                - self.flip_animation["start_ticks"]
+        )
+
+        if elapsed >= FLIP_DURATION_MS:
+            self.flip_animation = None
+            return False
+
+        return True
 
     def draw_card_sprite(
             self,
@@ -1455,6 +1478,7 @@ class Game:
         )
 
         self.auto_solve_steps = 0
+        self.auto_solve_recycle_signature = None
 
         return True
 
@@ -1600,6 +1624,21 @@ class Game:
                     return
 
         # ==================================================
+        # WAIT FOR THE FLIP (B1)
+        #
+        # click_stock() ignores clicks while a card flip animates, and the
+        # flip lasts longer than one auto-solve step. Wait and try again on
+        # a later step instead of mistaking the ignored recycle for
+        # "nothing else to do".
+        # ==================================================
+
+        if (
+                (self.stock or self.waste)
+                and self.is_flip_animating()
+        ):
+            return
+
+        # ==================================================
         # STOCK
         # ==================================================
 
@@ -1612,6 +1651,19 @@ class Game:
         # ==================================================
 
         if self.waste:
+
+            # A whole pass through the stock that played no card (nothing left
+            # the stock/waste, no foundation grew) will repeat forever with
+            # unlimited passes (draw 3): stop instead of cycling until the
+            # step cap. Waiting for the flip (B1) made such passes possible.
+            signature = (
+                len(self.stock) + len(self.waste),
+                sum(len(foundation) for foundation in self.foundations)
+            )
+            if signature == self.auto_solve_recycle_signature:
+                self.auto_solving = False
+                return
+            self.auto_solve_recycle_signature = signature
 
             old_stock_count = len(
                 self.stock

@@ -107,6 +107,7 @@ class HeadToHeadRace:
         self.winner = None
         self.reward_claimed = False
         self.finished_ms = None
+        self.paused_at_ms = None
 
     def prepare(self, opponent, player_rating=1000, now_ms=0):
         self.reset()
@@ -155,10 +156,34 @@ class HeadToHeadRace:
         self.race_started_ms = self.countdown_started_ms + HEAD_TO_HEAD_COUNTDOWN_MS
         return self
 
+    def pause(self, now_ms):
+        """Stop the race clock (the player left the table, e.g. for Options).
+
+        While paused the countdown, the timer and the opponent stand still."""
+        if self.opponent is None or self.winner is not None or self.paused_at_ms is not None:
+            return False
+        self.paused_at_ms = int(now_ms)
+        return True
+
+    def resume(self, now_ms):
+        """Restart the race clock where it stopped: the time away does not count."""
+        if self.paused_at_ms is None:
+            return False
+        away_ms = max(0, int(now_ms) - self.paused_at_ms)
+        self.paused_at_ms = None
+        if self.countdown_started_ms is not None:
+            self.countdown_started_ms += away_ms
+        if self.race_started_ms is not None:
+            self.race_started_ms += away_ms
+        return True
+
+    def _race_clock(self, now_ms):
+        return self.paused_at_ms if self.paused_at_ms is not None else int(now_ms)
+
     def countdown_remaining(self, now_ms):
         if self.race_started_ms is None:
             return 0
-        return max(0, self.race_started_ms - int(now_ms))
+        return max(0, self.race_started_ms - self._race_clock(now_ms))
 
     def is_countdown_active(self, now_ms):
         return self.winner is None and self.countdown_remaining(now_ms) > 0
@@ -166,7 +191,7 @@ class HeadToHeadRace:
     def elapsed_ms(self, now_ms):
         if self.race_started_ms is None:
             return 0
-        return max(0, int(now_ms) - self.race_started_ms)
+        return max(0, self._race_clock(now_ms) - self.race_started_ms)
 
     def update(self, now_ms):
         if self.opponent is None or self.winner is not None:

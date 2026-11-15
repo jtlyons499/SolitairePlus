@@ -294,6 +294,12 @@ def handle_event(event):
 
             if state.current_game_mode == "career":
 
+                # Backing out of a calendar round/challenge abandons it, like the
+                # pause menu's "return to menu" (B6): nothing stays pending.
+                state.pending_career_activity_index = None
+                state.pending_career_activity_type = None
+                state.pending_career_challenge_id = None
+                legacy.game.clear_challenge()
                 state.current_state = state_names.STATE_CAREER_HUB
 
 

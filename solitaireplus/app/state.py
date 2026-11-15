@@ -211,7 +211,7 @@ mouse_pos = None   # the mouse in game coordinates this frame (set by the main l
 #   WINDOWED_HEIGHT, WINDOWED_WIDTH, WINDOW_HEIGHT, WINDOW_WIDTH, _entry, _inserted,
 #   achievement_state, additional_bet, age_value, arcade_state, asset_id, career_alien_story,
 #   career_back_rect, career_bigfoot_story, career_calendar_action_rect, career_calendar_skip_rect,
-#   career_jobs_rect, career_leaderboards_rect, career_news_rect, career_play_rect,
+#   career_jobs_rect, career_leaderboards_rect, career_news_rect,
 #   career_poker_learning, career_ratings, career_real_estate_rect, case_collection_state,
 #   column_index, courrier_title_font, cryptid_collection_state, current_index, current_state,
 #   cursor_files, cursor_image, customize_category, customize_return_state,

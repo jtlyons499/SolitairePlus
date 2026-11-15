@@ -362,11 +362,18 @@ def handle_event(event):
                 "button_click"
             )
 
-            # Stay at the table and deal another hand. If the completed
-            # round earned one or more levels, show those screens first
-            # and then return directly to the fresh deal.
-            legacy.game.new_game()
-            state.post_round_return_state = state_names.STATE_PLAYING
+            if state.current_game_mode == "career":
+                # B5: the career round already used its calendar day and
+                # cleared the pending activity, so a new deal here would pay
+                # full career rewards for free. Return to the Career hub
+                # instead, without dealing (designer decision 2026-11-15).
+                state.post_round_return_state = state_names.STATE_CAREER_HUB
+            else:
+                # Stay at the table and deal another hand. If the completed
+                # round earned one or more levels, show those screens first
+                # and then return directly to the fresh deal.
+                legacy.game.new_game()
+                state.post_round_return_state = state_names.STATE_PLAYING
 
             if (
                     state.last_progression_result
@@ -378,7 +385,7 @@ def handle_event(event):
                 )
                 level_up.advance_level_up_screen()
             else:
-                state.current_state = state_names.STATE_PLAYING
+                state.current_state = state.post_round_return_state
 
 
 def draw():

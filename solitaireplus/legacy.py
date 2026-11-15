@@ -3441,13 +3441,6 @@ career_mode_rect = pygame.Rect(
     100
 )
 
-state.career_play_rect = pygame.Rect(
-    483,
-    400,
-    400,
-    55
-)
-
 state.career_jobs_rect = pygame.Rect(
     333,
     485,
@@ -9203,13 +9196,6 @@ def get_career_residence_image(
         return None
 from solitaireplus.ui import buttons  # start-up code of this module runs here, as it did in main.py
 
-state.career_play_rect = pygame.Rect(
-    500,
-    175,
-    300,
-    55
-)
-
 state.career_jobs_rect = pygame.Rect(
     740,
     703,
@@ -13005,6 +12991,8 @@ def begin_selected_head_to_head_race():
         player_rating=state.career_ratings["solitaire"],
         now_ms=pygame.time.get_ticks(),
     )
+    # The player's clock starts at GO, like the opponent's: the 3-2-1 countdown is not race time.
+    game.round_start_ticks = head_to_head_race.race_started_ms
 
     state.career_event_has_activity = True
     state.current_game_mode = "head_to_head"
@@ -15556,19 +15544,6 @@ def loop_event_career_hub(event):
         if career_hub_controls.select_day_at(state.game_mouse_pos):
             sounds.audio.play_sound("button_click")
             return
-
-        if state.career_play_rect.collidepoint(
-                state.game_mouse_pos
-        ):
-            sounds.audio.play_sound(
-                "button_click"
-            )
-
-            state.current_game_mode = (
-                "career"
-            )
-
-            state.current_state = state_names.STATE_DIFFICULTY
 
         if state.career_calendar_action_rect.collidepoint(
                 state.game_mouse_pos

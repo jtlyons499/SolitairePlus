@@ -497,6 +497,15 @@ def apply_plan(plan: dict, dry_run: bool, out_dir: Path | None = None) -> int:
     for path, text in writes.items():
         for problem in _alias_conflicts(text, aliases):
             conflicts.append(f"{path.relative_to(ROOT)}: {problem}")
+        # two different modules bound to one alias (games/solitaire/screen vs games/cryptid/screen)
+        bound = {}
+        for package, name in re.findall(r"^from ([\w.]+) import (\w+)\b", text, re.M):
+            bound.setdefault(name, set()).add(f"{package}.{name}")
+        for name, dotted in re.findall(r'^(\w+) = lazy\("([\w.]+)"\)', text, re.M):
+            bound.setdefault(name, set()).add(dotted)
+        for name, modules in bound.items():
+            if name in aliases and len(modules) > 1:
+                conflicts.append(f"{path.relative_to(ROOT)}: alias '{name}' bound to {sorted(modules)}")
     if conflicts:
         print("\n".join("PROBLEM: " + c for c in conflicts))
         print("Rename the target module (or the local variable) so its alias is unique.")

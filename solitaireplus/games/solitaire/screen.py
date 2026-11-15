@@ -697,6 +697,33 @@ def draw_return_confirmation():
     )
 
 
+def instant_win_round():
+    """Designer's instant win (was the F8 debug hotkey): fake a completed round.
+
+    Not bound to any key; the F10 debug menu's 'Win this Solitaire round' button
+    (Phase 10) calls this.
+    """
+
+    legacy.game.round_won = True
+
+    legacy.game.round_summary = {
+        "moves": 112,
+        "elapsed_seconds": 387,
+        "base_score": 5000,
+        "move_bonus": 1700,
+        "time_bonus": 952,
+        "score": 7652,
+        "xp_earned": 150,
+        "remark": "Efficient work.",
+    }
+
+    legacy.game.audio.play_sound(
+        "celebration_1"
+    )
+
+    legacy.game.start_debug_victory_animation()
+
+
 def handle_event(event):
     """Old main-loop event branch for STATE_PLAYING."""
 
@@ -724,46 +751,11 @@ def handle_event(event):
         if legacy.game.request_hint():
             sounds.audio.play_sound("button_click")
 
-    # ----------------------------
-    # TEMP DEBUG: fake completed round
-    # ----------------------------
-
-    if (
-            event.type == pygame.KEYDOWN
-            and event.key == pygame.K_F8
-    ):
-        legacy.game.round_won = True
-
-        legacy.game.round_summary = {
-            "moves": 112,
-            "elapsed_seconds": 387,
-            "base_score": 5000,
-            "move_bonus": 1700,
-            "time_bonus": 952,
-            "score": 7652,
-            "xp_earned": 150,
-            "remark": "Efficient work.",
-        }
-
-        legacy.game.audio.play_sound(
-            "celebration_1"
-        )
-
-        legacy.game.start_debug_victory_animation()
-
-    if (
-            event.type == pygame.KEYDOWN
-            and event.key == pygame.K_F7
-            and state.current_state == state_names.STATE_PLAYING
-    ):
-        legacy.game.debug_auto_solve_state()
-
-
     # ==================================================
     # MOUSE DOWN // MOUSEBUTTONDOWN sorta
     # ==================================================
 
-    elif (
+    if (
             event.type
             == pygame.MOUSEBUTTONDOWN
             and event.button == 1
@@ -824,6 +816,11 @@ def handle_event(event):
                 state.confirm_return_to_menu = False
 
                 if state.current_game_mode == "career":
+                    # Abandoned: no activity is pending and the challenge rules end (B6).
+                    state.pending_career_activity_index = None
+                    state.pending_career_activity_type = None
+                    state.pending_career_challenge_id = None
+                    legacy.game.clear_challenge()
                     state.current_state = state_names.STATE_CAREER_HUB
                 elif state.current_game_mode == "free":
                     legacy.finish_free_play_sandbox()
@@ -1006,6 +1003,20 @@ def update_solitaire_round():
     # ----------------------------------------------
     # Head-to-Head opponent race update
     # ----------------------------------------------
+
+    # The opponent races only while the player is at the table: on any other
+    # screen (pause -> Options, the F10 menu) the race clock stands still, and
+    # the time away does not count when the player comes back.
+    if state.current_game_mode == "head_to_head":
+        if state.current_state == state_names.STATE_PLAYING:
+            now = pygame.time.get_ticks()
+            paused_at = legacy.head_to_head_race.paused_at_ms
+            if legacy.head_to_head_race.resume(now) and paused_at is not None:
+                # The player's own round clock started with the race clock (B3):
+                # skip the same time away so both keep showing the same race time.
+                legacy.game.round_start_ticks += max(0, now - paused_at)
+        else:
+            legacy.head_to_head_race.pause(pygame.time.get_ticks())
 
     if (
             state.current_state == state_names.STATE_PLAYING

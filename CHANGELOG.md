@@ -34,6 +34,13 @@ How to use this file (maintainers and AI agents):
 - You can no longer delete the profile you're playing; the screen asks you to load another profile first.
 - The game no longer switches the music to Ambient after the splash screen when you chose another mode (or Off) in Options.
 - The Customize screen no longer shows a leftover "DEBUG +100 XP" button.
+- Solitaire's Auto-solve no longer stops halfway when it has to turn the waste pile over, and it no longer spins through the stock for a minute when the ending can't be finished.
+- Restart after a Head-to-Head race deal now restores the race deal, not a different one.
+- In Head-to-Head, the 3-2-1 countdown no longer counts against your time, and the opponent no longer keeps racing while you're in Options (both clocks pick up where they left off).
+- Clicking the top row of the Career calendar no longer opens a free Solitaire round that paid career rewards without using a day.
+- After a career Solitaire round, "Leave table? → No" now returns to the Career hub instead of dealing an extra round that paid full rewards.
+- Leaving a career round from the pause menu, or backing out of the difficulty screen, no longer leaves the round's challenge rules on the next game.
+- Removed the Solitaire F7/F8 debug keys (the instant win moves to the F10 debug menu later).
 
 ### Online play
 - Room codes are now 6 letters/digits instead of 5 digits, and guessing other people's room codes is slowed down and then blocked. Old 5-digit codes still work with players who haven't updated.

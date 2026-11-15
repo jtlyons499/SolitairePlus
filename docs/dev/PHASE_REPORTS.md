@@ -297,3 +297,49 @@ profile-select picture (B9).
 
 **Results:** `screen_harness compare` → `IDENTICAL 64/64`; `replay compare` → `IDENTICAL 18/18` (baseline
 `9890c12`). Tests `PASSED` (no test needed changes).
+
+## Phase 4 (fix): B1, B2, B3, B4, B5, B6, B8, D1 (Solitaire)
+
+Fixed by the fix workflow (one agent per bug, test first, adversarial review of each); the lead fixed what the
+reviews found.
+
+- **B1** — auto-solve waits for the stock flip animation (`Game.is_flip_animating()`, which also clears a
+  finished flip without the renderer) instead of taking an ignored recycle for "nothing left". Review finding
+  fixed: with draw 3 and unlimited passes an ending auto-solve can't finish now cycled draw/wait/recycle until
+  the 500-step cap (~72 s, table locked); auto-solve now stops when a whole stock pass plays no card (same
+  stock+waste count and foundation count as at the previous recycle). `test_solitaire_auto_solve`.
+- **B2** — `Game.new_race_game()` captures the Restart snapshot after the race layout is set.
+  `test_solitaire_race_restart`.
+- **B3** — the player's round clock (`game.round_start_ticks`) starts at the end of the 3-2-1 countdown
+  (`begin_selected_head_to_head_race`). `test_head_to_head_countdown_clock`.
+- **B4** — the invisible `career_play_rect` hotspot, its handler and both rect definitions are gone; the other hub
+  buttons behave as before. `test_career_hub_hotspot`.
+- **B5** — Recap "No" after a career round goes to the Career hub (after any level-up screens) without dealing;
+  free play still deals a new game. `test_recap_no_career`.
+- **B6** — abandoning a career round from the pause menu clears `pending_career_activity_*` and the game's
+  challenge. Review finding fixed: Back on the difficulty screen in career mode did the same kind of abandon and
+  left them set. `test_career_abandon_round`, `test_difficulty_back_clears_career_activity`.
+- **B8** — `HeadToHeadRace.pause()/resume()`: on any screen other than the table the race clock (countdown, timer,
+  opponent) stands still and resumes where it was; a race the player never leaves is frame-for-frame the same.
+  Review finding fixed (B3 + B8): the player's round clock skips the same time away, so both clocks keep showing
+  the same race time. `test_head_to_head_pause`.
+- **D1 (Solitaire)** — F7/F8 removed from the table; the old F8 body is `screen.instant_win_round()` (unused until
+  the F10 button in Phase 10). `test_solitaire_debug_hotkeys`.
+
+**Results:** tests `PASSED`. `screen_harness compare` → `IDENTICAL 64/64`; `replay compare` → `IDENTICAL 18/18`
+(baseline `0df2c68`): none of these fixes changes a static screen or a scripted journey's values.
+
+**New findings (not fixed):**
+- **N13 (designer):** after a career round, Recap still asks "Leave table?" but Yes and No now both go to the
+  Career hub; you may want to relabel or hide No in career mode.
+- **N14 (designer):** the in-game pause menu (still `STATE_PLAYING`) does not stop the Head-to-Head opponent, the
+  countdown or the player's timer; B8 pauses only on other screens, as the brief says.
+- **N15:** `finish_head_to_head_race` ignores the player's round summary (moves, score, elapsed time), which is
+  why B3 is not visible today.
+- **N16:** `Game.get_elapsed_seconds()` counts time spent in Options in every Solitaire mode (lowers the time
+  bonus); only Head-to-Head now skips it.
+- **N17:** a stale stock flip (the flipped card not drawn within 220 ms, e.g. dragged) can block the player's own
+  stock clicks until another flip finishes (auto-solve no longer has this problem).
+- **N18:** `new_race_game()` still deals and discards a full random deal first (and plays the shuffle sound).
+- **N19:** `legacy.py` still has a dead first set of the Career hub rects (`career_jobs_rect` etc.); removed with
+  the §5.1 duplicates (B45 in Phase 7).
