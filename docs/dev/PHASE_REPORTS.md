@@ -634,3 +634,47 @@ original maintainer added that NPC behaviour should be the same in every variant
   seat). Phase 11 moves them onto `core.py`; the steps are in `tools/refactor/specs/phase11_plan.md`.
 - **N37:** `strategy.LATE_STREETS` changed value (single-round stages count as final rounds); multiplayer imports
   `strategy` through a shim and gets the new value. Phase 11 confirms the room NPCs.
+
+## Phase 8 (move): Casual cards
+
+**What moved** (`move.py`, plan from `tools/refactor/specs/phase8.json`; `legacy.py` 6285 → 5126 lines; no
+cards-area names are left in it):
+- `solitaireplus/games/cards/crazy_eights_screen.py` (the screen as `handle_event`/`draw`,
+  `start_crazy_eights_session`, `claim_crazy_eights_result`, the `crazy_eights_game` engine instance) and
+  `bango_screen.py` (same pattern: `start_bango_session`, `claim_bango_result`, `bango_game`).
+- `score_four_screen.py`: the table, mode select and opponent select screens (a multi-screen module, so the
+  `loop_event_`/`loop_draw_` names stay), `draw_score_four*`, `settle_score_four_session_result`,
+  `get_score_four_npc_progress`, the `score_four_*_rect(s)` and `score_four_game`. The unused
+  `draw_score_four_npc_panel` moved with them (Phase 12 deletes it).
+- `games/cards/score_four_tiers.py`: `SCORE_FOUR_TIER_DISPLAY_NAMES`. This is a start-up table near the top of
+  legacy.py. The prepared spec put it in the Score Four screen module, which would then load at that early point and
+  create `score_four_game` (whose constructor draws a seeded random puzzle) ahead of the other start-up code. That is
+  the Phase 7 lesson, so it got its own module and the three engines are still created in the old order.
+- The SCORE_FOUR*, CRAZY_EIGHTS and BANGO screens are registered in `app/loop.py`. The F10 launchers (still in
+  legacy.py), free play, the career event select screen and `profile/save_data.py` (Score Four layout setting) call
+  through the new modules.
+
+**Problems met:**
+- `score_four_ui` reads and writes Score Four names through the namespace it is given (`namespace['score_four_solo_rect']`,
+  `namespace.get('get_score_four_npc_progress')`, `namespace.get('score_four_game')` ...). That namespace was
+  `legacy.game_namespace()`, which no longer holds those names, so the mode select would raise KeyError and the rival
+  progress bar would fall back to its own timer. Fix: `score_four_screen.score_four_namespace()` is
+  `legacy.game_namespace()` with the screen module added last. Every name the old namespace had is still found
+  first, and writes still go to state, as before.
+- `make_plan.py` pulled the shared `draw_npc_portrait` (and the `NPC_PORTRAIT_STYLES` start-up table) into Score Four,
+  because inside legacy.py only Score Four code uses it. Blackjack and the poker screens also use it, through
+  `legacy.draw_npc_portrait`. The planner now treats any legacy name that another module uses as `legacy.<name>`
+  as shared: it is never pulled in as an exclusive helper, only moved when a spec names it.
+
+**Tests re-pointed:** `test_frame_font_sites` draws the Score Four opponent select from `score_four_screen`.
+`tools/refactor/specs/phase8_fixes.json`'s layout note now names the new homes for the fix agents.
+
+**What is still in legacy.py for this area:** the cards import lines it no longer uses (earlier phases left theirs
+too; Phase 12 cleanup), the F10 launchers `debug_open_crazy_eights` / `debug_open_bango` / `debug_open_score_four_*`
+(Phase 10, debug area), and shared tables and helpers used by several areas (`HELP_NAVIGATION`/`HELP_CONTENT` entries,
+`FREE_PLAY_GAME_IDS`, `NPC_PORTRAIT_STYLES`, `draw_npc_portrait`, `get_npc_portrait_surface`). legacy.py would not be
+empty after this phase. In this checkout it still holds arcade (96 names), cryptid (5), Dead Man's Hand (5),
+debug (36) and 41 shared names.
+
+**Results:** `screen_harness compare` → `IDENTICAL 64/64`; `replay compare` → `IDENTICAL 18/18` (baseline
+`7195fb3`). Tests `PASSED`.

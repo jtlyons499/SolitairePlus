@@ -12,6 +12,7 @@ from solitaireplus.career.activities import reconcile_story_cosmetics
 from solitaireplus.app import state
 from solitaireplus.career.event_progress import store_event_progress
 from solitaireplus.app.lazy import lazy
+score_four_screen = lazy("solitaireplus.games.cards.score_four_screen")
 leaderboard_engine = lazy("solitaireplus.career.leaderboard_engine")
 career_rewards = lazy("solitaireplus.career.career_rewards")
 profile_select = lazy("solitaireplus.profile.profile_select")
@@ -336,7 +337,7 @@ def build_profile_save_data():
         {}
     )
 
-    profile_settings["score_four_layout"] = getattr(legacy.score_four_game, "layout", "compact")
+    profile_settings["score_four_layout"] = getattr(score_four_screen.score_four_game, "layout", "compact")
 
     profile_settings[
         "solitaire_deal_mode"
@@ -801,7 +802,7 @@ def apply_profile_save_data(
         {}
     )
 
-    legacy.score_four_game.layout = "wide" if gameplay_settings.get("score_four_layout") == "wide" else "compact"
+    score_four_screen.score_four_game.layout = "wide" if gameplay_settings.get("score_four_layout") == "wide" else "compact"
 
     requested_deal_mode = gameplay_settings.get(
         "solitaire_deal_mode",

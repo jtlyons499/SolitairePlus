@@ -18,6 +18,8 @@ from solitaireplus.app import state_names
 from solitaireplus.career.event_progress import store_event_progress
 from solitaireplus.debug.game_mode import end_debug_game_mode
 from solitaireplus.app.lazy import lazy
+crazy_eights_screen = lazy("solitaireplus.games.cards.crazy_eights_screen")
+bango_screen = lazy("solitaireplus.games.cards.bango_screen")
 five_o_screen = lazy("solitaireplus.games.poker.five_o_screen")
 blind_mans_bluff_screen = lazy("solitaireplus.games.poker.blind_mans_bluff_screen")
 roulette_screen = lazy("solitaireplus.games.casino.roulette_screen")
@@ -827,10 +829,10 @@ def handle_event(event):
                     state.current_state = state_names.STATE_SCORE_FOUR_MODE_SELECT
 
                 elif game_id == "crazy_eights":
-                    legacy.start_crazy_eights_session()
+                    crazy_eights_screen.start_crazy_eights_session()
 
                 elif game_id == "bango":
-                    legacy.start_bango_session()
+                    bango_screen.start_bango_session()
 
                 elif game_id == "blackjack":
                     state.blackjack_selected_bet_percentage = None

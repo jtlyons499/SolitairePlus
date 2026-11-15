@@ -8,6 +8,8 @@ import pygame
 from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
+crazy_eights_screen = lazy("solitaireplus.games.cards.crazy_eights_screen")
+bango_screen = lazy("solitaireplus.games.cards.bango_screen")
 five_o_screen = lazy("solitaireplus.games.poker.five_o_screen")
 blind_mans_bluff_screen = lazy("solitaireplus.games.poker.blind_mans_bluff_screen")
 roulette_screen = lazy("solitaireplus.games.casino.roulette_screen")
@@ -94,11 +96,11 @@ def start_free_play_game(game_id):
         return True
 
     if game_id == "crazy_eights":
-        legacy.start_crazy_eights_session()
+        crazy_eights_screen.start_crazy_eights_session()
         return True
 
     if game_id == "bango":
-        legacy.start_bango_session()
+        bango_screen.start_bango_session()
         return True
 
     if game_id == "blackjack":

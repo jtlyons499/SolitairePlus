@@ -86,9 +86,10 @@ class LegacyFontSiteTests(unittest.TestCase):
         from solitaireplus.career.events import event_select_screen, summary_screen
 
         def score_four_opponent_select():
+            from solitaireplus.games.cards import score_four_screen
             if not state.score_four_opponent_choices:
                 state.score_four_opponent_choices = legacy.get_score_four_opponent_choices()
-            legacy.draw_score_four_opponent_select()
+            score_four_screen.draw_score_four_opponent_select()
 
         def career_event_summary():
             state.career_event_summary_title = 'Casino Night'

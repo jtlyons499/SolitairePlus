@@ -32,8 +32,14 @@
     "draw_score_four",
     "settle_score_four_session_result",
     "score_four_game",
-    "SCORE_FOUR_TIER_DISPLAY_NAMES",
-    "get_score_four_npc_progress"
+    "get_score_four_npc_progress",
+    "draw_score_four_npc_panel"
+   ]
+  },
+  "solitaireplus/games/cards/score_four_tiers.py": {
+   "doc": "Display names of the Score Four rival skill tiers (a start-up table; moved out of legacy.py).",
+   "names": [
+    "SCORE_FOUR_TIER_DISPLAY_NAMES"
    ]
   }
  }
