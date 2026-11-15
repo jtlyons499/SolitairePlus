@@ -151,6 +151,38 @@ jobs:
         shell: pwsh
         run: python tools/make_manifest.py reuse --dist dist\SolitairePlus --previous-manifest prev\manifest.json --previous-dir prev\files --rebuilt-out release\rebuilt-exes.txt
 
+      # ---------------------------------------------------------------- signing (tag builds only)
+      # The certificate lives only in GitHub Secrets (docs/CODE_SIGNING.md). A release is never
+      # published unsigned: a tag build stops here if the secrets are missing.
+      - name: Prepare signing certificate
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          PFX_BASE64: ${{ secrets.SIGNING_CERT_PFX_BASE64 }}
+        run: |
+          if (-not $env:PFX_BASE64) {
+            throw "Release builds must be signed, but the SIGNING_CERT_PFX_BASE64 secret is not set. See docs/CODE_SIGNING.md."
+          }
+          $path = Join-Path $env:RUNNER_TEMP "signing.pfx"
+          [IO.File]::WriteAllBytes($path, [Convert]::FromBase64String($env:PFX_BASE64))
+          "SIGNING_PFX_PATH=$path" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Sign freshly built programs
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          SIGNING_CERT_PASSWORD: ${{ secrets.SIGNING_CERT_PASSWORD }}
+        run: |
+          # Programs reused from the previous release are already signed; only sign the new ones.
+          if (Test-Path release\rebuilt-exes.txt) {
+            $files = @(Get-Content release\rebuilt-exes.txt | Where-Object { $_ } | ForEach-Object { "dist\SolitairePlus\$_" })
+          } else {
+            $files = @("SolitairePlus.exe", "SolitaireNet.exe", "SolitaireUpdater.exe" | ForEach-Object { "dist\SolitairePlus\$_" })
+          }
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          # -CheckTrusted: stop if this certificate is not in updater/trusted_publishers.py.
+          ./tools/sign_release.ps1 -CheckTrusted -Files $files -ExportCer release\SolitairePlus-Publisher.cer
+
       # Preflight scan: detects threats *on this runner only*. It cannot
       # guarantee that a consumer's current Defender cloud model agrees.
       - name: Scan build with Microsoft Defender (if available)
@@ -187,6 +219,34 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Writing the manifest failed" }
           Copy-Item dist\SolitairePlus\manifest.json release\manifest.json
 
+      - name: Sign manifest
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          SIGNING_CERT_PASSWORD: ${{ secrets.SIGNING_CERT_PASSWORD }}
+        run: ./tools/sign_release.ps1 -Manifest release\manifest.json
+
+      - name: Build installer
+        shell: pwsh
+        env:
+          SIGNING_CERT_PASSWORD: ${{ secrets.SIGNING_CERT_PASSWORD }}
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup --no-progress -y
+            if ($LASTEXITCODE -ne 0) { throw "Could not install Inno Setup" }
+          }
+          $version = (python tools/release_helpers.py current).Trim()
+          $numeric = $version.Split("-")[0]
+          $arguments = @("/DAppVersion=$version", "/DFileVersion=$numeric", "/DSourceDir=$PWD\dist\SolitairePlus", "/O$PWD\release")
+          if ("${{ github.ref_type }}" -eq "tag") {
+            $thumb = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new("$PWD\release\SolitairePlus-Publisher.cer").Thumbprint
+            $sign = "pwsh -NoProfile -ExecutionPolicy Bypass -File `$q$PWD\tools\sign_release.ps1`$q -Files `$f"
+            $arguments += @("/DPublisherCer=$PWD\release\SolitairePlus-Publisher.cer", "/DPublisherThumbprint=$thumb", "/DUseSigning", "/Ssolsign=$sign")
+          }
+          & $iscc @arguments installer\SolitairePlus.iss
+          if ($LASTEXITCODE -ne 0) { throw "Building the installer failed" }
+
       - name: Create player-ready ZIP and checksums
         shell: pwsh
         run: |
@@ -197,7 +257,7 @@ jobs:
           Compress-Archive -Path "release\Solitaire-Windows\*" -DestinationPath "release\Solitaire-Windows.zip" -Force
           Remove-Item "release\Solitaire-Windows" -Recurse -Force
           Push-Location release
-          Get-ChildItem -File -Filter *.zip | ForEach-Object {
+          Get-ChildItem -File | Where-Object { $_.Extension -in ".zip", ".exe", ".cer" } | ForEach-Object {
             $hash = (Get-FileHash -Algorithm SHA256 $_.Name).Hash.ToLowerInvariant()
             "$hash  $($_.Name)"
           } | Set-Content -Path "SHA256SUMS.txt" -Encoding ASCII
@@ -211,6 +271,11 @@ jobs:
           path: release/
           if-no-files-found: error
           retention-days: 14
+
+      - name: Remove signing certificate from the build machine
+        if: always()
+        shell: pwsh
+        run: if ($env:SIGNING_PFX_PATH -and (Test-Path $env:SIGNING_PFX_PATH)) { Remove-Item $env:SIGNING_PFX_PATH -Force }
 
   publish:
     name: Publish GitHub Release
@@ -242,7 +307,8 @@ jobs:
           $tag = "${{ github.ref_name }}"
           $version = $tag.Substring(1)
           python tools/release_helpers.py notes $version | Set-Content -Path release-notes.md -Encoding UTF8
-          # Players' updaters read manifest.json and the delta/full zips; SHA256SUMS.txt is for people.
+          # Players' updaters read manifest.json(.p7s) and the delta/full zips; new players download
+          # SolitairePlus-Setup-<version>.exe; SolitairePlus-Publisher.cer and SHA256SUMS.txt are for people.
           $assets = @(Get-ChildItem release -File | Where-Object { $_.Name -ne "rebuilt-exes.txt" } | ForEach-Object { $_.FullName })
           $assets | ForEach-Object { Write-Host "Asset: $_" }
           # Versions like 0.0.8-beta.1 are published as pre-releases, which the in-game updater ignores.

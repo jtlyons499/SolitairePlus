@@ -43,5 +43,38 @@ class PackagingTests(unittest.TestCase):
         self.assertEqual(spec_constant("CONTENTS"), "SolitairePlus_Data")
 
 
+class InstallerAndSigningTests(unittest.TestCase):
+    ISS = (ROOT / "installer" / "SolitairePlus.iss").read_text(encoding="utf-8")
+
+    def test_installer_is_per_user_and_never_needs_admin(self):
+        self.assertIn("PrivilegesRequired=lowest", self.ISS)
+        self.assertIn(r"DefaultDirName={autopf}\SolitairePlus", self.ISS)
+
+    def test_installer_identity_never_changes(self):
+        # Windows recognises an existing install by AppId; changing it would break upgrades.
+        self.assertIn("AppId={{6B0E4C5A-3D7F-4B0E-9A61-2F7C1D9E5A42}", self.ISS)
+
+    def test_uninstaller_only_deletes_saves_when_the_player_says_yes(self):
+        section = self.ISS.split("[UninstallDelete]")[1].split("[Code]")[0]
+        self.assertNotIn("localappdata", section.lower())
+        self.assertIn("MB_DEFBUTTON2", self.ISS)  # "No" is the default answer to deleting saves
+
+    def test_signing_script_understands_the_trusted_publisher_list(self):
+        """tools/sign_release.ps1 -CheckTrusted must find a thumbprint written the documented way."""
+        import re
+        script = (ROOT / "tools" / "sign_release.ps1").read_text(encoding="utf-8")
+        pattern = re.compile(re.search(r"-Pattern '([^']+)'", script).group(1))
+        publishers = (ROOT / "updater" / "trusted_publishers.py").read_text(encoding="utf-8")
+        example = next(line for line in publishers.splitlines() if '"thumbprint"' in line)
+        uncommented = example.replace("# ", "", 1)   # what a maintainer gets by removing the "#"
+        self.assertRegex(uncommented, pattern)
+        self.assertIsNone(pattern.match(example))    # a commented-out entry must NOT count as trusted
+
+    def test_release_builds_refuse_to_publish_unsigned(self):
+        workflow = (ROOT / ".github" / "workflows" / "release-windows.yml").read_text(encoding="utf-8")
+        self.assertIn("Release builds must be signed", workflow)
+        self.assertIn("-CheckTrusted", workflow)
+
+
 if __name__ == "__main__":
     unittest.main()

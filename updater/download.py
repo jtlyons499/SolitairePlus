@@ -21,6 +21,8 @@ def fetch_bytes(url: str, limit: int = config.MAX_MANIFEST_BYTES, missing_ok: bo
     except urllib.error.HTTPError as error:
         if missing_ok and error.code == 404:
             return None
+        if error.code == 404:
+            raise UpdateError("No update information was found online yet. Try again later.") from None
         raise UpdateError(f"The update server answered {error.code}. Try again later.") from None
     except (urllib.error.URLError, OSError) as error:
         if missing_ok and isinstance(getattr(error, "reason", None), FileNotFoundError):

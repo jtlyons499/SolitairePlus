@@ -17,11 +17,16 @@
 .PARAMETER SkipTests
   Skip step 3. Only use this when tools/release.ps1 has just run the tests.
 
+.PARAMETER Installer
+  Also build release\SolitairePlus-Setup-<version>.exe (unsigned) with Inno Setup 6.
+  Install Inno Setup once with:  winget install --id JRSoftware.InnoSetup --scope user
+
 .EXAMPLE
   .\build_release.ps1
 #>
 param(
-    [switch]$SkipTests
+    [switch]$SkipTests,
+    [switch]$Installer
 )
 
 $ErrorActionPreference = "Stop"
@@ -80,5 +85,15 @@ Copy-Item -Path "$dist\*" -Destination $stage -Recurse -Force
 Copy-Item -Path "PLAYING.txt" -Destination $stage -Force
 $archive = Join-Path $PSScriptRoot "release\Solitaire-Windows.zip"
 Compress-Archive -Path "$stage\*" -DestinationPath $archive -Force
+if ($Installer) {
+    $iscc = @("$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe", "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe") |
+        Where-Object { Test-Path $_ } | Select-Object -First 1
+    if (-not $iscc) { throw "Inno Setup 6 not found. Install it with: winget install --id JRSoftware.InnoSetup --scope user" }
+    $version = (& $python tools/release_helpers.py current).Trim()
+    Invoke-Step "Building the installer (unsigned)" {
+        & $iscc /Q "/DAppVersion=$version" "/DFileVersion=$($version.Split('-')[0])" "/DSourceDir=$dist" "/O$(Join-Path $PSScriptRoot 'release')" installer\SolitairePlus.iss
+    }
+    Write-Host "Installer (unsigned test build): release\SolitairePlus-Setup-$version.exe"
+}
 Write-Host "Done. Playable folder: $dist"
 Write-Host "Shareable ZIP (unsigned test build): $archive"

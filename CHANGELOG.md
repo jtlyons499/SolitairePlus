@@ -11,6 +11,8 @@ How to use this file (maintainers and AI agents):
 ## [Unreleased]
 
 ### New
+- **A real installer.** `SolitairePlus-Setup-<version>.exe` installs the game for your Windows account only (no administrator prompt), adds Start Menu shortcuts (and an optional desktop shortcut), can bring over saves from an old unzipped copy, and uninstalls cleanly from Windows Settings. Your saves are only deleted if you say so.
+- The installer can mark the Solitaire+ developers as a trusted publisher (Windows asks you to confirm), so the game and its updates show as verified.
 - **In-game updates.** The game checks for a new version when it starts and shows an "Update to …" button on the main menu. Click it and the game saves, closes, updates only the files that changed, and reopens. You can also check by hand (Options → Updates → Check now), or turn the automatic check off.
 - Updates are checked for the developers' signature. If an update can't be verified, the updater warns you twice before it will install anything.
 - An interrupted update (for example a power cut) is undone automatically the next time you start the game.
