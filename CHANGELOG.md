@@ -45,6 +45,11 @@ How to use this file (maintainers and AI agents):
 - Switching side jobs several times in one day now gives one news story (naming your latest job) instead of one per click.
 - Damaged career activity data (a Bigfoot or Alien night) no longer crashes the game every frame; the night is skipped safely.
 - After a locked save, the Career hub now says the progress went to a recovery file instead of "Profile saved".
+- Roulette: spinning again with the same bets now pays out (it used to take the stake and pay nothing), a spin that doesn't start no longer takes your money, changing your chips after a spin clears the old result, and a $1,500 stake shows as "1.5k" instead of "1k".
+- Blackjack: a round can no longer show the same card twice, a natural pays 3:2 rounded up to the dollar (a $5 bet wins $8, not $7), and the "Low Roller" achievement now needs a real Stand.
+- The horse races no longer leave the music permanently quieter after you leave them.
+- Faro: placing a bet, taking it back and cashing out no longer counts as a played session (no free rating, XP or fans).
+- The blackjack table does much less work every frame (fonts and the background picture are made once).
 - F10 debug menu: jumping to the Career hub or a debug night during Free Play no longer saves the Free Play $5,000 into your career, debug nights no longer use up a career day, and leaving a debug session no longer leaves the game in debug mode (where real career nights weren't recorded).
 
 ### Online play

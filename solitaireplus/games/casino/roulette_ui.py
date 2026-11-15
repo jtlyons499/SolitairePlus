@@ -2,6 +2,8 @@ import math
 
 import pygame
 
+from solitaireplus.ui import text as ui_text
+
 from solitaireplus.games.casino.roulette import (
     AMERICAN_WHEEL_ORDER,
 )
@@ -350,6 +352,35 @@ def get_number_color(
     return BLACK
 
 
+def format_chip_amount(
+        amount
+):
+    """Short chip label: 500 -> '500', 1000 -> '1k', 1500 -> '1.5k', 12500 -> '12k'.
+
+    Below $10k, thousands keep one decimal when it is not zero. Further digits
+    are dropped (1990 -> '1.9k'), so the label never shows more than the stake
+    and always fits on the chip.
+    """
+
+    if amount < 1000:
+        return str(
+            amount
+        )
+
+    amount = int(
+        amount
+    )
+
+    thousands = amount // 1000
+    tenths = (amount % 1000) // 100
+
+    # One decimal only below $10k: "12.5k" would be wider than the 26 px chip.
+    if tenths and thousands < 10:
+        return f"{thousands}.{tenths}k"
+
+    return f"{thousands}k"
+
+
 def draw_bet_chip(
         game_surface,
         rect,
@@ -388,17 +419,12 @@ def draw_bet_chip(
         2
     )
 
-    if amount >= 1000:
-        text = (
-            f"{amount // 1000}k"
-        )
-    else:
-        text = str(
-            amount
-        )
+    text = format_chip_amount(
+        amount
+    )
 
     chip_surface = (
-        pygame.font.Font(
+        ui_text.get_font(
             None,
             18
         ).render(

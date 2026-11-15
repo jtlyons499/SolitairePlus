@@ -144,6 +144,15 @@ class RouletteGame:
 
         self.display_result = None
 
+    def clear_finished_result(self):
+        """Drop the last spin's result once the stake changes (B26), so the
+        old number and its WIN/LOSE are never shown against a new stake."""
+
+        self.result = None
+        self.round_complete = False
+        self.payout_claimed = False
+        self.display_result = None
+
     def remove_bet(
             self,
             bet_type,
@@ -172,6 +181,8 @@ class RouletteGame:
                     self.bets.remove(
                         bet
                     )
+
+                self.clear_finished_result()
 
                 return True
 
@@ -207,6 +218,8 @@ class RouletteGame:
                 bet["amount"] += (
                     bet_amount
                 )
+
+                self.clear_finished_result()
 
                 return True
 
@@ -244,7 +257,11 @@ class RouletteGame:
             return False
 
         self.spinning = True
+        # Every spin is a new round (B24): clear the last spin's settlement so a
+        # re-spin with the same bets is paid out by settle_roulette_round() again.
+        # (result is replaced by the new spin's number just below.)
         self.round_complete = False
+        self.payout_claimed = False
 
         self.spin_start_time = (
             time.monotonic()
@@ -539,6 +556,8 @@ class RouletteGame:
             return False
 
         self.bets = []
+
+        self.clear_finished_result()
 
         return True
 

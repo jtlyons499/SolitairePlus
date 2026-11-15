@@ -1,11 +1,38 @@
-{"phase": "Phase 7: Poker",
+{
+ "phase": "Phase 7: Poker",
  "layout": "- Phase 7 moved the poker screens into solitaireplus/games/poker/: holdem_screen.py (TEXAS_HOLDEM + TEXAS_HOLDEM_BUY_IN screens, sessions, showdown processing, timed NPC turns as loop_late_texas_holdem; multi-screen module keeps loop_event_/loop_draw_/loop_late_ names), five_card_draw_screen.py, seven_card_stud_screen.py (same pattern), five_o_screen.py, blind_mans_bluff_screen.py, and the F10 poker opponent picker into solitaireplus/debug/poker_select_screen.py. Engines: games/poker/holdem.py (TexasHoldemGame; was texas_holdem.py), five_card_draw.py, seven_card_stud.py, five_o.py, blind_mans_bluff.py, shared core.py / strategy.py / ai.py / recap.py; UIs holdem_ui.py etc. Multiplayer has its own copies in multiplayer/ until Phase 11 - do not edit those.",
  "tasks": [
-  {"key": "B35", "prompt": "Fix B35 (stale Hold'em session-end timer): start_texas_holdem_session never resets texas_holdem_session_end_at (Draw and Stud reset theirs at session start). Reset it at session start. Test: bust, return, start again: the session does not end on the first frame."},
-  {"key": "B40", "prompt": "Fix B40 (Stud picks an all-in player for the bring-in): seven_card_stud.py's bring-in selection can choose a player with no chips. Skip players with no chips (all-in/busted) when picking the bring-in. Test: with the lowest up-card held by a player with 0 chips, the bring-in goes to the next eligible player."},
-  {"key": "B41", "prompt": "Fix B41 (a Draw discard silently keeps the old card when the deck runs out): five_card_draw.py's draw step keeps the discarded card if the deck is empty. When the deck is empty, reshuffle the muck (discards not in any live hand) into the deck and continue; if even that is impossible, keep the card but log it correctly. Test: a draw round with an exhausted deck replaces discards from the reshuffled muck and never duplicates a card."},
-  {"key": "B43", "prompt": "Fix B43 (blank 'Eligible:' line in the hand recap for a single-winner pot): texas_holdem.py's recap data leaves 'eligible' empty for a pot with one winner. Fill eligible (the players who could win that pot). Test: a single-winner pot's recap lists its eligible players."},
-  {"key": "B44", "prompt": "Fix B44 (fonts created per frame in the poker UIs): games/poker/recap.py (several fonts per frame, plus a font per click in recap_display_lines), games/poker/five_o_ui.py (a font per card, and three more per frame). Use the shared font cache solitaireplus.ui.text.get_font so each font is built once; pixels must not change. (score_four_ui, career_activities_ui and head_to_head_ui font sites belong to their own phases - leave them.) Test: drawing the recap and the Five-O table twice builds each font once, and the output surfaces are byte-identical before/after."},
-  {"key": "B45", "prompt": "Fix B45 (duplicates): remove the three duplicated Hold'em sound functions play_texas_holdem_npc_action_sound, play_texas_holdem_new_hand_sound and play_texas_holdem_street_sound - keep the version Python currently uses (the LATER definition in the file; find where they are now, likely solitaireplus/games/poker/holdem_screen.py or solitaireplus/legacy.py), the duplicate STATE_CAREER_NEWS assignment in solitaireplus/app/state_names.py, and the duplicate assignments of blackjack_dealer_npc, play_background_image, profile_switch_rect and career_{back,jobs,leaderboards,news,play,real_estate}_rect wherever they now live (keep the value that is in effect today, i.e. the later assignment, unless the earlier one is the only one used before the later runs - check). Test: an AST check that each of these names is defined/assigned exactly once in its module, and that the kept definitions are the ones that were in effect."},
-  {"key": "D1-holdem", "prompt": "D1 (part): delete the Hold'em debug hotkeys from the Hold'em table's event handler (solitaireplus/games/poker/holdem_screen.py loop_event_texas_holdem): F7 (debug_setup_holdem_heads_up), Space (deals streets without betting) and B (bets $50 and prints). Keep debug_setup_holdem_heads_up itself only if the F10 debug menu calls it (check solitaireplus/legacy.py loop_event_debug_menu / debug actions); otherwise delete it too. Test: pressing F7, Space or B on the Hold'em table changes nothing (no deal, no bet), and the remaining controls still work."}
- ]}
+  {
+   "key": "B35",
+   "prompt": "Fix B35 (stale Hold'em session-end timer): start_texas_holdem_session never resets texas_holdem_session_end_at (Draw and Stud reset theirs at session start). Reset it at session start. Test: bust, return, start again: the session does not end on the first frame."
+  },
+  {
+   "key": "B40",
+   "prompt": "Fix B40 (Stud picks an all-in player for the bring-in): seven_card_stud.py's bring-in selection can choose a player with no chips. Skip players with no chips (all-in/busted) when picking the bring-in. Test: with the lowest up-card held by a player with 0 chips, the bring-in goes to the next eligible player."
+  },
+  {
+   "key": "B41",
+   "prompt": "Fix B41 (a Draw discard silently keeps the old card when the deck runs out): five_card_draw.py's draw step keeps the discarded card if the deck is empty. When the deck is empty, reshuffle the muck (discards not in any live hand) into the deck and continue; if even that is impossible, keep the card but log it correctly. Test: a draw round with an exhausted deck replaces discards from the reshuffled muck and never duplicates a card."
+  },
+  {
+   "key": "B43",
+   "prompt": "Fix B43 (blank 'Eligible:' line in the hand recap for a single-winner pot): texas_holdem.py's recap data leaves 'eligible' empty for a pot with one winner. Fill eligible (the players who could win that pot). Test: a single-winner pot's recap lists its eligible players."
+  },
+  {
+   "key": "B44",
+   "prompt": "Fix B44 (fonts created per frame in the poker UIs): games/poker/recap.py (several fonts per frame, plus a font per click in recap_display_lines), games/poker/five_o_ui.py (a font per card, and three more per frame). Use the shared font cache solitaireplus.ui.text.get_font so each font is built once; pixels must not change. (score_four_ui, career_activities_ui and head_to_head_ui font sites belong to their own phases - leave them.) Test: drawing the recap and the Five-O table twice builds each font once, and the output surfaces are byte-identical before/after."
+  },
+  {
+   "key": "B45",
+   "prompt": "Fix B45 (duplicates): remove the three duplicated Hold'em sound functions play_texas_holdem_npc_action_sound, play_texas_holdem_new_hand_sound and play_texas_holdem_street_sound - keep the version Python currently uses (the LATER definition in the file; find where they are now, likely solitaireplus/games/poker/holdem_screen.py or solitaireplus/legacy.py), the duplicate STATE_CAREER_NEWS assignment in solitaireplus/app/state_names.py, and the duplicate assignments of blackjack_dealer_npc, play_background_image, profile_switch_rect and career_{back,jobs,leaderboards,news,play,real_estate}_rect wherever they now live (keep the value that is in effect today, i.e. the later assignment, unless the earlier one is the only one used before the later runs - check). Test: an AST check that each of these names is defined/assigned exactly once in its module, and that the kept definitions are the ones that were in effect."
+  },
+  {
+   "key": "D1-holdem",
+   "prompt": "D1 (part): delete the Hold'em debug hotkeys from the Hold'em table's event handler (solitaireplus/games/poker/holdem_screen.py loop_event_texas_holdem): F7 (debug_setup_holdem_heads_up), Space (deals streets without betting) and B (bets $50 and prints). Keep debug_setup_holdem_heads_up itself only if the F10 debug menu calls it (check solitaireplus/legacy.py loop_event_debug_menu / debug actions); otherwise delete it too. Test: pressing F7, Space or B on the Hold'em table changes nothing (no deal, no bet), and the remaining controls still work."
+  },
+  {
+   "key": "N7-poker",
+   "prompt": "Remove the 'global' statements from the poker table modules (brief end-state checklist: no global statements anywhere in solitaireplus/): solitaireplus/games/poker/holdem_ui.py (54), five_card_draw_ui.py (55), seven_card_stud_ui.py (32), blind_mans_bluff_ui.py (1), five_o_ui.py (1; another agent fixes B44 fonts in five_o_ui.py at the same time - touch only the global there), speech.py (1). Many are table UI state such as holdem_options_open, holdem_manual_bet_active, _draw_selected_card_indexes, chat/scroll/tab state and animation keys. Rules for this cleanup: shared/screen state that other modules read or write goes to solitaireplus/app/state.py (state.<name>, default value moved there; update every reference, including other modules that read it as module.<name>); module-private caches (names starting with '_', fonts, image caches, animation keys) go into one module-private mutable holder (e.g. _cache = {...} or a small class instance) - no 'global' statement and no globals() may remain in these files. Behaviour and pixels must not change: render every scene of the area before and after (tools/screen_harness.py list; render with --out) and compare the PNGs byte for byte, and run the area's test files. A libcst-based codemod is fine (libcst is installed); write it to the scratchpad, not into the repo. Test: an AST check (new test file) that the listed modules contain no ast.Global node and no call to globals()."
+  }
+ ]
+}

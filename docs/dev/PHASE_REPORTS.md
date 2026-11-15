@@ -449,3 +449,46 @@ break them again.
 
 **Results:** `screen_harness compare` → `IDENTICAL 64/64`; `replay compare` → `IDENTICAL 18/18` (baseline
 `6ed72fe`). Tests `PASSED`.
+
+## Phase 6 (fix): B24–B31, B33, B34, B66 (B32 no change)
+
+Fixed by the fix workflow (one agent per bug, test first, adversarial review); the lead closed the review
+findings.
+
+- **B24** — `RouletteGame.start_spin()` resets `payout_claimed`, so a re-spin with the same bets pays (cash, XP,
+  achievement, rating); `test_career_ratings` no longer hides it by resetting flags by hand.
+  `test_roulette_respin`, `test_career_ratings`.
+- **B25** — the Spin handler takes the stake only after `start_spin()` returned True. `test_roulette_spin_cash`.
+- **B26** — changing, removing or clearing chips after a round clears the old result
+  (`RouletteGame.clear_finished_result`). `test_roulette_bet_change_clears_result`.
+- **B27** — blackjack reshuffles a fresh deck before a round when fewer than 15 cards remain and never rebuilds
+  mid-hand (an empty deck mid-hand deals only cards not in play); 4 × 200 seeded rounds, no duplicate.
+  `test_blackjack_deck`.
+- **B28** — a natural pays `bet + (bet * 3 + 1) // 2` (whole dollars, half-up): $1/$3/$5 → +2/+5/+8.
+  `test_blackjack_payout_rounding`.
+- **B29** — an unsplit bust resolves as "dealer", not "split". `test_blackjack_single_hand_bust`.
+- **B30** — "Low Roller" needs a real Stand (a per-round flag set only by the Stand button).
+  `test_blackjack_low_stand_achievement`.
+- **B31** — the horse-race cue captures the base music volume only when not already ducked and restores it on
+  every exit (incl. the screen's new `leave()`). `test_horse_race_music_ducking`.
+- **B32** — no change (designer decision).
+- **B33** — Faro tracks the money a deal actually settled (`settled_total`); place/remove/deal/cash out gives no
+  rating, XP, fans or night activity. `test_faro_risk_free_rating`.
+- **B34** — blackjack fitted labels use the shared font cache (pixel-identical). Also (review): the blackjack
+  background and logo are scaled once instead of every frame, and `blackjack_presentation.py` has no `global`
+  any more. `test_blackjack_fonts`, `test_casino_frame_caches`.
+- **B66** — roulette chip labels: "1.5k" for $1,500; from $10k up the decimal is dropped ("12k") so the label
+  fits on the 26 px chip; the chip font is built once. `test_roulette_chip_label`, `test_casino_frame_caches`.
+
+**Results:** tests `PASSED`. `screen_harness compare` → `IDENTICAL 64/64`; `replay compare` → `IDENTICAL 18/18`
+(baseline `3103f2e`; the scripted roulette/blackjack journeys use stakes and spins these fixes don't change).
+
+**New findings (not fixed):**
+- **N28:** the roulette status line computes WIN/LOSE from the bets on the table at draw time, not from the
+  settled result (B26 hides the stale value, but storing the settled net would be more robust).
+- **N29:** `claim_faro_session_result` computes a session rating tier (`TRAINING_RATING_REWARDS['faro']`) and
+  never uses it; a break-even Faro night costs at least 1 fan (`lose_fans_for_bad_result` with net 0).
+- **N30:** on split blackjack rounds the Low Roller flag is per round, not per hand (stand on one hand, double
+  the other, only the doubled one wins → still awarded).
+- **N31:** after leaving the horse races mid-race via F10 and coming back, the race continues without its cue.
+- **N32:** `test_career_ratings` still sets the blackjack `round_complete`/`payout_claimed` flags by hand.

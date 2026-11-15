@@ -4,8 +4,14 @@ import time
 
 class BlackjackGame:
 
+    # A fresh deck is shuffled before a round once fewer cards than this
+    # remain, so a round never runs the deck dry mid-hand.
+    RESHUFFLE_THRESHOLD = 15
+
     def __init__(self):
         self.deck = []
+        # Every card dealt since the current round began (still on the table).
+        self._dealt_this_round = []
 
         # ``player_hand`` is kept as a compatibility alias for the currently
         # active hand. Split rounds use ``player_hands`` internally.
@@ -27,6 +33,10 @@ class BlackjackGame:
         self.round_complete = False
         self.result = None
         self.player_stood = False
+        # ``player_stood`` only means the player's turn is over (it is also
+        # set by doubles, naturals, 21s and split aces). This one is True only
+        # when the player pressed Stand this round (B30).
+        self.player_chose_stand = False
 
         self.reset_deck()
         self.payout_claimed = False
@@ -57,16 +67,35 @@ class BlackjackGame:
     # Deck
     # ==================================================
 
-    def reset_deck(self):
+    def reset_deck(self, exclude=()):
         suits = ["C", "D", "H", "S"]
         ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
-        self.deck = [(rank, suit) for suit in suits for rank in ranks]
+        excluded = {tuple(card) for card in exclude}
+        self.deck = [
+            (rank, suit)
+            for suit in suits
+            for rank in ranks
+            if (rank, suit) not in excluded
+        ]
         random.shuffle(self.deck)
+
+    def _cards_in_play(self):
+        cards = list(self._dealt_this_round)
+        cards.extend(self.dealer_hand)
+        for hand in self.player_hands:
+            cards.extend(hand)
+        cards.extend(self.player_hand)
+        return cards
 
     def draw_card(self):
         if not self.deck:
-            self.reset_deck()
-        return self.deck.pop()
+            # Guard only: start_round reshuffles before the deck gets this low.
+            # Never rebuild a full deck mid-hand; only cards that are not on
+            # the table may come back.
+            self.reset_deck(exclude=self._cards_in_play())
+        card = self.deck.pop()
+        self._dealt_this_round.append(card)
+        return card
 
     # ==================================================
     # Animation helpers
@@ -198,6 +227,12 @@ class BlackjackGame:
         opening_bet = max(1, int(bet))
         self.bet = opening_bet
 
+        # The previous round's cards leave the table here, so this is the one
+        # safe point to reshuffle a fresh deck (B27).
+        self._dealt_this_round = []
+        if len(self.deck) < self.RESHUFFLE_THRESHOLD:
+            self.reset_deck()
+
         first_hand = [self.draw_card(), self.draw_card()]
         self.player_hands = [first_hand]
         self.player_hand_bets = [opening_bet]
@@ -228,6 +263,7 @@ class BlackjackGame:
         self.round_complete = False
         self.result = None
         self.player_stood = False
+        self.player_chose_stand = False
 
         player_blackjack = self.player_value() == 21
         dealer_blackjack = self.dealer_value() == 21
@@ -339,6 +375,7 @@ class BlackjackGame:
     def stand(self):
         if self.round_complete or self.player_stood:
             return False
+        self.player_chose_stand = True
         self._complete_active_hand()
         return True
 
@@ -403,7 +440,10 @@ class BlackjackGame:
         player_value = self.player_value()
         dealer_value = self.dealer_value()
 
-        if dealer_value > 21:
+        # A bust loses before the dealer's hand matters (B29).
+        if player_value > 21:
+            self.finish_round("dealer")
+        elif dealer_value > 21:
             self.finish_round("player")
         elif dealer_value > player_value:
             self.finish_round("dealer")
@@ -441,7 +481,9 @@ class BlackjackGame:
             return payout
 
         if self.result == "blackjack":
-            return int(round(self.bet * 2.5))
+            # Chips are whole dollars (start_round stores int bets): pay 3:2
+            # rounded half-up, not round()'s banker's rounding (B28).
+            return self.bet + (self.bet * 3 + 1) // 2
         if self.result == "player":
             return self.bet * 2
         if self.result == "push":
@@ -471,7 +513,12 @@ class BlackjackGame:
 
         if self.pending_split_finish_time is not None:
             if now >= self.pending_split_finish_time:
-                self._resolve_split_round()
+                # Every hand busted. Only a real split round settles as
+                # "split"; a single bust hand is a plain dealer win (B29).
+                if self.is_split_round():
+                    self._resolve_split_round()
+                else:
+                    self._resolve_unsplit_round()
             return
 
         if not self.dealer_playing:

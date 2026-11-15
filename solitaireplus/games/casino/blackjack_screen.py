@@ -13,6 +13,7 @@ sounds = lazy("solitaireplus.app.sounds")
 leveling = lazy("solitaireplus.profile.leveling")
 fonts = lazy("solitaireplus.app.fonts")
 assets = lazy("solitaireplus.app.assets")
+ui_text = lazy("solitaireplus.ui.text")
 
 
 # MINIGAME RUNTIME OBJECTS
@@ -60,7 +61,8 @@ blackjack_bet_return_rect = pygame.Rect(BASE_WIDTH // 2 - 105, 640, 210, 48)
 def _render_blackjack_fit(text, max_width, size=21, bold=False, color=(255, 255, 255), minimum_size=13):
     current_size = int(size)
     while current_size >= minimum_size:
-        font = pygame.font.SysFont("cambria", current_size, bold=bold)
+        # Shared font cache: building a SysFont for every size tried, every frame, was B34.
+        font = ui_text.get_font("cambria", current_size, bold=bold, sysfont=True)
         surface = font.render(str(text), True, color)
         if surface.get_width() <= max_width or current_size == minimum_size:
             return surface
@@ -857,7 +859,9 @@ def settle_blackjack_round():
         ),
         doubled=state.blackjack_round_doubled,
         all_in=state.blackjack_round_all_in,
-        stood=bool(getattr(blackjack_game, "player_stood", False)),
+        # The player pressed Stand (not just "turn over", which doubles,
+        # naturals and 21s also reach) (B30).
+        stood=bool(getattr(blackjack_game, "player_chose_stand", False)),
         player_total=max(blackjack_hand_values, default=0),
         hit_count=max(
             0,

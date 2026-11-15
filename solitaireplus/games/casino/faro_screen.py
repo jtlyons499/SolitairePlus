@@ -46,7 +46,9 @@ def claim_faro_session_result():
     state.career_cash = faro_game.cash_out()
     state.faro_session_net = faro_game.get_session_net()
 
-    if faro_game.turns_dealt <= 0 or faro_game.wagered_total <= 0:
+    # Only stakes a dealt turn settled count as really playing (B33): chips placed
+    # and taken back before the deal never risked anything.
+    if faro_game.turns_dealt <= 0 or faro_game.settled_total <= 0:
         faro_game.reward_claimed = True
         return state.faro_session_net
 
@@ -141,7 +143,7 @@ def handle_event(event):
                 net = faro_game.last_profit - faro_game.last_loss - faro_game.last_doublet_loss
                 if net: career_rewards.rate_house_game("faro", net)
                 sounds.audio.play_sound("card_draw")
-                if faro_game.turns_dealt > 0 and faro_game.wagered_total > 0:
+                if faro_game.turns_dealt > 0 and faro_game.settled_total > 0:
                     state.career_event_has_activity = True
 
         elif (

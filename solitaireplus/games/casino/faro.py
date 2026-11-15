@@ -30,7 +30,11 @@ class FaroGame:
         self.cash = 0
         self.turn_number = 0
         self.turns_dealt = 0
+        # wagered_total counts every chip placed, even ones taken back later.
+        # settled_total counts only stakes a dealt turn resolved (won, lost or
+        # split on a doublet): the money really put at risk this session.
         self.wagered_total = 0
+        self.settled_total = 0
         self.session_complete = False
         self.reward_claimed = False
         self.cashed_out = False
@@ -68,6 +72,7 @@ class FaroGame:
         self.turn_number = 0
         self.turns_dealt = 0
         self.wagered_total = 0
+        self.settled_total = 0
         self.session_complete = False
         self.reward_claimed = False
         self.cashed_out = False
@@ -153,6 +158,7 @@ class FaroGame:
                 # odd chip in the house's favor, matching traditional practice.
                 house_take = (wager + 1) // 2
                 self.bets[banker_rank] -= house_take
+                self.settled_total += wager
                 self.last_doublet_loss = house_take
                 self.last_result_text = (
                     f"Doublet: {banker_rank}. House takes ${house_take:,}."
@@ -164,6 +170,7 @@ class FaroGame:
         losing_wager = self.bets.get(banker_rank, 0)
         if losing_wager > 0:
             self.bets[banker_rank] = 0
+            self.settled_total += losing_wager
             self.last_loss = losing_wager
 
         winning_wager = self.bets.get(player_rank, 0)
@@ -171,6 +178,7 @@ class FaroGame:
             # The original wager remains on the layout. Even-money profit is
             # paid directly to cash.
             self.cash += winning_wager
+            self.settled_total += winning_wager
             self.last_profit = winning_wager
 
         parts = [

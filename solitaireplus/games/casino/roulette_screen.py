@@ -577,9 +577,12 @@ def handle_event(event):
                 roulette_game.get_total_bet()
             )
 
+            # Take the stake only once the wheel really starts: a refused
+            # start_spin() runs no round, so nothing would ever pay it back.
             if (
                     total_bet > 0
                     and state.career_cash >= total_bet
+                    and roulette_game.start_spin()
             ):
 
                 state.career_cash -= (
@@ -587,14 +590,13 @@ def handle_event(event):
 
                 )
 
-                if roulette_game.start_spin():
-                    state.career_event_has_activity = True
+                state.career_event_has_activity = True
 
-                    sounds.audio.play_sound(
+                sounds.audio.play_sound(
 
-                        "button_click"
+                    "button_click"
 
-                    )
+                )
 
         # ==========================================
         # RETURN

@@ -324,9 +324,16 @@ class RatingTests(unittest.TestCase):
             blackjack.round_complete = True
             blackjack.payout_claimed = False
             roulette.place_bet("number", 7, 100)
-            roulette.result = "7"
-            roulette.round_complete = True
-            roulette.payout_claimed = False
+            roulette.spin_duration = 0
+
+            def spin_roulette_to_seven():
+                # The real spin path (start_spin + update), with the wheel landing on 7.
+                with patch.object(random, "choice", return_value="7"):
+                    self.assertTrue(roulette.start_spin())
+                roulette.update()
+                self.assertTrue(roulette.round_complete)
+
+            spin_roulette_to_seven()
             env = main_functions("rate_house_game", "settle_blackjack_round", "settle_roulette_round",
                                  current_game_mode=mode, blackjack_game=blackjack, roulette_game=roulette,
                                  career_cash=1000, blackjack_session_net=0, roulette_session_net=0,
@@ -348,6 +355,14 @@ class RatingTests(unittest.TestCase):
             else:
                 self.assertEqual(env["career_rating_results"], {})
                 self.assertEqual(env["career_ratings"], make_player_rating_bundle())
+            # Spinning again with the same bets is a new round: it pays (and rates) once more.
+            spin_roulette_to_seven()
+            env["settle_roulette_round"]()
+            self.assertEqual(env["career_cash"], after[0] + 3600)
+            if mode == "career":
+                self.assertEqual(env["career_rating_results"]["roulette"]["played"], 2)
+            else:
+                self.assertEqual(env["career_rating_results"], {})
 
     def test_head_to_head_forfeit_is_loss_and_duplicate_finish_is_ignored(self):
         from solitaireplus.games.solitaire.head_to_head import HeadToHeadRace

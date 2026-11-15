@@ -1,15 +1,23 @@
 """Blackjack presentation using the player's existing background and felt artwork."""
 from solitaireplus.app import paths
+from solitaireplus.ui import text as ui_text
 import pygame
 
-_logo = None
-_logo_loaded = False
+_logo = {"image": None, "loaded": False}   # the logo, loaded once
 _felt_cache = {}
+_scaled_cache = {}   # (id(image), size) -> scaled copy: the background and logo are scaled once
+
+def _scaled(image, size):
+    key = id(image), tuple(size)
+    if key not in _scaled_cache:
+        if len(_scaled_cache) > 8:
+            _scaled_cache.clear()
+        _scaled_cache[key] = (image, pygame.transform.smoothscale(image, size))
+    return _scaled_cache[key][1]
 
 def draw_background(surface, background, felt):
-    global _logo, _logo_loaded
     if background is not None:
-        surface.blit(pygame.transform.smoothscale(background, surface.get_size()), (0, 0))
+        surface.blit(_scaled(background, surface.get_size()), (0, 0))
     else:
         surface.fill((18, 29, 37))
     shade = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
@@ -33,16 +41,17 @@ def draw_background(surface, background, felt):
         _felt_cache[key] = layer
     surface.blit(_felt_cache[key], inner)
     pygame.draw.rect(surface, (200, 184, 131), inner, 2, border_radius=44)
-    if not _logo_loaded:
-        try: _logo = pygame.image.load(str(paths.asset('blackjack/logo.png'))).convert_alpha()
-        except (OSError, pygame.error): _logo = None
-        _logo_loaded = True
-    if _logo is not None:
-        ratio = min(380/_logo.get_width(), 88/_logo.get_height())
-        image = pygame.transform.smoothscale(_logo, (int(_logo.get_width()*ratio), int(_logo.get_height()*ratio)))
+    if not _logo["loaded"]:
+        try: _logo["image"] = pygame.image.load(str(paths.asset('blackjack/logo.png'))).convert_alpha()
+        except (OSError, pygame.error): _logo["image"] = None
+        _logo["loaded"] = True
+    logo = _logo["image"]
+    if logo is not None:
+        ratio = min(380/logo.get_width(), 88/logo.get_height())
+        image = _scaled(logo, (int(logo.get_width()*ratio), int(logo.get_height()*ratio)))
         surface.blit(image, image.get_rect(center=(683, 46)))
     else:
-        label = pygame.font.Font(None, 46).render('BLACKJACK', True, (244, 235, 209))
+        label = ui_text.get_font(None, 46).render('BLACKJACK', True, (244, 235, 209))
         surface.blit(label, label.get_rect(center=(683, 46)))
 
 def draw_button(surface, rect, label, mouse, font, selected=False):

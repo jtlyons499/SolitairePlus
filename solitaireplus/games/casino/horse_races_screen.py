@@ -68,13 +68,17 @@ def start_horse_race_music():
         except pygame.error:
             pass
 
-    state.horse_race_previous_music_volume = float(sounds.audio.music_volume)
+    # Take the base volume only while the music is not ducked yet: a second start (after the cue
+    # was cut off) must not take the ducked volume as the one to restore later (B31).
+    if state.horse_race_previous_music_volume is None:
+        state.horse_race_previous_music_volume = float(sounds.audio.music_volume)
     sounds.audio.set_music_volume(state.horse_race_previous_music_volume * 0.22)
 
     try:
         state.horse_race_music_channel = pygame.mixer.find_channel(True)
         if state.horse_race_music_channel is None:
             sounds.audio.set_music_volume(state.horse_race_previous_music_volume)
+            state.horse_race_previous_music_volume = None
             return False
 
         state.horse_race_music_channel.set_volume(
@@ -88,6 +92,7 @@ def start_horse_race_music():
         return True
     except pygame.error:
         sounds.audio.set_music_volume(state.horse_race_previous_music_volume)
+        state.horse_race_previous_music_volume = None
         state.horse_race_music_channel = None
         return False
 
@@ -147,6 +152,12 @@ def finish_horse_races_session():
         state.current_state = state_names.STATE_CAREER_EVENT_SELECT
 
     return state.horse_races_session_net
+
+
+def leave():
+    """Leaving the horse races by any route (Return, the F10 debug menu, a debug launch, the end
+    of the night...) ends the race cue and puts the music back to its volume from before (B31)."""
+    stop_horse_race_music(300)
 
 
 def handle_event(event):
