@@ -87,71 +87,126 @@ jobs:
       - name: Generate Windows version metadata
         shell: pwsh
         run: |
-          # Version always comes from version.py. Non-release builds get a "+ci.N" label
-          # so they can never be mistaken for an official release.
+          # Each exe gets the version of its own code (game: version.py, network: netservice/__init__.py).
+          # Non-release builds get a "+ci.N" label so they can never be mistaken for an official release.
           if ("${{ github.ref_type }}" -ne "tag") {
             $env:SOLITAIRE_BUILD_NUMBER = "${{ github.run_number }}"
             $env:SOLITAIRE_BUILD_SUFFIX = "+ci.${{ github.run_number }}"
           }
-          python tools/write_version_info.py
+          python tools/write_version_info.py --all
 
       - name: Build with PyInstaller
         shell: pwsh
         run: python -m PyInstaller --clean --noconfirm "SolitairePlus.spec"
 
-      - name: Verify executable
+      - name: Verify executables
         shell: pwsh
         run: |
-          $exe = "dist\SolitairePlus\SolitairePlus.exe"
-          if (-not (Test-Path $exe)) {
-            throw "Expected executable was not produced: $exe"
+          foreach ($exe in "SolitairePlus.exe", "SolitaireNet.exe") {
+            $path = "dist\SolitairePlus\$exe"
+            if (-not (Test-Path $path)) { throw "Expected executable was not produced: $path" }
+            Get-Item $path | Format-List Name, Length, LastWriteTime
           }
-          Get-Item $exe | Format-List Name, Length, LastWriteTime
+
+      # The multiplayer files ship as loose .py source, so PyInstaller cannot see what they
+      # import. This proves every one of them imports inside the real packaged game.
+      # A failure usually means "add <module> to hiddenimports in SolitairePlus.spec" (docs/TESTING.md).
+      - name: Self-test packaged game and network service
+        shell: pwsh
+        run: |
+          & "dist\SolitairePlus\SolitaireNet.exe" --selftest
+          if ($LASTEXITCODE -ne 0) { throw "SolitaireNet.exe --selftest failed" }
+          $env:SDL_VIDEODRIVER = "dummy"; $env:SDL_AUDIODRIVER = "dummy"
+          $report = Join-Path $PWD "selftest-multiplayer.txt"
+          $p = Start-Process "dist\SolitairePlus\SolitairePlus.exe" -ArgumentList "--multiplayer", "--selftest", "--selftest-report", "`"$report`"" -Wait -PassThru
+          if (Test-Path $report) { Get-Content $report } else { Write-Warning "No self-test report was written." }
+          if ($p.ExitCode -ne 0) { throw "Packaged multiplayer self-test failed (exit code $($p.ExitCode))" }
+
+      # Tag builds only: reuse the previous release's copy of every part whose source did not
+      # change, so players only download what really changed (tools/make_manifest.py).
+      - name: Fetch previous release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $current = "${{ github.ref_name }}"
+          $previous = gh release list --repo "${{ github.repository }}" --exclude-pre-releases --exclude-drafts --limit 10 --json tagName --jq ".[].tagName" |
+            Where-Object { $_ -ne $current } | Select-Object -First 1
+          if (-not $previous) { Write-Host "No previous release."; exit 0 }
+          New-Item -ItemType Directory -Force -Path prev | Out-Null
+          gh release download $previous --repo "${{ github.repository }}" --pattern manifest.json --pattern Solitaire-Windows.zip --dir prev
+          if (-not (Test-Path prev\manifest.json)) {
+            Write-Host "Previous release $previous has no manifest.json (made before the updater existed); everything is new."
+            Remove-Item prev -Recurse -Force
+            exit 0
+          }
+          Expand-Archive prev\Solitaire-Windows.zip -DestinationPath prev\files -Force
+          Write-Host "Previous release: $previous"
+
+      - name: Reuse unchanged parts from the previous release
+        if: startsWith(github.ref, 'refs/tags/v') && hashFiles('prev/manifest.json') != ''
+        shell: pwsh
+        run: python tools/make_manifest.py reuse --dist dist\SolitairePlus --previous-manifest prev\manifest.json --previous-dir prev\files --rebuilt-out release\rebuilt-exes.txt
 
       # Preflight scan: detects threats *on this runner only*. It cannot
       # guarantee that a consumer's current Defender cloud model agrees.
-      - name: Scan built executable with Microsoft Defender (if available)
+      - name: Scan build with Microsoft Defender (if available)
         shell: pwsh
         run: |
-          $exe = (Resolve-Path -LiteralPath "dist\SolitairePlus\SolitairePlus.exe").Path
+          $folder = (Resolve-Path -LiteralPath "dist\SolitairePlus").Path
           $status = Get-MpComputerStatus -ErrorAction SilentlyContinue
           if ($null -eq $status -or -not $status.AMServiceEnabled -or -not $status.AntivirusEnabled) {
             Write-Warning "Defender is unavailable on this runner. No antivirus scan was performed."
           } else {
-            Write-Host "Defender enabled. Scanning $exe"
-            Start-MpScan -ScanType CustomScan -ScanPath $exe -ErrorAction Stop
-            if (-not (Test-Path -LiteralPath $exe)) {
-              throw "Defender removed or quarantined the executable. Stop publication."
+            Write-Host "Defender enabled. Scanning $folder"
+            Start-MpScan -ScanType CustomScan -ScanPath $folder -ErrorAction Stop
+            foreach ($exe in "SolitairePlus.exe", "SolitaireNet.exe") {
+              if (-not (Test-Path -LiteralPath (Join-Path $folder $exe))) {
+                throw "Defender removed or quarantined $exe. Stop publication."
+              }
             }
             $detected = @(Get-MpThreatDetection -ErrorAction SilentlyContinue | Where-Object {
-              @($_.Resources) | Where-Object { $_ -like "*$exe*" }
+              @($_.Resources) | Where-Object { $_ -like "*$folder*" }
             })
             if ($detected.Count -gt 0) {
               $detected | Format-List ThreatID, ThreatStatusID, Resources
-              throw "Defender flagged the generated executable. Stop publication."
+              throw "Defender flagged the build. Stop publication."
             }
             Write-Host "No Defender detection reported by this runner's scan."
           }
 
-      - name: Create player-ready ZIP
+      - name: Write manifest and delta
+        shell: pwsh
+        run: |
+          $previous = @()
+          if (Test-Path prev\manifest.json) { $previous = @("--previous-manifest", "prev\manifest.json") }
+          python tools/make_manifest.py manifest --dist dist\SolitairePlus --out dist\SolitairePlus\manifest.json --delta-dir release @previous
+          if ($LASTEXITCODE -ne 0) { throw "Writing the manifest failed" }
+          Copy-Item dist\SolitairePlus\manifest.json release\manifest.json
+
+      - name: Create player-ready ZIP and checksums
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path "release\Solitaire-Windows" | Out-Null
           Copy-Item -Path "dist\SolitairePlus\*" -Destination "release\Solitaire-Windows" -Recurse -Force
           Copy-Item -Path "README.md" -Destination "release\Solitaire-Windows\README.md" -Force
           Copy-Item -Path "PLAYING.txt" -Destination "release\Solitaire-Windows\PLAYING.txt" -Force
-          Compress-Archive -Path "release\Solitaire-Windows\*" -DestinationPath "Solitaire-Windows.zip" -Force
-          $hash = (Get-FileHash -Algorithm SHA256 "Solitaire-Windows.zip").Hash.ToLowerInvariant()
-          "$hash  Solitaire-Windows.zip" | Set-Content -Path "Solitaire-Windows.zip.sha256" -Encoding ASCII
-          Write-Host "SHA256 of Windows ZIP: $hash"
+          Compress-Archive -Path "release\Solitaire-Windows\*" -DestinationPath "release\Solitaire-Windows.zip" -Force
+          Remove-Item "release\Solitaire-Windows" -Recurse -Force
+          Push-Location release
+          Get-ChildItem -File -Filter *.zip | ForEach-Object {
+            $hash = (Get-FileHash -Algorithm SHA256 $_.Name).Hash.ToLowerInvariant()
+            "$hash  $($_.Name)"
+          } | Set-Content -Path "SHA256SUMS.txt" -Encoding ASCII
+          Get-Content SHA256SUMS.txt
+          Pop-Location
 
       - name: Upload downloadable build artifact
         uses: actions/upload-artifact@v4
         with:
           name: Solitaire-Windows
-          path: |
-            Solitaire-Windows.zip
-            Solitaire-Windows.zip.sha256
+          path: release/
           if-no-files-found: error
           retention-days: 14
 
@@ -170,6 +225,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: Solitaire-Windows
+          path: release
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -184,7 +240,9 @@ jobs:
           $tag = "${{ github.ref_name }}"
           $version = $tag.Substring(1)
           python tools/release_helpers.py notes $version | Set-Content -Path release-notes.md -Encoding UTF8
-          $assets = @("Solitaire-Windows.zip#Solitaire+ for Windows", "Solitaire-Windows.zip.sha256#SHA-256 checksum")
+          # Players' updaters read manifest.json and the delta/full zips; SHA256SUMS.txt is for people.
+          $assets = @(Get-ChildItem release -File | Where-Object { $_.Name -ne "rebuilt-exes.txt" } | ForEach-Object { $_.FullName })
+          $assets | ForEach-Object { Write-Host "Asset: $_" }
           # Versions like 0.0.8-beta.1 are published as pre-releases, which the in-game updater ignores.
           $extra = @()
           if ($version.Contains("-")) { $extra += "--prerelease" }

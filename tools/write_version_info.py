@@ -1,10 +1,16 @@
-"""Write the Windows version resource that PyInstaller embeds in an exe.
+"""Write the Windows version resources that PyInstaller embeds in each exe.
 
-The version always comes from version.py (the single source of truth).
+Usage:
+    python tools/write_version_info.py --all     # every exe (what the build scripts run)
+    python tools/write_version_info.py           # just the game exe
+    python tools/write_version_info.py --name SolitaireNet --description "..." \\
+        --version-file netservice/__init__.py --output build_version_info_net.txt
 
-Usage (defaults produce the game exe's resource):
-    python tools/write_version_info.py
-    python tools/write_version_info.py --name SolitaireNet --description "Solitaire+ network service" --output build_version_info_net.txt
+Each exe is stamped with the version of ITS OWN code: the game exe with
+version.py, SolitaireNet.exe with netservice/__init__.py. Releases reuse an
+unchanged exe from the previous release (tools/make_manifest.py), so
+Explorer's "File version" shows the release in which that exe last changed.
+The version shown in the game is always the installed release.
 
 Optional environment variables, used by CI for non-release builds:
     SOLITAIRE_BUILD_NUMBER  integer placed in the 4th FileVersion field (e.g. the CI run number)
@@ -24,14 +30,21 @@ DEFAULT_OUTPUT = ROOT / "build_version_info.txt"
 
 # MAJOR.MINOR.PATCH with an optional pre-release such as -beta.1 or -rc.2
 SEMVER = re.compile(r"^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$")
+VERSION_LINE = re.compile(r"""^__version__\s*=\s*["']([^"']+)["']""", re.MULTILINE)
+
+# Every exe this project builds: (name, description, version file, output file).
+EXES = [
+    ("SolitairePlus", "Solitaire+", "version.py", "build_version_info.txt"),
+    ("SolitaireNet", "Solitaire+ online play service", "netservice/__init__.py", "build_version_info_net.txt"),
+]
 
 
-def read_version() -> str:
-    """Read __version__ from version.py without importing the game."""
-    text = (ROOT / "version.py").read_text(encoding="utf-8")
-    match = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', text, re.MULTILINE)
+def read_version(version_file: Path | str = "version.py") -> str:
+    """Read __version__ from a .py file without importing it."""
+    text = (ROOT / version_file).read_text(encoding="utf-8")
+    match = VERSION_LINE.search(text)
     if not match:
-        raise SystemExit("version.py does not define __version__")
+        raise SystemExit(f"{version_file} does not define __version__")
     return match.group(1)
 
 
@@ -39,7 +52,7 @@ def version_parts(label: str, build_number: int = 0) -> tuple[int, int, int, int
     match = SEMVER.match(label)
     if not match:
         raise SystemExit(
-            f"version.py has {label!r}, which is not MAJOR.MINOR.PATCH[-prerelease] "
+            f"Version {label!r} is not MAJOR.MINOR.PATCH[-prerelease] "
             "(for example 0.0.7 or 0.0.7-beta.1)"
         )
     major, minor, patch = (int(match.group(i)) for i in (1, 2, 3))
@@ -87,18 +100,24 @@ VSVersionInfo(
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--all", action="store_true", help="write the resource for every exe")
     parser.add_argument("--name", default="SolitairePlus", help="exe name without .exe")
     parser.add_argument("--description", default="Solitaire+", help="FileDescription shown in Explorer")
+    parser.add_argument("--version-file", default="version.py", help=".py file holding __version__")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     args = parser.parse_args(argv)
 
-    version = read_version()
+    if args.all:
+        jobs = [(name, description, vfile, ROOT / out) for name, description, vfile, out in EXES]
+    else:
+        jobs = [(args.name, args.description, args.version_file, args.output)]
     build_number = int(os.environ.get("SOLITAIRE_BUILD_NUMBER", "0") or 0) % 65536
-    parts = version_parts(version, build_number)
-    label = version + os.environ.get("SOLITAIRE_BUILD_SUFFIX", "")
-
-    args.output.write_text(render(label, parts, args.name, args.description), encoding="utf-8")
-    print(f"Wrote {args.output.name} for {args.name}.exe {label}")
+    for name, description, version_file, output in jobs:
+        version = read_version(version_file)
+        label = version + os.environ.get("SOLITAIRE_BUILD_SUFFIX", "")
+        Path(output).write_text(render(label, version_parts(version, build_number), name, description),
+                                encoding="utf-8")
+        print(f"Wrote {Path(output).name} for {name}.exe {label}")
 
 
 if __name__ == "__main__":

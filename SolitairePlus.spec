@@ -1,26 +1,56 @@
 # -*- mode: python ; coding: utf-8 -*-
+#
+# Builds the Solitaire+ install folder (dist/SolitairePlus/):
+#
+#   SolitairePlus.exe        the game (also runs the Multiplayer window with --multiplayer)
+#   SolitaireNet.exe         online-play network service (netservice/)
+#   SolitairePlus_Data/      shared Python runtime + assets/, data/, multiplayer/, version.py
+#
+# Both exes share one runtime folder. Each exe only contains its own Python code,
+# so a change to netservice/ rebuilds SolitaireNet.exe but not the game, and an
+# asset change rebuilds neither (see tools/make_manifest.py).
+#
+# Build with build_release.ps1 (local) or the GitHub workflow; both write the
+# version resources first (tools/write_version_info.py).
 
 from pathlib import Path
 
 project = Path(SPECPATH)
+CONTENTS = 'SolitairePlus_Data'
+
+# multiplayer/*.py ship as loose source files (multiplayer_launcher runs them),
+# so multiplayer updates do not change the game exe. Server-only and test-only
+# modules are left out of the player install.
+MP_EXCLUDED = {'relay_server.py', 'room_relay.py', 'relay_transport.py'}
 mp_files = [
     (str(p), str(p.parent.relative_to(project)))
     for p in (project / 'multiplayer').rglob('*.py')
     if not any(part in {'tests', '__pycache__', '.venv'} for part in p.relative_to(project).parts)
+    and p.name not in MP_EXCLUDED
 ]
 
-version_path = project / 'build_version_info.txt'
-version_file = str(version_path) if version_path.exists() else None
 
-icon_path = project / 'assets' / 'app_icon.ico'
-icon_file = str(icon_path) if icon_path.exists() else None
+def optional(path):
+    return str(path) if path.exists() else None
 
 
-a = Analysis(
+icon_file = optional(project / 'assets' / 'app_icon.ico')
+
+
+# ----------------------------------------------------------------------------- game
+game = Analysis(
     ['main.py'],
-    pathex=[],
+    pathex=[str(project)],
     binaries=[],
-    datas=[(str(project / 'assets'), 'assets'), (str(project / 'data'), 'data')] + mp_files,
+    datas=[
+        (str(project / 'assets'), 'assets'),
+        (str(project / 'data'), 'data'),
+        # Loose, so a release that only changes the version number does not change the exe.
+        (str(project / 'version.py'), '.'),
+    ] + mp_files,
+    # Standard-library modules that only the loose multiplayer/*.py files use.
+    # PyInstaller cannot see those imports. If the frozen self-test fails with
+    # "No module named X", add X here (see docs/TESTING.md).
     hiddenimports=[
         'asyncio',
         'socket',
@@ -36,15 +66,14 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=['version', 'netservice'],
     noarchive=False,
     optimize=0,
 )
-pyz = PYZ(a.pure)
-
-exe = EXE(
-    pyz,
-    a.scripts,
+game_pyz = PYZ(game.pure)
+game_exe = EXE(
+    game_pyz,
+    game.scripts,
     [],
     exclude_binaries=True,
     name='SolitairePlus',
@@ -58,14 +87,58 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    contents_directory='.',
-    version=version_file,
+    contents_directory=CONTENTS,
+    version=optional(project / 'build_version_info.txt'),
     icon=icon_file,
 )
+
+
+# ----------------------------------------------------------------------------- network service
+net = Analysis(
+    [str(project / 'netservice' / '__main__.py')],
+    pathex=[str(project)],
+    binaries=[],
+    datas=[],
+    hiddenimports=['netservice.connectors.relay'],
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=['pygame', 'tkinter', 'version'],
+    noarchive=False,
+    optimize=0,
+)
+net_pyz = PYZ(net.pure)
+net_exe = EXE(
+    net_pyz,
+    net.scripts,
+    [],
+    exclude_binaries=True,
+    name='SolitaireNet',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=False,
+    # Console program: the game talks to it over stdin/stdout pipes and starts it
+    # with CREATE_NO_WINDOW, so players never see a window.
+    console=True,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    contents_directory=CONTENTS,
+    version=optional(project / 'build_version_info_net.txt'),
+    icon=icon_file,
+)
+
+
 coll = COLLECT(
-    exe,
-    a.binaries,
-    a.datas,
+    game_exe,
+    game.binaries,
+    game.datas,
+    net_exe,
+    net.binaries,
+    net.datas,
     strip=False,
     upx=False,
     upx_exclude=[],

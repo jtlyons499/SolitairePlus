@@ -21,7 +21,59 @@ def run_multiplayer():
         raise FileNotFoundError('Missing multiplayer/main.py. Extract the complete consolidation batch.')
     sys.path.insert(0, str(folder))
     os.chdir(ROOT)
+    if '--selftest' in sys.argv:
+        raise SystemExit(run_selftest(folder))
     runpy.run_path(str(folder / 'main.py'), run_name='__main__')
+
+
+# Server-only and test-only modules. The packaged game does not ship them
+# (keep in sync with MP_EXCLUDED in SolitairePlus.spec).
+SELFTEST_SKIP = {'relay_server', 'room_relay', 'relay_transport'}
+
+
+def run_selftest(folder):
+    """`SolitairePlus.exe --multiplayer --selftest [--selftest-report FILE]`
+
+    Imports every multiplayer module the way the packaged game would, without
+    opening a window. The multiplayer files ship as loose .py source, so
+    PyInstaller cannot see what they import. A standard-library module they
+    need may be missing from the exe; this finds that before players do.
+    Exit code 0 = all imported; 1 = at least one failed (details in the report).
+    """
+    import importlib
+    import traceback
+    os.environ.setdefault('SDL_VIDEODRIVER', 'dummy')
+    os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')
+    lines, failed = [], 0
+    try:
+        import pygame
+        pygame.init()
+    except Exception as error:
+        lines.append(f'FAILED pygame: {error!r}')
+        failed += 1
+    for path in sorted(folder.glob('*.py')):
+        if path.stem in SELFTEST_SKIP:
+            continue
+        try:
+            importlib.import_module(path.stem)
+            lines.append(f'ok     {path.stem}')
+        except BaseException as error:  # SystemExit/ImportError alike: report, keep going
+            failed += 1
+            detail = traceback.format_exception_only(type(error), error)[-1].strip()
+            lines.append(f'FAILED {path.stem}: {detail}')
+    lines.append(f'FAILED: {failed} check(s) failed; see the lines above' if failed
+                 else 'PASSED: every multiplayer module imported')
+    report = '\n'.join(lines) + '\n'
+    if '--selftest-report' in sys.argv:
+        index = sys.argv.index('--selftest-report')
+        if index + 1 < len(sys.argv):
+            Path(sys.argv[index + 1]).write_text(report, encoding='utf-8')
+    if sys.stdout is not None:
+        try:
+            sys.stdout.write(report)
+        except (OSError, ValueError):
+            pass
+    return 1 if failed else 0
 
 
 class MultiplayerLauncher:

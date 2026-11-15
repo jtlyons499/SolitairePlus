@@ -145,6 +145,27 @@ Other result types:
 | `CRASH  test_x` | The file couldn't even be imported, usually a syntax error or a missing module. | Read the printed error. The file and line are shown. |
 | `NOW PASSES ...` | A quarantined test works again. | Delete its line from `tests/KNOWN_FAILURES.txt`. |
 
+## Packaged self-tests (after the exe is built)
+
+The unit tests run on the source code. Two more checks run on the **built** game, in `build_release.ps1` and on
+GitHub:
+
+| Command | What it proves |
+|---|---|
+| `dist\SolitairePlus\SolitaireNet.exe --selftest` | The network service starts, and all its connectors load. |
+| `dist\SolitairePlus\SolitairePlus.exe --multiplayer --selftest --selftest-report report.txt` | Every multiplayer module imports inside the real packaged game. |
+
+Why the second one matters: the files in `multiplayer/` ship as loose `.py` files, so PyInstaller can't see what
+they import. If a multiplayer change starts using a standard-library module the game exe doesn't contain, multiplayer
+would crash **only in the packaged game**, never from source. The report then contains a line like:
+
+```text
+FAILED room_view: ModuleNotFoundError: No module named 'fractions'
+```
+
+**Fix:** add that module name (here `fractions`) to the `hiddenimports` list in `SolitairePlus.spec`, rebuild, and run
+the self-test again. Lines starting with `ok` passed. The last line says `PASSED` or `FAILED`.
+
 ## Asset preflight
 
 `tools/release_preflight.py` loads every image in `assets/` and every JSON file in `data/`, and checks that the

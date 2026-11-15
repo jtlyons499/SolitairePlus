@@ -6,8 +6,9 @@
   1. Uses the project's .venv Python (create it once: py -3.14 -m venv .venv).
   2. Installs the pinned dependencies (requirements.txt + requirements-build.txt).
   3. Runs all unit tests (tools/run_tests.py) and the asset preflight. Any failure stops the build.
-  4. Writes the Windows version resource from version.py and runs PyInstaller.
-  5. Puts a playable ZIP in release\Solitaire-Windows.zip.
+  4. Writes the Windows version resources and runs PyInstaller (SolitairePlus.exe + SolitaireNet.exe).
+  5. Runs the packaged self-tests (every multiplayer module imports; SolitaireNet starts).
+  6. Writes manifest.json and puts a playable ZIP in release\Solitaire-Windows.zip.
 
   Local builds are NOT signed. Official, signed builds are made only by GitHub
   when a version tag is pushed (see docs/RELEASING.md).
@@ -45,11 +46,26 @@ if (-not $SkipTests) {
     Invoke-Step "Checking game assets (preflight)" { & $python tools/release_preflight.py }
 }
 
-Invoke-Step "Writing version information" { & $python tools/write_version_info.py }
+Invoke-Step "Writing version information" { & $python tools/write_version_info.py --all }
 Invoke-Step "Building with PyInstaller" { & $python -m PyInstaller --noconfirm --clean "SolitairePlus.spec" }
 
 $dist = Join-Path $PSScriptRoot "dist\SolitairePlus"
-if (-not (Test-Path (Join-Path $dist "SolitairePlus.exe"))) { throw "Build did not produce dist\SolitairePlus\SolitairePlus.exe" }
+foreach ($exe in "SolitairePlus.exe", "SolitaireNet.exe") {
+    if (-not (Test-Path (Join-Path $dist $exe))) { throw "Build did not produce dist\SolitairePlus\$exe" }
+}
+
+Invoke-Step "Self-test: SolitaireNet.exe" { & (Join-Path $dist "SolitaireNet.exe") --selftest }
+Invoke-Step "Self-test: multiplayer modules in the packaged game" {
+    $report = Join-Path $PSScriptRoot "release\selftest-multiplayer.txt"
+    New-Item -ItemType Directory -Force -Path (Split-Path $report) | Out-Null
+    $env:SDL_VIDEODRIVER = "dummy"; $env:SDL_AUDIODRIVER = "dummy"
+    $p = Start-Process (Join-Path $dist "SolitairePlus.exe") -ArgumentList "--multiplayer", "--selftest", "--selftest-report", "`"$report`"" -Wait -PassThru
+    Remove-Item Env:SDL_VIDEODRIVER, Env:SDL_AUDIODRIVER
+    if (Test-Path $report) { Get-Content $report | Select-String -Pattern "FAILED|PASSED" }
+    $global:LASTEXITCODE = $p.ExitCode
+}
+
+Invoke-Step "Writing manifest.json" { & $python tools/make_manifest.py manifest --dist $dist --out (Join-Path $dist "manifest.json") }
 
 Write-Host "`n=== Packaging ZIP ===" -ForegroundColor Cyan
 $stage = Join-Path $PSScriptRoot "release\Solitaire-Windows"

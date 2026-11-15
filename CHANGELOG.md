@@ -17,6 +17,8 @@ How to use this file (maintainers and AI agents):
 - Online play now runs through a small separate program, `SolitaireNet.exe`, so connection fixes and new connection types can ship without changing the game itself.
 - Online games now notice a dead connection (no reply for 45 seconds) instead of waiting forever, and a malformed server reply no longer leaves the game stuck on "Waiting for friend".
 - The game no longer remembers the default server address as if you had chosen it, so moving the server to a new address won't strand anyone.
+- The game folder is tidier: `SolitairePlus.exe` and `SolitaireNet.exe` sit next to one `SolitairePlus_Data` folder that holds everything else.
+- Each release now lists every file with a checksum (`manifest.json`) and ships a small "changes only" download, so future in-game updates only fetch what actually changed.
 
 ## [0.0.6b] - 2026-11-02
 
