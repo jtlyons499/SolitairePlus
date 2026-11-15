@@ -343,3 +343,25 @@ reviews found.
 - **N18:** `new_race_game()` still deals and discards a full random deal first (and plays the shuffle sound).
 - **N19:** `legacy.py` still has a dead first set of the Career hub rects (`career_jobs_rect` etc.); removed with
   the §5.1 duplicates (B45 in Phase 7).
+
+## Phase 5 (move): Career
+
+**What moved** (`move.py` with the plan from `tools/refactor/specs/phase5.json`; `legacy.py` 20,754 → 12,221
+lines):
+- Career screens, each with `handle_event`/`draw` (+ exclusive helpers and rects): `career/hub_screen.py`,
+  `activity_screen.py`, `jobs_screen.py`, `real_estate_screen.py`, `leaderboards_screen.py`,
+  `leaderboard_bio_screen.py`, `news_screen.py` (+ `ensure_career_news`, `add_career_news`),
+  `case_opening_screen.py`, `events/event_select_screen.py`, `events/event_screen.py`, `events/summary_screen.py`.
+- Shared career code: `career/calendar.py` (days, schedule, advancing the day), `career/career_saving.py`
+  (`auto_save_career`, `save_career_from_hub`), `career/career_rewards.py` (ratings and fans from games; named so
+  it doesn't clash with local variables called `rewards`), `career/leaderboard_engine.py` (leaderboard and NPC
+  roster sync), `career/events/night.py` (activity kinds, event-night results), `career/web_pages.py`,
+  `career/career_names.py`.
+- 3 tests re-pointed at the new modules: `test_career_hub_hotspot` (the hub handler is now
+  `hub_screen.handle_event`; its rects come from legacy start-up code and the hub module),
+  `test_career_night_warp` (moved code calls `legacy.game_namespace()`), `test_frame_font_sites` (draws the moved
+  screens and now counts fonts built anywhere in the package, not only in legacy.py, so moving a screen can't hide
+  a per-frame font).
+
+**Results:** `screen_harness compare` → `IDENTICAL 64/64`; `replay compare` → `IDENTICAL 18/18` (baseline
+`3a1784d`). Tests `PASSED`.

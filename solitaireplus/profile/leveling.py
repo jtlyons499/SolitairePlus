@@ -7,6 +7,8 @@ from solitaireplus.profile.achievements import record_event as record_achievemen
 from solitaireplus.career.rating_events import record_result
 from solitaireplus.app import state
 from solitaireplus.app.lazy import lazy
+career_saving = lazy("solitaireplus.career.career_saving")
+career_rewards = lazy("solitaireplus.career.career_rewards")
 legacy = lazy("solitaireplus.legacy")
 
 
@@ -42,7 +44,7 @@ def award_game_xp(game_id, won=False, bonus=0):
 
 
 def award_achievement_fans(difficulty="normal", achievement_name="Achievement"):
-    return legacy.award_career_fans(
+    return career_rewards.award_career_fans(
         fan_bonus_for_achievement(difficulty),
         f"Achievement: {achievement_name}"
     )
@@ -81,7 +83,7 @@ def process_achievement_event(event_name, **data):
         )
 
     if newly_unlocked and state.current_game_mode != "free":
-        legacy.auto_save_career()
+        career_saving.auto_save_career()
 
     return newly_unlocked
 
@@ -439,10 +441,10 @@ def apply_round_rewards(
             cash_earned
         )
 
-        rating_change = legacy.award_career_rating("solitaire", rating_change)
+        rating_change = career_rewards.award_career_rating("solitaire", rating_change)
         record_result(state.career_rating_results, "solitaire", 1.0, rating_change)
 
-        fans_earned = legacy.award_fans_for_rating_win(
+        fans_earned = career_rewards.award_fans_for_rating_win(
             rating_change,
             "Solitaire win"
         )

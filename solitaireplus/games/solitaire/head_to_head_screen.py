@@ -6,13 +6,17 @@ from solitaireplus.games.solitaire.head_to_head import select_head_to_head_oppon
 from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
+news_screen = lazy("solitaireplus.career.news_screen")
+leaderboard_engine = lazy("solitaireplus.career.leaderboard_engine")
+event_screen = lazy("solitaireplus.career.events.event_screen")
+career_rewards = lazy("solitaireplus.career.career_rewards")
 legacy = lazy("solitaireplus.legacy")
 leveling = lazy("solitaireplus.profile.leveling")
 
 
 def start_head_to_head_event():
 
-    leaderboard = legacy.get_career_leaderboard(
+    leaderboard = leaderboard_engine.get_career_leaderboard(
         rating_key="solitaire"
     )
     state.head_to_head_opponents = select_head_to_head_opponents(
@@ -22,7 +26,7 @@ def start_head_to_head_event():
     )
     random.shuffle(state.head_to_head_opponents)
     state.head_to_head_selected_index = None
-    legacy.head_to_head_race.reset()
+    event_screen.head_to_head_race.reset()
     state.career_event_has_activity = False
 
 
@@ -53,24 +57,24 @@ def finish_head_to_head_race(
         forfeited=False
 ):
 
-    if legacy.head_to_head_race.opponent is None or legacy.head_to_head_race.reward_claimed:
+    if event_screen.head_to_head_race.opponent is None or event_screen.head_to_head_race.reward_claimed:
         return False
-    legacy.head_to_head_race.reward_claimed = True
+    event_screen.head_to_head_race.reward_claimed = True
 
     now_ms = pygame.time.get_ticks()
 
     if won:
-        legacy.head_to_head_race.mark_winner(
+        event_screen.head_to_head_race.mark_winner(
             "player",
             now_ms
         )
-    elif legacy.head_to_head_race.winner is None:
-        legacy.head_to_head_race.mark_winner(
+    elif event_screen.head_to_head_race.winner is None:
+        event_screen.head_to_head_race.mark_winner(
             "npc",
             now_ms
         )
 
-    opponent = legacy.head_to_head_race.opponent
+    opponent = event_screen.head_to_head_race.opponent
     opponent_name = opponent.get(
         "name",
         "Opponent"
@@ -82,21 +86,21 @@ def finish_head_to_head_race(
     player_progress = (
         52
         if won
-        else legacy.head_to_head_race.player_progress_from_foundations(
+        else event_screen.head_to_head_race.player_progress_from_foundations(
             legacy.game.foundations
         )
     )
-    elapsed_text = legacy.head_to_head_race.format_elapsed(
+    elapsed_text = event_screen.head_to_head_race.format_elapsed(
         now_ms
     )
 
-    rating_change = legacy.rate_competitive_game("solitaire", opponent, won and not forfeited)
+    rating_change = career_rewards.rate_competitive_game("solitaire", opponent, won and not forfeited)
     fans_earned = 0
 
     if not forfeited:
 
         if won:
-            fans_earned = legacy.award_fans_for_rating_win(
+            fans_earned = career_rewards.award_fans_for_rating_win(
                 rating_change,
                 "Head-to-Head win"
             )
@@ -117,7 +121,7 @@ def finish_head_to_head_race(
             won,
             elapsed_text=elapsed_text,
         )
-        legacy.add_career_news(
+        news_screen.add_career_news(
             headline,
             body,
             category

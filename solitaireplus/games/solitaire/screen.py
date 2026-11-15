@@ -7,6 +7,10 @@ import pygame
 from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
+news_screen = lazy("solitaireplus.career.news_screen")
+night = lazy("solitaireplus.career.events.night")
+event_screen = lazy("solitaireplus.career.events.event_screen")
+calendar = lazy("solitaireplus.career.calendar")
 head_to_head_screen = lazy("solitaireplus.games.solitaire.head_to_head_screen")
 legacy = lazy("solitaireplus.legacy")
 window = lazy("solitaireplus.app.window")
@@ -862,7 +866,7 @@ def handle_event(event):
 
         elif (
                 state.current_game_mode == "head_to_head"
-                and legacy.head_to_head_race.is_countdown_active(
+                and event_screen.head_to_head_race.is_countdown_active(
                     pygame.time.get_ticks()
                 )
         ):
@@ -971,13 +975,13 @@ def draw():
     draw_gameplay_ui()
 
     if state.current_game_mode == "head_to_head":
-        legacy.head_to_head_race.update(
+        event_screen.head_to_head_race.update(
             pygame.time.get_ticks()
         )
         draw_head_to_head_hud(
             window.game_surface,
-            legacy.head_to_head_race,
-            legacy.head_to_head_race.player_progress_from_foundations(
+            event_screen.head_to_head_race,
+            event_screen.head_to_head_race.player_progress_from_foundations(
                 legacy.game.foundations
             ),
             pygame.time.get_ticks(),
@@ -1010,24 +1014,24 @@ def update_solitaire_round():
     if state.current_game_mode == "head_to_head":
         if state.current_state == state_names.STATE_PLAYING:
             now = pygame.time.get_ticks()
-            paused_at = legacy.head_to_head_race.paused_at_ms
-            if legacy.head_to_head_race.resume(now) and paused_at is not None:
+            paused_at = event_screen.head_to_head_race.paused_at_ms
+            if event_screen.head_to_head_race.resume(now) and paused_at is not None:
                 # The player's own round clock started with the race clock (B3):
                 # skip the same time away so both keep showing the same race time.
                 legacy.game.round_start_ticks += max(0, now - paused_at)
         else:
-            legacy.head_to_head_race.pause(pygame.time.get_ticks())
+            event_screen.head_to_head_race.pause(pygame.time.get_ticks())
 
     if (
             state.current_state == state_names.STATE_PLAYING
             and state.current_game_mode == "head_to_head"
             and legacy.game.round_summary is None
     ):
-        legacy.head_to_head_race.update(
+        event_screen.head_to_head_race.update(
             pygame.time.get_ticks()
         )
 
-        if legacy.head_to_head_race.winner == "npc":
+        if event_screen.head_to_head_race.winner == "npc":
             head_to_head_screen.finish_head_to_head_race(
                 False
             )
@@ -1119,13 +1123,13 @@ def update_solitaire_round():
 
                 if (
                         state.pending_career_activity_type
-                        == legacy.CAREER_ACTIVITY_ROUND
+                        == night.CAREER_ACTIVITY_ROUND
                 ):
                     state.career_rounds_won += 1
 
                 elif (
                         state.pending_career_activity_type
-                        == legacy.CAREER_ACTIVITY_CHALLENGE
+                        == night.CAREER_ACTIVITY_CHALLENGE
                 ):
                     state.career_challenges_won += 1
 
@@ -1150,7 +1154,7 @@ def update_solitaire_round():
                         )
                     )
 
-                    legacy.add_career_news(
+                    news_screen.add_career_news(
                         (
                             f"{state.player_name.upper()} "
                             f"CONQUERS {challenge_name.upper()}"
@@ -1168,7 +1172,7 @@ def update_solitaire_round():
                 # Advance Career calendar
                 # ----------------------------
 
-                legacy.advance_career_day(
+                calendar.advance_career_day(
                     completed=True
                 )
 

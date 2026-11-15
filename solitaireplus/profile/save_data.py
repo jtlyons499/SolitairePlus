@@ -12,6 +12,8 @@ from solitaireplus.career.activities import reconcile_story_cosmetics
 from solitaireplus.app import state
 from solitaireplus.career.event_progress import store_event_progress
 from solitaireplus.app.lazy import lazy
+leaderboard_engine = lazy("solitaireplus.career.leaderboard_engine")
+career_rewards = lazy("solitaireplus.career.career_rewards")
 profile_select = lazy("solitaireplus.profile.profile_select")
 leveling = lazy("solitaireplus.profile.leveling")
 legacy = lazy("solitaireplus.legacy")
@@ -799,7 +801,7 @@ def apply_profile_save_data(
     reconcile_story_cosmetics(state.career_alien_story, state.unlocked_menu_backgrounds, state.unlocked_felts, state.unlocked_titles, data=ALIEN_STORY)
     refresh_adventure_schedule(state.career_current_schedule, state.career_bigfoot_story, state.career_alien_story, state.career_day_of_month)
     profile_select.sync_achievement_cosmetic_rewards()
-    legacy.grant_rating_cosmetics(force=True)
-    legacy.sync_career_npc_runtime_state()
+    career_rewards.grant_rating_cosmetics(force=True)
+    leaderboard_engine.sync_career_npc_runtime_state()
     legacy.sync_selected_cosmetics()
     cursors.apply_selected_cursor()

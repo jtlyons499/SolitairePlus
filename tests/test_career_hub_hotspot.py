@@ -3,7 +3,8 @@
 ``career_play_rect`` was checked by the hub's click handler but never drawn. It sat over the top
 calendar row, and a click there opened Career Solitaire with no pending calendar activity (so a win
 paid out without using a day). It was a plain ``if``, so the rest of the hub's button checks also ran
-on the same click. These tests run the real ``loop_event_career_hub`` with the hub's real start-up
+on the same click. These tests run the hub's real click handler (``career/hub_screen.py``
+``handle_event``, the old ``loop_event_career_hub``) with the hub's real start-up
 button rects and check that the area does nothing now, and that every other hub button still works.
 """
 import ast
@@ -28,11 +29,18 @@ HUB_RECT_NAMES = (
 )
 
 
+HUB_SCREEN = "solitaireplus/career/hub_screen.py"
+
+
 def startup_rects():
-    """The hub's fixed button rects as start-up code leaves them (the last module-level assignment wins)."""
-    path = locate.file_of("loop_event_career_hub")
+    """The hub's fixed button rects as start-up code leaves them (the last module-level assignment wins).
+
+    They are set by start-up code in solitaireplus/legacy.py and the hub screen module."""
     rects = {}
-    for node in ast.parse(path.read_text(encoding="utf-8")).body:
+    nodes = []
+    for relative in ("solitaireplus/legacy.py", HUB_SCREEN):
+        nodes += ast.parse((locate.ROOT / relative).read_text(encoding="utf-8")).body
+    for node in nodes:
         if not (isinstance(node, ast.Assign) and len(node.targets) == 1):
             continue
         target = node.targets[0]
@@ -109,12 +117,12 @@ class CareerHubHotspotTests(unittest.TestCase):
                      "start_career_activity", "skip_career_day"):
             env[name] = record(name)
         env.update(self.rects)
-        self.env = locate.exec_functions(["loop_event_career_hub"], env)
+        self.env = locate.exec_functions(["handle_event"], env, path=HUB_SCREEN)
 
     def click(self, pos):
         self.env["game_mouse_pos"] = pos
         event = pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=pos)
-        self.env["loop_event_career_hub"](event)
+        self.env["handle_event"](event)
 
     def assert_nothing_happened(self):
         self.assertEqual(self.env["current_state"], state_names.STATE_CAREER_HUB)

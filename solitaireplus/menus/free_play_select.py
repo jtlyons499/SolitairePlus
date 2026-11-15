@@ -8,6 +8,10 @@ import pygame
 from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
+hub_screen = lazy("solitaireplus.career.hub_screen")
+night = lazy("solitaireplus.career.events.night")
+event_select_screen = lazy("solitaireplus.career.events.event_select_screen")
+case_opening_screen = lazy("solitaireplus.career.case_opening_screen")
 legacy = lazy("solitaireplus.legacy")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
@@ -70,7 +74,7 @@ def start_free_play_game(game_id):
 
     if game_id == "case_opening":
         from solitaireplus.career.case_opening import new_case_state
-        legacy.case_screen.enter(new_case_state(), FREE_PLAY_STARTING_CASH, legacy.buy_case_for_screen, temporary=True)
+        case_opening_screen.case_screen.enter(new_case_state(), FREE_PLAY_STARTING_CASH, hub_screen.buy_case_for_screen, temporary=True)
         state.current_state = state_names.STATE_CASE_OPENING
         return True
 
@@ -189,7 +193,7 @@ def draw_free_play_select():
             rect, 4 if hovered else 2, border_radius=10
         )
 
-        label = legacy.FREE_PLAY_GAME_NAMES.get(game_id, game_id)
+        label = night.FREE_PLAY_GAME_NAMES.get(game_id, game_id)
         label_surface = fonts.option_label_font.render(
             label, True, (255, 255, 255)
         )
@@ -199,7 +203,7 @@ def draw_free_play_select():
         )
 
         if not unlocked:
-            required = legacy.get_game_unlock_level(game_id)
+            required = event_select_screen.get_game_unlock_level(game_id)
             lock_surface = fonts.difficulty_detail_font.render(
                 f"Level {required}", True, (210, 210, 210)
             )

@@ -5,6 +5,7 @@ import pygame
 from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
+career_saving = lazy("solitaireplus.career.career_saving")
 main_menu = lazy("solitaireplus.menus.main_menu")
 legacy = lazy("solitaireplus.legacy")
 window = lazy("solitaireplus.app.window")
@@ -991,7 +992,7 @@ def handle_event(event):
                 state.sfx_slider_dragging = False
 
                 if state.options_return_state == state_names.STATE_CAREER_HUB:
-                    legacy.save_career_from_hub()
+                    career_saving.save_career_from_hub()
                 state.current_state = state.options_return_state
 
     # ==================================================

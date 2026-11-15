@@ -9,6 +9,7 @@ from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.app import update_check
 from solitaireplus.app.lazy import lazy
+career_saving = lazy("solitaireplus.career.career_saving")
 options_screen = lazy("solitaireplus.menus.options_screen")
 legacy = lazy("solitaireplus.legacy")
 window = lazy("solitaireplus.app.window")
@@ -43,7 +44,7 @@ def start_game_update():
     if multiplayer_launcher.process is not None and multiplayer_launcher.process.poll() is None:
         state.update_message = "Close the Multiplayer window first, then try again."
         return
-    legacy.auto_save_career()
+    career_saving.auto_save_career()
     options_screen.app_settings.flush()
     if update_check.launch_update():
         state.running = False

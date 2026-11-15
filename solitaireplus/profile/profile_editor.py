@@ -5,6 +5,8 @@ from solitaireplus.profile.saves import save_profile
 from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
+hub_screen = lazy("solitaireplus.career.hub_screen")
+career_saving = lazy("solitaireplus.career.career_saving")
 save_data = lazy("solitaireplus.profile.save_data")
 profile_select = lazy("solitaireplus.profile.profile_select")
 legacy = lazy("solitaireplus.legacy")
@@ -868,7 +870,7 @@ def handle_event(event):
             sounds.audio.play_sound("button_click")
 
             if state.profile_return_state == state_names.STATE_CAREER_HUB:
-                legacy.begin_career_profile_switch()
+                hub_screen.begin_career_profile_switch()
                 return
 
             state.profile_select_return_state = state_names.STATE_MENU
@@ -907,7 +909,7 @@ def handle_event(event):
                 state.current_state = state_names.STATE_PROFILE_SELECT
             else:
                 if state.profile_return_state == state_names.STATE_CAREER_HUB:
-                    legacy.save_career_from_hub()
+                    career_saving.save_career_from_hub()
                 state.current_state = state.profile_return_state
 
 

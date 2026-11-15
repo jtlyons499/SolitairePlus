@@ -1,4 +1,4 @@
-"""B17: legacy screens must not build pygame fonts every frame.
+"""B17: screens (first in legacy.py, now partly moved out) must not build pygame fonts every frame.
 
 Starts the game's modules headless (as the game does, saves in a temporary folder), then draws
 each screen that used to call pygame.font.Font / SysFont per frame twice: only the first draw
@@ -14,7 +14,16 @@ os.environ.setdefault('SDL_VIDEODRIVER', 'dummy')
 os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')
 import pygame
 
-COUNTED_FILES = {'legacy.py', 'text.py'}   # solitaireplus/legacy.py and solitaireplus/ui/text.py
+PACKAGE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'solitaireplus')
+# Fonts built by these modules are fixed in their own phases (B44), so they are not counted here.
+NOT_COUNTED = {'score_four_ui.py'}
+
+
+def counted(filename):
+    """Fonts built anywhere in the game package count (screens move out of legacy.py phase by phase)."""
+    filename = os.path.abspath(filename)
+    return (os.path.commonpath([filename, PACKAGE]) == PACKAGE
+            and os.path.basename(filename) not in NOT_COUNTED)
 
 
 class FontCounter:
@@ -23,7 +32,7 @@ class FontCounter:
 
     def __call__(self, *args, **kwargs):
         caller = sys._getframe(1).f_code
-        if os.path.basename(caller.co_filename) in COUNTED_FILES:
+        if counted(caller.co_filename):
             self.calls.append((caller.co_name, args))
         return self.real(*args, **kwargs)
 
@@ -73,6 +82,8 @@ class LegacyFontSiteTests(unittest.TestCase):
         legacy, state = self.legacy, self.state
         from solitaireplus.menus import customize
         from solitaireplus.profile import profile_editor
+        from solitaireplus.career import hub_screen, leaderboard_engine, leaderboards_screen, real_estate_screen
+        from solitaireplus.career.events import event_select_screen, summary_screen
 
         def score_four_opponent_select():
             if not state.score_four_opponent_choices:
@@ -82,9 +93,9 @@ class LegacyFontSiteTests(unittest.TestCase):
         def career_event_summary():
             state.career_event_summary_title = 'Casino Night'
             state.career_event_summary_lines = [f'Result line {n}' for n in range(9)]   # > 7 lines
-            legacy.draw_career_event_summary()
+            summary_screen.draw_career_event_summary()
 
-        real_leaderboard = legacy.get_career_leaderboard
+        real_leaderboard = leaderboard_engine.get_career_leaderboard
 
         def leaderboard_with_changes(*args, **kwargs):
             board = real_leaderboard(*args, **kwargs)
@@ -93,12 +104,12 @@ class LegacyFontSiteTests(unittest.TestCase):
             return board
 
         def career_leaderboards():
-            with patch.object(legacy, 'get_career_leaderboard', leaderboard_with_changes):
-                legacy.draw_career_leaderboards()
+            with patch.object(leaderboard_engine, 'get_career_leaderboard', leaderboard_with_changes):
+                leaderboards_screen.draw_career_leaderboards()
 
         def career_event_select():
             legacy.debug_open_casino_night()
-            legacy.draw_career_event_select()
+            event_select_screen.draw_career_event_select()
 
         def battle_bosses_opponent_select():
             if not state.battle_bosses_opponent_choices:
@@ -108,8 +119,8 @@ class LegacyFontSiteTests(unittest.TestCase):
         return {
             'draw_score_four_opponent_select': score_four_opponent_select,
             'draw_career_event_summary': career_event_summary,
-            'draw_career_hub': legacy.draw_career_hub,
-            'draw_career_real_estate': legacy.draw_career_real_estate,
+            'draw_career_hub': hub_screen.draw_career_hub,
+            'draw_career_real_estate': real_estate_screen.draw_career_real_estate,
             'draw_career_leaderboards': career_leaderboards,
             'draw_career_event_select': career_event_select,
             'draw_battle_bosses_opponent_select': battle_bosses_opponent_select,

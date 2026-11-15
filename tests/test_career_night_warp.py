@@ -40,6 +40,7 @@ class NightWarpTests(unittest.TestCase):
   controls.draw_time_warp(out,header,draw,controls.font)
   self.assertEqual(len(controls.warp_choices),5);self.assertEqual(controls.get_action(controls.warp_choices[60].center),'warp:60');self.assertFalse(controls.warp_open);pygame.quit()
  def test_production_entry_restore_and_return_save_hooks(self):
-  s=locate.source();self.assertIn('if not restore_event_progress(state.career_event_entry, game_namespace()):',s)
-  select=locate.function('loop_event_career_event_select')
-  self.assertIn('store_event_progress(state.career_event_entry, game_namespace())',select)
+  # Moved code reaches game_namespace() through the legacy alias (legacy.game_namespace()).
+  s=locate.source();self.assertRegex(s,r'if not restore_event_progress\(state\.career_event_entry, (legacy\.)?game_namespace\(\)\):')
+  select=locate.function('handle_event',path='solitaireplus/career/events/event_select_screen.py')
+  self.assertRegex(select,r'store_event_progress\(state\.career_event_entry, (legacy\.)?game_namespace\(\)\)')

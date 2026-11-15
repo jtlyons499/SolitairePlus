@@ -12,6 +12,10 @@ import pygame
 from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
+news_screen = lazy("solitaireplus.career.news_screen")
+leaderboard_engine = lazy("solitaireplus.career.leaderboard_engine")
+career_saving = lazy("solitaireplus.career.career_saving")
+calendar = lazy("solitaireplus.career.calendar")
 save_data = lazy("solitaireplus.profile.save_data")
 leveling = lazy("solitaireplus.profile.leveling")
 legacy = lazy("solitaireplus.legacy")
@@ -34,12 +38,12 @@ def finish_profile_selection():
     state.gender_dropdown_open = False
     state.favorite_suit_dropdown_open = False
     if destination == state_names.STATE_CAREER_HUB:
-        legacy.reset_career_hub_runtime()
+        calendar.reset_career_hub_runtime()
         state.current_game_mode = "career"
-        legacy.ensure_career_schedule()
-        legacy.ensure_career_leaderboard()
-        legacy.ensure_career_news()
-        legacy.auto_save_career()
+        calendar.ensure_career_schedule()
+        leaderboard_engine.ensure_career_leaderboard()
+        news_screen.ensure_career_news()
+        career_saving.auto_save_career()
     state.profile_return_state = destination
     state.current_state = destination
 

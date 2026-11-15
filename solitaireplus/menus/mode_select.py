@@ -5,6 +5,9 @@ import pygame
 from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
+news_screen = lazy("solitaireplus.career.news_screen")
+leaderboard_engine = lazy("solitaireplus.career.leaderboard_engine")
+calendar = lazy("solitaireplus.career.calendar")
 legacy = lazy("solitaireplus.legacy")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
@@ -186,9 +189,9 @@ def handle_event(event):
                 "career"
             )
 
-            legacy.ensure_career_schedule()
-            legacy.ensure_career_leaderboard()
-            legacy.ensure_career_news()
+            calendar.ensure_career_schedule()
+            leaderboard_engine.ensure_career_leaderboard()
+            news_screen.ensure_career_news()
 
             state.current_state = state_names.STATE_CAREER_HUB
 

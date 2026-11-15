@@ -13,6 +13,7 @@ from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.profile.unlocks import unlock_ratings
 from solitaireplus.app.lazy import lazy
+career_saving = lazy("solitaireplus.career.career_saving")
 legacy = lazy("solitaireplus.legacy")
 window = lazy("solitaireplus.app.window")
 ui_text = lazy("solitaireplus.ui.text")
@@ -751,7 +752,7 @@ def handle_event(event):
             )
 
             if state.customize_return_state == state_names.STATE_CAREER_HUB:
-                legacy.save_career_from_hub()
+                career_saving.save_career_from_hub()
             state.current_state = state.customize_return_state
 
         # ----------------------------
