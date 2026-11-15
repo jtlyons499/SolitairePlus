@@ -8,6 +8,9 @@ import pygame
 from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
+roulette_screen = lazy("solitaireplus.games.casino.roulette_screen")
+horse_races_screen = lazy("solitaireplus.games.casino.horse_races_screen")
+faro_screen = lazy("solitaireplus.games.casino.faro_screen")
 hub_screen = lazy("solitaireplus.career.hub_screen")
 night = lazy("solitaireplus.career.events.night")
 event_select_screen = lazy("solitaireplus.career.events.event_select_screen")
@@ -107,14 +110,14 @@ def start_free_play_game(game_id):
 
     if game_id == "roulette":
         state.roulette_session_net = 0
-        legacy.roulette_game.reset_round()
+        roulette_screen.roulette_game.reset_round()
         state.current_state = state_names.STATE_ROULETTE
         return True
 
     if game_id == "horse_races":
         state.horse_races_session_net = 0
         state.horse_races_last_rewarded_races = 0
-        legacy.start_horse_races_session()
+        horse_races_screen.start_horse_races_session()
         return True
 
     if game_id == "texas_holdem":
@@ -131,7 +134,7 @@ def start_free_play_game(game_id):
 
     if game_id == "faro":
         state.faro_session_net = 0
-        legacy.start_faro_session()
+        faro_screen.start_faro_session()
         return True
 
     if game_id == "five_o_poker":

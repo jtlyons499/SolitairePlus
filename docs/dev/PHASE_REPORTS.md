@@ -432,3 +432,20 @@ second reviews still found.
 - **N26:** switching jobs A → B → A in one day leaves one (rewritten) story although the day ends with the
   starting job.
 - **N27:** a shown rating rounds .5 to even (2818.50 shows as 2818), so a shown change can be one point off.
+
+## Phase 6 (move): Casino
+
+**What moved** (`move.py`, plan from `tools/refactor/specs/phase6.json`; `legacy.py` 12,2xx → 10,096 lines):
+`solitaireplus/games/casino/blackjack_screen.py` (bet and table screens, `settle_blackjack_round`, the
+blackjack engine instance), `roulette_screen.py` (+ `settle_roulette_round`, bet placement, `roulette_game`),
+`horse_races_screen.py` (+ `start_horse_races_session`, `finish_horse_races_session`, `settle_horse_race_result`,
+`stop_horse_race_music`, `horse_races_game`), `faro_screen.py` (+ `start_faro_session`,
+`claim_faro_session_result`, `faro_game`). The F10 debug launchers (still in legacy.py) call them through the
+new modules.
+
+`tests/support/locate.py` gained `module_defining(name)` (the imported module whose top level defines a name);
+the two debug-night tests now patch and call the casino functions wherever they live, so later moves don't
+break them again.
+
+**Results:** `screen_harness compare` → `IDENTICAL 64/64`; `replay compare` → `IDENTICAL 18/18` (baseline
+`6ed72fe`). Tests `PASSED`.

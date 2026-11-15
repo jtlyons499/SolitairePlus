@@ -7,10 +7,13 @@ current_game_mode back to what it was before the launcher switched it to "debug"
 Starts the game's modules headless (as the game does, saves in a temporary folder) and drives
 the real event-select and summary screens with mouse clicks.
 """
+import contextlib
 import os
 import tempfile
 import unittest
 from unittest.mock import patch
+
+from tests.support import locate
 
 os.environ.setdefault('SDL_VIDEODRIVER', 'dummy')
 os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')
@@ -154,7 +157,7 @@ class DebugNightModeTests(unittest.TestCase):
         self.assertTrue(legacy.debug_open_horse_races())
         self.assertEqual(state.current_game_mode, 'debug')
         self.assertTrue(state.career_event_entry.get('debug'))
-        legacy.finish_horse_races_session()
+        locate.module_defining('finish_horse_races_session').finish_horse_races_session()
         self.end_night()
         self.assert_career_untouched()
 
@@ -185,7 +188,7 @@ class DebugNightModeTests(unittest.TestCase):
         legacy.debug_open_arcade_night()
         self.assertTrue(legacy.debug_open_horse_races())
         self.assertEqual(state.current_game_mode, 'debug')
-        legacy.finish_horse_races_session()
+        locate.module_defining('finish_horse_races_session').finish_horse_races_session()
         self.end_night()
         self.assert_career_untouched()
 
@@ -206,9 +209,14 @@ class DebugNightModeTests(unittest.TestCase):
                      'debug_open_score_four_solo', 'debug_open_score_four_competitive',
                      'debug_open_blackjack', 'debug_open_roulette', 'debug_open_horse_races',
                      'debug_open_faro', 'debug_open_five_o_poker', 'debug_open_blind_mans_bluff')
-        with patch.multiple(legacy, **stubs), \
-                patch.object(legacy.score_four_game, 'start_solo_session', lambda: None), \
-                patch.object(legacy.roulette_game, 'reset_round', lambda: None):
+        # Patch each stub where it is defined today (the games move out of legacy.py phase by phase).
+        with contextlib.ExitStack() as stack:
+            for stub_name, stub in stubs.items():
+                stack.enter_context(patch.object(locate.module_defining(stub_name), stub_name, stub))
+            stack.enter_context(patch.object(locate.module_defining('score_four_game').score_four_game,
+                                             'start_solo_session', lambda: None))
+            stack.enter_context(patch.object(locate.module_defining('roulette_game').roulette_game,
+                                             'reset_round', lambda: None))
             for name in launchers:
                 with self.subTest(launcher=name):
                     state.career_event_entry = None
@@ -305,7 +313,7 @@ class DebugNightModeTests(unittest.TestCase):
         self.choose_debug_action(legacy.ACTION_CLOSE, from_hotkey=False)
         self.assertEqual(state.current_state, self.names.STATE_HORSE_RACES)
         self.assertEqual(state.current_game_mode, 'debug')
-        legacy.finish_horse_races_session()
+        locate.module_defining('finish_horse_races_session').finish_horse_races_session()
         self.end_night()
         self.assert_career_untouched()
 
@@ -324,7 +332,7 @@ class DebugNightModeTests(unittest.TestCase):
                 self.assertEqual(state.debug_saved_game_mode, 'career')
                 self.choose_debug_action(legacy.ACTION_CLOSE, from_hotkey=False)
                 self.assertEqual(state.current_state, self.names.STATE_HORSE_RACES)
-        legacy.finish_horse_races_session()
+        locate.module_defining('finish_horse_races_session').finish_horse_races_session()
         self.end_night()
         self.assert_career_untouched()
 
@@ -337,7 +345,7 @@ class DebugNightModeTests(unittest.TestCase):
         with patch.object(legacy.game, 'set_challenge', lambda challenge_id: False):
             self.assertFalse(legacy.debug_open_solitaire_challenge('draw_3'))
         self.assertEqual(state.current_game_mode, 'debug')
-        legacy.finish_horse_races_session()
+        locate.module_defining('finish_horse_races_session').finish_horse_races_session()
         self.end_night()
         self.assert_career_untouched()
 

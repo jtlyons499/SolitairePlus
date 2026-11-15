@@ -18,6 +18,9 @@ from solitaireplus.app import state_names
 from solitaireplus.career.event_progress import store_event_progress
 from solitaireplus.debug.game_mode import end_debug_game_mode
 from solitaireplus.app.lazy import lazy
+roulette_screen = lazy("solitaireplus.games.casino.roulette_screen")
+horse_races_screen = lazy("solitaireplus.games.casino.horse_races_screen")
+faro_screen = lazy("solitaireplus.games.casino.faro_screen")
 news_screen = lazy("solitaireplus.career.news_screen")
 night = lazy("solitaireplus.career.events.night")
 career_saving = lazy("solitaireplus.career.career_saving")
@@ -837,14 +840,14 @@ def handle_event(event):
 
                 elif game_id == "roulette":
                     state.roulette_session_net = 0
-                    legacy.roulette_game.reset_round()
+                    roulette_screen.roulette_game.reset_round()
                     state.current_state = state_names.STATE_ROULETTE
 
                 elif game_id == "horse_races":
-                    legacy.start_horse_races_session()
+                    horse_races_screen.start_horse_races_session()
 
                 elif game_id == "faro":
-                    legacy.start_faro_session()
+                    faro_screen.start_faro_session()
 
                 elif game_id == "five_o_poker":
                     if not legacy.start_five_o_poker_session():

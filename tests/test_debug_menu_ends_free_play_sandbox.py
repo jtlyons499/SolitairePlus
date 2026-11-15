@@ -14,6 +14,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+from tests.support import locate
+
 import pygame
 
 REAL_CASH = 777
@@ -221,7 +223,7 @@ class DebugMenuEndsFreePlaySandboxTests(unittest.TestCase):
                 self.start_free_play_cash_game()
                 self.choose_debug_action(action)
                 if action == legacy.ACTION_HORSE_RACES:
-                    legacy.finish_horse_races_session()
+                    locate.module_defining('finish_horse_races_session').finish_horse_races_session()
                 self.click_event_select_return()
                 self.assertEqual(self.state.current_game_mode, "career")
                 self.assert_real_career_kept()

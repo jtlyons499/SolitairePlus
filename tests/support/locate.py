@@ -193,3 +193,28 @@ def walk() -> Iterator[ast.AST]:
     """Every AST node of every searched file (ast.walk order, file by file)."""
     for _, tree in trees():
         yield from ast.walk(tree)
+
+
+def module_defining(name: str):
+    """The imported game module whose top level defines ``name`` (def, class or assignment).
+
+    Code moves out of solitaireplus/legacy.py phase by phase; tests that patch or call a
+    function by name use this instead of hard-coding the module it lives in today.
+    Raises LookupError when no package module (main.py excluded) defines it.
+    """
+    import importlib
+    for path in source_files():
+        if path.name == "main.py":
+            continue
+        for node in _tree(path).body:
+            names = []
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                names = [node.name]
+            elif isinstance(node, ast.Assign):
+                names = [t.id for t in node.targets if isinstance(t, ast.Name)]
+            elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+                names = [node.target.id]
+            if name in names:
+                dotted = ".".join(path.relative_to(ROOT).with_suffix("").parts)
+                return importlib.import_module(dotted)
+    raise LookupError(f"no top-level definition of {name!r} in solitaireplus/")
