@@ -279,3 +279,21 @@ profile-select picture (B9).
 - **N12:** `apply_saved_app_settings` only calls `set_music_mode` when the saved mode differs from the built-in
   "instrumental", so a saved "ambient" starts during the splash while a saved "instrumental" starts when the
   splash is left (both end up right).
+
+## Phase 4 (move): Solitaire
+
+**What moved** (`tools/refactor/split_post_event.py`, then `move.py` with the plan from
+`tools/refactor/specs/phase4.json`; `legacy.py` 22047 → 20754 lines):
+- Pre-step: the first three blocks of `legacy.loop_post_event_updates` (Head-to-Head opponent progress and the
+  Solitaire round completion, all guarded by `current_state == PLAYING`) became `update_solitaire_round()`,
+  called at the same place, so the frame order is unchanged (checked: no local variable shared with the
+  blocks after them).
+- `solitaireplus/games/solitaire/screen.py`: the Solitaire table screen (`handle_event`/`draw`, `DRAWS_LATE`),
+  its mini buttons, tooltips, pause menu, return confirmation, the restart prompt and `update_solitaire_round`.
+- `solitaireplus/games/solitaire/head_to_head_screen.py`: `start_head_to_head_event`, `finish_head_to_head_race`,
+  `restore_head_to_head_game_settings`.
+- `move.py`'s alias-clash check now only looks at modules that bind the alias at module level (`loop.run()`
+  has a local `screen` but imports no such module).
+
+**Results:** `screen_harness compare` → `IDENTICAL 64/64`; `replay compare` → `IDENTICAL 18/18` (baseline
+`9890c12`). Tests `PASSED` (no test needed changes).

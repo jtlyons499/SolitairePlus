@@ -1,4 +1,5 @@
 [
+ "solitaireplus.games.solitaire.screen",
  "solitaireplus.menus.customize",
  "solitaireplus.menus.difficulty_screen",
  "solitaireplus.menus.free_play_select",

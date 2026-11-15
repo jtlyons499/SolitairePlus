@@ -574,6 +574,13 @@ def _alias_conflicts(text: str, aliases: set) -> list:
     used = set(re.findall(r"\b([A-Za-z_][A-Za-z_0-9]*)\.[A-Za-z_]", text)) & aliases
     if not used:
         return []
+    # only aliases this module binds at module level (imports / lazy aliases) can clash; a
+    # module that merely has a local of that name (loop.run's `screen`) imports no such alias
+    top = symtable.symtable(text, "<module>", "exec")
+    used &= {symbol.get_name() for symbol in top.get_symbols()
+             if symbol.is_imported() or symbol.is_assigned()}
+    if not used:
+        return []
     problems = []
 
     def walk(table):

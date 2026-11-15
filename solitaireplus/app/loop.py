@@ -84,7 +84,7 @@ SCREENS = {
     state_names.STATE_RECAP: "solitaireplus.profile.recap",
     state_names.STATE_LEVEL_UP: "solitaireplus.profile.level_up",
     state_names.STATE_PROFILE: "solitaireplus.profile.profile_editor",
-    state_names.STATE_PLAYING: "solitaireplus.legacy:playing",
+    state_names.STATE_PLAYING: "solitaireplus.games.solitaire.screen",
 }
 
 # Screens the old loop drew in its second draw chain, after the timed poker turns. That chain

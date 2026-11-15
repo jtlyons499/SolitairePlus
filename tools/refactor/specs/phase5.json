@@ -117,7 +117,7 @@
     "save_career_from_hub"
    ]
   },
-  "solitaireplus/career/rewards.py": {
+  "solitaireplus/career/career_rewards.py": {
    "doc": "Career ratings and fans earned from games (moved out of legacy.py).",
    "names": [
     "award_career_rating",
