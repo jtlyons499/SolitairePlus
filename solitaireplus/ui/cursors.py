@@ -153,6 +153,12 @@ def detect_accessible_cursor_mode():
         user32 = ctypes.windll.user32
         width = int(user32.GetSystemMetrics(13))
         height = int(user32.GetSystemMetrics(14))
+        # The game is DPI-aware (W1), so Windows reports cursor sizes in real pixels at the
+        # system scaling (40 px at 125%, 64 px at 200%). Compare them at 100% scaling, as before.
+        dpi = int(user32.GetDpiForSystem()) if hasattr(user32, "GetDpiForSystem") else 96
+        if dpi > 96:
+            width = round(width * 96 / dpi)
+            height = round(height * 96 / dpi)
     except Exception:
         return
 

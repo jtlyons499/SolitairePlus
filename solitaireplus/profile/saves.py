@@ -385,6 +385,10 @@ def _keep_damaged_copy(path):
         pass
 
 
+# Top-level save sections that are always dicts (see make_default_profile).
+DICT_SECTIONS = ("identity", "progression", "career", "cosmetics", "achievements", "settings")
+
+
 def load_profile(
         slot=1
 ):
@@ -418,8 +422,14 @@ def load_profile(
         )
 
     data = migrate(data)
+    # A damaged or hand-edited save may hold null (or another non-dict) where a
+    # section should be; the game reads them as data.get(section, {}).get(...).
+    for section in DICT_SECTIONS:
+        if section in data and not isinstance(data[section], dict):
+            data[section] = {}
     migrate_profile_ratings(data)
     data.setdefault("career", {}).setdefault("npc_world", {})
+    data["career"]["arcade"] = normalize_arcade_state(data["career"].get("arcade"))   # as save_profile does
     data["cryptid_creatures"]=normalize_collection(data.get("cryptid_creatures"),data.get("progression",{}).get("level",1))
     data["poker_learning"] = normalize_learning(data.get("poker_learning"))
     data["case_opening"] = normalize_case_state(data.get("case_opening"))

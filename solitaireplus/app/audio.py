@@ -217,15 +217,19 @@ class AudioManager:
         # Once every valid track has played, create another shuffled rotation.
         # Failed files are filtered out so a malformed WAV/MP3/OGG cannot
         # crash (or repeatedly stall) the playlist on every music-end event.
-        if not self.music_queue:
-            self.build_music_queue(
-                exclude=self.current_track
-            )
+        # If the rest of this rotation fails to load, start one fresh rotation
+        # straight away: nothing retries an idle mixer later, so giving up
+        # here would leave the music silent.
+        for _rotation in range(2):
+            if not self.music_queue:
+                self.build_music_queue(
+                    exclude=self.current_track
+                )
 
-        while self.music_queue:
-            next_track = self.music_queue.pop(0)
-            if self.play_music_track(next_track):
-                return True
+            while self.music_queue:
+                next_track = self.music_queue.pop(0)
+                if self.play_music_track(next_track):
+                    return True
 
         return False
 
@@ -367,6 +371,7 @@ class AudioManager:
     # ==================================================
 
     def handle_event(self, event):
+        # The end-of-music event is the only place the playlist advances.
         if event.type == self.MUSIC_END_EVENT:
             if self._music_transition is not None:
                 return
@@ -374,9 +379,18 @@ class AudioManager:
             if self.machine_music_active:
                 return
 
+            # stop() and finished fade-outs post this event too. If a track is
+            # already playing again (a mode change or the return from cabinet
+            # music started it), the event is stale: advancing would skip it.
+            if pygame.mixer.music.get_busy():
+                return
+
             self.play_next_track()
 
     def update(self):
+        # Fades/transitions and cabinet-music recovery only. The playlist
+        # advances in handle_event(); advancing here as well (whenever the
+        # mixer was idle) skipped every other track.
         if (
                 self._music_transition is not None
                 and pygame.time.get_ticks() >= self._music_transition_due
@@ -399,15 +413,6 @@ class AudioManager:
                 ):
                     self.sync_machine_music(None, None)
             return
-
-        if self.music_mode == "off":
-            return
-
-        if not self.current_playlist:
-            return
-
-        if not pygame.mixer.music.get_busy():
-            self.play_next_track()
 
     # ==================================================
     # VOLUME

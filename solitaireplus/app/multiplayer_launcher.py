@@ -92,11 +92,12 @@ class MultiplayerLauncher:
         # A frozen child must outlive the parent without inheriting its bootloader state.
         env = os.environ.copy()
         try:
-            import pygame
-            surface=pygame.display.get_surface()
-            if surface:
-                width,height=surface.get_size();env['SOLITAIRE_MP_WINDOW']=f'{width}x{height}'
-                env['SOLITAIRE_MP_FULLSCREEN']='1' if surface.get_flags() & pygame.FULLSCREEN else '0'
+            # The game draws at 1366x768 and SDL scales it (W1), so the display surface no longer
+            # tells the window size: pass the player's window size and fullscreen choice instead.
+            from solitaireplus.app import state
+            if getattr(state, 'WINDOWED_WIDTH', None):
+                env['SOLITAIRE_MP_WINDOW']=f'{state.WINDOWED_WIDTH}x{state.WINDOWED_HEIGHT}'
+                env['SOLITAIRE_MP_FULLSCREEN']='1' if state.fullscreen_enabled else '0'
         except (ImportError,RuntimeError):pass
         if getattr(sys, 'frozen', False):
             env['PYINSTALLER_RESET_ENVIRONMENT'] = '1'

@@ -5,8 +5,15 @@ mouse mapping, then the current screen), run per-frame updates, draw the current
 then overlays, then present. The order is exactly the old loop's order.
 
 SCREENS maps a screen name to the code that runs it: "package.module" for a screen module
-(functions handle_event(event), draw(), and optionally update() and late_update()), or
-"solitaireplus.legacy:<screen>" for screens still in solitaireplus/legacy.py.
+(functions handle_event(event), draw(), and optionally update(), late_update(), enter() and
+leave()), or "solitaireplus.legacy:<screen>" for screens still in solitaireplus/legacy.py.
+
+When state.current_state changes, the old screen's leave() and the new screen's enter() run
+(checked after each event and at the start of each frame).
+
+Mouse positions: while an event is handled, state.game_mouse_pos is that event's position
+(None for events without one, like key presses). Drawing uses the mouse position of the frame
+(state.mouse_pos), so a key press does not drop the hover highlight.
 """
 import importlib
 import pygame
@@ -90,6 +97,8 @@ class _LegacyScreen:
         self.handle_event = getattr(module, f"loop_event_{slug}", None)
         self.draw = getattr(module, f"loop_draw_{slug}", None)
         self.late_update = getattr(module, f"loop_late_{slug}", None)
+        self.enter = getattr(module, f"loop_enter_{slug}", None)
+        self.leave = getattr(module, f"loop_leave_{slug}", None)
         self.update = None
         self.DRAWS_LATE = draws_late
 
@@ -111,6 +120,21 @@ def screen_for(name):
     return _loaded[name]
 
 
+def run_screen_hooks(entered_state):
+    """If state.current_state is no longer `entered_state`, run the old screen's leave() and the
+    new screen's enter(). Returns the screen name now entered (pass it in next time)."""
+    new_state = state.current_state
+    if new_state == entered_state:
+        return entered_state
+    old_screen = screen_for(entered_state)
+    if old_screen is not None and getattr(old_screen, "leave", None) is not None:
+        old_screen.leave()
+    new_screen = screen_for(new_state)
+    if new_screen is not None and getattr(new_screen, "enter", None) is not None:
+        new_screen.enter()
+    return new_state
+
+
 def run():
 
     # ==================================================
@@ -122,8 +146,14 @@ def run():
         legacy.update_checker.start()
 
     state.running = True
+    entered_state = None   # the screen whose enter() ran last (the first frame enters the first screen)
+    last_pointer_event = None   # position of the last mouse event, not clamped to the picture
+    pointer_in_window = True
 
     while state.running:
+
+        # A screen change made outside the event loop (per-frame updates, draw chains).
+        entered_state = run_screen_hooks(entered_state)
 
         # Saved Options are written shortly after they change (only while the Options
         # screen is open, so temporary changes like horse-race music ducking are not saved).
@@ -199,6 +229,7 @@ def run():
 
                     state.current_state = state_names.STATE_DEBUG_MENU
 
+                entered_state = run_screen_hooks(entered_state)
                 continue
 
             state.game_mouse_pos = None
@@ -215,12 +246,35 @@ def run():
 
             if state.game_mouse_pos is not None:
                 state.menu_mouse_pos = state.game_mouse_pos
+                last_pointer_event = state.game_mouse_pos
+                pointer_in_window = True
+            elif event.type == pygame.WINDOWLEAVE:
+                pointer_in_window = False      # nothing hovers while the mouse is outside the window
+            elif event.type == pygame.WINDOWENTER:
+                pointer_in_window = True
 
             screen = screen_for(state.current_state)
             if screen is not None and screen.handle_event is not None:
                 screen.handle_event(event)
 
+            entered_state = run_screen_hooks(entered_state)
+
         legacy.loop_post_event_updates()
+
+        # Drawing uses where the mouse is this frame, not the last event's position (which is
+        # None after a key press, so nothing would be hovered until the mouse moved).
+        state.mouse_pos = window.window_to_game_coords(pygame.mouse.get_pos())
+        if last_pointer_event is not None and not (
+                0 <= last_pointer_event[0] < window.game_surface.get_width()
+                and 0 <= last_pointer_event[1] < window.game_surface.get_height()):
+            # The pointer is in a letterbox bar: SDL clamps get_pos() to the picture's edge,
+            # which would hover things along the edge. Keep the real (outside) position.
+            state.mouse_pos = last_pointer_event
+        if not pointer_in_window:
+            state.mouse_pos = None
+        state.game_mouse_pos = state.mouse_pos
+        if state.mouse_pos is not None:
+            state.menu_mouse_pos = state.mouse_pos
 
         # First draw chain: per-frame update, then draw.
         screen = screen_for(state.current_state)

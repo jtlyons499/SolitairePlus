@@ -15,9 +15,12 @@ PROFILE_SLOT_2 = (450, 345)
 def window_pos(h, pos):
     """Game coordinates -> window coordinates while the game believes its window is another size.
 
-    The harness window is always 1366x768, but after picking another window size the game
-    scales mouse positions by WINDOW_WIDTH/HEIGHT (until W1 replaces that with SDL scaling).
+    The harness window is always 1366x768. Before W1 the game scaled mouse positions by
+    WINDOW_WIDTH/HEIGHT after picking another window size; since W1 SDL does the scaling and the
+    game's mapping is the identity. Ask the game which one it does, so this works on both.
     """
+    if tuple(h.call("window_to_game_coords", (1000, 500))) == (1000, 500):
+        return pos
     width = h.get("WINDOW_WIDTH", 1366)
     height = h.get("WINDOW_HEIGHT", 768)
     return (round(pos[0] * width / 1366), round(pos[1] * height / 768))

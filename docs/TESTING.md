@@ -201,6 +201,13 @@ FAILED room_view: ModuleNotFoundError: No module named 'fractions'
 **Fix:** add that module name (here `fractions`) to the `hiddenimports` list in `SolitairePlus.spec`, rebuild, and run
 the self-test again. Lines starting with `ok` passed. The last line says `PASSED` or `FAILED`.
 
+### Window check on a real screen (W1)
+
+`tools/window_check.py source` and `tools/window_check.py packaged` open the real game window (Windows only,
+about a minute, don't use the PC meanwhile) and check that it stays inside the screen's work area with its title
+bar visible: at start-up, after F11 in and out of fullscreen five times, at every window size Options offers, and
+with a saved size too large for the screen. They use a temporary profile folder, never your saves or settings.
+
 ## Asset preflight
 
 `tools/release_preflight.py` loads every image in `assets/` and every JSON file in `data/`, and checks that the

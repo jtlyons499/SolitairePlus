@@ -18,7 +18,7 @@ help_nav_max_scroll = 0
 help_content_scroll = 0
 help_content_max_scroll = 0
 fullscreen_enabled = False
-scaled_surface_cache = None
+window_pending_size = None   # window size waiting for SDL to apply it (see window.present)
 confirm_return_to_menu = False
 game_pause_menu_open = False
 profile_switch_snapshot = None
@@ -203,6 +203,7 @@ menu_mouse_pos = (
     0,
     0
 )
+mouse_pos = None   # the mouse in game coordinates this frame (set by the main loop before drawing)
 
 # Set during start-up:
 

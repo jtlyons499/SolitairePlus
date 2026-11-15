@@ -85,6 +85,25 @@ def main_menu_hover(h):
     h.shot()
 
 
+@scene("menu_hover_after_key")
+def hover_after_key(h):
+    """B15: a key press must not drop the hover (drawing uses the mouse position of the frame)."""
+    yield from to_main_menu(h)
+    h.move(h.center("options_rect"))
+    yield 10
+    h.key(pygame.K_LSHIFT)
+    yield 10
+    h.shot()
+    # The main menu hovers with menu_mouse_pos; Options (like most screens) with game_mouse_pos.
+    h.click("options_rect")
+    yield from h.until_state("OPTIONS", 30)
+    h.move(h.center("options_back_rect"))
+    yield 10
+    h.key(pygame.K_LSHIFT)
+    yield 10
+    h.shot("options")
+
+
 @scene("menu_mode_select")
 def mode_select(h):
     yield from to_mode_select(h)

@@ -7,6 +7,7 @@ from pathlib import Path
 
 from solitaireplus.career.npc_development import development_stage, rating_tier
 from solitaireplus.career.npc_world import career_roster
+from solitaireplus.career.ratings import derive_overall
 
 
 NPC_FILE = paths.data("npcs.json")
@@ -49,8 +50,12 @@ def sync_npc_runtime_state(career_state, month=1):
                 if key in state:
                     npc[key] = state[key]
             if isinstance(state.get("ratings"), dict):
-                npc["career_ratings"] = dict(state["ratings"])
-                npc["skill_tier"] = rating_tier(state["ratings"]["overall"])
+                ratings = dict(state["ratings"])
+                if "overall" not in ratings:
+                    # Older/partial saves: derive Global the same way the career code does.
+                    ratings["overall"] = derive_overall(ratings)
+                npc["career_ratings"] = ratings
+                npc["skill_tier"] = rating_tier(ratings["overall"])
             if "fans" in state:
                 npc["career_fans"] = state["fans"]
             if state.get("development"):

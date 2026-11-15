@@ -6,6 +6,7 @@ from solitaireplus.app.lazy import lazy
 assets = lazy("solitaireplus.app.assets")
 fonts = lazy("solitaireplus.app.fonts")
 window = lazy("solitaireplus.app.window")
+buttons = lazy("solitaireplus.ui.buttons")
 
 def draw_submenu_title(
         text,
@@ -20,8 +21,8 @@ def draw_submenu_title(
         height
     )
 
-    # Wood plaque
-    plaque = pygame.transform.smoothscale(
+    # Wood plaque (scaled once per size, shared: only blit it)
+    plaque = buttons.scaled_image(
         assets.button_normal,
         (
             rect.width,

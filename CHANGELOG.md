@@ -19,6 +19,11 @@ How to use this file (maintainers and AI agents):
 - Your Options choices (music, volume, sound effects, window size, fullscreen, double-click) are now remembered between launches.
 
 ### Fixes
+- **The game window now fits your screen.** It opens at the largest size that fits comfortably (title bar and taskbar included), centred, and it stays fully on-screen when you leave fullscreen or pick a window size. Options only offers window sizes that fit; the others are greyed out. Fullscreen fills your monitor without stretching the picture (black bars where the shape differs). The game is sharp on screens with Windows display scaling (125% and up) instead of being blurry and oversized. A window size saved on a bigger monitor no longer breaks the game on a smaller one.
+- Music no longer skips every other track, and changing the music mode no longer jumps past the first song.
+- Buttons stay highlighted under the mouse after you press a key (before, nothing lit up until the mouse moved).
+- Leaving Options while dragging a volume slider no longer leaves the slider stuck to the mouse when you come back.
+- A save whose progression or career section is empty (null) no longer crashes the profile screen.
 - A damaged save file no longer crashes the game on the profile screen. The game opens the previous good copy (a backup is now kept on every save). If no copy is readable, the slot says "Damaged save" and the damaged file is kept so it can be repaired.
 - A save made by a newer version of the game is no longer opened (and silently damaged) by an older version; the slot says "Needs update".
 
@@ -37,6 +42,7 @@ How to use this file (maintainers and AI agents):
 - Each release now lists every file with a checksum (`manifest.json`) and ships a small "changes only" download, so future in-game updates only fetch what actually changed.
 - The game's code now lives in one `solitaireplus/` package, organised by area (app, menus, profile, career, NPCs, and one folder per game family) instead of 110 files in the top folder. Game files are found from the install folder, not the current folder. Nothing changes for players.
 - New developer safety net for the upcoming code reorganisation: every screen is rendered headless and compared pixel by pixel between versions, and 18 scripted playthroughs check that money, XP and progress come out the same (`tools/screen_harness.py`, `tools/replay.py`).
+- Menus and career screens do much less work every frame: fonts and scaled button art are made once and reused, and the drifting main-menu background is pre-scaled instead of shrinking a 4300x2500 picture 60 times a second. The picture is exactly the same.
 
 ## [0.0.6b] - 2026-11-02
 

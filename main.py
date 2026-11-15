@@ -15,6 +15,11 @@ if update_check.recover_if_needed():
     raise SystemExit(0)
 update_check.cleanup_leftovers()
 
+# Real screen pixels, not Windows' stretched "logical" ones (must happen before pygame opens
+# the display). Multiplayer gets the same treatment in its own window code.
+from solitaireplus.app import window
+window.enable_dpi_awareness()
+
 # Everything else lives in the solitaireplus package; loop.run() is the old main loop.
 from solitaireplus.app import loop
 

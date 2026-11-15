@@ -137,3 +137,71 @@ empty `game-*.log`.
 
 **Surprises:** `multiplayer:test_six_seat…test_six_clients_and_late_join` passed in two runs (it is the B67
 timing test; left quarantined until Phase 11 fixes the clock mix).
+
+## Phase 2 (fix): W1, B15, B16, B17, B62, B63, B64, B65
+
+Fixed by the lead (W1) and by a workflow of six agents (one per bug group, test first), each fix
+checked by an independent adversarial reviewer.
+
+- **W1 (windowing, designer's top complaint)** — `solitaireplus/app/window.py` rewritten:
+  - DPI-aware process (`SDL_WINDOWS_DPI_AWARENESS=permonitorv2` + `SetProcessDpiAwareness(2)`, called by
+    `main.py` before pygame opens the display; multiplayer keeps its old window until Phase 11).
+  - `SCALED | RESIZABLE`: SDL scales the 1366x768 picture with letterboxing and maps the mouse; the manual
+    smoothscale, `scaled_surface_cache` and coordinate scaling are gone. Spike first: `Window.size` works
+    after a few frames, so the window is re-centred once SDL has applied the size (`present()`).
+  - Size rules (pure, unit-tested in `tests/test_window.py` for the six screens in the brief plus Dan's PC):
+    default = largest 16:9 within 90% of the work area minus frame and title bar, clamped to
+    1024x576..2560x1440; Options greys out sizes that don't fit ("Too large for this screen." tooltip, clicks
+    ignored); a saved size that no longer fits is replaced by the default on start-up.
+  - Centred on creation, on every resize and when leaving fullscreen; fullscreen = `toggle_fullscreen()`
+    (desktop fullscreen, letterboxed); F11 and Options keep working and are still saved.
+  - `ui/cursors.py`: the accessible-cursor check compares cursor sizes at 100% scaling (a DPI-aware process
+    sees 40-64 px cursors at 125-200% and would have switched to the large software cursor).
+  - The multiplayer launcher passes the player's real window size and fullscreen choice (the display
+    surface is always 1366x768 now).
+  - **Manual check (`tools/window_check.py`, real screen, Dan's PC: 1920x1200 at 125%, work area
+    1920x1152):** 39/39 ok from source — start-up window (103, 87, 1817, 1082) = 1712x963 client, centred,
+    title bar visible; 5 x F11 each way: fullscreen (0, 0, 1920, 1200), back to the same centred window;
+    Options 1366x768 → (276, 185, 1644, 985), 1600x900 → (159, 119, 1761, 1051); 1920x1080 and 2560x1440
+    greyed out; saved 2560x1440 → clamped to the default; saved fullscreen → starts fullscreen. Packaged:
+    11/11 ok — the packaged game opens at (103, 87, 1817, 1082), 5 x F11 alternate between (0, 0, 1920, 1200) and the same centred window; the 10-second launch leaves an empty log.
+- **B15** — drawing uses the frame's mouse position (`state.mouse_pos`); event handlers still get the event's
+  own position. Also no hover while the pointer is in a letterbox bar or outside the window (review
+  findings). Tests: `test_loop_mouse_and_screen_hooks` + scene `menu_hover_after_key`.
+- **B16** — screens can have `enter()`/`leave()` (legacy: `loop_enter_<screen>`/`loop_leave_<screen>`);
+  the loop runs them on every screen change; Options resets both slider drags.
+- **B17** — `ui/text.get_font()` font cache (no `global`; cleared on `pygame.quit()`), scaled-image caches
+  for wooden buttons and submenu plaques, pre-scaled menu drift (9 sub-pixel phases per background, built
+  on first use); every per-frame font construction in legacy.py replaced. The reviewer found the drift cache
+  only covered fully opaque art, while scaling opaque art to 3x leaves alpha 251-254 in places; such
+  "nearly opaque" backgrounds are now flattened once and use the cache too (at most a few colour levels from
+  the old picture, without the faint ghosting of the previous frame). Backgrounds with real transparency
+  (`bg_the_reverent`, `bg_wall`) keep the exact old path. The default background is pixel-identical.
+- **B62** — the playlist advances only on the end-of-music event (and ignores the stale event after a
+  stop/fade); `update()` only finishes fades and recovers cabinet music.
+- **B63** — non-dict save sections load as empty; `career.arcade` normalised on load like on save.
+- **B64** — a missing `ratings["overall"]` is derived from the category ratings.
+- **B65** — `RatingPoints` formats "f" specs as whole points (precision dropped), "d" specs unchanged.
+
+**Results:** tests `PASSED`. `screen_harness compare` (baseline `4bf1db8`): 59/64 identical; the 5 that differ
+are intended: `menu_hover_after_key__options` (B15: hover kept after a key press), `debug_menu` and
+`arcade_battle_bosses` (B15: the button under the resting mouse stays highlighted after F10 / arrow keys),
+`menu_options` and `menu_options_update_available` (W1: 1920x1080 and 2560x1440 greyed out on this screen).
+`replay compare`: all checkpoint values identical; pixel differences only in `02_options` (W1 greyed sizes; at
+1600x900 SDL now does the scaling the old code did by hand), `15_debug_menu_quit` and `13_arcade_battle_bosses`
+(B15 hover). Packaged build: all self-tests pass; W1 packaged check 11/11; 10-second launch, empty log.
+
+**New findings (not fixed):**
+- **N3:** a save with a null field *inside* a section (e.g. `identity.avatar`, `progression.level`,
+  `cosmetics.unlocked_felts`, `career.owned_residences`) still crashes in `apply_profile_save_data` after it
+  loads (B63 covers whole sections only).
+- **N4:** `npc/manager.py` with a non-numeric category rating (`"strategy": "abc"`) still raises in
+  `derive_overall` (malformed data, beyond B64's missing key).
+- **N5:** B62 removed `update()`'s "start the next track when the mixer is idle" safety net, as the brief
+  asked: if an end-of-music event were ever lost (nothing loses one today), music would stay off until the
+  next mode change.
+- **N6:** `ui/text.get_font` clears on `pygame.quit()` but not on `pygame.font.quit()` (nothing calls that).
+- **N7:** 156 module-private `global` statements remain in modules that moved in Phase 1 (mostly the poker
+  table UIs' animation caches); the brief's end-state checklist forbids them, so they go during the area
+  phases (poker in Phase 7) or Phase 12.
+- `multiplayer/audio.py` has the same double-advance as B62, but nothing imports it (dead code, Phase 11).

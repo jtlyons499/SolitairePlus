@@ -229,9 +229,17 @@ class Probe:
         main = sys.modules.get("__main__")
         if main is not None:
             found.append(vars(main))
-        for name in sorted(sys.modules):
+        # Names of the old main.py first (legacy, then app modules), then everything else: a moved
+        # name never loses to an unrelated same-named object in some other package module.
+        def priority(name):
+            if name == "solitaireplus.legacy":
+                return (0, name)
+            if name.startswith("solitaireplus.app."):
+                return (1, name)
+            return (2, name)
+        for name in sorted((n for n in sys.modules if n.startswith("solitaireplus.")), key=priority):
             module = sys.modules[name]
-            if name.startswith("solitaireplus.") and module is not state and module is not None:
+            if module is not state and module is not None:
                 found.append(vars(module))
         return found
 
@@ -578,6 +586,16 @@ def install(driver: Driver) -> None:
 
     pygame.display.set_mode = set_mode
     pygame.display.toggle_fullscreen = lambda: 1
+
+    class NoWindowObject:
+        """The game may resize/centre its window through pygame.Window (W1); the harness window
+        must stay a plain 1366x768 surface, so the window object is unavailable here."""
+
+        @staticmethod
+        def from_display_module(*args, **kwargs):
+            raise pygame.error("pygame.Window is disabled in the screen harness")
+
+    pygame.Window = NoWindowObject
     driver.real_flip = pygame.display.flip
     pygame.display.flip = driver.on_flip
     pygame.display.update = driver.on_flip

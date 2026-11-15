@@ -6,6 +6,36 @@ fonts = lazy("solitaireplus.app.fonts")
 window = lazy("solitaireplus.app.window")
 
 # ==================================================
+# SCALED IMAGE CACHE
+# ==================================================
+# Menu buttons and submenu plaques used to smoothscale their art on every draw (B17).
+# scaled_image() scales each image once per size. An entry is keyed by (id(image), size) and
+# keeps the image itself: while the entry exists that id can't be reused by another image, and
+# a hit is only accepted for that same image object. The result is SHARED: blit it, never draw
+# on it. (Drawing on a source image after scaling it would need clear_scaled_images().)
+
+SCALED_IMAGE_LIMIT = 128   # buttons use a handful of sizes; only a guard against unbounded sizes
+
+_scaled_images = {}
+
+
+def clear_scaled_images():
+    _scaled_images.clear()
+
+
+def scaled_image(image, size):
+    """pygame.transform.smoothscale(image, size), computed once per image and size."""
+    key = (id(image), tuple(size))
+    entry = _scaled_images.get(key)
+    if entry is not None and entry[0] is image:
+        return entry[1]
+    scaled = pygame.transform.smoothscale(image, size)
+    if len(_scaled_images) >= SCALED_IMAGE_LIMIT:
+        _scaled_images.pop(next(iter(_scaled_images)))   # drop the oldest
+    _scaled_images[key] = (image, scaled)
+    return scaled
+
+# ==================================================
 # GENERIC UI DRAWING
 # ==================================================
 
@@ -94,7 +124,7 @@ def draw_menu_button(
     else:
         image = assets.button_normal
 
-    scaled_image = pygame.transform.smoothscale(
+    button_image = scaled_image(
         image,
         (
             rect.width,
@@ -103,7 +133,7 @@ def draw_menu_button(
     )
 
     window.game_surface.blit(
-        scaled_image,
+        button_image,
         rect.topleft
     )
 

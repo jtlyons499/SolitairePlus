@@ -1,4 +1,5 @@
 import random
+import re
 
 from solitaireplus.career.fans import ensure_npc_fan_state
 
@@ -19,12 +20,20 @@ RATING_DISPLAY_NAMES = {
 }
 RATING_SCHEMA_VERSION = 3
 MIN_RATING = 100
+# [[fill]align][sign][z][#][0][width][grouping][.precision][type]
+_FORMAT_SPEC = re.compile(r"(?P<head>(?:.?[<>=^])?[-+ ]?)(?P<z>z?)(?P<tail>#?0?\d*[,_]?)"
+                          r"(?:\.(?P<precision>\d+))?(?P<type>.?)", re.DOTALL)
 
 
 class RatingPoints(float):
     """Fractional save precision with whole-point UI formatting."""
     def __format__(self, spec):
-        return format(int(round(self)), spec.replace("f", "d") if "f" not in spec else spec)
+        # Float-style specs ("f", "F", or a bare precision) show whole points as "d";
+        # precision and "z" are not allowed for ints, so they are dropped.
+        match = _FORMAT_SPEC.fullmatch(spec)
+        if match and (match["type"] in ("f", "F") or (not match["type"] and match["precision"] is not None)):
+            spec = match["head"] + match["tail"] + "d"
+        return format(int(round(self)), spec)
 
     def __str__(self):
         return str(int(round(self)))

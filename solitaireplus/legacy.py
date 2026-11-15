@@ -2932,6 +2932,7 @@ CAREER_LEADERBOARD_PLAYERS = (
     load_career_leaderboard_players()
 )
 from solitaireplus.app import window  # start-up code of this module runs here, as it did in main.py
+window.open_window()
 from solitaireplus.ui import backgrounds  # start-up code of this module runs here, as it did in main.py
 state.options_return_state = state_names.STATE_MENU
 state.customize_return_state = state_names.STATE_MENU
@@ -4318,8 +4319,11 @@ def apply_saved_app_settings():
     if app_settings.get("double_click_mode"):
         game.double_click_mode = app_settings.get("double_click_mode")
     size = app_settings.get("window_size")
-    if size and tuple(size) in RESOLUTION_OPTIONS and tuple(size) != (state.WINDOWED_WIDTH, state.WINDOWED_HEIGHT):
-        window.set_window_size(*size)
+    if size and tuple(size) in RESOLUTION_OPTIONS:
+        # A size saved on a bigger monitor may not fit this one: then keep the default size.
+        size = window.clamp_window_size(size, window.usable_area())
+        if size != (state.WINDOWED_WIDTH, state.WINDOWED_HEIGHT):
+            window.set_window_size(*size)
     if app_settings.get("fullscreen"):
         window.set_fullscreen_enabled(True)
 
@@ -9743,7 +9747,7 @@ def draw_score_four_opponent_select():
             reward_text = f"Win {gain:+d} / Loss {loss:+d} Strategy"
         else:
             reward_text = "Practice • No rating changes"
-        reward_label = pygame.font.Font(None, 24).render(reward_text, True, (225, 239, 244))
+        reward_label = ui_text.get_font(None, 24).render(reward_text, True, (225, 239, 244))
         window.game_surface.blit(reward_label, reward_label.get_rect(center=(rect.centerx, rect.bottom - 24)))
 
     buttons.draw_menu_button(
@@ -11660,7 +11664,7 @@ def draw_career_event_summary():
     ):
 
         line_surface = (
-            (pygame.font.Font(None, 28) if line_count > 7 else fonts.option_label_font).render(
+            (ui_text.get_font(None, 28) if line_count > 7 else fonts.option_label_font).render(
                 line_text,
                 True,
                 (
@@ -12892,9 +12896,10 @@ def draw_career_hub():
         date_header_rect
     )
 
-    date_title = pygame.font.SysFont(
+    date_title = ui_text.get_font(
         None,
-        58
+        58,
+        sysfont=True
     ).render(
         f"{get_career_month_name()} {state.career_year}",
         True,
@@ -14683,7 +14688,7 @@ def draw_career_real_estate():
         # ----------------------------------------------
 
         if residence_id == "summit":
-            residence_name_font = pygame.font.Font(
+            residence_name_font = ui_text.get_font(
                 None,
                 25
             )
@@ -15480,7 +15485,7 @@ def draw_career_leaderboards():
 
         if change_text:
             change_surface = (
-                pygame.font.Font(None, 24).render(
+                ui_text.get_font(None, 24).render(
                     change_text,
                     True,
                     change_color
@@ -17322,7 +17327,7 @@ def draw_career_event_select():
     width, _height, gap, card_y = get_career_event_card_layout(state.career_event_entry.get("activity_type"), count)
     start = (BASE_WIDTH - (width * count + gap * (count - 1))) // 2
     label_y = max(150, card_y - 14)
-    tag_font = pygame.font.Font(None, 24)
+    tag_font = ui_text.get_font(None, 24)
     for index, key in enumerate(games):
         category = GAME_CATEGORIES.get(key)
         if state.career_event_entry.get("activity_type") == CAREER_ACTIVITY_ARCADE_NIGHT and key == "prize_counter":
@@ -17845,7 +17850,7 @@ def draw_battle_bosses_opponent_select():
     )
     window.game_surface.blit(wallet, wallet.get_rect(center=(BASE_WIDTH // 2, 170)))
 
-    battle_name_font = pygame.font.Font(None, 19)
+    battle_name_font = ui_text.get_font(None, 19)
 
     for index, choice in enumerate(state.battle_bosses_opponent_choices[:4]):
         rect = battle_bosses_choice_rects[index]
@@ -20235,9 +20240,11 @@ def draw_options_menu():
         )
     )
 
-    for index, resolution in enumerate(
-        RESOLUTION_OPTIONS
-    ):
+    # Sizes that don't fit this screen (with the title bar and taskbar) are greyed out (W1).
+    size_choices = window.window_size_choices(window.usable_area(), RESOLUTION_OPTIONS)
+    too_large_hovered = False
+
+    for index, (resolution, fits_screen) in enumerate(size_choices):
         width, height = resolution
 
         selected = (
@@ -20249,13 +20256,29 @@ def draw_options_menu():
             f"{width}x{height}"
         )
 
-        buttons.draw_menu_button(
-            resolution_rects[index],
-            text,
-            state.game_mouse_pos,
-            selected=selected,
-            font=fonts.option_value_font
-        )
+        if fits_screen:
+            buttons.draw_menu_button(
+                resolution_rects[index],
+                text,
+                state.game_mouse_pos,
+                selected=selected,
+                font=fonts.option_value_font
+            )
+            continue
+
+        pygame.draw.rect(window.game_surface, (72, 76, 74), resolution_rects[index], border_radius=8)
+        pygame.draw.rect(window.game_surface, (115, 120, 118), resolution_rects[index], 2, border_radius=8)
+        disabled_label = fonts.option_value_font.render(text, True, (155, 158, 156))
+        window.game_surface.blit(disabled_label, disabled_label.get_rect(center=resolution_rects[index].center))
+        if state.game_mouse_pos is not None and resolution_rects[index].collidepoint(state.game_mouse_pos):
+            too_large_hovered = True
+
+    if too_large_hovered:
+        tooltip_rect = pygame.Rect(440, 556, 530, 36)
+        pygame.draw.rect(window.game_surface, (22, 26, 24), tooltip_rect, border_radius=7)
+        pygame.draw.rect(window.game_surface, (205, 178, 90), tooltip_rect, 2, border_radius=7)
+        tooltip = fonts.difficulty_detail_font.render("Too large for this screen.", True, (240, 235, 218))
+        window.game_surface.blit(tooltip, tooltip.get_rect(center=tooltip_rect.center))
 
     # ----------------------------
     # Fullscreen
@@ -20611,7 +20634,7 @@ def draw_customize_menu():
             )
             kind = {CUSTOMIZE_BACKGROUNDS: "backgrounds", CUSTOMIZE_FELTS: "felts", CUSTOMIZE_TITLES: "titles"}.get(state.customize_category, "cursors")
             requirement = os.path.basename(data.get("path", "")) if unlocked else lock_reason(asset_id, data, kind, LEVEL_UNLOCKS, ACHIEVEMENT_DEFINITIONS)
-            reason_font = pygame.font.Font(None, 23)
+            reason_font = ui_text.get_font(None, 23)
             words, rows = requirement.split(), [""]
             for word in words:
                 trial = (rows[-1] + " " + word).strip()
@@ -20742,10 +20765,11 @@ def draw_profile_screen():
         else "PROFILE"
     )
 
-    title = pygame.font.SysFont(
+    title = ui_text.get_font(
         "cambria",
         44,
-        bold=True
+        bold=True,
+        sysfont=True
     ).render(
         profile_title_text,
         True,
@@ -26739,6 +26763,12 @@ def loop_event_options(event):
                         ]
                     )
 
+                    resolution_clicked = True
+
+                    # Greyed-out sizes (too large for this screen) do nothing (W1).
+                    if not window.fits((width, height), window.usable_area()):
+                        break
+
                     sounds.audio.play_sound(
                         "button_click"
                     )
@@ -26747,8 +26777,6 @@ def loop_event_options(event):
                         width,
                         height
                     )
-
-                    resolution_clicked = True
 
                     break
 
@@ -26851,6 +26879,18 @@ def loop_event_options(event):
 
         state.music_slider_dragging = False
         state.sfx_slider_dragging = False
+
+
+def loop_enter_options():
+    """Options opens with no slider drag (the button release of an old drag may have gone elsewhere)."""
+    state.music_slider_dragging = False
+    state.sfx_slider_dragging = False
+
+
+def loop_leave_options():
+    """Leaving Options mid-drag (F10 for example) ends the drag."""
+    state.music_slider_dragging = False
+    state.sfx_slider_dragging = False
 
 
 def loop_event_customize(event):
