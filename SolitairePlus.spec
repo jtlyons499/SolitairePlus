@@ -16,6 +16,8 @@
 
 from pathlib import Path
 
+from PyInstaller.utils.hooks import collect_submodules
+
 project = Path(SPECPATH)
 CONTENTS = 'SolitairePlus_Data'
 
@@ -63,7 +65,11 @@ game = Analysis(
         'uuid',
         'base64',
         'io',
-    ],
+    ]
+    # Every game module. The main loop opens screens by module name
+    # (solitaireplus/app/loop.py SCREENS) and some modules reach each other through
+    # solitaireplus.app.lazy, so PyInstaller cannot see those imports.
+    + collect_submodules('solitaireplus'),
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

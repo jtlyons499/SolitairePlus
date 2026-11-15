@@ -635,6 +635,22 @@ original maintainer added that NPC behaviour should be the same in every variant
 - **N37:** `strategy.LATE_STREETS` changed value (single-round stages count as final rounds); multiplayer imports
   `strategy` through a shim and gets the new value. Phase 11 confirms the room NPCs.
 
+## Phase 7: packaged check (and a packaged-build fix)
+
+`build_release.ps1 -SkipTests` at `707be96` built, and the three packaged self-tests passed (SolitaireNet,
+SolitaireUpdater, every multiplayer module). The 10-second launch did **not** pass: the packaged game crashed at
+start-up with `ModuleNotFoundError: No module named 'solitaireplus.menus.splash'` (written to `game-*.log`).
+
+- **Cause:** since the Phase 3 move, the main loop opens screens from module-name strings (`app/loop.py`
+  `SCREENS`), and some modules reach each other through `solitaireplus.app.lazy`. PyInstaller only follows import
+  statements, so those modules were left out of the game exe. Source runs, tests and the harness import them
+  normally, so only the packaged check could see it. The last packaged check before this was after Phase 2.
+- **Fix:** `SolitairePlus.spec` adds `collect_submodules('solitaireplus')` to the game's hidden imports, so every
+  game module ships. `tests/test_packaged_game_modules.py` checks that the spec does this and that every module
+  named in `SCREENS` or a `lazy(...)` call is a real `solitaireplus` module (it fails without the spec change).
+- **After the fix:** rebuilt; all three self-tests pass; the packaged game ran 10 s with an empty `game-*.log`.
+  The same check runs again after Phases 11 and 12.
+
 ## Phase 8 (move): Casual cards
 
 **What moved** (`move.py`, plan from `tools/refactor/specs/phase8.json`; `legacy.py` 6285 → 5126 lines; no
