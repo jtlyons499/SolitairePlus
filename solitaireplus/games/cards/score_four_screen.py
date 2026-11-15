@@ -793,18 +793,6 @@ def loop_event_score_four(event):
             play_control_sound(sounds.audio, "select")
             return
 
-    # ----------------------------
-    # TEMP DEBUG: complete training
-    # ----------------------------
-
-    if (
-            event.type == pygame.KEYDOWN
-            and event.key == pygame.K_F6
-    ):
-        score_four_game.puzzles_completed = 3
-        score_four_game.round_complete = True
-        score_four_game.session_complete = True
-
     if (
 
             event.type

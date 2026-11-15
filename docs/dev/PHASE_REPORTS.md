@@ -678,3 +678,75 @@ debug (36) and 41 shared names.
 
 **Results:** `screen_harness compare` → `IDENTICAL 64/64`; `replay compare` → `IDENTICAL 18/18` (baseline
 `7195fb3`). Tests `PASSED`.
+
+## Phase 8 (fix): B46, B47, B48, D1 (Score Four), no `global` in the cards UIs
+
+Fixed by the fix workflow (one agent per item, test first, adversarial review). The finalizer closed the review
+follow-ups: a test for the "in a row" part of B46, a test for the B47 hint line, a B48 test that no longer depends
+on the PC's uptime, and the Crazy Eights help pages.
+
+- **B46** — Crazy Eights: a player who can neither play nor draw now passes (`_pass_turn`). A new `consecutive_passes`
+  count goes up by one per pass, and any play or successful draw sets it back to 0. The game ends as blocked only
+  once every player has passed in a row. Then the existing `_resolve_blocked_game` picks the smallest hand, or calls
+  a tie. `_draw_one` no longer ends the game on an empty pile. Both "can't draw" lines ("No cards remain to draw." /
+  "<NPC> cannot draw.") are logged before the result, so the result is always the last line of the log. When the
+  pile is empty, pressing Draw Card is how you pass. `test_crazy_eights_blocked_game`, including the review
+  follow-up `test_a_play_or_a_draw_restarts_the_count_of_passes_in_a_row`.
+- **B47** — after a draw, only the drawn card may be played (`is_player_card_playable`, which checks by object
+  identity), or the player passes:
+  - a new Pass button at (942, 545, 170, 48), left of Draw Card, shown only while a playable drawn card waits
+    (`can_player_pass`, `pass_player_turn`, `ACTION_PASS`);
+  - the hint line reads "Play the card you drew, or pass.";
+  - only the drawn card is highlighted.
+
+  A drawn eight still opens the suit choice; Pass is off while that choice is open. An unplayable drawn card still
+  ends the turn. NPCs already played only the card they drew; their code is unchanged, and the test now covers it.
+  The "any other card" half of B47 could not actually happen before, because Draw is only enabled when no card in
+  the hand is playable. The real gap was the missing pass. The rule is now in the engine, not only in the Draw
+  button's check. The How to Play pages "Crazy Eights: Basics" and "Crazy Eights: Controls" (`HELP_CONTENT` in
+  legacy.py; 2 text entries changed, 1 added) now describe the pass and the B46 blocked-game rule.
+  `test_crazy_eights_draw_rule`, including the review follow-up
+  `test_hint_line_offers_play_or_pass_after_drawing_a_playable_card`.
+- **B48** — `ScoreFourGame.get_hint_step` tries the reset to the original four cards only once (private
+  `_reset_depth`). If the original cards cannot make 24, or there are no cards, it returns
+  `NO_HINT = "No hint: these cards can't make 24."` on the normal hint row. That takes about 25 ms, instead of a
+  RecursionError after about 12 s, which crashed the game. Solvable puzzles get exactly the same hints as before:
+  the reviewer compared old and new code on 6,810 states and found 0 differences. Only debug or test states can
+  reach this, because `new_puzzle` deals only solvable puzzles. `test_score_four_hint_limit`.
+- **D1 (Score Four)** — the F6 "TEMP DEBUG: complete training" key is gone from `loop_event_score_four` (it set
+  `puzzles_completed = 3`, `round_complete` and `session_complete`). F6 now does nothing on that screen.
+  `test_score_four_debug_hotkey`.
+- **N7 (cards)** — the 3 `global` statements in crazy_eights_ui (`_fonts`, `_player_card_rects`) and bango_ui
+  (`_fonts`) are gone. Each module keeps its private caches in one `_ui` holder, the Phase 7 convention, and nothing
+  goes to state.py. `solitaireplus/games/cards/` has no `global` and no `globals()` call left (the only match is
+  the word in a docstring). All 5 cards scenes are byte-identical. `test_cards_ui_no_globals`.
+
+**Designer choices taken (defaults, can be changed):**
+- B47: Pass is its own button, not a relabelled Draw Card, so a fast double click cannot draw and then pass.
+  NPCs always play a playable drawn card and never choose to pass, so no seeded random draws shift.
+- B47: a voluntary pass after a draw does not count toward the B46 blocked-game count (the draw already reset it).
+- B46: with nothing left to draw, the hint still says "No legal play. Draw one card." and Draw Card passes, so the
+  table looks the same.
+- B48: a "no hint" answer still starts the 30-second hint cooldown and sets `hint_used`, like any hint.
+
+**Results:** tests `PASSED`. `screen_harness compare` → `IDENTICAL 64/64`; `replay compare` → `IDENTICAL 18/18`
+(baseline `1184437`). No intended differences: no scene or journey draws a card from the Crazy Eights pile, empties
+it, asks for a Score Four hint, presses F6 or opens the Crazy Eights help pages. The finalizer rendered both help
+pages separately: the new text wraps inside the page and needs no scrolling. The fix reviewers rendered the
+post-draw Pass button and hint: they sit below the table and above the hand and overlap nothing. legacy.py would
+still not be empty after this phase, and this fix only touched its Crazy Eights help text.
+
+**New findings (not fixed):**
+- **N38:** Crazy Eights can loop forever when the draw pile is empty and players keep drawing and replaying the
+  same recycled discards (seen in 2 of 2,000 simulated games with the pile emptied at the deal, 4 of 3,000 on the
+  old engine; practically never with a full 52-card deck). A turn or cycle limit would rule it out.
+- **N39:** with no legal play and nothing left to draw, the Crazy Eights hint still says "No legal play. Draw
+  one card." even though Draw Card now passes. A "No cards left: pass." wording would be clearer.
+- **N40:** the Crazy Eights suit choice has no cancel. After clicking an eight, including one just drawn, the
+  player must pick a suit.
+- **N41:** `CrazyEightsGame._choose_npc_card` gives face cards and tens two bonuses under two identical
+  `if` tests (+2 and +3 × aggressiveness). It works, but the duplicate test is redundant.
+- **N42:** Score Four: a hint request that returns the "no hint" text still starts the cooldown and sets
+  `hint_used`. Nothing reads `hint_used` today, but a future no-hint bonus must decide whether that counts.
+- **N43:** the Crazy Eights hand highlight's switch to `is_player_card_playable` has no test of its own. It
+  looks the same in real play, because before B47 no other card could become playable after a draw.

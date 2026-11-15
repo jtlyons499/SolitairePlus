@@ -69,6 +69,10 @@ How to use this file (maintainers and AI agents):
 - Poker NPCs now behave the same way at every table: cash on hand, grudges, career skill, table reads and career rival learning apply at Five-O and Blind Man's Bluff too.
 - Poker game logs: lines too long to read are wrapped instead of being squashed or running out of the panel.
 - F10 debug menu: jumping to the Career hub or a debug night during Free Play no longer saves the Free Play $5,000 into your career, debug nights no longer use up a career day, and leaving a debug session no longer leaves the game in debug mode (where real career nights weren't recorded).
+- Crazy Eights: when nobody can draw any more, a player with no legal play now passes and the others keep playing. The game only ends as a blocked game (smallest hand wins) once every player has passed in a row, and the result is no longer hidden behind a "cannot draw" message.
+- Crazy Eights: after drawing a card you can play, you can now keep it and pass (new Pass button); only the card you drew can be played that turn.
+- Score Four: asking for a hint on a puzzle that can't make 24 now says "No hint" instead of freezing and then crashing the game.
+- Removed the Score Four F6 debug key.
 
 ### Online play
 - Room codes are now 6 letters/digits instead of 5 digits, and guessing other people's room codes is slowed down and then blocked. Old 5-digit codes still work with players who haven't updated.

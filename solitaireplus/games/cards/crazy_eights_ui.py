@@ -1,4 +1,5 @@
 from solitaireplus.app import paths
+from types import SimpleNamespace
 import pygame
 
 
@@ -7,10 +8,13 @@ ACTION_DRAW = "draw"
 ACTION_CONTINUE = "continue"
 ACTION_CARD = "card"
 ACTION_SUIT = "suit"
+ACTION_PASS = "pass"
 
 
 _RETURN_RECT = pygame.Rect(1218, 22, 118, 40)
 _DRAW_RECT = pygame.Rect(1120, 545, 170, 48)
+# Beside Draw Card; shown only while a drawn playable card waits (B47).
+_PASS_RECT = pygame.Rect(942, 545, 170, 48)
 _CONTINUE_RECT = pygame.Rect(533, 585, 300, 52)
 
 _SUIT_RECTS = {
@@ -20,8 +24,9 @@ _SUIT_RECTS = {
     "S": pygame.Rect(796, 390, 100, 54),
 }
 
-_player_card_rects = []
-_fonts = None
+# Module-private caches: the player's card rects from the last draw (clicks are tested
+# against them) and the fonts, built on first use.
+_ui = SimpleNamespace(player_card_rects=[], fonts=None)
 _suit_icon_cache = {}
 
 
@@ -59,16 +64,15 @@ def _get_suit_icon(suit, size):
 
 
 def _get_fonts():
-    global _fonts
-    if _fonts is None:
-        _fonts = {
+    if _ui.fonts is None:
+        _ui.fonts = {
             "title": pygame.font.SysFont("cambria", 38, bold=True),
             "large": pygame.font.SysFont("cambria", 25, bold=True),
             "medium": pygame.font.SysFont("cambria", 19, bold=True),
             "small": pygame.font.SysFont("cambria", 15, bold=True),
             "tiny": pygame.font.SysFont("cambria", 13),
         }
-    return _fonts
+    return _ui.fonts
 
 
 def _draw_panel(surface, rect, fill=(18, 28, 22, 225), border=(205, 210, 205), width=2):
@@ -203,8 +207,6 @@ def draw_crazy_eights(
         card_back,
         portrait_loader=None,
 ):
-    global _player_card_rects
-
     fonts = _get_fonts()
     surface.fill((28, 104, 58))
 
@@ -288,15 +290,15 @@ def draw_crazy_eights(
 
     # Player hand.
     player_hand = game.hands[0] if game.hands else []
-    _player_card_rects = _player_hand_layout(len(player_hand))
+    _ui.player_card_rects = _player_hand_layout(len(player_hand))
 
-    for index, (card, rect) in enumerate(zip(player_hand, _player_card_rects)):
+    for index, (card, rect) in enumerate(zip(player_hand, _ui.player_card_rects)):
         hovered = mouse_pos is not None and rect.collidepoint(mouse_pos)
         playable = (
             not game.game_over
             and game.current_player == 0
             and not game.waiting_for_suit_choice
-            and game.is_card_playable(card)
+            and game.is_player_card_playable(index)
         )
 
         draw_rect = rect.copy()
@@ -324,8 +326,13 @@ def draw_crazy_eights(
         enabled=draw_enabled,
     )
 
+    if game.can_player_pass():
+        _draw_button(surface, _PASS_RECT, "Pass", mouse_pos, fonts["medium"], enabled=True)
+
     if not game.game_over and game.current_player == 0 and not game.waiting_for_suit_choice:
-        if game.has_playable_card(0):
+        if game.can_player_pass():
+            hint = "Play the card you drew, or pass."
+        elif game.has_playable_card(0):
             hint = "Play a card matching the active suit or rank. Eights are wild."
         else:
             hint = "No legal play. Draw one card."
@@ -401,12 +408,15 @@ def get_crazy_eights_action(mouse_pos, game):
     if game.current_player != 0:
         return None
 
-    for index in range(len(_player_card_rects) - 1, -1, -1):
-        if _player_card_rects[index].collidepoint(mouse_pos):
+    for index in range(len(_ui.player_card_rects) - 1, -1, -1):
+        if _ui.player_card_rects[index].collidepoint(mouse_pos):
             return (ACTION_CARD, index)
 
     if _DRAW_RECT.collidepoint(mouse_pos) and game.can_player_draw():
         return (ACTION_DRAW, None)
+
+    if _PASS_RECT.collidepoint(mouse_pos) and game.can_player_pass():
+        return (ACTION_PASS, None)
 
     return None
 

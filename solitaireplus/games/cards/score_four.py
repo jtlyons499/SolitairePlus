@@ -4,6 +4,9 @@ import time
 from fractions import Fraction
 from solitaireplus.games.cards.score_four_difficulty import puzzle_pool
 
+# Hint text when even the original four cards cannot make 24.
+NO_HINT = "No hint: these cards can't make 24."
+
 
 class ScoreFourGame:
 
@@ -154,7 +157,7 @@ class ScoreFourGame:
         self.start_npc_timer()
         return True
 
-    def get_hint_step(self):
+    def get_hint_step(self, _reset_depth=0):
 
         active_indices = [
             index
@@ -292,12 +295,17 @@ class ScoreFourGame:
         if len(active) == 1 and active[0] == 24:
             return "Solved: 24!"
         # A dead end gets a concrete first step from the original puzzle.
+        # The reset is tried once: an unsolvable original has no hint.
+        if _reset_depth:
+            return NO_HINT
         saved_values = self.values
         self.values = [Fraction(number) for number in self.original_numbers]
         try:
-            first_step = self.get_hint_step()
+            first_step = self.get_hint_step(_reset_depth=_reset_depth + 1)
         finally:
             self.values = saved_values
+        if first_step == NO_HINT:
+            return NO_HINT
         return "Reset to the original four cards. " + first_step
 
     def solo_hint_progress(self, now=None):

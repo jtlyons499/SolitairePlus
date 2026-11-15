@@ -910,7 +910,9 @@ HELP_CONTENT = {
             "",
             "Eights are wild. After playing an Eight, choose the suit that the next player must follow.",
             "",
-            "If you have no legal play, draw one card. A playable drawn card may be played immediately; otherwise your turn ends.",
+            "If you have no legal play, draw one card. You may play the card you drew (no other card) or pass; if it can't be played, your turn ends.",
+            "",
+            "When nobody can draw, a player with no legal play passes. If every player passes in a row, the smallest hand wins.",
         ],
     },
 
@@ -919,7 +921,7 @@ HELP_CONTENT = {
         "lines": [
             "Playable cards in your hand receive a gold outline.",
             "",
-            "Click a highlighted card to play it. Click Draw Card when you have no legal play.",
+            "Click a highlighted card to play it. Click Draw Card when you have no legal play. After drawing a playable card, click it to play it or click Pass to keep it.",
             "",
             "Playing an Eight opens the suit chooser. Select Clubs, Diamonds, Hearts, or Spades to continue.",
             "",

@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 import pygame
 
 
@@ -10,7 +11,8 @@ _RETURN_RECT = pygame.Rect(1218, 22, 118, 40)
 _CALL_RECT = pygame.Rect(598, 397, 250, 48)
 _CONTINUE_RECT = pygame.Rect(533, 600, 300, 52)
 
-_fonts = None
+# Module-private cache: the fonts, built on first use.
+_ui = SimpleNamespace(fonts=None)
 
 
 SUIT_NAMES = {
@@ -22,16 +24,15 @@ SUIT_NAMES = {
 
 
 def _get_fonts():
-    global _fonts
-    if _fonts is None:
-        _fonts = {
+    if _ui.fonts is None:
+        _ui.fonts = {
             "title": pygame.font.SysFont("cambria", 40, bold=True),
             "large": pygame.font.SysFont("cambria", 25, bold=True),
             "medium": pygame.font.SysFont("cambria", 18, bold=True),
             "small": pygame.font.SysFont("cambria", 14, bold=True),
             "tiny": pygame.font.SysFont("cambria", 12),
         }
-    return _fonts
+    return _ui.fonts
 
 
 def _draw_panel(surface, rect, fill=(22, 31, 45, 230), border=(190, 200, 215), width=2):

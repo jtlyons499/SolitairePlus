@@ -24,8 +24,9 @@ class CrazyEightsGame:
 
     Seat 0 is always the human player. Seats 1+ are NPCs. The implementation
     uses a simple draw-one rule: if a player has no legal play they draw one
-    card. A playable drawn card may be played immediately; otherwise the turn
-    passes. Eights are wild and choose the active suit.
+    card. A playable drawn card may be played (no other card from the hand),
+    or the player passes; an unplayable drawn card passes the turn. Eights
+    are wild and choose the active suit.
     """
 
     def __init__(self):
@@ -37,6 +38,8 @@ class CrazyEightsGame:
         self.current_player = 0
         self.current_suit = None
         self.player_has_drawn = False
+        # The card the human drew this turn: the only one they may play (B47).
+        self.player_drawn_card = None
 
         self.pending_eight_index = None
         self.waiting_for_suit_choice = False
@@ -45,6 +48,8 @@ class CrazyEightsGame:
         self.winner_index = None
         self.result_text = ""
         self.reward_claimed = False
+        # Players in a row who could neither play nor draw (B46).
+        self.consecutive_passes = 0
 
         self.action_log = []
         self.last_action_text = ""
@@ -110,6 +115,7 @@ class CrazyEightsGame:
         self.current_player = 0
         self.current_suit = first_discard["suit"]
         self.player_has_drawn = False
+        self.player_drawn_card = None
 
         self.pending_eight_index = None
         self.waiting_for_suit_choice = False
@@ -118,6 +124,7 @@ class CrazyEightsGame:
         self.winner_index = None
         self.result_text = ""
         self.reward_claimed = False
+        self.consecutive_passes = 0
 
         self.action_log = []
         self.last_action_text = ""
@@ -203,6 +210,29 @@ class CrazyEightsGame:
             and not self.has_playable_card(0)
         )
 
+    def is_player_card_playable(self, card_index):
+        """Whether the human may play hands[0][card_index] now.
+
+        After a draw only the drawn card may be played (B47).
+        """
+        if not self.hands or not (0 <= card_index < len(self.hands[0])):
+            return False
+
+        card = self.hands[0][card_index]
+        if self.player_has_drawn and card is not self.player_drawn_card:
+            return False
+
+        return self.is_card_playable(card)
+
+    def can_player_pass(self):
+        """The human drew a playable card and may pass instead of playing it."""
+        return (
+            not self.game_over
+            and self.current_player == 0
+            and not self.waiting_for_suit_choice
+            and self.player_has_drawn
+        )
+
     # ==================================================
     # Human actions
     # ==================================================
@@ -218,7 +248,7 @@ class CrazyEightsGame:
             return "invalid"
 
         card = self.hands[0][card_index]
-        if not self.is_card_playable(card):
+        if not self.is_player_card_playable(card_index):
             return "invalid"
 
         if card["rank"] == "8":
@@ -262,16 +292,27 @@ class CrazyEightsGame:
 
         if card is None:
             self._log("No cards remain to draw.")
-            self._advance_turn()
+            self._pass_turn()
             return False
 
         self.hands[0].append(card)
+        self.player_drawn_card = card
         self._log(f"You draw {self.card_label(card)}.")
 
-        # A playable drawn card may be played immediately. Otherwise turn passes.
+        # A playable drawn card may be played, or the player passes
+        # (pass_player_turn); no other card may be played. Otherwise turn passes.
         if not self.is_card_playable(card):
             self._advance_turn()
 
+        return True
+
+    def pass_player_turn(self):
+        """Keep the playable card just drawn and end the turn (B47)."""
+        if not self.can_player_pass():
+            return False
+
+        self._log("You pass.")
+        self._advance_turn()
         return True
 
     # ==================================================
@@ -313,7 +354,7 @@ class CrazyEightsGame:
 
         if card is None:
             self._log(f"{name} cannot draw.")
-            self._advance_turn()
+            self._pass_turn()
             return True
 
         self.hands[player_index].append(card)
@@ -413,6 +454,7 @@ class CrazyEightsGame:
         hand = self.hands[player_index]
         card = hand.pop(card_index)
         self.discard_pile.append(card)
+        self.consecutive_passes = 0
 
         if card["rank"] == "8":
             self.current_suit = chosen_suit or card["suit"]
@@ -446,10 +488,27 @@ class CrazyEightsGame:
         ) % len(self.hands)
 
         self.player_has_drawn = False
+        self.player_drawn_card = None
         self.pending_eight_index = None
         self.waiting_for_suit_choice = False
 
         self._schedule_npc_action()
+
+    def _pass_turn(self):
+        """The current player can neither play nor draw, so they pass.
+
+        The game ends as blocked (smallest hand wins) only once every player
+        has passed in a row; until then play moves on to the next player.
+        """
+        if self.game_over or not self.hands:
+            return
+
+        self.consecutive_passes += 1
+        if self.consecutive_passes >= len(self.hands):
+            self._resolve_blocked_game()
+            return
+
+        self._advance_turn()
 
     def _schedule_npc_action(self):
         if self.current_player == 0:
@@ -462,9 +521,10 @@ class CrazyEightsGame:
             self._recycle_stock()
 
         if not self.stock:
-            self._resolve_blocked_game()
+            # The caller passes the turn (B46); it no longer ends the game here.
             return None
 
+        self.consecutive_passes = 0
         return self.stock.pop()
 
     def _recycle_stock(self):

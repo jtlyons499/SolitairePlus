@@ -2,6 +2,7 @@
 from solitaireplus.games.cards.crazy_eights_ui import ACTION_CARD as CRAZY_EIGHTS_ACTION_CARD
 from solitaireplus.games.cards.crazy_eights_ui import ACTION_CONTINUE as CRAZY_EIGHTS_ACTION_CONTINUE
 from solitaireplus.games.cards.crazy_eights_ui import ACTION_DRAW as CRAZY_EIGHTS_ACTION_DRAW
+from solitaireplus.games.cards.crazy_eights_ui import ACTION_PASS as CRAZY_EIGHTS_ACTION_PASS
 from solitaireplus.games.cards.crazy_eights_ui import ACTION_RETURN as CRAZY_EIGHTS_ACTION_RETURN
 from solitaireplus.games.cards.crazy_eights_ui import ACTION_SUIT as CRAZY_EIGHTS_ACTION_SUIT
 from solitaireplus.games.cards.crazy_eights import CrazyEightsGame
@@ -91,6 +92,10 @@ def handle_event(event):
             elif action_name == CRAZY_EIGHTS_ACTION_DRAW:
                 if crazy_eights_game.draw_player_card():
                     sounds.audio.play_sound("card_draw")
+
+            elif action_name == CRAZY_EIGHTS_ACTION_PASS:
+                if crazy_eights_game.pass_player_turn():
+                    sounds.audio.play_sound("button_click")
 
             elif action_name == CRAZY_EIGHTS_ACTION_CARD:
                 result = crazy_eights_game.play_player_card(
