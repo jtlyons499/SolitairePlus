@@ -1,10 +1,16 @@
 from solitaireplus.app import paths
 from solitaireplus.career.session_summary import poker_session_status
 import math
+from types import SimpleNamespace
 
 import pygame
 
 from solitaireplus.games.poker.speech import PokerSpeechOverlay
+from solitaireplus.ui import text as ui_text
+
+# Module-private caches, animation keys and table UI state. Their starting values are
+# set below, next to the code that uses them; one holder means no 'global' statements.
+_ui = SimpleNamespace()
 
 
 # ==================================================
@@ -149,15 +155,15 @@ INNER_TABLE_RECT = TABLE_RECT.inflate(
 # UI STATE
 # ==================================================
 
-_stud_fonts = None
-_stud_chip_images = None
+_ui.stud_fonts = None
+_ui.stud_chip_images = None
 
-_stud_chat_history = []
+_ui.stud_chat_history = []
 _stud_speech_overlay = PokerSpeechOverlay()
-_stud_active_tab = "log"
-_stud_log_scroll = 0
-_stud_chat_scroll = 0
-_stud_chat_unread = False
+_ui.stud_active_tab = "log"
+_ui.stud_log_scroll = 0
+_ui.stud_chat_scroll = 0
+_ui.stud_chat_unread = False
 
 
 # ==================================================
@@ -165,13 +171,11 @@ _stud_chat_unread = False
 # ==================================================
 
 def get_stud_fonts():
-    global _stud_fonts
-
-    if _stud_fonts is None:
+    if _ui.stud_fonts is None:
         if not pygame.font.get_init():
             pygame.font.init()
 
-        _stud_fonts = {
+        _ui.stud_fonts = {
             "title": pygame.font.SysFont(
                 "cambria",
                 31,
@@ -199,7 +203,7 @@ def get_stud_fonts():
             ),
         }
 
-    return _stud_fonts
+    return _ui.stud_fonts
 
 
 def draw_panel(
@@ -293,10 +297,11 @@ def render_text_fit(
     )
 
     while current_size >= minimum_size:
-        smaller = pygame.font.SysFont(
+        smaller = ui_text.get_font(
             "cambria",
             current_size,
-            bold=True
+            bold=True,
+            sysfont=True
         )
 
         rendered = smaller.render(
@@ -448,10 +453,8 @@ def draw_card_back(
 # ==================================================
 
 def get_stud_chip_images():
-    global _stud_chip_images
-
-    if _stud_chip_images is None:
-        _stud_chip_images = {
+    if _ui.stud_chip_images is None:
+        _ui.stud_chip_images = {
             "black": pygame.image.load(
                 str(paths.asset("poker/chip_black.png"))
             ).convert_alpha(),
@@ -473,7 +476,7 @@ def get_stud_chip_images():
             ).convert_alpha(),
         }
 
-    return _stud_chip_images
+    return _ui.stud_chip_images
 
 
 def get_chip_key(
@@ -558,8 +561,8 @@ def draw_wager_marker(
 # POT DISPLAY / PAYOUT ANIMATION
 # ==================================================
 
-_stud_payout_fx_key = None
-_stud_payout_fx_started_at = 0
+_ui.stud_payout_fx_key = None
+_ui.stud_payout_fx_started_at = 0
 
 STUD_PAYOUT_FX_DURATION = 1050
 
@@ -676,9 +679,6 @@ def draw_stud_pot_stack(
 def get_stud_payout_fx_progress(
         game
 ):
-    global _stud_payout_fx_key
-    global _stud_payout_fx_started_at
-
     if (
             game.current_stage != "showdown"
             or not game.hand_complete
@@ -703,13 +703,13 @@ def get_stud_payout_fx_progress(
 
     now = pygame.time.get_ticks()
 
-    if key != _stud_payout_fx_key:
-        _stud_payout_fx_key = key
-        _stud_payout_fx_started_at = now
+    if key != _ui.stud_payout_fx_key:
+        _ui.stud_payout_fx_key = key
+        _ui.stud_payout_fx_started_at = now
 
     progress = (
         now
-        - _stud_payout_fx_started_at
+        - _ui.stud_payout_fx_started_at
     ) / STUD_PAYOUT_FX_DURATION
 
     progress = max(
@@ -978,18 +978,18 @@ STUD_CHIP_FX_DURATION = 280
 STUD_WAGER_SWEEP_DELAY = 180
 STUD_WAGER_SWEEP_DURATION = 680
 
-_stud_card_fx_hand_number = -1
-_stud_card_fx_stage = None
-_stud_card_fx_kind = None
-_stud_card_fx_started_at = 0
+_ui.stud_card_fx_hand_number = -1
+_ui.stud_card_fx_stage = None
+_ui.stud_card_fx_kind = None
+_ui.stud_card_fx_started_at = 0
 
-_stud_chip_fx_hand_number = -1
-_stud_chip_fx_stage = None
-_stud_chip_fx_signatures = {}
-_stud_chip_fx_started_at = {}
-_stud_chip_fx_indexes = {}
-_stud_wager_sweep_key = None
-_stud_wager_sweep_started_at = 0
+_ui.stud_chip_fx_hand_number = -1
+_ui.stud_chip_fx_stage = None
+_ui.stud_chip_fx_signatures = {}
+_ui.stud_chip_fx_started_at = {}
+_ui.stud_chip_fx_indexes = {}
+_ui.stud_wager_sweep_key = None
+_ui.stud_wager_sweep_started_at = 0
 
 
 def _ease_out_cubic(progress):
@@ -1004,36 +1004,31 @@ def _fx_progress(elapsed, delay=0, duration=180):
 
 
 def sync_stud_card_fx(game):
-    global _stud_card_fx_hand_number
-    global _stud_card_fx_stage
-    global _stud_card_fx_kind
-    global _stud_card_fx_started_at
-
     now = pygame.time.get_ticks()
     hand_number = getattr(game, "hand_number", 0)
     stage = getattr(game, "current_stage", None)
 
-    if hand_number != _stud_card_fx_hand_number:
-        _stud_card_fx_hand_number = hand_number
-        _stud_card_fx_stage = stage
-        _stud_card_fx_kind = "deal"
-        _stud_card_fx_started_at = now
-    elif stage != _stud_card_fx_stage:
-        _stud_card_fx_stage = stage
+    if hand_number != _ui.stud_card_fx_hand_number:
+        _ui.stud_card_fx_hand_number = hand_number
+        _ui.stud_card_fx_stage = stage
+        _ui.stud_card_fx_kind = "deal"
+        _ui.stud_card_fx_started_at = now
+    elif stage != _ui.stud_card_fx_stage:
+        _ui.stud_card_fx_stage = stage
         if stage == "fourth":
-            _stud_card_fx_kind = "street"
+            _ui.stud_card_fx_kind = "street"
         elif stage in ("fifth", "sixth", "seventh"):
-            _stud_card_fx_kind = "street"
+            _ui.stud_card_fx_kind = "street"
         elif stage == "showdown":
-            _stud_card_fx_kind = "showdown"
+            _ui.stud_card_fx_kind = "showdown"
         else:
-            _stud_card_fx_kind = None
-        _stud_card_fx_started_at = now
+            _ui.stud_card_fx_kind = None
+        _ui.stud_card_fx_started_at = now
 
-    elapsed = now - _stud_card_fx_started_at
+    elapsed = now - _ui.stud_card_fx_started_at
     if elapsed > 1500:
         return None, elapsed
-    return _stud_card_fx_kind, elapsed
+    return _ui.stud_card_fx_kind, elapsed
 
 
 def _stud_scaled_card(surface, image, x, y, width, height, progress):
@@ -1064,53 +1059,41 @@ def draw_popping_card_back(surface, card_back, x, y, width, height, progress):
 
 
 def sync_stud_chip_fx_context(game):
-    global _stud_chip_fx_hand_number
-    global _stud_chip_fx_stage
-    global _stud_chip_fx_signatures
-    global _stud_chip_fx_started_at
-    global _stud_chip_fx_indexes
-    global _stud_wager_sweep_key
-    global _stud_wager_sweep_started_at
-
     hand_number = getattr(game, "hand_number", 0)
     stage = getattr(game, "current_stage", None)
 
-    if hand_number != _stud_chip_fx_hand_number or stage != _stud_chip_fx_stage:
-        _stud_chip_fx_hand_number = hand_number
-        _stud_chip_fx_stage = stage
-        _stud_chip_fx_signatures = {}
-        _stud_chip_fx_started_at = {}
-        _stud_chip_fx_indexes = {}
-        _stud_wager_sweep_key = None
-        _stud_wager_sweep_started_at = 0
+    if hand_number != _ui.stud_chip_fx_hand_number or stage != _ui.stud_chip_fx_stage:
+        _ui.stud_chip_fx_hand_number = hand_number
+        _ui.stud_chip_fx_stage = stage
+        _ui.stud_chip_fx_signatures = {}
+        _ui.stud_chip_fx_started_at = {}
+        _ui.stud_chip_fx_indexes = {}
+        _ui.stud_wager_sweep_key = None
+        _ui.stud_wager_sweep_started_at = 0
 
 
 def _get_stud_chip_fx(key, chunks):
-    global _stud_chip_fx_signatures
-    global _stud_chip_fx_started_at
-    global _stud_chip_fx_indexes
-
     signature = tuple(int(v) for v in chunks)
-    previous = _stud_chip_fx_signatures.get(key)
+    previous = _ui.stud_chip_fx_signatures.get(key)
     now = pygame.time.get_ticks()
 
     if previous is None:
-        _stud_chip_fx_signatures[key] = signature
+        _ui.stud_chip_fx_signatures[key] = signature
         if signature:
-            _stud_chip_fx_indexes[key] = len(signature) - 1
-            _stud_chip_fx_started_at[key] = now
+            _ui.stud_chip_fx_indexes[key] = len(signature) - 1
+            _ui.stud_chip_fx_started_at[key] = now
     elif previous != signature:
         old_len = len(previous)
-        _stud_chip_fx_signatures[key] = signature
+        _ui.stud_chip_fx_signatures[key] = signature
         if len(signature) > old_len:
-            _stud_chip_fx_indexes[key] = len(signature) - 1
-            _stud_chip_fx_started_at[key] = now
+            _ui.stud_chip_fx_indexes[key] = len(signature) - 1
+            _ui.stud_chip_fx_started_at[key] = now
         else:
-            _stud_chip_fx_indexes.pop(key, None)
-            _stud_chip_fx_started_at.pop(key, None)
+            _ui.stud_chip_fx_indexes.pop(key, None)
+            _ui.stud_chip_fx_started_at.pop(key, None)
 
-    idx = _stud_chip_fx_indexes.get(key)
-    started = _stud_chip_fx_started_at.get(key)
+    idx = _ui.stud_chip_fx_indexes.get(key)
+    started = _ui.stud_chip_fx_started_at.get(key)
     if idx is None or started is None:
         return None, 1.0
 
@@ -1119,9 +1102,6 @@ def _get_stud_chip_fx(key, chunks):
 
 
 def get_stud_wager_sweep_progress(game):
-    global _stud_wager_sweep_key
-    global _stud_wager_sweep_started_at
-
     if game.current_stage not in getattr(game, "STUD_STAGES", ("third", "fourth", "fifth", "sixth", "seventh")):
         return 0.0
 
@@ -1132,11 +1112,11 @@ def get_stud_wager_sweep_progress(game):
     key = (getattr(game, "hand_number", 0), game.current_stage)
     now = pygame.time.get_ticks()
 
-    if _stud_wager_sweep_key != key:
-        _stud_wager_sweep_key = key
-        _stud_wager_sweep_started_at = now
+    if _ui.stud_wager_sweep_key != key:
+        _ui.stud_wager_sweep_key = key
+        _ui.stud_wager_sweep_started_at = now
 
-    elapsed = now - _stud_wager_sweep_started_at
+    elapsed = now - _ui.stud_wager_sweep_started_at
     if elapsed < STUD_WAGER_SWEEP_DELAY:
         return 0.0
 
@@ -1478,27 +1458,18 @@ def draw_seven_card_stud_buy_in(
 # ==================================================
 
 def reset_seven_card_stud_ui_session():
-    global _stud_chat_history
-    global _stud_active_tab
-    global _stud_log_scroll
-    global _stud_chat_scroll
-    global _stud_chat_unread
-
-    _stud_chat_history = []
+    _ui.stud_chat_history = []
     _stud_speech_overlay.clear()
-    _stud_active_tab = "log"
-    _stud_log_scroll = 0
-    _stud_chat_scroll = 0
-    _stud_chat_unread = False
+    _ui.stud_active_tab = "log"
+    _ui.stud_log_scroll = 0
+    _ui.stud_chat_scroll = 0
+    _ui.stud_chat_unread = False
 
 
 def add_seven_card_stud_chat_message(
         speaker,
         message
 ):
-    global _stud_chat_unread
-    global _stud_chat_scroll
-
     if not message:
         return
 
@@ -1514,27 +1485,24 @@ def add_seven_card_stud_chat_message(
         else str(message)
     )
 
-    _stud_chat_history.append(
+    _ui.stud_chat_history.append(
         text
     )
 
-    if len(_stud_chat_history) > 100:
-        del _stud_chat_history[
+    if len(_ui.stud_chat_history) > 100:
+        del _ui.stud_chat_history[
             :-100
         ]
 
-    _stud_chat_scroll = 0
+    _ui.stud_chat_scroll = 0
 
-    if _stud_active_tab != "chat":
-        _stud_chat_unread = True
+    if _ui.stud_active_tab != "chat":
+        _ui.stud_chat_unread = True
 
 
 def handle_seven_card_stud_panel_click(
         mouse_pos
 ):
-    global _stud_active_tab
-    global _stud_chat_unread
-
     if mouse_pos is None:
         return False
 
@@ -1555,14 +1523,14 @@ def handle_seven_card_stud_panel_click(
     if log_rect.collidepoint(
             mouse_pos
     ):
-        _stud_active_tab = "log"
+        _ui.stud_active_tab = "log"
         return True
 
     if chat_rect.collidepoint(
             mouse_pos
     ):
-        _stud_active_tab = "chat"
-        _stud_chat_unread = False
+        _ui.stud_active_tab = "chat"
+        _ui.stud_chat_unread = False
         return True
 
     return False
@@ -1572,22 +1540,19 @@ def scroll_seven_card_stud_panel(
         wheel_y,
         game
 ):
-    global _stud_log_scroll
-    global _stud_chat_scroll
-
     visible = 3
 
-    if _stud_active_tab == "chat":
+    if _ui.stud_active_tab == "chat":
         max_scroll = max(
             0,
-            len(_stud_chat_history)
+            len(_ui.stud_chat_history)
             - visible
         )
 
-        _stud_chat_scroll = max(
+        _ui.stud_chat_scroll = max(
             0,
             min(
-                _stud_chat_scroll
+                _ui.stud_chat_scroll
                 + wheel_y,
                 max_scroll
             )
@@ -1604,10 +1569,10 @@ def scroll_seven_card_stud_panel(
             - visible
         )
 
-        _stud_log_scroll = max(
+        _ui.stud_log_scroll = max(
             0,
             min(
-                _stud_log_scroll
+                _ui.stud_log_scroll
                 + wheel_y,
                 max_scroll
             )
@@ -1760,7 +1725,7 @@ def draw_log_panel(
         surface,
         log_tab_rect,
         "GAME LOG",
-        active=(_stud_active_tab == "log"),
+        active=(_ui.stud_active_tab == "log"),
         unread=False
     )
 
@@ -1768,32 +1733,32 @@ def draw_log_panel(
         surface,
         chat_tab_rect,
         "CHAT",
-        active=(_stud_active_tab == "chat"),
+        active=(_ui.stud_active_tab == "chat"),
         unread=(
-            _stud_chat_unread
-            and _stud_active_tab != "chat"
+            _ui.stud_chat_unread
+            and _ui.stud_active_tab != "chat"
         )
     )
 
-    if _stud_active_tab == "chat":
+    if _ui.stud_active_tab == "chat":
         lines = list(
-            _stud_chat_history
+            _ui.stud_chat_history
         )
-        scroll = _stud_chat_scroll
+        scroll = _ui.stud_chat_scroll
     else:
         lines = (
             game.get_hand_history_lines()
         )
-        scroll = _stud_log_scroll
+        scroll = _ui.stud_log_scroll
 
     visible_count = (
         4
-        if _stud_active_tab == "chat"
+        if _ui.stud_active_tab == "chat"
         else 3
     )
     line_step = (
         19
-        if _stud_active_tab == "chat"
+        if _ui.stud_active_tab == "chat"
         else 29
     )
 
@@ -2478,7 +2443,7 @@ def draw_seven_card_stud(
     )
 
     status = poker_session_status(game, getattr(game, 'career_session_rated', True))
-    status_image = pygame.font.Font(None, 23).render(status, True, (231, 239, 234))
+    status_image = ui_text.get_font(None, 23).render(status, True, (231, 239, 234))
     surface.blit(status_image, (22, 553))
     draw_log_panel(surface, game)
 
@@ -2509,9 +2474,8 @@ def draw_seven_card_stud(*args, **kwargs):
 
 
 def handle_seven_card_stud_panel_click(mouse_pos):
-    global _stud_active_tab, _stud_chat_unread
     if _stud_variant_qc.handle_click(mouse_pos, add_seven_card_stud_chat_message):
-        _stud_active_tab = "chat"
-        _stud_chat_unread = False
+        _ui.stud_active_tab = "chat"
+        _ui.stud_chat_unread = False
         return True
     return _stud_panel_click_base(mouse_pos)

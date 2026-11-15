@@ -1,5 +1,6 @@
 """Exact pot awards with a player-controlled review screen."""
 import pygame
+from solitaireplus.ui import text as ui_text
 
 OPEN = pygame.Rect(278, 580, 150, 26)
 CLOSE = pygame.Rect(898, 652, 198, 48)
@@ -36,7 +37,7 @@ def recap_lines(game):
 
 def recap_display_lines(game):
     """Wrap every detail at a fixed readable size; paginate wrapped rows."""
-    font = pygame.font.Font(None, 32)
+    font = ui_text.get_font(None, 32)
     rows = []
     for value in recap_lines(game):
         row = ''
@@ -80,12 +81,12 @@ def handle_recap_action(game, action):
 def draw_recap(surface, mouse, game):
     if not game.hand_complete:
         return
-    font = pygame.font.Font(None, 29)
+    font = ui_text.get_font(None, 29)
     def button(rect, value, enabled=True):
         hover = enabled and mouse is not None and rect.collidepoint(mouse)
         pygame.draw.rect(surface, (52,100,78) if hover else (29,57,49), rect, border_radius=8)
         pygame.draw.rect(surface, (232,195,105) if enabled else (95,110,105), rect, 2, border_radius=8)
-        text = pygame.font.Font(None, 24 if rect == OPEN else 29).render(value, True, (245,240,221) if enabled else (130,145,139))
+        text = ui_text.get_font(None, 24 if rect == OPEN else 29).render(value, True, (245,240,221) if enabled else (130,145,139))
         surface.blit(text, text.get_rect(center=rect.center))
     if not getattr(game, 'recap_open', False):
         button(OPEN, 'Payout details')
@@ -95,14 +96,14 @@ def draw_recap(surface, mouse, game):
     panel = pygame.Rect(242, 58, 882, 658)
     pygame.draw.rect(surface, (22,40,38), panel, border_radius=18)
     pygame.draw.rect(surface, (230,191,98), panel, 3, border_radius=18)
-    title = pygame.font.Font(None, 42).render('HAND / POT RECAP', True, (240,202,119))
+    title = ui_text.get_font(None, 42).render('HAND / POT RECAP', True, (240,202,119))
     surface.blit(title, (272,82))
     surface.blit(font.render('Auto-deal and cash-out pause while you review.', True, (188,207,195)), (272,133))
     lines = recap_display_lines(game)
     pages = max(1, (len(lines)+ROWS-1)//ROWS)
     page = max(0,min(pages-1,getattr(game,'recap_page',0)))
     for i, value in enumerate(lines[page*ROWS:(page+1)*ROWS]):
-        image = pygame.font.Font(None, 32).render(value, True, (243,236,216))
+        image = ui_text.get_font(None, 32).render(value, True, (243,236,216))
         surface.blit(image, (272,184+i*46))
     surface.blit(font.render(f'Page {page+1} / {pages}',True,(207,219,210)),(652,665))
     button(PREV,'Previous',page>0);button(NEXT,'Next',page+1<pages);button(CLOSE,'Back to table')

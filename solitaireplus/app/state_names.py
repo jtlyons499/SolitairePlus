@@ -83,7 +83,6 @@ STATE_CAREER_ACTIVITY = "career_activity"
 STATE_CAREER_REAL_ESTATE = "career_real_estate"
 STATE_CAREER_LEADERBOARDS = "career_leaderboards"
 STATE_CAREER_NEWS = "career_news"
-STATE_CAREER_NEWS = "career_news"
 STATE_CAREER_EVENT = "career_event"
 STATE_CAREER_EVENT_SELECT = "career_event_select"
 

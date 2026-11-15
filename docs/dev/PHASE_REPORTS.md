@@ -509,3 +509,45 @@ findings.
 
 **Results:** `screen_harness compare` → `IDENTICAL 64/64`; `replay compare` → `IDENTICAL 18/18` (baseline
 `ab7f1cc`). Tests `PASSED`.
+
+## Phase 7 (fix): B35, B40, B41, B43, B44, B45, D1 (Hold'em), no `global` in the poker UIs
+
+Fixed by the fix workflow (one agent per item, test first, adversarial review), then a repair workflow for the
+review follow-ups (each reviewed again). B36–B39, B42 and B86 follow in the B86 alignment (next section).
+
+- **B35** — `start_texas_holdem_session` resets `texas_holdem_session_end_at`. Also (review finding): it resets
+  `texas_holdem_table_sweep_rewarded`, like Draw and Stud, so the table-clear bonus is earned once per session
+  instead of once per app run. `test_holdem_session_end_timer`, `test_holdem_table_clear_bonus`.
+- **B40** — the Stud bring-in skips seats with no chips (next-lowest door card that can post); if nobody has chips
+  the old lowest-card pick stays. `test_stud_bring_in`. *Designer question:* the usual casino rule gives the
+  bring-in to the player left of the all-in low card instead; the two differ only with 4+ seats.
+- **B41** — Draw keeps a per-hand muck; an empty deck reshuffles the muck in; if even that is empty the old card
+  stays and the log says so ("The deck ran out: X keeps N cards."). Table reads still see the count the seat
+  asked for; the seat badge shows "Drew N" with what it received. Unreachable with today's 4-opponent tables.
+  `test_five_card_draw_deck_exhaustion`.
+- **B43** — a single-winner pot's recap lists its eligible player. `test_poker_recap_single_winner`.
+- **B44** — every per-frame `Font`/`SysFont` in the poker UIs, the recap and Five-O uses `ui_text.get_font`
+  (B44's list plus the review's: the Draw/Stud fit helpers and status lines, the Hold'em banner and rating line,
+  Blind Man's Bluff presentation, the variant quick chat). Pixel-identical. `test_poker_ui_fonts`,
+  `test_poker_ui_font_cache`.
+- **B45** — one definition each for the Hold'em sound helpers (the later ones kept), `STATE_CAREER_NEWS`,
+  `play_background_image`, `profile_switch_rect` and the career hub rects (the values in effect kept);
+  `blackjack_dealer_npc` keeps its `None` default in state.py. `test_b45_duplicates`.
+- **D1 (Hold'em)** — F7, Space and B are gone from the table; `debug_setup_holdem_heads_up` (unused) deleted.
+  `test_holdem_debug_hotkeys`.
+- **N7 (poker)** — all 144 `global` statements in holdem_ui, five_card_draw_ui, seven_card_stud_ui,
+  blind_mans_bluff_ui, five_o_ui and speech.py are gone: the 14 shared Hold'em UI values live in state.py
+  (`state.holdem_options_open` etc.), private caches in one module holder each; `speech.POKER_CHAT_POPUPS_ENABLED`
+  is `state.poker_chat_popups_enabled` (a module `__getattr__` keeps the old name for multiplayer until Phase 11).
+  All poker scenes and journeys 09–11 byte-identical. `test_poker_ui_no_globals`.
+
+**Results:** tests `PASSED`. `screen_harness compare` → `IDENTICAL 64/64`; `replay compare` → `IDENTICAL 18/18`
+(baseline `a2f9687`).
+
+**New findings (not fixed):**
+- **N33:** `award_pot_to_single_player`'s award entry has no `remainder` key (readers default it to 0).
+- **N34:** `multiplayer/texas_holdem_ui.py` still has its own `global` statements and module-level Hold'em UI
+  state; the Phase 11 merge must move multiplayer's `ui.holdem_*` writes to `state.holdem_*` and drop the
+  `speech.POKER_CHAT_POPUPS_ENABLED` shim.
+- **N35:** `tests/test_poker_recap.py` and `tests/test_table_polish.py` save previews to a hard-coded
+  `/workspace/scratch` path (already quarantined; Phase 12 points them at a temporary folder).

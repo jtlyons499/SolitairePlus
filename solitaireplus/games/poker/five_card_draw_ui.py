@@ -1,11 +1,17 @@
 from solitaireplus.app import paths
 from solitaireplus.career.session_summary import poker_session_status
 import math
+from types import SimpleNamespace
 
 import pygame
 
 from solitaireplus.games.poker.speech import PokerSpeechOverlay, is_poker_chat_popups_enabled
 from solitaireplus.games.poker.ui_assets import draw_poker_logo
+from solitaireplus.ui import text as ui_text
+
+# Module-private caches, animation keys and table UI state. Their starting values are
+# set below, next to the code that uses them; one holder means no 'global' statements.
+_ui = SimpleNamespace()
 
 
 # ==================================================
@@ -80,20 +86,20 @@ PLAYER_CARD_SELECTED_LIFT = 20
 # UI STATE
 # ==================================================
 
-_draw_fonts = None
-_draw_chip_images = None
-_draw_selected_card_indexes = set()
-_draw_bet_fraction = 0.50
-_draw_bet_slider_dragging = False
-_draw_manual_bet_text = ""
-_draw_manual_bet_active = False
-_draw_chat_history = []
+_ui.draw_fonts = None
+_ui.draw_chip_images = None
+_ui.draw_selected_card_indexes = set()
+_ui.draw_bet_fraction = 0.50
+_ui.draw_bet_slider_dragging = False
+_ui.draw_manual_bet_text = ""
+_ui.draw_manual_bet_active = False
+_ui.draw_chat_history = []
 _draw_speech_overlay = PokerSpeechOverlay()
-_draw_active_tab = "log"
-_draw_log_scroll = 0
-_draw_chat_scroll = 0
-_draw_chat_unread = False
-_draw_last_hand_number = -1
+_ui.draw_active_tab = "log"
+_ui.draw_log_scroll = 0
+_ui.draw_chat_scroll = 0
+_ui.draw_chat_unread = False
+_ui.draw_last_hand_number = -1
 
 
 # ==================================================
@@ -101,13 +107,11 @@ _draw_last_hand_number = -1
 # ==================================================
 
 def get_draw_fonts():
-    global _draw_fonts
-
-    if _draw_fonts is None:
+    if _ui.draw_fonts is None:
         if not pygame.font.get_init():
             pygame.font.init()
 
-        _draw_fonts = {
+        _ui.draw_fonts = {
             "title": pygame.font.SysFont("cambria", 31, bold=True),
             "name": pygame.font.SysFont("cambria", 20, bold=True),
             "small": pygame.font.SysFont("cambria", 17, bold=True),
@@ -115,7 +119,7 @@ def get_draw_fonts():
             "micro": pygame.font.SysFont("cambria", 12, bold=True),
         }
 
-    return _draw_fonts
+    return _ui.draw_fonts
 
 
 def draw_panel(
@@ -185,7 +189,7 @@ def render_text_fit(text, font, color, max_width, minimum_size=10):
     current_size = max(minimum_size, font.get_height() - 2)
 
     while current_size >= minimum_size:
-        smaller = pygame.font.SysFont(font_name, current_size, bold=True)
+        smaller = ui_text.get_font(font_name, current_size, bold=True, sysfont=True)
         rendered = smaller.render(text, True, color)
 
         if rendered.get_width() <= max_width:
@@ -309,10 +313,8 @@ def draw_card_back(
 # ==================================================
 
 def get_draw_chip_images():
-    global _draw_chip_images
-
-    if _draw_chip_images is None:
-        _draw_chip_images = {
+    if _ui.draw_chip_images is None:
+        _ui.draw_chip_images = {
             "black": pygame.image.load(
                 str(paths.asset("poker/chip_black.png"))
             ).convert_alpha(),
@@ -330,7 +332,7 @@ def get_draw_chip_images():
             ).convert_alpha(),
         }
 
-    return _draw_chip_images
+    return _ui.draw_chip_images
 
 
 def get_chip_key(amount, base_unit):
@@ -382,8 +384,8 @@ def draw_wager_marker(surface, amount, center, base_unit):
 # POT DISPLAY / PAYOUT ANIMATION
 # ==================================================
 
-_draw_payout_fx_key = None
-_draw_payout_fx_started_at = 0
+_ui.draw_payout_fx_key = None
+_ui.draw_payout_fx_started_at = 0
 
 DRAW_PAYOUT_FX_DURATION = 1050
 
@@ -500,9 +502,6 @@ def draw_draw_pot_stack(
 def get_draw_payout_fx_progress(
         game
 ):
-    global _draw_payout_fx_key
-    global _draw_payout_fx_started_at
-
     if (
             game.current_stage != "showdown"
             or not game.hand_complete
@@ -527,13 +526,13 @@ def get_draw_payout_fx_progress(
 
     now = pygame.time.get_ticks()
 
-    if key != _draw_payout_fx_key:
-        _draw_payout_fx_key = key
-        _draw_payout_fx_started_at = now
+    if key != _ui.draw_payout_fx_key:
+        _ui.draw_payout_fx_key = key
+        _ui.draw_payout_fx_started_at = now
 
     progress = (
         now
-        - _draw_payout_fx_started_at
+        - _ui.draw_payout_fx_started_at
     ) / DRAW_PAYOUT_FX_DURATION
 
     progress = max(
@@ -802,18 +801,18 @@ DRAW_CHIP_FX_DURATION = 280
 DRAW_WAGER_SWEEP_DELAY = 180
 DRAW_WAGER_SWEEP_DURATION = 680
 
-_draw_card_fx_hand_number = -1
-_draw_card_fx_stage = None
-_draw_card_fx_kind = None
-_draw_card_fx_started_at = 0
+_ui.draw_card_fx_hand_number = -1
+_ui.draw_card_fx_stage = None
+_ui.draw_card_fx_kind = None
+_ui.draw_card_fx_started_at = 0
 
-_draw_chip_fx_hand_number = -1
-_draw_chip_fx_stage = None
-_draw_chip_fx_signatures = {}
-_draw_chip_fx_started_at = {}
-_draw_chip_fx_indexes = {}
-_draw_wager_sweep_key = None
-_draw_wager_sweep_started_at = 0
+_ui.draw_chip_fx_hand_number = -1
+_ui.draw_chip_fx_stage = None
+_ui.draw_chip_fx_signatures = {}
+_ui.draw_chip_fx_started_at = {}
+_ui.draw_chip_fx_indexes = {}
+_ui.draw_wager_sweep_key = None
+_ui.draw_wager_sweep_started_at = 0
 
 
 def _ease_out_cubic(progress):
@@ -828,36 +827,31 @@ def _fx_progress(elapsed, delay=0, duration=180):
 
 
 def sync_draw_card_fx(game):
-    global _draw_card_fx_hand_number
-    global _draw_card_fx_stage
-    global _draw_card_fx_kind
-    global _draw_card_fx_started_at
-
     now = pygame.time.get_ticks()
     hand_number = getattr(game, "hand_number", 0)
     stage = getattr(game, "current_stage", None)
 
-    if hand_number != _draw_card_fx_hand_number:
-        _draw_card_fx_hand_number = hand_number
-        _draw_card_fx_stage = stage
-        _draw_card_fx_kind = "deal"
-        _draw_card_fx_started_at = now
-    elif stage != _draw_card_fx_stage:
-        _draw_card_fx_stage = stage
+    if hand_number != _ui.draw_card_fx_hand_number:
+        _ui.draw_card_fx_hand_number = hand_number
+        _ui.draw_card_fx_stage = stage
+        _ui.draw_card_fx_kind = "deal"
+        _ui.draw_card_fx_started_at = now
+    elif stage != _ui.draw_card_fx_stage:
+        _ui.draw_card_fx_stage = stage
         if stage == "draw":
-            _draw_card_fx_kind = "draw_phase"
+            _ui.draw_card_fx_kind = "draw_phase"
         elif stage == "post_draw":
-            _draw_card_fx_kind = "redraw"
+            _ui.draw_card_fx_kind = "redraw"
         elif stage == "showdown":
-            _draw_card_fx_kind = "showdown"
+            _ui.draw_card_fx_kind = "showdown"
         else:
-            _draw_card_fx_kind = None
-        _draw_card_fx_started_at = now
+            _ui.draw_card_fx_kind = None
+        _ui.draw_card_fx_started_at = now
 
-    elapsed = now - _draw_card_fx_started_at
+    elapsed = now - _ui.draw_card_fx_started_at
     if elapsed > 1500:
         return None, elapsed
-    return _draw_card_fx_kind, elapsed
+    return _ui.draw_card_fx_kind, elapsed
 
 
 def _draw_scaled_card(surface, image, x, y, width, height, progress):
@@ -888,53 +882,41 @@ def draw_popping_card_back(surface, card_back, x, y, width, height, progress):
 
 
 def sync_draw_chip_fx_context(game):
-    global _draw_chip_fx_hand_number
-    global _draw_chip_fx_stage
-    global _draw_chip_fx_signatures
-    global _draw_chip_fx_started_at
-    global _draw_chip_fx_indexes
-    global _draw_wager_sweep_key
-    global _draw_wager_sweep_started_at
-
     hand_number = getattr(game, "hand_number", 0)
     stage = getattr(game, "current_stage", None)
 
-    if hand_number != _draw_chip_fx_hand_number or stage != _draw_chip_fx_stage:
-        _draw_chip_fx_hand_number = hand_number
-        _draw_chip_fx_stage = stage
-        _draw_chip_fx_signatures = {}
-        _draw_chip_fx_started_at = {}
-        _draw_chip_fx_indexes = {}
-        _draw_wager_sweep_key = None
-        _draw_wager_sweep_started_at = 0
+    if hand_number != _ui.draw_chip_fx_hand_number or stage != _ui.draw_chip_fx_stage:
+        _ui.draw_chip_fx_hand_number = hand_number
+        _ui.draw_chip_fx_stage = stage
+        _ui.draw_chip_fx_signatures = {}
+        _ui.draw_chip_fx_started_at = {}
+        _ui.draw_chip_fx_indexes = {}
+        _ui.draw_wager_sweep_key = None
+        _ui.draw_wager_sweep_started_at = 0
 
 
 def _get_draw_chip_fx(key, chunks):
-    global _draw_chip_fx_signatures
-    global _draw_chip_fx_started_at
-    global _draw_chip_fx_indexes
-
     signature = tuple(int(v) for v in chunks)
-    previous = _draw_chip_fx_signatures.get(key)
+    previous = _ui.draw_chip_fx_signatures.get(key)
     now = pygame.time.get_ticks()
 
     if previous is None:
-        _draw_chip_fx_signatures[key] = signature
+        _ui.draw_chip_fx_signatures[key] = signature
         if signature:
-            _draw_chip_fx_indexes[key] = len(signature) - 1
-            _draw_chip_fx_started_at[key] = now
+            _ui.draw_chip_fx_indexes[key] = len(signature) - 1
+            _ui.draw_chip_fx_started_at[key] = now
     elif previous != signature:
         old_len = len(previous)
-        _draw_chip_fx_signatures[key] = signature
+        _ui.draw_chip_fx_signatures[key] = signature
         if len(signature) > old_len:
-            _draw_chip_fx_indexes[key] = len(signature) - 1
-            _draw_chip_fx_started_at[key] = now
+            _ui.draw_chip_fx_indexes[key] = len(signature) - 1
+            _ui.draw_chip_fx_started_at[key] = now
         else:
-            _draw_chip_fx_indexes.pop(key, None)
-            _draw_chip_fx_started_at.pop(key, None)
+            _ui.draw_chip_fx_indexes.pop(key, None)
+            _ui.draw_chip_fx_started_at.pop(key, None)
 
-    idx = _draw_chip_fx_indexes.get(key)
-    started = _draw_chip_fx_started_at.get(key)
+    idx = _ui.draw_chip_fx_indexes.get(key)
+    started = _ui.draw_chip_fx_started_at.get(key)
     if idx is None or started is None:
         return None, 1.0
 
@@ -943,9 +925,6 @@ def _get_draw_chip_fx(key, chunks):
 
 
 def get_draw_wager_sweep_progress(game):
-    global _draw_wager_sweep_key
-    global _draw_wager_sweep_started_at
-
     if game.current_stage not in ("preflop", "post_draw"):
         return 0.0
 
@@ -956,11 +935,11 @@ def get_draw_wager_sweep_progress(game):
     key = (getattr(game, "hand_number", 0), game.current_stage)
     now = pygame.time.get_ticks()
 
-    if _draw_wager_sweep_key != key:
-        _draw_wager_sweep_key = key
-        _draw_wager_sweep_started_at = now
+    if _ui.draw_wager_sweep_key != key:
+        _ui.draw_wager_sweep_key = key
+        _ui.draw_wager_sweep_started_at = now
 
-    elapsed = now - _draw_wager_sweep_started_at
+    elapsed = now - _ui.draw_wager_sweep_started_at
     if elapsed < DRAW_WAGER_SWEEP_DELAY:
         return 0.0
 
@@ -1196,36 +1175,21 @@ def draw_five_card_draw_buy_in(
 # ==================================================
 
 def reset_five_card_draw_ui_session():
-    global _draw_selected_card_indexes
-    global _draw_chat_history
-    global _draw_active_tab
-    global _draw_log_scroll
-    global _draw_chat_scroll
-    global _draw_chat_unread
-    global _draw_last_hand_number
-    global _draw_bet_fraction
-    global _draw_bet_slider_dragging
-    global _draw_manual_bet_text
-    global _draw_manual_bet_active
-
-    _draw_selected_card_indexes = set()
-    _draw_chat_history = []
+    _ui.draw_selected_card_indexes = set()
+    _ui.draw_chat_history = []
     _draw_speech_overlay.clear()
-    _draw_active_tab = "log"
-    _draw_log_scroll = 0
-    _draw_chat_scroll = 0
-    _draw_chat_unread = False
-    _draw_last_hand_number = -1
-    _draw_bet_fraction = 0.50
-    _draw_bet_slider_dragging = False
-    _draw_manual_bet_text = ""
-    _draw_manual_bet_active = False
+    _ui.draw_active_tab = "log"
+    _ui.draw_log_scroll = 0
+    _ui.draw_chat_scroll = 0
+    _ui.draw_chat_unread = False
+    _ui.draw_last_hand_number = -1
+    _ui.draw_bet_fraction = 0.50
+    _ui.draw_bet_slider_dragging = False
+    _ui.draw_manual_bet_text = ""
+    _ui.draw_manual_bet_active = False
 
 
 def add_five_card_draw_chat_message(speaker, message):
-    global _draw_chat_unread
-    global _draw_chat_scroll
-
     if not message:
         return
 
@@ -1241,21 +1205,18 @@ def add_five_card_draw_chat_message(speaker, message):
         else str(message)
     )
 
-    _draw_chat_history.append(text)
+    _ui.draw_chat_history.append(text)
 
-    if len(_draw_chat_history) > 100:
-        del _draw_chat_history[:-100]
+    if len(_ui.draw_chat_history) > 100:
+        del _ui.draw_chat_history[:-100]
 
-    _draw_chat_scroll = 0
+    _ui.draw_chat_scroll = 0
 
-    if _draw_active_tab != "chat":
-        _draw_chat_unread = True
+    if _ui.draw_active_tab != "chat":
+        _ui.draw_chat_unread = True
 
 
 def handle_five_card_draw_panel_click(mouse_pos):
-    global _draw_active_tab
-    global _draw_chat_unread
-
     if mouse_pos is None:
         return False
 
@@ -1274,33 +1235,30 @@ def handle_five_card_draw_panel_click(mouse_pos):
     )
 
     if log_rect.collidepoint(mouse_pos):
-        _draw_active_tab = "log"
+        _ui.draw_active_tab = "log"
         return True
 
     if chat_rect.collidepoint(mouse_pos):
-        _draw_active_tab = "chat"
-        _draw_chat_unread = False
+        _ui.draw_active_tab = "chat"
+        _ui.draw_chat_unread = False
         return True
 
     return False
 
 
 def scroll_five_card_draw_panel(wheel_y, game):
-    global _draw_log_scroll
-    global _draw_chat_scroll
-
     visible = 3
 
-    if _draw_active_tab == "chat":
+    if _ui.draw_active_tab == "chat":
         max_scroll = max(
             0,
-            len(_draw_chat_history) - visible
+            len(_ui.draw_chat_history) - visible
         )
 
-        _draw_chat_scroll = max(
+        _ui.draw_chat_scroll = max(
             0,
             min(
-                _draw_chat_scroll + wheel_y,
+                _ui.draw_chat_scroll + wheel_y,
                 max_scroll
             )
         )
@@ -1313,10 +1271,10 @@ def scroll_five_card_draw_panel(wheel_y, game):
             len(lines) - visible
         )
 
-        _draw_log_scroll = max(
+        _ui.draw_log_scroll = max(
             0,
             min(
-                _draw_log_scroll + wheel_y,
+                _ui.draw_log_scroll + wheel_y,
                 max_scroll
             )
         )
@@ -1338,7 +1296,7 @@ def get_player_card_rects():
     for index in range(5):
         lift = (
             PLAYER_CARD_SELECTED_LIFT
-            if index in _draw_selected_card_indexes
+            if index in _ui.draw_selected_card_indexes
             else 0
         )
 
@@ -1357,8 +1315,6 @@ def get_player_card_rects():
 
 
 def handle_five_card_draw_card_click(mouse_pos, game):
-    global _draw_selected_card_indexes
-
     if (
             mouse_pos is None
             or game.current_stage != "draw"
@@ -1372,10 +1328,10 @@ def handle_five_card_draw_card_click(mouse_pos, game):
             get_player_card_rects()
     ):
         if rect.collidepoint(mouse_pos):
-            if index in _draw_selected_card_indexes:
-                _draw_selected_card_indexes.remove(index)
+            if index in _ui.draw_selected_card_indexes:
+                _ui.draw_selected_card_indexes.remove(index)
             else:
-                _draw_selected_card_indexes.add(index)
+                _ui.draw_selected_card_indexes.add(index)
 
             return True
 
@@ -1383,12 +1339,11 @@ def handle_five_card_draw_card_click(mouse_pos, game):
 
 
 def get_selected_draw_indexes():
-    return sorted(_draw_selected_card_indexes)
+    return sorted(_ui.draw_selected_card_indexes)
 
 
 def clear_five_card_draw_selection():
-    global _draw_selected_card_indexes
-    _draw_selected_card_indexes = set()
+    _ui.draw_selected_card_indexes = set()
 
 
 # ==================================================
@@ -1396,16 +1351,11 @@ def clear_five_card_draw_selection():
 # ==================================================
 
 def clear_five_card_draw_manual_bet():
-    global _draw_manual_bet_text
-    global _draw_manual_bet_active
-
-    _draw_manual_bet_text = ""
-    _draw_manual_bet_active = False
+    _ui.draw_manual_bet_text = ""
+    _ui.draw_manual_bet_active = False
 
 
 def handle_five_card_draw_manual_bet_click(mouse_pos, game):
-    global _draw_manual_bet_active
-
     if mouse_pos is None:
         return False
 
@@ -1418,47 +1368,44 @@ def handle_five_card_draw_manual_bet_click(mouse_pos, game):
     )
 
     if can_edit and DRAW_MANUAL_BET_RECT.collidepoint(mouse_pos):
-        _draw_manual_bet_active = True
+        _ui.draw_manual_bet_active = True
         return True
 
-    if _draw_manual_bet_active:
-        _draw_manual_bet_active = False
+    if _ui.draw_manual_bet_active:
+        _ui.draw_manual_bet_active = False
 
     return False
 
 
 def handle_five_card_draw_manual_bet_key(event, game):
-    global _draw_manual_bet_text
-    global _draw_manual_bet_active
-
-    if not _draw_manual_bet_active or event.type != pygame.KEYDOWN:
+    if not _ui.draw_manual_bet_active or event.type != pygame.KEYDOWN:
         return False
 
     if event.key == pygame.K_ESCAPE:
-        _draw_manual_bet_active = False
+        _ui.draw_manual_bet_active = False
         return True
 
     if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-        _draw_manual_bet_active = False
+        _ui.draw_manual_bet_active = False
         return True
 
     if event.key == pygame.K_BACKSPACE:
-        _draw_manual_bet_text = _draw_manual_bet_text[:-1]
+        _ui.draw_manual_bet_text = _ui.draw_manual_bet_text[:-1]
         return True
 
     character = getattr(event, "unicode", "")
-    if character.isdigit() and len(_draw_manual_bet_text) < 9:
-        _draw_manual_bet_text += character
+    if character.isdigit() and len(_ui.draw_manual_bet_text) < 9:
+        _ui.draw_manual_bet_text += character
 
     return True
 
 
 def get_five_card_draw_manual_bet_amount(game):
-    if not _draw_manual_bet_text:
+    if not _ui.draw_manual_bet_text:
         return None
 
     try:
-        requested = int(_draw_manual_bet_text)
+        requested = int(_ui.draw_manual_bet_text)
     except ValueError:
         return None
 
@@ -1480,10 +1427,6 @@ def get_five_card_draw_manual_bet_amount(game):
 
 
 def set_five_card_draw_bet_slider_from_mouse(mouse_pos):
-    global _draw_bet_fraction
-    global _draw_manual_bet_text
-    global _draw_manual_bet_active
-
     if mouse_pos is None:
         return False
 
@@ -1492,19 +1435,17 @@ def set_five_card_draw_bet_slider_from_mouse(mouse_pos):
         min(mouse_pos[0], DRAW_SLIDER_RECT.right)
     )
 
-    _draw_bet_fraction = (
+    _ui.draw_bet_fraction = (
         mouse_x - DRAW_SLIDER_RECT.left
     ) / max(1, DRAW_SLIDER_RECT.width)
 
-    _draw_bet_fraction = max(0.0, min(_draw_bet_fraction, 1.0))
-    _draw_manual_bet_text = ""
-    _draw_manual_bet_active = False
+    _ui.draw_bet_fraction = max(0.0, min(_ui.draw_bet_fraction, 1.0))
+    _ui.draw_manual_bet_text = ""
+    _ui.draw_manual_bet_active = False
     return True
 
 
 def update_five_card_draw_bet_slider(mouse_pos, game):
-    global _draw_bet_slider_dragging
-
     can_edit = (
         not game.hand_complete
         and game.current_stage in ("preflop", "post_draw")
@@ -1518,55 +1459,50 @@ def update_five_card_draw_bet_slider(mouse_pos, game):
 
     hit_rect = DRAW_SLIDER_RECT.inflate(0, 24)
     if hit_rect.collidepoint(mouse_pos):
-        _draw_bet_slider_dragging = True
+        _ui.draw_bet_slider_dragging = True
         return set_five_card_draw_bet_slider_from_mouse(mouse_pos)
 
     return False
 
 
 def drag_five_card_draw_bet_slider(mouse_pos):
-    if not _draw_bet_slider_dragging:
+    if not _ui.draw_bet_slider_dragging:
         return False
     return set_five_card_draw_bet_slider_from_mouse(mouse_pos)
 
 
 def stop_five_card_draw_bet_slider():
-    global _draw_bet_slider_dragging
-    was_dragging = _draw_bet_slider_dragging
-    _draw_bet_slider_dragging = False
+    was_dragging = _ui.draw_bet_slider_dragging
+    _ui.draw_bet_slider_dragging = False
     return was_dragging
 
 
 def handle_five_card_draw_bet_preset(mouse_pos):
-    global _draw_bet_fraction
-    global _draw_manual_bet_text
-    global _draw_manual_bet_active
-
     if mouse_pos is None:
         return False
 
     if DRAW_MIN_RECT.collidepoint(mouse_pos):
-        _draw_bet_fraction = 0.0
-        _draw_manual_bet_text = ""
-        _draw_manual_bet_active = False
+        _ui.draw_bet_fraction = 0.0
+        _ui.draw_manual_bet_text = ""
+        _ui.draw_manual_bet_active = False
         return True
 
     if DRAW_HALF_RECT.collidepoint(mouse_pos):
-        _draw_bet_fraction = 0.5
-        _draw_manual_bet_text = ""
-        _draw_manual_bet_active = False
+        _ui.draw_bet_fraction = 0.5
+        _ui.draw_manual_bet_text = ""
+        _ui.draw_manual_bet_active = False
         return True
 
     if DRAW_POT_RECT.collidepoint(mouse_pos):
-        _draw_bet_fraction = 0.75
-        _draw_manual_bet_text = ""
-        _draw_manual_bet_active = False
+        _ui.draw_bet_fraction = 0.75
+        _ui.draw_manual_bet_text = ""
+        _ui.draw_manual_bet_active = False
         return True
 
     if DRAW_MAX_RECT.collidepoint(mouse_pos):
-        _draw_bet_fraction = 1.0
-        _draw_manual_bet_text = ""
-        _draw_manual_bet_active = False
+        _ui.draw_bet_fraction = 1.0
+        _ui.draw_manual_bet_text = ""
+        _ui.draw_manual_bet_active = False
         return True
 
     return False
@@ -1589,14 +1525,14 @@ def get_five_card_draw_bet_amount(game):
         if maximum <= minimum:
             return maximum
 
-        if _draw_bet_fraction >= 0.99:
+        if _ui.draw_bet_fraction >= 0.99:
             return maximum
 
         pot_target = max(
             minimum,
             int(
                 max(game.pot, minimum)
-                * max(0.35, _draw_bet_fraction)
+                * max(0.35, _ui.draw_bet_fraction)
             )
         )
 
@@ -1611,14 +1547,14 @@ def get_five_card_draw_bet_amount(game):
     if maximum <= minimum:
         return maximum
 
-    if _draw_bet_fraction >= 0.99:
+    if _ui.draw_bet_fraction >= 0.99:
         return maximum
 
     additional = max(
         game.get_minimum_raise_size(),
         int(
             max(game.pot, game.big_blind)
-            * max(0.35, _draw_bet_fraction)
+            * max(0.35, _ui.draw_bet_fraction)
         )
     )
 
@@ -1782,7 +1718,7 @@ def draw_log_panel(surface, game):
         "GAME LOG",
         None,
         fonts["tiny"],
-        selected=_draw_active_tab == "log"
+        selected=_ui.draw_active_tab == "log"
     )
 
     chat_label = "CHAT"
@@ -1793,28 +1729,28 @@ def draw_log_panel(surface, game):
         chat_label,
         None,
         fonts["tiny"],
-        selected=_draw_active_tab == "chat",
+        selected=_ui.draw_active_tab == "chat",
         attention=(
-            _draw_chat_unread
-            and _draw_active_tab != "chat"
+            _ui.draw_chat_unread
+            and _ui.draw_active_tab != "chat"
         )
     )
 
-    if _draw_active_tab == "chat":
-        lines = _draw_chat_history
-        scroll = _draw_chat_scroll
+    if _ui.draw_active_tab == "chat":
+        lines = _ui.draw_chat_history
+        scroll = _ui.draw_chat_scroll
     else:
         lines = game.get_hand_history_lines()
-        scroll = _draw_log_scroll
+        scroll = _ui.draw_log_scroll
 
     visible = (
         4
-        if _draw_active_tab == "chat"
+        if _ui.draw_active_tab == "chat"
         else 3
     )
     line_step = (
         19
-        if _draw_active_tab == "chat"
+        if _ui.draw_active_tab == "chat"
         else 28
     )
     end = max(0, len(lines) - scroll)
@@ -1901,7 +1837,7 @@ def draw_action_panel(
             and not game.player_draw_complete
             and not game.player_folded
     ):
-        count = len(_draw_selected_card_indexes)
+        count = len(_ui.draw_selected_card_indexes)
 
         instruction = (
             "Select up to five cards to discard."
@@ -2045,7 +1981,7 @@ def draw_action_panel(
     knob_x = int(
         DRAW_SLIDER_RECT.x
         + (DRAW_SLIDER_RECT.width - knob_width)
-        * _draw_bet_fraction
+        * _ui.draw_bet_fraction
     )
     knob_rect = pygame.Rect(
         knob_x,
@@ -2055,7 +1991,7 @@ def draw_action_panel(
     )
     pygame.draw.rect(
         surface,
-        (175, 205, 240) if _draw_bet_slider_dragging else (130, 170, 220),
+        (175, 205, 240) if _ui.draw_bet_slider_dragging else (130, 170, 220),
         knob_rect,
         border_radius=6
     )
@@ -2066,11 +2002,11 @@ def draw_action_panel(
         surface,
         DRAW_MANUAL_BET_RECT,
         (18, 24, 27, 235) if manual_enabled else (48, 48, 52, 220),
-        GOLD if _draw_manual_bet_active else ((150, 175, 205) if _draw_manual_bet_text else (105, 110, 118)),
+        GOLD if _ui.draw_manual_bet_active else ((150, 175, 205) if _ui.draw_manual_bet_text else (105, 110, 118)),
         radius=7,
-        border_width=2 if _draw_manual_bet_active else 1
+        border_width=2 if _ui.draw_manual_bet_active else 1
     )
-    manual_label = f"${_draw_manual_bet_text}" if _draw_manual_bet_text else "TYPE $"
+    manual_label = f"${_ui.draw_manual_bet_text}" if _ui.draw_manual_bet_text else "TYPE $"
     manual_surface = fonts["tiny"].render(
         manual_label,
         True,
@@ -2094,7 +2030,7 @@ def draw_action_panel(
             fonts["tiny"],
             enabled=can_act,
             selected=(
-                abs(_draw_bet_fraction - fraction)
+                abs(_ui.draw_bet_fraction - fraction)
                 < 0.01
             )
         )
@@ -2314,7 +2250,9 @@ def draw_npc_seat(
     action = game.npc_action_texts[index] if index < len(game.npc_action_texts) else ""
     if game.current_stage == "draw" and not folded and not busted and index < len(game.npc_draw_counts):
         count = game.npc_draw_counts[index]
-        action = "Stood pat" if count == 0 else f"Drew {count}"
+        # A seat that asked for cards when the deck ran out drew 0; it did not stand pat.
+        stood_pat = index >= len(game.npc_stood_pat) or game.npc_stood_pat[index]
+        action = "Stood pat" if count == 0 and stood_pat else f"Drew {count}"
     if busted:
         action = "ELIMINATED"
     elif all_in:
@@ -2372,12 +2310,9 @@ def draw_five_card_draw(
         felt_surface,
         next_hand_seconds=None
 ):
-    global _draw_last_hand_number
-    global _draw_selected_card_indexes
-
-    if game.hand_number != _draw_last_hand_number:
-        _draw_last_hand_number = game.hand_number
-        _draw_selected_card_indexes = set()
+    if game.hand_number != _ui.draw_last_hand_number:
+        _ui.draw_last_hand_number = game.hand_number
+        _ui.draw_selected_card_indexes = set()
 
     draw_submenu_background(overlay_alpha=110)
     fonts = get_draw_fonts()
@@ -2482,7 +2417,7 @@ def draw_five_card_draw(
     card_rects = get_player_card_rects()
     for index, card in enumerate(game.player_hand[:5]):
         rect = card_rects[index]
-        selected = index in _draw_selected_card_indexes and game.current_stage == "draw"
+        selected = index in _ui.draw_selected_card_indexes and game.current_stage == "draw"
 
         shadow = pygame.Surface(rect.size, pygame.SRCALPHA)
         pygame.draw.rect(shadow, (0, 0, 0, 85), shadow.get_rect(), border_radius=7)
@@ -2547,7 +2482,7 @@ def draw_five_card_draw(
     )
 
     status = poker_session_status(game, getattr(game, 'career_session_rated', True))
-    status_image = pygame.font.Font(None, 23).render(status, True, (231, 239, 234))
+    status_image = ui_text.get_font(None, 23).render(status, True, (231, 239, 234))
     surface.blit(status_image, (22, 553))
     draw_log_panel(surface, game)
 
@@ -2591,9 +2526,8 @@ def draw_five_card_draw(*args, **kwargs):
 
 
 def handle_five_card_draw_panel_click(mouse_pos):
-    global _draw_active_tab, _draw_chat_unread
     if _draw_variant_qc.handle_click(mouse_pos, add_five_card_draw_chat_message):
-        _draw_active_tab = "chat"
-        _draw_chat_unread = False
+        _ui.draw_active_tab = "chat"
+        _ui.draw_chat_unread = False
         return True
     return _draw_panel_click_base(mouse_pos)

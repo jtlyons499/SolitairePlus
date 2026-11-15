@@ -153,12 +153,10 @@ avatar_top_options = avatar_options(avatar_tops, allow_none=False)
 # MORE UI ASSETS
 # ==================================================
 
-state.play_background_image = pygame.image.load(
-    str(paths.asset("ui/menu_ui/play_background.png"))
-).convert_alpha()
-
 state.play_background_image = pygame.transform.smoothscale(
-    state.play_background_image,
+    pygame.image.load(
+        str(paths.asset("ui/menu_ui/play_background.png"))
+    ).convert_alpha(),
     (
         BASE_WIDTH,
         BASE_HEIGHT

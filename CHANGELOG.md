@@ -50,6 +50,11 @@ How to use this file (maintainers and AI agents):
 - The horse races no longer leave the music permanently quieter after you leave them.
 - Faro: placing a bet, taking it back and cashing out no longer counts as a played session (no free rating, XP or fans).
 - The blackjack table does much less work every frame (fonts and the background picture are made once).
+- Hold'em: starting a new session after busting no longer ends it on the first frame, the table-clear bonus can be earned again in later sessions, and the hand recap's "Eligible:" line is no longer blank when everyone else folded.
+- Seven-Card Stud: a player who is all-in from the ante no longer has to "post" the bring-in.
+- Five-Card Draw: if the deck ever runs out during the draw, the discards are shuffled back in instead of silently keeping your old card.
+- Removed the Hold'em F7/Space/B debug keys.
+- The poker tables and the hand recap do less work every frame (fonts are made once).
 - F10 debug menu: jumping to the Career hub or a debug night during Free Play no longer saves the Free Play $5,000 into your career, debug nights no longer use up a career day, and leaving a debug session no longer leaves the game in debug mode (where real career nights weren't recorded).
 
 ### Online play

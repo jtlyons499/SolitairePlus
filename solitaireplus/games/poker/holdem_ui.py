@@ -1,7 +1,9 @@
 from solitaireplus.app import paths
+from solitaireplus.app import state
 from solitaireplus.career.session_summary import poker_session_status
 from solitaireplus.games.poker.recap import draw_recap, get_recap_action
 import math
+from types import SimpleNamespace
 
 import pygame
 
@@ -17,6 +19,11 @@ from solitaireplus.games.poker.quick_chat import (
     quick_chat_availability,
     submit_holdem_quick_chat,
 )
+from solitaireplus.ui import text as ui_text
+
+# Module-private caches, animation keys and table UI state. Their starting values are
+# set below, next to the code that uses them; one holder means no 'global' statements.
+_ui = SimpleNamespace()
 
 
 # ==================================================
@@ -45,21 +52,19 @@ HOLDEM_LOG_RECT = pygame.Rect(
     140
 )
 
-holdem_log_scroll = 0
+# Kept in solitaireplus/app/state.py: state.holdem_log_scroll.
 
 # ==================================================
 # LOAD ASSETS/IMAGES
 # ==================================================
-_poker_chip_images = None
+_ui.poker_chip_images = None
 
 
 def get_poker_chip_images():
 
-    global _poker_chip_images
+    if _ui.poker_chip_images is None:
 
-    if _poker_chip_images is None:
-
-        _poker_chip_images = {
+        _ui.poker_chip_images = {
             "black": pygame.image.load(
                 str(paths.asset("poker/chip_black.png"))
             ).convert_alpha(),
@@ -81,25 +86,23 @@ def get_poker_chip_images():
             ).convert_alpha(),
         }
 
-    return _poker_chip_images
+    return _ui.poker_chip_images
 
 # ==================================================
 # HOLDEM FONTS
 # ==================================================
 
-_holdem_fonts = None
+_ui.holdem_fonts = None
 
 
 def get_holdem_fonts():
 
-    global _holdem_fonts
-
-    if _holdem_fonts is None:
+    if _ui.holdem_fonts is None:
 
         if not pygame.font.get_init():
             pygame.font.init()
 
-        _holdem_fonts = {
+        _ui.holdem_fonts = {
             "title": pygame.font.SysFont(
                 "cambria",
                 31,
@@ -125,7 +128,7 @@ def get_holdem_fonts():
             ),
         }
 
-    return _holdem_fonts
+    return _ui.holdem_fonts
 
 # ==================================================
 # COLORS
@@ -206,12 +209,8 @@ holdem_raise_rect = pygame.Rect(
 # BET SLIDER STATE
 # ==================================================
 
-holdem_bet_fraction = 0.25
-
-holdem_bet_slider_dragging = False
-
-holdem_manual_bet_text = ""
-holdem_manual_bet_active = False
+# Kept in solitaireplus/app/state.py: state.holdem_bet_fraction, state.holdem_bet_slider_dragging,
+# state.holdem_manual_bet_text, state.holdem_manual_bet_active.
 
 # Raise slider
 holdem_slider_rect = pygame.Rect(
@@ -279,38 +278,28 @@ holdem_exit_rect = pygame.Rect(
 
 holdem_log_history = []
 
-holdem_log_scroll = 0
+# Kept in solitaireplus/app/state.py: state.holdem_log_scroll.
 
 holdem_chat_history = []
 _holdem_speech_overlay = PokerSpeechOverlay()
 
-holdem_active_tab = "log"
-
-holdem_chat_scroll = 0
-
-holdem_chat_unread = False
+# Kept in solitaireplus/app/state.py: state.holdem_active_tab, state.holdem_chat_scroll,
+# state.holdem_chat_unread, state.holdem_quick_chat_open, state.holdem_quick_chat_target_mode.
 
 # Player quick-chat panel. The active game reference is refreshed every draw,
 # keeping the existing main.py click path unchanged.
-holdem_quick_chat_open = False
-holdem_quick_chat_target_mode = None
 holdem_quick_chat_pending = []
-_holdem_active_game = None
+_ui.holdem_active_game = None
 
-_holdem_last_stage = None
-_holdem_last_result = None
+_ui.holdem_last_stage = None
+_ui.holdem_last_result = None
 
 # ==================================================
 # HOLDEM OPTIONS STATE
 # ==================================================
 
-holdem_options_open = False
-
-holdem_table_speed = "normal"
-
-holdem_auto_deal_enabled = True
-
-holdem_table_chat_enabled = True
+# Kept in solitaireplus/app/state.py: state.holdem_options_open, state.holdem_table_speed,
+# state.holdem_auto_deal_enabled, state.holdem_table_chat_enabled.
 
 
 # ==================================================
@@ -520,33 +509,29 @@ def get_texas_holdem_buy_in_action(
 
 def is_holdem_options_open():
 
-    return holdem_options_open
+    return state.holdem_options_open
 
 
 def toggle_holdem_options():
 
-    global holdem_options_open
-
-    holdem_options_open = (
-        not holdem_options_open
+    state.holdem_options_open = (
+        not state.holdem_options_open
     )
 
 
 def close_holdem_options():
 
-    global holdem_options_open
-
-    holdem_options_open = False
+    state.holdem_options_open = False
 
 
 def is_holdem_auto_deal_enabled():
 
-    return holdem_auto_deal_enabled
+    return state.holdem_auto_deal_enabled
 
 
 def is_holdem_table_chat_enabled():
 
-    return holdem_table_chat_enabled
+    return state.holdem_table_chat_enabled
 
 
 def is_holdem_table_chat_popups_enabled():
@@ -563,7 +548,7 @@ def get_holdem_npc_delay():
     }
 
     return delays.get(
-        holdem_table_speed,
+        state.holdem_table_speed,
         1200
     )
 
@@ -579,7 +564,7 @@ def get_holdem_street_delay():
     }
 
     return delays.get(
-        holdem_table_speed,
+        state.holdem_table_speed,
         1200
     )
 
@@ -595,7 +580,7 @@ def get_holdem_next_hand_delay():
     }
 
     return delays.get(
-        holdem_table_speed,
+        state.holdem_table_speed,
         15000
     )
 
@@ -604,12 +589,7 @@ def handle_holdem_options_click(
         mouse_pos
 ):
 
-    global holdem_options_open
-    global holdem_table_speed
-    global holdem_auto_deal_enabled
-    global holdem_table_chat_enabled
-
-    if not holdem_options_open:
+    if not state.holdem_options_open:
         return False
 
     if mouse_pos is None:
@@ -623,7 +603,7 @@ def handle_holdem_options_click(
             mouse_pos
     ):
 
-        holdem_options_open = False
+        state.holdem_options_open = False
 
         return True
 
@@ -635,7 +615,7 @@ def handle_holdem_options_click(
             mouse_pos
     ):
 
-        holdem_table_speed = "slow"
+        state.holdem_table_speed = "slow"
 
         return True
 
@@ -643,7 +623,7 @@ def handle_holdem_options_click(
             mouse_pos
     ):
 
-        holdem_table_speed = "normal"
+        state.holdem_table_speed = "normal"
 
         return True
 
@@ -651,7 +631,7 @@ def handle_holdem_options_click(
             mouse_pos
     ):
 
-        holdem_table_speed = "fast"
+        state.holdem_table_speed = "fast"
 
         return True
 
@@ -663,8 +643,8 @@ def handle_holdem_options_click(
             mouse_pos
     ):
 
-        holdem_auto_deal_enabled = (
-            not holdem_auto_deal_enabled
+        state.holdem_auto_deal_enabled = (
+            not state.holdem_auto_deal_enabled
         )
 
         return True
@@ -677,14 +657,14 @@ def handle_holdem_options_click(
             mouse_pos
     ):
 
-        holdem_table_chat_enabled = (
-            not holdem_table_chat_enabled
+        state.holdem_table_chat_enabled = (
+            not state.holdem_table_chat_enabled
         )
 
         return True
 
     if (
-            holdem_table_chat_enabled
+            state.holdem_table_chat_enabled
             and holdem_chat_popups_toggle_rect.collidepoint(mouse_pos)
     ):
         set_poker_chat_popups_enabled(
@@ -698,22 +678,22 @@ def handle_holdem_options_click(
 # CARD ANIMATION STATE
 # ==================================================
 
-_holdem_card_fx_hand_number = -1
-_holdem_card_fx_stage = None
+_ui.holdem_card_fx_hand_number = -1
+_ui.holdem_card_fx_stage = None
 
-_holdem_card_fx_kind = None
-_holdem_card_fx_started_at = 0
+_ui.holdem_card_fx_kind = None
+_ui.holdem_card_fx_started_at = 0
 
 # ==================================================
 # CHIP ANIMATION STATE
 # ==================================================
 
-_holdem_chip_fx_hand_number = -1
-_holdem_chip_fx_stage = None
+_ui.holdem_chip_fx_hand_number = -1
+_ui.holdem_chip_fx_stage = None
 
-_holdem_chip_fx_signatures = {}
-_holdem_chip_fx_started_at = {}
-_holdem_chip_fx_indexes = {}
+_ui.holdem_chip_fx_signatures = {}
+_ui.holdem_chip_fx_started_at = {}
+_ui.holdem_chip_fx_indexes = {}
 
 HOLDEM_CHIP_FX_DURATION = 280
 
@@ -721,8 +701,8 @@ HOLDEM_CHIP_FX_DURATION = 280
 # WAGER SWEEP ANIMATION STATE
 # ==================================================
 
-_holdem_wager_sweep_key = None
-_holdem_wager_sweep_started_at = 0
+_ui.holdem_wager_sweep_key = None
+_ui.holdem_wager_sweep_started_at = 0
 
 HOLDEM_WAGER_SWEEP_DELAY = 200
 HOLDEM_WAGER_SWEEP_DURATION = 700
@@ -731,8 +711,8 @@ HOLDEM_WAGER_SWEEP_DURATION = 700
 # POT DISPLAY / PAYOUT ANIMATION
 # ==================================================
 
-_holdem_payout_fx_key = None
-_holdem_payout_fx_started_at = 0
+_ui.holdem_payout_fx_key = None
+_ui.holdem_payout_fx_started_at = 0
 
 HOLDEM_PAYOUT_FX_DURATION = 1050
 
@@ -874,9 +854,6 @@ def draw_holdem_pot_stack(
 def get_holdem_payout_fx_progress(
         holdem_game
 ):
-    global _holdem_payout_fx_key
-    global _holdem_payout_fx_started_at
-
     if (
             holdem_game.current_stage
             != "showdown"
@@ -903,13 +880,13 @@ def get_holdem_payout_fx_progress(
 
     now = pygame.time.get_ticks()
 
-    if key != _holdem_payout_fx_key:
-        _holdem_payout_fx_key = key
-        _holdem_payout_fx_started_at = now
+    if key != _ui.holdem_payout_fx_key:
+        _ui.holdem_payout_fx_key = key
+        _ui.holdem_payout_fx_started_at = now
 
     progress = (
         now
-        - _holdem_payout_fx_started_at
+        - _ui.holdem_payout_fx_started_at
     ) / HOLDEM_PAYOUT_FX_DURATION
 
     progress = max(
@@ -1127,7 +1104,7 @@ def draw_holdem_showdown_banner(
         explanations = list(dict.fromkeys(pot.get('hand') or 'Everyone else folded' for pot in awards))
         if explanations:
             result += ' — ' + '; '.join(explanations)
-    font = pygame.font.Font(None, 32)
+    font = ui_text.get_font(None, 32)
     rows = ['']
     for word in result.split():
         trial = (rows[-1] + ' ' + word).strip()
@@ -1238,11 +1215,6 @@ def handle_holdem_panel_click(
         mouse_pos
 ):
 
-    global holdem_active_tab
-    global holdem_chat_unread
-    global holdem_quick_chat_open
-    global holdem_quick_chat_target_mode
-
     if mouse_pos is None:
         return False
 
@@ -1262,36 +1234,36 @@ def handle_holdem_panel_click(
         28
     )
 
-    game = _holdem_active_game
+    game = _ui.holdem_active_game
     quick_toggle_rect, quick_popup_rect, quick_option_rects = (
-        _get_holdem_quick_chat_rects(game, holdem_quick_chat_target_mode)
+        _get_holdem_quick_chat_rects(game, state.holdem_quick_chat_target_mode)
     )
 
     if log_tab_rect.collidepoint(mouse_pos):
-        holdem_active_tab = "log"
-        holdem_quick_chat_open = False
-        holdem_quick_chat_target_mode = None
+        state.holdem_active_tab = "log"
+        state.holdem_quick_chat_open = False
+        state.holdem_quick_chat_target_mode = None
         return True
 
     if chat_tab_rect.collidepoint(mouse_pos):
-        holdem_active_tab = "chat"
-        holdem_chat_unread = False
-        holdem_quick_chat_open = False
-        holdem_quick_chat_target_mode = None
+        state.holdem_active_tab = "chat"
+        state.holdem_chat_unread = False
+        state.holdem_quick_chat_open = False
+        state.holdem_quick_chat_target_mode = None
         return True
 
     if quick_toggle_rect.collidepoint(mouse_pos):
         if (
-            holdem_table_chat_enabled
+            state.holdem_table_chat_enabled
             and game is not None
             and quick_chat_options_for_game(game)
         ):
-            holdem_quick_chat_open = not holdem_quick_chat_open
-            if not holdem_quick_chat_open:
-                holdem_quick_chat_target_mode = None
+            state.holdem_quick_chat_open = not state.holdem_quick_chat_open
+            if not state.holdem_quick_chat_open:
+                state.holdem_quick_chat_target_mode = None
         return True
 
-    if holdem_quick_chat_open:
+    if state.holdem_quick_chat_open:
         for key, label, rect in quick_option_rects:
             if not rect.collidepoint(mouse_pos):
                 continue
@@ -1299,12 +1271,12 @@ def handle_holdem_panel_click(
                 return True
 
             if key == "__back__":
-                holdem_quick_chat_target_mode = None
+                state.holdem_quick_chat_target_mode = None
                 return True
 
             if isinstance(key, tuple) and key and key[0] == "__target__":
                 target_index = int(key[1])
-                chat_key = holdem_quick_chat_target_mode
+                chat_key = state.holdem_quick_chat_target_mode
                 if not chat_key:
                     return True
                 enabled, _reason = quick_chat_availability(game, chat_key, target_index)
@@ -1316,24 +1288,24 @@ def handle_holdem_panel_click(
                 if not enabled:
                     return True
                 if quick_chat_target_options(game, key):
-                    holdem_quick_chat_target_mode = key
+                    state.holdem_quick_chat_target_mode = key
                     return True
                 result = submit_holdem_quick_chat(game, key)
 
             if result.get("accepted"):
                 add_holdem_chat_message("You", result.get("label", label))
                 _queue_holdem_quick_chat_responses(result.get("responses", []))
-                holdem_active_tab = "chat"
-                holdem_chat_unread = False
-                holdem_quick_chat_open = False
-                holdem_quick_chat_target_mode = None
+                state.holdem_active_tab = "chat"
+                state.holdem_chat_unread = False
+                state.holdem_quick_chat_open = False
+                state.holdem_quick_chat_target_mode = None
             return True
 
         if quick_popup_rect.collidepoint(mouse_pos):
             return True
 
-        holdem_quick_chat_open = False
-        holdem_quick_chat_target_mode = None
+        state.holdem_quick_chat_open = False
+        state.holdem_quick_chat_target_mode = None
 
     return False
 
@@ -1703,16 +1675,6 @@ def sync_holdem_chip_fx_context(
         holdem_game
 ):
 
-    global _holdem_chip_fx_hand_number
-    global _holdem_chip_fx_stage
-
-    global _holdem_chip_fx_signatures
-    global _holdem_chip_fx_started_at
-    global _holdem_chip_fx_indexes
-
-    global _holdem_wager_sweep_key
-    global _holdem_wager_sweep_started_at
-
     hand_number = getattr(
         holdem_game,
         "hand_number",
@@ -1729,34 +1691,30 @@ def sync_holdem_chip_fx_context(
 
     if (
             hand_number
-            != _holdem_chip_fx_hand_number
+            != _ui.holdem_chip_fx_hand_number
             or stage
-            != _holdem_chip_fx_stage
+            != _ui.holdem_chip_fx_stage
     ):
 
-        _holdem_chip_fx_hand_number = (
+        _ui.holdem_chip_fx_hand_number = (
             hand_number
         )
 
-        _holdem_chip_fx_stage = (
+        _ui.holdem_chip_fx_stage = (
             stage
         )
 
-        _holdem_chip_fx_signatures = {}
-        _holdem_chip_fx_started_at = {}
-        _holdem_chip_fx_indexes = {}
+        _ui.holdem_chip_fx_signatures = {}
+        _ui.holdem_chip_fx_started_at = {}
+        _ui.holdem_chip_fx_indexes = {}
 
-        _holdem_wager_sweep_key = None
-        _holdem_wager_sweep_started_at = 0
+        _ui.holdem_wager_sweep_key = None
+        _ui.holdem_wager_sweep_started_at = 0
 
 def get_holdem_chip_fx(
         animation_key,
         chunks
 ):
-
-    global _holdem_chip_fx_signatures
-    global _holdem_chip_fx_started_at
-    global _holdem_chip_fx_indexes
 
     if animation_key is None:
         return None, 1.0
@@ -1767,7 +1725,7 @@ def get_holdem_chip_fx(
     )
 
     previous_signature = (
-        _holdem_chip_fx_signatures.get(
+        _ui.holdem_chip_fx_signatures.get(
             animation_key
         )
     )
@@ -1780,19 +1738,19 @@ def get_holdem_chip_fx(
 
     if previous_signature is None:
 
-        _holdem_chip_fx_signatures[
+        _ui.holdem_chip_fx_signatures[
             animation_key
         ] = signature
 
         if signature:
 
-            _holdem_chip_fx_indexes[
+            _ui.holdem_chip_fx_indexes[
                 animation_key
             ] = (
                 len(signature) - 1
             )
 
-            _holdem_chip_fx_started_at[
+            _ui.holdem_chip_fx_started_at[
                 animation_key
             ] = now
 
@@ -1810,42 +1768,42 @@ def get_holdem_chip_fx(
             signature
         )
 
-        _holdem_chip_fx_signatures[
+        _ui.holdem_chip_fx_signatures[
             animation_key
         ] = signature
 
         if new_length > old_length:
 
-            _holdem_chip_fx_indexes[
+            _ui.holdem_chip_fx_indexes[
                 animation_key
             ] = (
                 new_length - 1
             )
 
-            _holdem_chip_fx_started_at[
+            _ui.holdem_chip_fx_started_at[
                 animation_key
             ] = now
 
         else:
 
-            _holdem_chip_fx_indexes.pop(
+            _ui.holdem_chip_fx_indexes.pop(
                 animation_key,
                 None
             )
 
-            _holdem_chip_fx_started_at.pop(
+            _ui.holdem_chip_fx_started_at.pop(
                 animation_key,
                 None
             )
 
     animated_index = (
-        _holdem_chip_fx_indexes.get(
+        _ui.holdem_chip_fx_indexes.get(
             animation_key
         )
     )
 
     started_at = (
-        _holdem_chip_fx_started_at.get(
+        _ui.holdem_chip_fx_started_at.get(
             animation_key
         )
     )
@@ -1899,9 +1857,6 @@ def get_holdem_chip_ease(
 def get_holdem_wager_sweep_progress(
         holdem_game
 ):
-
-    global _holdem_wager_sweep_key
-    global _holdem_wager_sweep_started_at
 
     # ==================================================
     # Only betting streets can sweep
@@ -1964,21 +1919,21 @@ def get_holdem_wager_sweep_progress(
     # ==================================================
 
     if (
-            _holdem_wager_sweep_key
+            _ui.holdem_wager_sweep_key
             != sweep_key
     ):
 
-        _holdem_wager_sweep_key = (
+        _ui.holdem_wager_sweep_key = (
             sweep_key
         )
 
-        _holdem_wager_sweep_started_at = (
+        _ui.holdem_wager_sweep_started_at = (
             now
         )
 
     elapsed = (
         now
-        - _holdem_wager_sweep_started_at
+        - _ui.holdem_wager_sweep_started_at
     )
 
     # Brief pause after final wager lands.
@@ -2322,10 +2277,6 @@ def set_holdem_bet_slider_from_mouse(
         mouse_pos
 ):
 
-    global holdem_bet_fraction
-    global holdem_manual_bet_text
-    global holdem_manual_bet_active
-
     if mouse_pos is None:
         return False
 
@@ -2342,7 +2293,7 @@ def set_holdem_bet_slider_from_mouse(
         - holdem_slider_rect.left
     )
 
-    holdem_bet_fraction = (
+    state.holdem_bet_fraction = (
         relative_x
         / max(
             1,
@@ -2350,16 +2301,16 @@ def set_holdem_bet_slider_from_mouse(
         )
     )
 
-    holdem_bet_fraction = max(
+    state.holdem_bet_fraction = max(
         0.0,
         min(
-            holdem_bet_fraction,
+            state.holdem_bet_fraction,
             1.0
         )
     )
 
-    holdem_manual_bet_text = ""
-    holdem_manual_bet_active = False
+    state.holdem_manual_bet_text = ""
+    state.holdem_manual_bet_active = False
 
     return True
 
@@ -2368,7 +2319,7 @@ def drag_holdem_bet_slider(
         mouse_pos
 ):
 
-    if not holdem_bet_slider_dragging:
+    if not state.holdem_bet_slider_dragging:
         return False
 
     return (
@@ -2380,13 +2331,11 @@ def drag_holdem_bet_slider(
 
 def stop_holdem_bet_slider_drag():
 
-    global holdem_bet_slider_dragging
-
     was_dragging = (
-        holdem_bet_slider_dragging
+        state.holdem_bet_slider_dragging
     )
 
-    holdem_bet_slider_dragging = False
+    state.holdem_bet_slider_dragging = False
 
     return was_dragging
 
@@ -2394,11 +2343,6 @@ def update_holdem_bet_slider(
         mouse_pos,
         holdem_game
 ):
-
-    global holdem_bet_fraction
-    global holdem_bet_slider_dragging
-    global holdem_manual_bet_text
-    global holdem_manual_bet_active
 
     if mouse_pos is None:
         return False
@@ -2441,7 +2385,7 @@ def update_holdem_bet_slider(
             mouse_pos
     ):
 
-        holdem_bet_slider_dragging = True
+        state.holdem_bet_slider_dragging = True
 
         set_holdem_bet_slider_from_mouse(
             mouse_pos
@@ -2457,9 +2401,9 @@ def update_holdem_bet_slider(
             mouse_pos
     ):
 
-        holdem_bet_fraction = 0.0
-        holdem_manual_bet_text = ""
-        holdem_manual_bet_active = False
+        state.holdem_bet_fraction = 0.0
+        state.holdem_manual_bet_text = ""
+        state.holdem_manual_bet_active = False
 
         return True
 
@@ -2467,9 +2411,9 @@ def update_holdem_bet_slider(
             mouse_pos
     ):
 
-        holdem_bet_fraction = 0.5
-        holdem_manual_bet_text = ""
-        holdem_manual_bet_active = False
+        state.holdem_bet_fraction = 0.5
+        state.holdem_manual_bet_text = ""
+        state.holdem_manual_bet_active = False
 
         return True
 
@@ -2485,21 +2429,21 @@ def update_holdem_bet_slider(
             holdem_game.player_stack
         )
 
-        holdem_bet_fraction = (
+        state.holdem_bet_fraction = (
             pot_target
             / holdem_game.player_stack
         )
 
-        holdem_bet_fraction = max(
+        state.holdem_bet_fraction = max(
             0.0,
             min(
-                holdem_bet_fraction,
+                state.holdem_bet_fraction,
                 1.0
             )
         )
 
-        holdem_manual_bet_text = ""
-        holdem_manual_bet_active = False
+        state.holdem_manual_bet_text = ""
+        state.holdem_manual_bet_active = False
 
         return True
 
@@ -2507,9 +2451,9 @@ def update_holdem_bet_slider(
             mouse_pos
     ):
 
-        holdem_bet_fraction = 1.0
-        holdem_manual_bet_text = ""
-        holdem_manual_bet_active = False
+        state.holdem_bet_fraction = 1.0
+        state.holdem_manual_bet_text = ""
+        state.holdem_manual_bet_active = False
 
         return True
 
@@ -2517,19 +2461,14 @@ def update_holdem_bet_slider(
 
 def clear_holdem_manual_bet():
 
-    global holdem_manual_bet_text
-    global holdem_manual_bet_active
-
-    holdem_manual_bet_text = ""
-    holdem_manual_bet_active = False
+    state.holdem_manual_bet_text = ""
+    state.holdem_manual_bet_active = False
 
 
 def handle_holdem_manual_bet_click(
         mouse_pos,
         holdem_game
 ):
-
-    global holdem_manual_bet_active
 
     if mouse_pos is None:
         return False
@@ -2544,11 +2483,11 @@ def handle_holdem_manual_bet_click(
     )
 
     if can_edit and holdem_manual_bet_rect.collidepoint(mouse_pos):
-        holdem_manual_bet_active = True
+        state.holdem_manual_bet_active = True
         return True
 
-    if holdem_manual_bet_active:
-        holdem_manual_bet_active = False
+    if state.holdem_manual_bet_active:
+        state.holdem_manual_bet_active = False
 
     return False
 
@@ -2558,42 +2497,39 @@ def handle_holdem_manual_bet_key(
         holdem_game
 ):
 
-    global holdem_manual_bet_text
-    global holdem_manual_bet_active
-
-    if not holdem_manual_bet_active:
+    if not state.holdem_manual_bet_active:
         return False
 
     if event.type != pygame.KEYDOWN:
         return False
 
     if event.key == pygame.K_ESCAPE:
-        holdem_manual_bet_active = False
+        state.holdem_manual_bet_active = False
         return True
 
     if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-        holdem_manual_bet_active = False
+        state.holdem_manual_bet_active = False
         return True
 
     if event.key == pygame.K_BACKSPACE:
-        holdem_manual_bet_text = holdem_manual_bet_text[:-1]
+        state.holdem_manual_bet_text = state.holdem_manual_bet_text[:-1]
         return True
 
     character = getattr(event, "unicode", "")
 
-    if character.isdigit() and len(holdem_manual_bet_text) < 9:
-        holdem_manual_bet_text += character
+    if character.isdigit() and len(state.holdem_manual_bet_text) < 9:
+        state.holdem_manual_bet_text += character
 
     return True
 
 
 def get_holdem_manual_bet_amount(holdem_game):
 
-    if not holdem_manual_bet_text:
+    if not state.holdem_manual_bet_text:
         return None
 
     try:
-        requested = int(holdem_manual_bet_text)
+        requested = int(state.holdem_manual_bet_text)
     except ValueError:
         return None
 
@@ -2621,8 +2557,6 @@ def get_holdem_manual_bet_amount(holdem_game):
 def get_holdem_bet_amount(
         holdem_game
 ):
-
-    global holdem_bet_fraction
 
     available_stack = (
         holdem_game.player_stack
@@ -2661,7 +2595,7 @@ def get_holdem_bet_amount(
                 maximum
                 - minimum
             )
-            * holdem_bet_fraction
+            * state.holdem_bet_fraction
         )
 
         return max(
@@ -2698,7 +2632,7 @@ def get_holdem_bet_amount(
             maximum_raise_to
             - minimum_raise_to
         )
-        * holdem_bet_fraction
+        * state.holdem_bet_fraction
     )
 
     return max(
@@ -2714,16 +2648,13 @@ def scroll_holdem_log(
         total_lines
 ):
 
-    global holdem_log_scroll
-    global holdem_chat_scroll
-
     visible_line_count = 3
 
     # ==================================================
     # CHAT
     # ==================================================
 
-    if holdem_active_tab == "chat":
+    if state.holdem_active_tab == "chat":
 
         total_chat_lines = (
             len(
@@ -2737,14 +2668,14 @@ def scroll_holdem_log(
             - visible_line_count
         )
 
-        holdem_chat_scroll += (
+        state.holdem_chat_scroll += (
             wheel_y
         )
 
-        holdem_chat_scroll = max(
+        state.holdem_chat_scroll = max(
             0,
             min(
-                holdem_chat_scroll,
+                state.holdem_chat_scroll,
                 max_scroll
             )
         )
@@ -2761,14 +2692,14 @@ def scroll_holdem_log(
         - visible_line_count
     )
 
-    holdem_log_scroll += (
+    state.holdem_log_scroll += (
         wheel_y
     )
 
-    holdem_log_scroll = max(
+    state.holdem_log_scroll = max(
         0,
         min(
-            holdem_log_scroll,
+            state.holdem_log_scroll,
             max_scroll
         )
     )
@@ -2778,13 +2709,10 @@ def add_holdem_chat_message(
         message
 ):
 
-    global holdem_chat_scroll
-    global holdem_chat_unread
-
     if not message:
         return
 
-    if not holdem_table_chat_enabled:
+    if not state.holdem_table_chat_enabled:
         return
 
     if speaker and is_poker_chat_popups_enabled():
@@ -2817,21 +2745,17 @@ def add_holdem_chat_message(
         ]
 
     # New messages return view to newest
-    holdem_chat_scroll = 0
+    state.holdem_chat_scroll = 0
 
     # If player is not currently looking at chat,
     # light up the Chat tab.
-    if holdem_active_tab != "chat":
+    if state.holdem_active_tab != "chat":
 
-        holdem_chat_unread = True
+        state.holdem_chat_unread = True
 
 def update_holdem_log(
         holdem_game
 ):
-
-    global _holdem_last_stage
-    global _holdem_last_result
-    global holdem_log_scroll
 
     # ==================================================
     # Engine-owned hand history
@@ -2859,7 +2783,7 @@ def update_holdem_log(
 
             # New information always returns the log view
             # to the most recent action.
-            holdem_log_scroll = 0
+            state.holdem_log_scroll = 0
 
         return
 
@@ -2872,7 +2796,7 @@ def update_holdem_log(
 
     stage = holdem_game.current_stage
 
-    if stage != _holdem_last_stage:
+    if stage != _ui.holdem_last_stage:
 
         stage_messages = {
             "ready":
@@ -2894,8 +2818,8 @@ def update_holdem_log(
                 message
             )
 
-        _holdem_last_stage = stage
-        holdem_log_scroll = 0
+        _ui.holdem_last_stage = stage
+        state.holdem_log_scroll = 0
 
     result_text = getattr(
         holdem_game,
@@ -2906,18 +2830,18 @@ def update_holdem_log(
     if (
             result_text
             and result_text
-            != _holdem_last_result
+            != _ui.holdem_last_result
     ):
 
         holdem_log_history.append(
             result_text
         )
 
-        _holdem_last_result = (
+        _ui.holdem_last_result = (
             result_text
         )
 
-        holdem_log_scroll = 0
+        state.holdem_log_scroll = 0
 
 def draw_translucent_panel(
         surface,
@@ -3197,21 +3121,21 @@ def draw_holdem_log_panel(
                 active_tab == "chat"
         ),
         attention=(
-                holdem_chat_unread
+                state.holdem_chat_unread
                 and active_tab != "chat"
         )
     )
 
-    quick_options = quick_chat_options_for_game(_holdem_active_game)
+    quick_options = quick_chat_options_for_game(_ui.holdem_active_game)
     quick_toggle_rect, quick_popup_rect, quick_option_rects = (
         _get_holdem_quick_chat_rects(
-            _holdem_active_game,
-            holdem_quick_chat_target_mode
+            _ui.holdem_active_game,
+            state.holdem_quick_chat_target_mode
         )
     )
     quick_enabled = (
-        holdem_table_chat_enabled
-        and _holdem_active_game is not None
+        state.holdem_table_chat_enabled
+        and _ui.holdem_active_game is not None
         and bool(quick_options)
     )
 
@@ -3222,10 +3146,10 @@ def draw_holdem_log_panel(
         mouse_pos,
         holdem_small_font,
         enabled=quick_enabled,
-        selected=holdem_quick_chat_open
+        selected=state.holdem_quick_chat_open
     )
 
-    if holdem_quick_chat_open and quick_enabled:
+    if state.holdem_quick_chat_open and quick_enabled:
         draw_translucent_panel(
             game_surface,
             quick_popup_rect,
@@ -3235,7 +3159,7 @@ def draw_holdem_log_panel(
             radius=12
         )
 
-        title_text = "CHOOSE PLAYER" if holdem_quick_chat_target_mode else "QUICK CHAT"
+        title_text = "CHOOSE PLAYER" if state.holdem_quick_chat_target_mode else "QUICK CHAT"
         popup_title = holdem_small_font.render(
             title_text,
             True,
@@ -3254,7 +3178,7 @@ def draw_holdem_log_panel(
                 enabled = True
                 button_text = label
             else:
-                enabled, _reason = quick_chat_availability(_holdem_active_game, key)
+                enabled, _reason = quick_chat_availability(_ui.holdem_active_game, key)
                 button_text = label
             draw_holdem_glossy_button(
                 game_surface,
@@ -3305,7 +3229,7 @@ def draw_holdem_log_panel(
 
         end_index = (
             len(log_lines)
-            - holdem_log_scroll
+            - state.holdem_log_scroll
         )
 
         end_index = max(
@@ -3336,7 +3260,7 @@ def draw_holdem_log_panel(
 
                 len(holdem_chat_history)
 
-                - holdem_chat_scroll
+                - state.holdem_chat_scroll
 
         )
 
@@ -3504,7 +3428,7 @@ def draw_holdem_log_panel(
         )
 
         scroll_fraction = (
-            holdem_log_scroll
+            state.holdem_log_scroll
             / max_scroll
         )
 
@@ -4090,7 +4014,7 @@ def draw_holdem_side_panel(
                 holdem_slider_rect.width
                 - knob_width
         )
-        * holdem_bet_fraction
+        * state.holdem_bet_fraction
     )
 
     knob_rect = pygame.Rect(
@@ -4100,7 +4024,7 @@ def draw_holdem_side_panel(
         holdem_slider_rect.height + 6
     )
 
-    if holdem_bet_slider_dragging:
+    if state.holdem_bet_slider_dragging:
 
         knob_color = (
             175,
@@ -4156,19 +4080,19 @@ def draw_holdem_side_panel(
     )
 
     manual_fill = (18, 24, 27, 235) if manual_enabled else (48, 48, 52, 220)
-    manual_border = (235, 190, 70) if holdem_manual_bet_active else ((150, 175, 205) if holdem_manual_bet_text else (105, 110, 118))
+    manual_border = (235, 190, 70) if state.holdem_manual_bet_active else ((150, 175, 205) if state.holdem_manual_bet_text else (105, 110, 118))
 
     draw_translucent_panel(
         surface,
         holdem_manual_bet_rect,
         manual_fill,
         border_color=manual_border,
-        border_width=2 if holdem_manual_bet_active else 1,
+        border_width=2 if state.holdem_manual_bet_active else 1,
         radius=7
     )
 
-    if holdem_manual_bet_text:
-        manual_label = f"${holdem_manual_bet_text}"
+    if state.holdem_manual_bet_text:
+        manual_label = f"${state.holdem_manual_bet_text}"
         manual_color = WHITE if manual_enabled else (150, 150, 155)
     else:
         manual_label = (
@@ -4781,12 +4705,6 @@ def sync_holdem_card_fx(
         holdem_game
 ):
 
-    global _holdem_card_fx_hand_number
-    global _holdem_card_fx_stage
-
-    global _holdem_card_fx_kind
-    global _holdem_card_fx_started_at
-
     now = pygame.time.get_ticks()
 
     hand_number = getattr(
@@ -4805,22 +4723,22 @@ def sync_holdem_card_fx(
 
     if (
             hand_number
-            != _holdem_card_fx_hand_number
+            != _ui.holdem_card_fx_hand_number
     ):
 
-        _holdem_card_fx_hand_number = (
+        _ui.holdem_card_fx_hand_number = (
             hand_number
         )
 
-        _holdem_card_fx_stage = (
+        _ui.holdem_card_fx_stage = (
             stage
         )
 
-        _holdem_card_fx_kind = (
+        _ui.holdem_card_fx_kind = (
             "deal"
         )
 
-        _holdem_card_fx_started_at = (
+        _ui.holdem_card_fx_started_at = (
             now
         )
 
@@ -4828,9 +4746,9 @@ def sync_holdem_card_fx(
     # New street
     # ==================================================
 
-    elif stage != _holdem_card_fx_stage:
+    elif stage != _ui.holdem_card_fx_stage:
 
-        _holdem_card_fx_stage = (
+        _ui.holdem_card_fx_stage = (
             stage
         )
 
@@ -4841,22 +4759,22 @@ def sync_holdem_card_fx(
                 "showdown",
         ):
 
-            _holdem_card_fx_kind = (
+            _ui.holdem_card_fx_kind = (
                 stage
             )
 
-            _holdem_card_fx_started_at = (
+            _ui.holdem_card_fx_started_at = (
                 now
             )
 
     elapsed = max(
         0,
         now
-        - _holdem_card_fx_started_at
+        - _ui.holdem_card_fx_started_at
     )
 
     return (
-        _holdem_card_fx_kind,
+        _ui.holdem_card_fx_kind,
         elapsed
     )
 
@@ -5245,7 +5163,7 @@ def draw_holdem_options_overlay(
         mouse_pos
 ):
 
-    if not holdem_options_open:
+    if not state.holdem_options_open:
         return
 
     holdem_fonts = (
@@ -5377,7 +5295,7 @@ def draw_holdem_options_overlay(
         enabled=True,
         accent_color=(
             (70, 95, 125)
-            if holdem_table_speed
+            if state.holdem_table_speed
             == "slow"
             else None
         )
@@ -5392,7 +5310,7 @@ def draw_holdem_options_overlay(
         enabled=True,
         accent_color=(
             (70, 95, 125)
-            if holdem_table_speed
+            if state.holdem_table_speed
             == "normal"
             else None
         )
@@ -5407,7 +5325,7 @@ def draw_holdem_options_overlay(
         enabled=True,
         accent_color=(
             (70, 95, 125)
-            if holdem_table_speed
+            if state.holdem_table_speed
             == "fast"
             else None
         )
@@ -5435,13 +5353,13 @@ def draw_holdem_options_overlay(
 
     auto_text = (
         "ON"
-        if holdem_auto_deal_enabled
+        if state.holdem_auto_deal_enabled
         else "OFF"
     )
 
     auto_color = (
         (45, 115, 75)
-        if holdem_auto_deal_enabled
+        if state.holdem_auto_deal_enabled
         else (130, 55, 55)
     )
 
@@ -5477,13 +5395,13 @@ def draw_holdem_options_overlay(
 
     chat_text = (
         "ON"
-        if holdem_table_chat_enabled
+        if state.holdem_table_chat_enabled
         else "OFF"
     )
 
     chat_color = (
         (45, 115, 75)
-        if holdem_table_chat_enabled
+        if state.holdem_table_chat_enabled
         else (130, 55, 55)
     )
 
@@ -5504,7 +5422,7 @@ def draw_holdem_options_overlay(
     popup_label = name_font.render(
         "Table Chat Pop-ups",
         True,
-        WHITE if holdem_table_chat_enabled else (125, 130, 135)
+        WHITE if state.holdem_table_chat_enabled else (125, 130, 135)
     )
     surface.blit(popup_label, (515, 537))
 
@@ -5518,7 +5436,7 @@ def draw_holdem_options_overlay(
         popup_text,
         mouse_pos,
         small_font,
-        enabled=holdem_table_chat_enabled,
+        enabled=state.holdem_table_chat_enabled,
         accent_color=popup_color
     )
 
@@ -5573,22 +5491,18 @@ def draw_texas_holdem(
         felt_surface,
         next_hand_seconds=None
 ):
-    global _holdem_active_game
-    global holdem_quick_chat_open
-    global holdem_quick_chat_target_mode
-
-    if _holdem_active_game is not holdem_game:
-        holdem_quick_chat_open = False
-        holdem_quick_chat_target_mode = None
+    if _ui.holdem_active_game is not holdem_game:
+        state.holdem_quick_chat_open = False
+        state.holdem_quick_chat_target_mode = None
         holdem_quick_chat_pending.clear()
-        _holdem_active_game = holdem_game
+        _ui.holdem_active_game = holdem_game
 
     _pump_holdem_quick_chat_responses()
 
     # If the hand changes context while the menu is open, immediately leave a
     # target submenu that no longer belongs to the current situation.
-    if holdem_quick_chat_target_mode and not quick_chat_target_options(holdem_game, holdem_quick_chat_target_mode):
-        holdem_quick_chat_target_mode = None
+    if state.holdem_quick_chat_target_mode and not quick_chat_target_options(holdem_game, state.holdem_quick_chat_target_mode):
+        state.holdem_quick_chat_target_mode = None
 
     poker_chip_images = (
         get_poker_chip_images()
@@ -7042,14 +6956,14 @@ def draw_texas_holdem(
 
     completed = len(getattr(holdem_game, 'rating_seen_hands', ()))
     rating_status = poker_session_status(holdem_game, getattr(holdem_game, 'career_session_rated', True))
-    rating_label = pygame.font.Font(None, 24).render(rating_status, True, (231, 239, 234))
+    rating_label = ui_text.get_font(None, 24).render(rating_status, True, (231, 239, 234))
     game_surface.blit(rating_label, (22, 553))
 
     draw_holdem_log_panel(
         game_surface=game_surface,
         detail_font=detail_font,
         mouse_pos=mouse_pos,
-        active_tab=holdem_active_tab,
+        active_tab=state.holdem_active_tab,
         log_lines=holdem_log_history
     )
 
@@ -7157,7 +7071,7 @@ def get_texas_holdem_action(
     if recap_action:
         return recap_action
 
-    if holdem_options_open:
+    if state.holdem_options_open:
         return None
 
     # ==================================================

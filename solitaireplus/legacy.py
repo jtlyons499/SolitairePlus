@@ -1361,7 +1361,6 @@ dead_mans_hand_game = DeadMansHandGame()
 state.dead_mans_hand_return_state = state_names.STATE_DEBUG_MENU
 state.arcade_state = make_default_arcade_state()
 
-state.blackjack_dealer_npc = None
 career_event_start_arcade_tokens = 0
 career_event_start_arcade_tickets = 0
 state.career_ratings = make_player_rating_bundle(state.career_rating)
@@ -1514,13 +1513,6 @@ def sync_selected_cosmetics():
 
 sync_selected_cosmetics()
 from solitaireplus.app import fonts  # start-up code of this module runs here, as it did in main.py
-
-state.profile_switch_rect = pygame.Rect(
-    630,
-    650,
-    240,
-    48
-)
 from solitaireplus.menus import customize  # start-up code of this module runs here, as before
 from solitaireplus.menus import mode_select  # start-up code of this module runs here, as before
 
@@ -1728,41 +1720,6 @@ career_mode_rect = pygame.Rect(
     430,
     600,
     100
-)
-
-state.career_jobs_rect = pygame.Rect(
-    333,
-    485,
-    300,
-    55
-)
-
-state.career_real_estate_rect = pygame.Rect(
-    733,
-    485,
-    300,
-    55
-)
-
-state.career_leaderboards_rect = pygame.Rect(
-    333,
-    555,
-    300,
-    55
-)
-
-state.career_news_rect = pygame.Rect(
-    733,
-    555,
-    300,
-    55
-)
-
-state.career_back_rect = pygame.Rect(
-    533,
-    650,
-    300,
-    50
 )
 from solitaireplus.career import leaderboards_screen  # start-up code of this module runs here, as before
 

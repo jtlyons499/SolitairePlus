@@ -2136,6 +2136,11 @@ class TexasHoldemGame:
                 "amount":
                     winnings,
 
+                # Everyone else folded, so the winner is the only
+                # player who could take this pot.
+                "eligible":
+                    [winner_index],
+
                 "winners":
                     [winner_index],
 

@@ -226,74 +226,6 @@ def process_texas_holdem_showdown():
 # TEXAS HOLD'EM AUDIO HELPERS
 # ==================================================
 
-def play_texas_holdem_npc_action_sound(
-        npc_index
-):
-
-    if not (
-            0
-            <= npc_index
-            < len(
-                texas_holdem_game.npc_action_texts
-            )
-    ):
-        return
-
-    action_text = (
-        texas_holdem_game
-        .npc_action_texts[
-            npc_index
-        ]
-        .strip()
-        .lower()
-    )
-
-    # ------------------------------------------
-    # Check
-    # ------------------------------------------
-
-    if action_text.startswith(
-            "checked"
-    ):
-
-        sounds.audio.play_sound(
-            "poker_check"
-        )
-
-        return
-
-    # ------------------------------------------
-    # Chips moving
-    # ------------------------------------------
-
-    if action_text.startswith(
-            (
-                "called",
-                "bet",
-                "raised",
-            )
-    ):
-
-        play_texas_holdem_chip_sound()
-
-
-def play_texas_holdem_new_hand_sound():
-
-    sounds.audio.play_sound(
-        "card_draw"
-    )
-
-
-def play_texas_holdem_street_sound():
-
-    sounds.audio.play_sound(
-        "card_draw"
-    )
-
-# ==================================================
-# TEXAS HOLD'EM AUDIO HELPERS
-# ==================================================
-
 def play_texas_holdem_chip_sound():
 
     sound_name = random.choice(
@@ -371,93 +303,6 @@ def play_texas_holdem_street_sound():
 # ==================================================
 # SCHEDULE NEXT NPC ACTION
 # ==================================================
-
-def debug_setup_holdem_heads_up():
-
-    if not texas_holdem_game.npcs:
-        return
-
-    # ==================================================
-    # We add the ante here because start_hand() will
-    # immediately deduct it.
-    #
-    # Result after ante:
-    # Player = $10,000
-    # NPC 0  = $3,000
-    # ==================================================
-
-    ante = max(
-        0,
-        texas_holdem_game.ante
-    )
-
-    texas_holdem_game.player_stack = (
-        10000 + ante
-    )
-
-    texas_holdem_game.npc_stacks = [
-        0
-        for _ in texas_holdem_game.npcs
-    ]
-
-    texas_holdem_game.npc_stacks[0] = (
-        3000 + ante
-    )
-
-    # ==================================================
-    # Clear persistent state
-    # ==================================================
-
-    texas_holdem_game.player_busted = False
-
-    texas_holdem_game.npc_busted = [
-        False
-        for _ in texas_holdem_game.npcs
-    ]
-
-    texas_holdem_game.player_all_in = False
-
-    texas_holdem_game.npc_all_in = [
-        False
-        for _ in texas_holdem_game.npcs
-    ]
-
-    texas_holdem_game.player_folded = False
-
-    texas_holdem_game.npc_folded = [
-        False
-        for _ in texas_holdem_game.npcs
-    ]
-
-    # Recalculate who is actually busted.
-    texas_holdem_game.refresh_busted_state()
-
-    # ==================================================
-    # Cancel old scheduled actions
-    # ==================================================
-
-    state.texas_holdem_next_npc_action_at = 0
-    state.texas_holdem_round_advance_at = 0
-    state.texas_holdem_next_hand_at = 0
-    state.texas_holdem_session_end_at = 0
-
-    # ==================================================
-    # Fresh hand
-    # ==================================================
-
-    texas_holdem_game.start_hand()
-
-    play_texas_holdem_new_hand_sound()
-
-    print(
-        "HOLDEM DEBUG HEADS-UP:",
-        "Player =",
-        texas_holdem_game.player_stack,
-        "|",
-        texas_holdem_game.npcs[0]["name"],
-        "=",
-        texas_holdem_game.npc_stacks[0]
-    )
 
 def schedule_texas_holdem_npc_action():
 
@@ -576,6 +421,8 @@ def start_texas_holdem_session(
     state.texas_holdem_buy_in_active = True
     texas_holdem_game.session_xp_rewarded = False
     state.texas_holdem_last_processed_showdown_hand = 0
+    # The table-clear bonus is paid once per session (as in Draw and Stud).
+    state.texas_holdem_table_sweep_rewarded = False
 
     # ==================================================
     # Reset runtime timers
@@ -584,6 +431,7 @@ def start_texas_holdem_session(
     state.texas_holdem_next_npc_action_at = 0
     state.texas_holdem_round_advance_at = 0
     state.texas_holdem_next_hand_at = 0
+    state.texas_holdem_session_end_at = 0
 
     # ==================================================
     # Start poker session
@@ -730,175 +578,15 @@ def loop_event_texas_holdem(event):
         return
 
     # ==================================================
-    # Temporary keyboard hand progression
-    #
-    # SPACE:
-    # Ready/Showdown -> Deal
-    # Preflop        -> Flop
-    # Flop           -> Turn
-    # Turn           -> River
-    # River          -> Showdown
+    # Keyboard: manual bet / raise-to entry only
     # ==================================================
 
     if event.type == pygame.KEYDOWN:
 
-        if handle_holdem_manual_bet_key(
-                event,
-                texas_holdem_game
-        ):
-            return
-
-        if (
-                event.key == pygame.K_F7
-                and state.current_state
-                == state_names.STATE_TEXAS_HOLDEM
-        ):
-            debug_setup_holdem_heads_up()
-
-            return
-
-        # ==================================================
-        # SPACE = temporary hand progression
-        # ==================================================
-
-        if event.key == pygame.K_SPACE:
-
-            # ------------------------------------------
-            # Deal
-            # ------------------------------------------
-
-            if texas_holdem_game.current_stage in (
-                    "idle",
-                    "ready",
-                    "showdown",
-            ):
-
-                if texas_holdem_game.start_hand():
-                    play_texas_holdem_new_hand_sound()
-
-                state.career_event_has_activity = True
-
-                sounds.audio.play_sound(
-                    "button_click"
-                )
-
-            # ------------------------------------------
-            # Flop
-            # ------------------------------------------
-
-            elif (
-                    texas_holdem_game.current_stage
-                    == "preflop"
-            ):
-
-                if texas_holdem_game.deal_flop():
-                    sounds.audio.play_sound(
-                        "button_click"
-                    )
-
-            # ------------------------------------------
-            # Turn
-            # ------------------------------------------
-
-            elif (
-                    texas_holdem_game.current_stage
-                    == "flop"
-            ):
-
-                if texas_holdem_game.deal_turn():
-                    sounds.audio.play_sound(
-                        "button_click"
-                    )
-
-            # ------------------------------------------
-            # River
-            # ------------------------------------------
-
-            elif (
-                    texas_holdem_game.current_stage
-                    == "turn"
-            ):
-
-                if texas_holdem_game.deal_river():
-                    sounds.audio.play_sound(
-                        "button_click"
-                    )
-
-            # ------------------------------------------
-            # Showdown
-            # ------------------------------------------
-
-            elif (
-                    texas_holdem_game.current_stage
-                    == "river"
-            ):
-
-                if texas_holdem_game.showdown():
-                    state.texas_holdem_session_net = (
-                            texas_holdem_game.player_stack
-                            - state.texas_holdem_starting_stack
-                    )
-
-                    state.career_event_has_activity = True
-
-                    sounds.audio.play_sound(
-                        "button_click"
-                    )
-
-        # ==================================================
-        # B = temporary $50 bet test
-        # ==================================================
-
-        elif event.key == pygame.K_b:
-
-            result = (
-                texas_holdem_game.player_bet(
-                    50
-                )
-            )
-
-            if result:
-                schedule_texas_holdem_npc_action()
-
-            print(
-                "BET RESULT:",
-                result
-            )
-
-            print(
-                "Player stack:",
-                texas_holdem_game.player_stack
-            )
-
-            print(
-                "NPC stacks:",
-                texas_holdem_game.npc_stacks
-            )
-
-            print(
-                "Pot:",
-                texas_holdem_game.pot
-            )
-
-            print(
-                "Current bet:",
-                texas_holdem_game.current_bet
-            )
-
-            print(
-                "Player round bet:",
-                texas_holdem_game.player_round_bet
-            )
-
-            print(
-                "NPC round bets:",
-                texas_holdem_game.npc_round_bets
-            )
-
-            print(
-                "Round complete:",
-                texas_holdem_game.is_betting_round_complete()
-            )
+        handle_holdem_manual_bet_key(
+            event,
+            texas_holdem_game
+        )
 
     # ==================================================
     # Game Log scrolling

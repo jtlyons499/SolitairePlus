@@ -2,6 +2,8 @@
 from weakref import WeakKeyDictionary
 import pygame
 
+from solitaireplus.ui import text as ui_text
+
 _EFFECTS = WeakKeyDictionary()
 POT = (683, 326)
 SEATS = ((800, 560), (430, 320), (803, 290), (1176, 320))
@@ -58,7 +60,7 @@ def draw_bluff_effects(surface,game,now=None):
     fx=effects_for(game);fx.update(game,now)
     if game.pot:
         for i in range(min(7,max(1,len(str(game.pot))))):chip(surface,(POT[0]+(i%3-1)*23,POT[1]-(i//3)*7))
-    font=pygame.font.Font(None,27)
+    font=ui_text.get_font(None,27)
     for start,event in fx.motions:
         age=now-start
         if age < 0:

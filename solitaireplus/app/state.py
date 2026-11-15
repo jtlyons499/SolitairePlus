@@ -63,6 +63,23 @@ seven_card_stud_session_end_at = 0
 seven_card_stud_hand_win_sound_at = 0
 seven_card_stud_last_processed_showdown_hand = 0
 seven_card_stud_table_sweep_rewarded = False
+# Poker table UI (games/poker/holdem_ui.py). The options panel and its settings are shared by
+# the Hold'em, Five Card Draw and Seven Card Stud tables.
+holdem_bet_fraction = 0.25
+holdem_bet_slider_dragging = False
+holdem_manual_bet_text = ""
+holdem_manual_bet_active = False
+holdem_log_scroll = 0
+holdem_active_tab = "log"
+holdem_chat_scroll = 0
+holdem_chat_unread = False
+holdem_quick_chat_open = False
+holdem_quick_chat_target_mode = None
+holdem_options_open = False
+holdem_table_speed = "normal"
+holdem_auto_deal_enabled = True
+holdem_table_chat_enabled = True
+poker_chat_popups_enabled = True   # NPC chat bubbles at every poker table (games/poker/speech.py)
 arcade_night_tokens_spent = 0
 arcade_night_tickets_won = 0
 arcade_pending_launch_game_id = None

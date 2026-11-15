@@ -11,6 +11,7 @@ from solitaireplus.games.poker.quick_chat import (
     submit_holdem_quick_chat,
 )
 from solitaireplus.games.poker.quick_chat_adapter import adapt_quick_chat_game
+from solitaireplus.ui import text as ui_text
 
 WHITE = (245, 245, 245)
 MUTED = (182, 188, 192)
@@ -20,7 +21,7 @@ GOLD = (235, 190, 70)
 def _font(size=15, bold=True):
     if not pygame.font.get_init():
         pygame.font.init()
-    return pygame.font.SysFont("cambria", size, bold=bold)
+    return ui_text.get_font("cambria", size, bold=bold, sysfont=True)
 
 
 def _panel(surface, rect, fill=(12, 16, 20, 238), border=(145, 154, 164), radius=10, width=2):

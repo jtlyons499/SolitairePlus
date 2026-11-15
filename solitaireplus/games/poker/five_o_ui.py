@@ -4,6 +4,7 @@ from pathlib import Path
 from solitaireplus.games.poker.speech import is_poker_chat_popups_enabled
 
 from solitaireplus.games.poker.core import format_poker_display_name
+from solitaireplus.ui import text as ui_text
 
 
 ACTION_RETURN = "return"
@@ -108,7 +109,7 @@ def _draw_card(surface, card, rect, detail_font, card_fronts, card_back_surface=
         pygame.draw.rect(surface, WHITE if face_up else (45, 70, 145), rect, border_radius=4)
         pygame.draw.rect(surface, DARK, rect, 2, border_radius=4)
     if face_up and card:
-        font = pygame.font.Font(None, 22)
+        font = ui_text.get_font(None, 22)
         color = (172, 32, 42) if card.get("suit") in ("Diamonds", "Hearts") else DARK
         label = font.render(str(card.get('rank', '?')), True, color)
         badge = pygame.Rect(rect.x + 2, rect.y + 2, rect.width - 4, STACK_OFFSET - 2)
@@ -240,8 +241,7 @@ FAST_RECT = pygame.Rect(453, 285, 460, 58)
 SOUND_RECT = pygame.Rect(453, 365, 460, 58)
 CLOSE_RECT = pygame.Rect(583, 475, 200, 48)
 BET_PRESET_RECTS = [pygame.Rect(32+(i%2)*154, 488+(i//2)*46, 142, 36) for i in range(4)]
-_logo = None
-_logo_signature = None
+_logo = {"image": None, "signature": None}   # the scaled logo and the file signature it was made from
 _sound_cache = {}
 
 def _play_column_sound(game, index):
@@ -257,7 +257,6 @@ def _play_column_sound(game, index):
 def draw_five_o_poker(surface, mouse_pos, game, player_name, draw_submenu_background,
                       title_font, label_font, detail_font, card_fronts=None, card_back_surface=None):
     from solitaireplus.games.cards.score_four_ui import panel, text
-    global _logo, _logo_signature
     draw_submenu_background(overlay_alpha=115)
     logo_path = paths.asset("poker/logos/five_o_poker.png")
     try:
@@ -265,19 +264,19 @@ def draw_five_o_poker(surface, mouse_pos, game, player_name, draw_submenu_backgr
         signature = (stat.st_mtime_ns, stat.st_size)
     except OSError:
         signature = None
-    if _logo is None or signature != _logo_signature:
-        _logo_signature = signature
+    if _logo["image"] is None or signature != _logo["signature"]:
+        _logo["signature"] = signature
         try:
             source = pygame.image.load(str(logo_path)).convert_alpha()
             scale = min(430 / source.get_width(), 64 / source.get_height())
-            _logo = pygame.transform.smoothscale(source, (max(1, round(source.get_width()*scale)), max(1, round(source.get_height()*scale))))
+            _logo["image"] = pygame.transform.smoothscale(source, (max(1, round(source.get_width()*scale)), max(1, round(source.get_height()*scale))))
         except (OSError, pygame.error):
-            _logo = False
-    if _logo: surface.blit(_logo, _logo.get_rect(center=(640, 38)))
+            _logo["image"] = False
+    if _logo["image"]: surface.blit(_logo["image"], _logo["image"].get_rect(center=(640, 38)))
     else: text(surface, "FIVE-O  •  FIVE FRONTS", (640, 36), 42, CREAM, True)
     panel(surface, (20, 75, 320, 585), (10, 23, 34, 225), (167, 191, 211))
     panel(surface, (20, 660, 320, 90), (10, 23, 34, 225), (167, 191, 211))
-    font = pygame.font.Font(None, 24)
+    font = ui_text.get_font(None, 24)
     def line(value, y, color=WHITE):
         surface.blit(_fit_line(font, value, 296, color), (32, y))
     def wrap(value, y, color=WHITE):
@@ -329,7 +328,7 @@ def draw_five_o_poker(surface, mouse_pos, game, player_name, draw_submenu_backgr
                 description = ("Four of " if counts[0] == 4 else "Three of " if counts[0] == 3 else "Pair of ") + str(groups[0]) + "s" if counts[0] >= 2 else "High card"
                 if counts[:2] == [2,2]: description = "Two pair"
             description = description.split(",")[0]
-            small = pygame.font.Font(None, 22)
+            small = ui_text.get_font(None, 22)
             label = _fit_line(small, description, player_rect.width, WHITE)
             surface.blit(label, label.get_rect(midtop=(player_rect.centerx, VALUE_LABEL_Y)))
     if game.phase == "placement" and game.player_drawn_card:
@@ -342,7 +341,7 @@ def draw_five_o_poker(surface, mouse_pos, game, player_name, draw_submenu_backgr
         wrap(game.result_text, 260)
         wrap(game.last_player_action, 370, CREAM)
         wrap(game.last_npc_action, 420, CREAM)
-        for index, rect in enumerate(BET_PRESET_RECTS): _draw_button(surface, rect, ("1/4 POT", "1/2 POT", "POT", "MAX")[index], mouse_pos, pygame.font.Font(None, 22))
+        for index, rect in enumerate(BET_PRESET_RECTS): _draw_button(surface, rect, ("1/4 POT", "1/2 POT", "POT", "MAX")[index], mouse_pos, ui_text.get_font(None, 22))
     else:
         line(f"Columns: You {game.player_column_wins} / Rival {game.npc_column_wins}", 216, GOLD)
         for index in range(revealed):

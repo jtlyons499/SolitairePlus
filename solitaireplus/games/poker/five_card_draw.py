@@ -33,6 +33,8 @@ class FiveCardDrawGame(TexasHoldemGame):
         self.player_last_draw_indexes = []
         self.npc_draw_counts = []
         self.npc_stood_pat = []
+        # Cards thrown away during this hand's draw (never in a live hand).
+        self.draw_muck = []
 
     # ==================================================
     # SESSION
@@ -125,6 +127,7 @@ class FiveCardDrawGame(TexasHoldemGame):
         )
 
         self.build_deck()
+        self.draw_muck = []
 
         self.player_hand = []
         self.npc_hands = [
@@ -441,19 +444,105 @@ class FiveCardDrawGame(TexasHoldemGame):
             if index not in keep
         ]
 
+    def _reshuffle_muck_into_deck(self):
+        if self.deck or not self.draw_muck:
+            return False
+
+        self.deck = list(self.draw_muck)
+        self.draw_muck = []
+        random.shuffle(self.deck)
+
+        self.log_hand_event(
+            "reshuffle",
+            "The deck is empty; the discards are shuffled in.",
+        )
+        return True
+
     def _replace_cards(self, hand, discard_indexes):
+        """Swap discards for new cards; return (replaced, kept) indexes."""
         discard_indexes = sorted({
             int(index)
             for index in discard_indexes
             if 0 <= int(index) < len(hand)
         })
 
+        replaced = []
+        kept = []
+        thrown = []
+
         for index in discard_indexes:
             replacement = self.draw_card()
-            if replacement is not None:
-                hand[index] = replacement
+            if replacement is None and self._reshuffle_muck_into_deck():
+                replacement = self.draw_card()
 
-        return len(discard_indexes)
+            if replacement is None:
+                # Deck and muck are both exhausted: the old card stays.
+                kept.append(index)
+                continue
+
+            thrown.append(hand[index])
+            hand[index] = replacement
+            replaced.append(index)
+
+        # Join the muck only after this hand has drawn, so nobody is dealt
+        # their own discards straight back.
+        self.draw_muck.extend(thrown)
+
+        return replaced, kept
+
+    def _deck_ran_out_text(self, actor_index, kept_count):
+        cards = "card" if kept_count == 1 else "cards"
+        if actor_index == 0:
+            who = f"you keep {kept_count} {cards}"
+        else:
+            who = (
+                f"{self.get_table_player_name(actor_index)} "
+                f"keeps {kept_count} {cards}"
+            )
+
+        return f"The deck ran out: {who}."
+
+    def _log_draw(self, actor_index, received_count, kept_count):
+        """Log one seat's draw.
+
+        draw_count is how many cards the seat asked for (what the table saw
+        it throw), which is what table reads learn from. The text and
+        received_count say how many cards it actually got.
+        """
+        asked_count = received_count + kept_count
+
+        if actor_index == 0:
+            subject, verb, pat = "You", "draw", "stand pat"
+        else:
+            subject = self.get_table_player_name(actor_index)
+            verb, pat = "draws", "stands pat"
+
+        if asked_count == 0:
+            text = f"{subject} {pat}."
+        elif received_count == 0:
+            # Nothing was left to draw: one line says so.
+            text = self._deck_ran_out_text(actor_index, kept_count)
+        elif received_count == 1:
+            text = f"{subject} {verb} 1 card."
+        else:
+            text = f"{subject} {verb} {received_count} cards."
+
+        self.log_hand_event(
+            "draw",
+            text,
+            actor_index=actor_index,
+            draw_count=asked_count,
+            received_count=received_count,
+            kept_count=kept_count,
+        )
+
+        if received_count > 0 and kept_count > 0:
+            self.log_hand_event(
+                "draw_short",
+                self._deck_ran_out_text(actor_index, kept_count),
+                actor_index=actor_index,
+                kept_count=kept_count,
+            )
 
     def perform_npc_draw(self, npc_index):
         if not (
@@ -471,31 +560,16 @@ class FiveCardDrawGame(TexasHoldemGame):
             npc_index
         )
 
-        count = self._replace_cards(
+        replaced, kept = self._replace_cards(
             self.npc_hands[npc_index],
             discard_indexes,
         )
+        count = len(replaced)
 
         self.npc_draw_counts[npc_index] = count
-        self.npc_stood_pat[npc_index] = count == 0
+        self.npc_stood_pat[npc_index] = count == 0 and not kept
 
-        name = self.get_table_player_name(
-            npc_index + 1
-        )
-
-        if count == 0:
-            text = f"{name} stands pat."
-        elif count == 1:
-            text = f"{name} draws 1 card."
-        else:
-            text = f"{name} draws {count} cards."
-
-        self.log_hand_event(
-            "draw",
-            text,
-            actor_index=npc_index + 1,
-            draw_count=count,
-        )
+        self._log_draw(npc_index + 1, count, len(kept))
 
         return True
 
@@ -558,28 +632,17 @@ class FiveCardDrawGame(TexasHoldemGame):
             if 0 <= int(index) < len(self.player_hand)
         })
 
-        count = self._replace_cards(
+        replaced, kept = self._replace_cards(
             self.player_hand,
             discard_indexes,
         )
+        count = len(replaced)
 
         self.player_draw_complete = True
         self.player_last_draw_count = count
-        self.player_last_draw_indexes = list(discard_indexes)
+        self.player_last_draw_indexes = list(replaced)
 
-        if count == 0:
-            text = "You stand pat."
-        elif count == 1:
-            text = "You draw 1 card."
-        else:
-            text = f"You draw {count} cards."
-
-        self.log_hand_event(
-            "draw",
-            text,
-            actor_index=0,
-            draw_count=count,
-        )
+        self._log_draw(0, count, len(kept))
 
         self.log_hand_event(
             "player_hand",

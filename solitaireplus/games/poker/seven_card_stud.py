@@ -299,6 +299,30 @@ class SevenCardStudGame(TexasHoldemGame):
 
         return paid
 
+    def seat_has_chips(self, player_index):
+        if player_index == 0:
+            return (
+                self.player_stack > 0
+                and not self.player_all_in
+            )
+
+        npc_index = player_index - 1
+
+        if not (
+                0 <= npc_index < len(self.npc_stacks)
+        ):
+            return False
+
+        all_in = (
+            npc_index < len(self.npc_all_in)
+            and self.npc_all_in[npc_index]
+        )
+
+        return (
+            self.npc_stacks[npc_index] > 0
+            and not all_in
+        )
+
     def get_bring_in_index(self):
         candidates = []
 
@@ -331,6 +355,14 @@ class SevenCardStudGame(TexasHoldemGame):
             return None
 
         candidates.sort()
+
+        # A seat with no chips left (all-in from the ante) cannot post
+        # the bring-in; it passes to the next-lowest door card. If no
+        # live seat has chips, keep the lowest card so the hand still
+        # starts and runs out.
+        for candidate in candidates:
+            if self.seat_has_chips(candidate[2]):
+                return candidate[2]
 
         return candidates[0][2]
 

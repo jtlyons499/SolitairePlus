@@ -1,16 +1,21 @@
 import pygame
 
-
-POKER_CHAT_POPUPS_ENABLED = True
+from solitaireplus.app import state
 
 
 def set_poker_chat_popups_enabled(enabled):
-    global POKER_CHAT_POPUPS_ENABLED
-    POKER_CHAT_POPUPS_ENABLED = bool(enabled)
+    state.poker_chat_popups_enabled = bool(enabled)
 
 
 def is_poker_chat_popups_enabled():
-    return bool(POKER_CHAT_POPUPS_ENABLED)
+    return bool(state.poker_chat_popups_enabled)
+
+
+def __getattr__(name):
+    # multiplayer/poker_speech.py still imports POKER_CHAT_POPUPS_ENABLED by name (until Phase 11).
+    if name == "POKER_CHAT_POPUPS_ENABLED":
+        return state.poker_chat_popups_enabled
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 class PokerSpeechOverlay:

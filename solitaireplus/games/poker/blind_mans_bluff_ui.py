@@ -1,4 +1,6 @@
 from solitaireplus.games.poker.bluff_presentation import draw_bluff_effects
+from types import SimpleNamespace
+
 import pygame
 
 from solitaireplus.games.poker.niche_common import RANK_VALUES
@@ -20,7 +22,8 @@ BET_PRESET_RECTS = {
     "POT": pygame.Rect(1005, 640, 100, 34),
     "MAX": pygame.Rect(1115, 640, 100, 34),
 }
-_selected_bet_label = "POT"
+# Module-private table UI state, kept on one holder so no 'global' statement is needed.
+_ui = SimpleNamespace(selected_bet_label="POT")
 
 WHITE = (245, 245, 240)
 CREAM = (236, 221, 181)
@@ -131,8 +134,8 @@ def get_blind_mans_bluff_bet_amount(game):
         return 0
 
     by_label = {label: amount for label, amount in presets}
-    if _selected_bet_label in by_label:
-        return by_label[_selected_bet_label]
+    if _ui.selected_bet_label in by_label:
+        return by_label[_ui.selected_bet_label]
 
     # POT can collapse into another amount when stacks are short. Prefer the
     # largest non-all-in option, then fall back to the maximum legal bet.
@@ -142,7 +145,6 @@ def get_blind_mans_bluff_bet_amount(game):
 
 
 def get_blind_mans_bluff_action(mouse_pos, game):
-    global _selected_bet_label
     if mouse_pos is None:
         return None
     if game.hand_complete:
@@ -157,7 +159,7 @@ def get_blind_mans_bluff_action(mouse_pos, game):
         available_labels = {label for label, _ in game.get_player_bet_presets()}
         for label, rect in BET_PRESET_RECTS.items():
             if label in available_labels and rect.collidepoint(mouse_pos):
-                _selected_bet_label = label
+                _ui.selected_bet_label = label
                 return None
 
     for action in (ACTION_FOLD, ACTION_CHECK, ACTION_CALL, ACTION_BET, ACTION_RAISE):
@@ -326,7 +328,7 @@ def draw_blind_mans_bluff(
             for label, rect in BET_PRESET_RECTS.items():
                 if label not in available:
                     continue
-                selected = (label == _selected_bet_label)
+                selected = (label == _ui.selected_bet_label)
                 _draw_button(
                     surface,
                     rect,
