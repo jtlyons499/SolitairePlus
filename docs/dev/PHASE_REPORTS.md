@@ -492,3 +492,20 @@ findings.
   the other, only the doubled one wins → still awarded).
 - **N31:** after leaving the horse races mid-race via F10 and coming back, the race continues without its cue.
 - **N32:** `test_career_ratings` still sets the blackjack `round_complete`/`payout_claimed` flags by hand.
+
+## Phase 7 (move): Poker
+
+**What moved** (`move.py`, plan from `tools/refactor/specs/phase7.json`; `legacy.py` 10,096 → 6328 lines):
+- `solitaireplus/games/poker/holdem_screen.py` (table + buy-in screens, sessions, showdown processing, timed NPC
+  turns, the street/NPC/next-hand delays, chip sound), `five_card_draw_screen.py`, `seven_card_stud_screen.py`
+  (each with its session starter, opponents and engine instance), `five_o_screen.py`, `blind_mans_bluff_screen.py`
+  (+ session starters and engine instances), `debug/poker_select_screen.py` (the F10 poker table picker).
+- `games/poker/table_stakes.py`: career starting stacks, antes and minimum buy-ins shared by the tables.
+- `career/training.py`: `TRAINING_RATING_REWARDS` and `TRAINING_GAMES`. First try: the planner put this shared
+  table into the Blind Man's Bluff module; its definition is early in start-up, so the module (and its engine
+  instance) loaded early and shifted the seeded random draws of later games: `compare` showed Blind Man's Bluff
+  and horse-race differences. Reverted and redone with this module; the engines are created in the old order.
+- 2 debug tests re-pointed at the poker picker screen and the moved launchers.
+
+**Results:** `screen_harness compare` → `IDENTICAL 64/64`; `replay compare` → `IDENTICAL 18/18` (baseline
+`ab7f1cc`). Tests `PASSED`.

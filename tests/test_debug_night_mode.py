@@ -119,9 +119,10 @@ class DebugNightModeTests(unittest.TestCase):
         state, legacy = self.state, self.legacy
         self.assertEqual(state.current_state, self.names.STATE_DEBUG_POKER_NPC_SELECT)
         state.game_mouse_pos = (10, 10)
-        with patch.object(legacy, 'get_debug_poker_select_action',
-                          lambda pos, can_start=True: (legacy.DEBUG_POKER_ACTION_BACK, None)):
-            legacy.loop_event_debug_poker_npc_select(click_event(state.game_mouse_pos))
+        from solitaireplus.debug import poker_select, poker_select_screen   # the picker's screen (Phase 7)
+        with patch.object(poker_select_screen, 'get_debug_poker_select_action',
+                          lambda pos, can_start=True: (poker_select.ACTION_BACK, None)):
+            poker_select_screen.handle_event(click_event(state.game_mouse_pos))
         self.assertEqual(state.current_state, self.names.STATE_DEBUG_MENU)
 
     def assert_career_untouched(self, previous_mode='career'):
@@ -163,7 +164,7 @@ class DebugNightModeTests(unittest.TestCase):
 
     def test_debug_five_o_poker_session_restores_the_game_mode(self):
         legacy, state = self.legacy, self.state
-        with patch.object(legacy, 'start_five_o_poker_session', lambda: True):
+        with patch.object(locate.module_defining('start_five_o_poker_session'), 'start_five_o_poker_session', lambda: True):
             self.assertTrue(legacy.debug_open_five_o_poker())
         self.assertEqual(state.current_game_mode, 'debug')
         self.assertTrue(state.career_event_entry.get('debug'))
@@ -177,7 +178,7 @@ class DebugNightModeTests(unittest.TestCase):
                               ('debug_open_blind_mans_bluff', 'start_blind_mans_bluff_session')):
             with self.subTest(launcher=name):
                 state.current_game_mode = 'career'
-                with patch.object(legacy, starter, lambda: False):
+                with patch.object(locate.module_defining(starter), starter, lambda: False):
                     self.assertFalse(getattr(legacy, name)())
                 self.assertEqual(state.current_game_mode, 'career')
 
@@ -325,7 +326,7 @@ class DebugNightModeTests(unittest.TestCase):
         for action, starter in ((legacy.ACTION_FIVE_O_POKER, 'start_five_o_poker_session'),
                                 (legacy.ACTION_BLIND_MANS_BLUFF, 'start_blind_mans_bluff_session')):
             with self.subTest(action=action):
-                with patch.object(legacy, starter, lambda: False):
+                with patch.object(locate.module_defining(starter), starter, lambda: False):
                     self.choose_debug_action(action)   # F10 from the horse races
                 self.assertEqual(state.current_state, self.names.STATE_DEBUG_MENU)
                 self.assertEqual(state.current_game_mode, 'debug')

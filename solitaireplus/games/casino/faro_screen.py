@@ -16,6 +16,7 @@ from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.career.session_summary import track_night_cash
 from solitaireplus.app.lazy import lazy
+training = lazy("solitaireplus.career.training")
 legacy = lazy("solitaireplus.legacy")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
@@ -66,7 +67,7 @@ def claim_faro_session_result():
     else:
         reward_key = "break_even"
 
-    rating_gain = legacy.TRAINING_RATING_REWARDS["faro"][reward_key]
+    rating_gain = training.TRAINING_RATING_REWARDS["faro"][reward_key]
 
     if state.faro_session_net > 0:
         career_rewards.award_fans_for_cash_win(

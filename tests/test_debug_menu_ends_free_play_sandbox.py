@@ -109,9 +109,10 @@ class DebugMenuEndsFreePlaySandboxTests(unittest.TestCase):
         state = self.state
         self.assertEqual(state.current_state, self.state_names.STATE_DEBUG_POKER_NPC_SELECT)
         state.game_mouse_pos = (10, 10)
-        with patch.object(self.legacy, "get_debug_poker_select_action",
-                          lambda pos, can_start=True: (self.legacy.DEBUG_POKER_ACTION_BACK, None)):
-            self.legacy.loop_event_debug_poker_npc_select(
+        from solitaireplus.debug import poker_select, poker_select_screen   # the picker's screen (Phase 7)
+        with patch.object(poker_select_screen, "get_debug_poker_select_action",
+                          lambda pos, can_start=True: (poker_select.ACTION_BACK, None)):
+            poker_select_screen.handle_event(
                 pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=state.game_mouse_pos))
 
     def click_event_select_return(self):

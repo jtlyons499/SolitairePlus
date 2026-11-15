@@ -18,6 +18,8 @@ from solitaireplus.app import state_names
 from solitaireplus.career.event_progress import store_event_progress
 from solitaireplus.debug.game_mode import end_debug_game_mode
 from solitaireplus.app.lazy import lazy
+five_o_screen = lazy("solitaireplus.games.poker.five_o_screen")
+blind_mans_bluff_screen = lazy("solitaireplus.games.poker.blind_mans_bluff_screen")
 roulette_screen = lazy("solitaireplus.games.casino.roulette_screen")
 horse_races_screen = lazy("solitaireplus.games.casino.horse_races_screen")
 faro_screen = lazy("solitaireplus.games.casino.faro_screen")
@@ -850,11 +852,11 @@ def handle_event(event):
                     faro_screen.start_faro_session()
 
                 elif game_id == "five_o_poker":
-                    if not legacy.start_five_o_poker_session():
+                    if not five_o_screen.start_five_o_poker_session():
                         print("Not enough cash to enter Five-O Poker.")
 
                 elif game_id == "blind_mans_bluff":
-                    if not legacy.start_blind_mans_bluff_session():
+                    if not blind_mans_bluff_screen.start_blind_mans_bluff_session():
                         print("Not enough cash to enter Blind Man's Bluff.")
 
                 elif game_id == "texas_holdem":

@@ -78,6 +78,13 @@
     "FIVE_O_POKER_MIN_BUY_IN",
     "BLIND_MANS_BLUFF_MIN_BUY_IN"
    ]
+  },
+  "solitaireplus/career/training.py": {
+   "doc": "Rating rewards for the training games (shared by several game screens; moved out of legacy.py).",
+   "names": [
+    "TRAINING_RATING_REWARDS",
+    "TRAINING_GAMES"
+   ]
   }
  }
 }
