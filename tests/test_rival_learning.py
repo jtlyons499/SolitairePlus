@@ -13,6 +13,8 @@ from solitaireplus.games.poker.strategy import PokerTableReads
 from solitaireplus.games.poker.holdem import TexasHoldemGame
 from solitaireplus.games.poker.five_card_draw import FiveCardDrawGame
 from solitaireplus.games.poker.seven_card_stud import SevenCardStudGame
+from solitaireplus.games.poker.five_o import FiveOPokerGame
+from solitaireplus.games.poker.blind_mans_bluff import BlindMansBluffGame
 from solitaireplus.npc.personality import npc_identity
 from solitaireplus.profile import saves as profiles
 
@@ -107,10 +109,17 @@ class LearningTests(unittest.TestCase):
         self.assertEqual(len(records['remaining']['player']['history']),4)
 
     def test_actual_main_profile_and_session_bindings(self):
-        functions={name:locate.function_node(name) for name in ('start_texas_holdem_session','start_five_card_draw_session','start_seven_card_stud_session','build_profile_save_data','apply_profile_save_data')}
-        for key,cls in (('texas_holdem',TexasHoldemGame),('five_card_draw',FiveCardDrawGame),('seven_card_stud',SevenCardStudGame)):
+        starters={'texas_holdem':TexasHoldemGame,'five_card_draw':FiveCardDrawGame,'seven_card_stud':SevenCardStudGame,
+                  'five_o_poker':FiveOPokerGame,'blind_mans_bluff':BlindMansBluffGame}
+        functions={name:locate.function_node(name) for name in [f'start_{key}_session' for key in starters]+['build_profile_save_data','apply_profile_save_data']}
+        for key,cls in starters.items():
             function=functions['start_'+key+'_session']
+            self.assertEqual(function.name,'start_'+key+'_session')
+            self.assertEqual(cls.rating_game_key,key)
             binding=next(n for n in function.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Attribute) and t.attr=='learning_store' for t in n.targets))
+            # The store is bound before start_session, which binds the table reads to it.
+            starts=[i for i,n in enumerate(function.body) if any(isinstance(c,ast.Call) and isinstance(c.func,ast.Attribute) and c.func.attr=='start_session' for c in ast.walk(n))]
+            self.assertTrue(starts);self.assertLess(function.body.index(binding),starts[0])
             program=compile(ast.Module(body=[binding],type_ignores=[]),'production learning binding','exec')
             bank=new_learning();game=cls()
             env=locate.namespace({key+'_game':game,'current_game_mode':'career','career_poker_learning':bank},[binding])

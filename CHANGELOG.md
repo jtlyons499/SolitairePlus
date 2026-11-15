@@ -55,6 +55,19 @@ How to use this file (maintainers and AI agents):
 - Five-Card Draw: if the deck ever runs out during the draw, the discards are shuffled back in instead of silently keeping your old card.
 - Removed the Hold'em F7/Space/B debug keys.
 - The poker tables and the hand recap do less work every frame (fonts are made once).
+- **The five poker tables now share one set of table rules** (Texas Hold'em, Five-Card Draw, Seven-Card Stud, Five-O, Blind Man's Bluff), each keeping its own structure. What changed at each table is listed in `docs/POKER_RULE_CHANGES.md`.
+- Poker: chips nobody called now go back to the player who bet them instead of counting as a win ("Uncalled $980 returned to you."), also when everyone folds. Stacks end the same; only chips actually won count for the win, fans and achievements.
+- Poker: chips paid into a pot that only folded players could win no longer disappear; they go back to whoever paid them.
+- Poker: odd chips in a split pot go to the first winner left of the dealer (they used to go to you, or to the dealer first), and the hand history says who got them.
+- Poker: NPCs no longer bet or raise when nobody left can answer, and when a short all-in blind or bring-in leaves only one player able to act, that player only has to match what was actually put in.
+- Poker career fans are paid on what you won on the hand (like the casino games), not on the size of every pot.
+- Hold'em: after you fold, the NPCs still in the hand play it out instead of the board being dealt at once.
+- Hold'em: the big-pot achievements need a single pot of that size; returned chips no longer count.
+- Seven-Card Stud: the pot shown after a hand is right (it could show $0 and side pots that didn't exist), and only full raises count toward the three-raise cap.
+- Five-O: the NPC can now raise you, and it takes the same thinking time as at the other tables.
+- Blind Man's Bluff: a player short of the ante plays all-in instead of sitting out (the session ends only at $0), and NPCs take thinking time instead of acting instantly.
+- Poker NPCs now behave the same way at every table: cash on hand, grudges, career skill, table reads and career rival learning apply at Five-O and Blind Man's Bluff too.
+- Poker game logs: lines too long to read are wrapped instead of being squashed or running out of the panel.
 - F10 debug menu: jumping to the Career hub or a debug night during Free Play no longer saves the Free Play $5,000 into your career, debug nights no longer use up a career day, and leaving a debug session no longer leaves the game in debug mode (where real career nights weren't recorded).
 
 ### Online play

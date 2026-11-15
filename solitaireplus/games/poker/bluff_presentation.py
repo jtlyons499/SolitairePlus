@@ -37,7 +37,10 @@ class BluffEffects:
                 self.motions.append((scheduled,event))
                 # Player input already has its own SFX; add feedback for NPC
                 # decisions and for the actual payout, without duplicate sounds.
-                if event['kind']=='payout':self.sounds.append('poker_hand_win' if event['seat']==0 else 'poker_chips_1')
+                # The win sound only when the human won or tied the hand (the
+                # payout's "won"), as at the Hold'em tables: chips that only come
+                # back (a refund) sound like any other payout.
+                if event['kind']=='payout':self.sounds.append('poker_hand_win' if event['seat']==0 and event.get('won', True) else 'poker_chips_1')
                 elif event['seat']>0:self.sounds.append('poker_chips_1')
             elif event['kind'] in ('check','fold') and event['seat']>0:
                 self.sounds.append('poker_check' if event['kind']=='check' else 'card_move')

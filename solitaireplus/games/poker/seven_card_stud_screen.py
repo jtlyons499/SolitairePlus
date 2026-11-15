@@ -30,7 +30,10 @@ from solitaireplus.games.poker.holdem_ui import is_holdem_table_chat_enabled
 import pygame
 from solitaireplus.career.rating_events import record_poker_showdown
 from solitaireplus.games.poker.seven_card_stud_ui import reset_seven_card_stud_ui_session
+from solitaireplus.games.poker.table_timers import reset_table_session
+from solitaireplus.games.poker.table_timers import reset_table_timers
 from solitaireplus.games.poker.seven_card_stud_ui import scroll_seven_card_stud_panel
+from solitaireplus.games.poker.recap import player_hand_net
 from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.games.poker.holdem_ui import toggle_holdem_options
@@ -172,13 +175,7 @@ def start_seven_card_stud_session(
     state.seven_card_stud_buy_in_active = True
     seven_card_stud_game.session_xp_rewarded = False
 
-    state.seven_card_stud_next_npc_action_at = 0
-    state.seven_card_stud_round_advance_at = 0
-    state.seven_card_stud_next_hand_at = 0
-    state.seven_card_stud_session_end_at = 0
-    state.seven_card_stud_last_processed_showdown_hand = 0
-    state.seven_card_stud_table_sweep_rewarded = False
-    state.seven_card_stud_hand_win_sound_at = 0
+    reset_table_session("seven_card_stud")
 
     reset_seven_card_stud_ui_session()
 
@@ -224,12 +221,7 @@ def finish_seven_card_stud_session():
     ):
         state.career_event_has_activity = True
 
-    state.seven_card_stud_hand_win_sound_at = 0
-
-    state.seven_card_stud_next_npc_action_at = 0
-    state.seven_card_stud_round_advance_at = 0
-    state.seven_card_stud_next_hand_at = 0
-    state.seven_card_stud_session_end_at = 0
+    reset_table_timers("seven_card_stud")
 
     if (
             len(getattr(seven_card_stud_game, "rating_seen_hands", ())) > 0
@@ -320,10 +312,15 @@ def process_seven_card_stud_showdown():
                 pygame.time.get_ticks()
                 + 450
         )
-        career_rewards.award_fans_for_cash_win(
-            max(1, int(getattr(seven_card_stud_game, "last_resolved_pot", 0))),
-            "Seven-Card Stud hand win"
-        )
+        # Fans on what the human made on the hand (its net), as every casino
+        # game pays them: its own chips back (an uncalled shove, a refund)
+        # earn none, and a hand that won a pot but lost money pays nothing.
+        net_win = player_hand_net(seven_card_stud_game)
+        if net_win > 0:
+            career_rewards.award_fans_for_cash_win(
+                net_win,
+                "Seven-Card Stud hand win"
+            )
 
     showdown_messages = (
         generate_showdown_chat(

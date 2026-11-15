@@ -128,6 +128,22 @@ def _draw_button(surface, rect, text, mouse_pos, font, enabled=True, accent=Fals
     surface.blit(label, label.get_rect(center=rect.center))
 
 
+# The widest line the 490 px status panel holds with a margin each side.
+STATUS_TEXT_WIDTH = 466
+
+
+def _wrap_rows(font, text, width):
+    """Word-wrap text into rows no wider than width (a longer single word keeps its row)."""
+    rows = [""]
+    for word in str(text).split():
+        trial = (rows[-1] + " " + word).strip()
+        if rows[-1] and font.size(trial)[0] > width:
+            rows.append(word)
+        else:
+            rows[-1] = trial
+    return rows
+
+
 def get_blind_mans_bluff_bet_amount(game):
     presets = game.get_player_bet_presets()
     if not presets:
@@ -278,9 +294,24 @@ def draw_blind_mans_bluff(
     draw_bluff_effects(surface, game)
     pot = label_font.render(f"Pot: ${game.pot:,}", True, GOLD)
     surface.blit(pot, pot.get_rect(center=(683, 374)))
-    stake_text = (f"Bet ${game.current_bet:,}  •  Minimum raise to ${game.get_minimum_raise_to():,}"
-                  if game.current_bet and not game.hand_complete else
-                  f"Ante ${game.ante:,}  •  Open ${game.get_min_open_bet():,}-${game.get_max_open_bet():,}")
+    if game.current_bet and not game.hand_complete:
+        stake_text = f"Bet ${game.current_bet:,}"
+        # On the human's turn the minimum raise is shown only when it may raise. A stack
+        # short of a full raise can only raise all-in: the line shows that amount, as the
+        # raise button does.
+        if game.bet_state != "player_response":
+            stake_text += f"  •  Minimum raise to ${game.get_minimum_raise_to():,}"
+        elif game.can_player_raise():
+            all_in_to = game.player_stack + game.round_bets[0]
+            if all_in_to < game.get_minimum_raise_to():
+                stake_text += f"  •  All-in raise to ${all_in_to:,}"
+            else:
+                stake_text += f"  •  Minimum raise to ${game.get_minimum_raise_to():,}"
+    elif game.bet_state == "player_open" and not game.hand_complete and game.get_max_open_bet() > 0:
+        # The open range is the human's own: only on its turn to open.
+        stake_text = f"Ante ${game.ante:,}  •  Open ${game.get_min_open_bet():,}-${game.get_max_open_bet():,}"
+    else:
+        stake_text = f"Ante ${game.ante:,}"
     stakes = detail_font.render(
         stake_text,
         True,
@@ -298,15 +329,24 @@ def draw_blind_mans_bluff(
         info_text = f"Highest card you can see: {visible_high['rank']}"
     else:
         info_text = game.result_text
-    info = detail_font.render(info_text, True, WHITE)
-    surface.blit(info, info.get_rect(center=(683, 422)))
+    info_rows = [info_text]
+    if game.hand_complete and detail_font.size(info_text)[0] > STATUS_TEXT_WIDTH:
+        # A long result (a payout list, an uncalled refund) takes the free prompt row too.
+        info_rows = _wrap_rows(detail_font, info_text, STATUS_TEXT_WIDTH)[:2]
+    for row_index, row in enumerate(info_rows):
+        info = detail_font.render(row, True, WHITE)
+        surface.blit(info, info.get_rect(center=(683, 422 + 24 * row_index)))
 
-    if game.bet_state == "player_response" and not game.hand_complete:
-        response_text = f"Call ${game.get_player_amount_to_call():,}, raise, or fold blind."
-    elif game.bet_state == "player_last_open" and not game.hand_complete:
-        response_text = "Everyone checked before you. Check behind or choose an opening size."
+    if getattr(game, "pending_npc_at", 0) and not game.hand_complete:
+        # An NPC's thinking pause: say whose turn it is ("<name> is thinking…").
+        response_text = game.result_text
+    elif game.bet_state == "player_response" and not game.hand_complete:
+        # Raising is named only when the raise button is offered (as at Five-O).
+        response_text = (f"Call ${game.get_player_amount_to_call():,}, raise, or fold blind."
+                         if game.can_player_raise() else
+                         f"Call ${game.get_player_amount_to_call():,} or fold blind.")
     elif not game.hand_complete:
-        response_text = "Everyone else can see your card. Read their betting, not your own hand."
+        response_text = "Everyone else can see your card. Read their betting."
     else:
         response_text = ""
 

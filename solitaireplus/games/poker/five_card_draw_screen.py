@@ -40,7 +40,10 @@ from solitaireplus.games.poker.holdem_ui import is_holdem_table_chat_enabled
 import pygame
 from solitaireplus.career.rating_events import record_poker_showdown
 from solitaireplus.games.poker.five_card_draw_ui import reset_five_card_draw_ui_session
+from solitaireplus.games.poker.table_timers import reset_table_session
+from solitaireplus.games.poker.table_timers import reset_table_timers
 from solitaireplus.games.poker.five_card_draw_ui import scroll_five_card_draw_panel
+from solitaireplus.games.poker.recap import player_hand_net
 from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.games.poker.five_card_draw_ui import stop_five_card_draw_bet_slider
@@ -185,13 +188,7 @@ def start_five_card_draw_session(
     state.five_card_draw_buy_in_active = True
     five_card_draw_game.session_xp_rewarded = False
 
-    state.five_card_draw_next_npc_action_at = 0
-    state.five_card_draw_round_advance_at = 0
-    state.five_card_draw_next_hand_at = 0
-    state.five_card_draw_session_end_at = 0
-    state.five_card_draw_last_processed_showdown_hand = 0
-    state.five_card_draw_table_sweep_rewarded = False
-    state.five_card_draw_hand_win_sound_at = 0
+    reset_table_session("five_card_draw")
 
     reset_five_card_draw_ui_session()
 
@@ -238,12 +235,7 @@ def finish_five_card_draw_session():
     ):
         state.career_event_has_activity = True
 
-    state.five_card_draw_hand_win_sound_at = 0
-
-    state.five_card_draw_next_npc_action_at = 0
-    state.five_card_draw_round_advance_at = 0
-    state.five_card_draw_next_hand_at = 0
-    state.five_card_draw_session_end_at = 0
+    reset_table_timers("five_card_draw")
 
     if (
             len(getattr(five_card_draw_game, "rating_seen_hands", ())) > 0
@@ -334,10 +326,15 @@ def process_five_card_draw_showdown():
                 pygame.time.get_ticks()
                 + 450
         )
-        career_rewards.award_fans_for_cash_win(
-            max(1, int(getattr(five_card_draw_game, "last_resolved_pot", 0))),
-            "Five-Card Draw hand win"
-        )
+        # Fans on what the human made on the hand (its net), as every casino
+        # game pays them: its own chips back (an uncalled shove, a refund)
+        # earn none, and a hand that won a pot but lost money pays nothing.
+        net_win = player_hand_net(five_card_draw_game)
+        if net_win > 0:
+            career_rewards.award_fans_for_cash_win(
+                net_win,
+                "Five-Card Draw hand win"
+            )
 
     showdown_messages = (
         generate_showdown_chat(

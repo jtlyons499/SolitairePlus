@@ -174,11 +174,26 @@ ANYTHING_GOING_REPLIES = {
     "bitterness": ("not much fam", "waiting to die", "everything and nothing", "i guess?"),
 }
 
+def _player_in_hand(game):
+    """Is the human still in this hand (dealt in, not folded, not busted)?
+
+    Every poker engine (and the quick-chat adapter) has seat_in_hand(), seat 0 first.
+    """
+    seat_in_hand = getattr(game, "seat_in_hand", None)
+    seats = seat_in_hand() if callable(seat_in_hand) else None
+    if seats is not None:
+        seats = list(seats)
+        return bool(seats and seats[0])
+    return not (getattr(game, "player_folded", False) or getattr(game, "player_busted", False))
+
+
 def quick_chat_options_for_game(game):
     """Return only lines that make sense in the current poker situation.
 
     Hold'em, Draw, Stud and Five-O deliberately share the same conversation
     categories, while each variant supplies its own live-stage names.
+    A human who is not in the hand (folded or busted) still sees the social
+    lines, but not the ones that change NPC decisions (MANIPULATIVE_QUICK_CHAT).
     """
     if game is None or not getattr(game, "npcs", None):
         return ()
@@ -196,6 +211,11 @@ def quick_chat_options_for_game(game):
         "placement", "betting", "showdown_bet",     # Five-O / niche poker
     }
     if stage in in_hand_stages:
+        if not _player_in_hand(game):
+            return tuple(
+                option for option in IN_HAND_OPTIONS
+                if option[0] not in MANIPULATIVE_QUICK_CHAT
+            )
         return IN_HAND_OPTIONS
     return ()
 

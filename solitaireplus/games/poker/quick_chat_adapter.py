@@ -41,6 +41,11 @@ class PokerQuickChatAdapter:
             return [bool(value)]
         return [False] * len(self.npcs)
 
+    def seat_in_hand(self):
+        """Per seat: still in this hand (the engine's own seat_in_hand); None without one."""
+        getter = getattr(self.game, "seat_in_hand", None)
+        return list(getter()) if callable(getter) else None
+
     @property
     def hand_complete(self):
         return bool(getattr(self.game, "hand_complete", False))

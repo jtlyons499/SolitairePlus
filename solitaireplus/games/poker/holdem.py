@@ -1,15 +1,45 @@
 import random
-from solitaireplus.npc.personality import get_npc_traits, PokerGrudgeMemory, npc_identity
+from solitaireplus.npc.personality import PokerGrudgeMemory
 from solitaireplus.games.poker.strategy import PokerTableReads
-from solitaireplus.games.poker.quick_chat import get_npc_quick_chat_context, reset_holdem_quick_chat
-from collections import Counter
-from itertools import combinations
+from solitaireplus.games.poker.quick_chat import get_npc_quick_chat_context
+from solitaireplus.games.poker.npc_inputs import (
+    grudge_seats,
+    npc_decision_inputs,
+    observe_public_action,
+    opponent_rows,
+    reset_session_memory,
+    soft_bet_cap,
+    table_identities,
+    wealth_pressure,
+)
 
+# RANK_VALUES and HAND_NAMES live in core.py with the shared evaluator.
+# They are imported here too so Five-Card Draw and Seven-Card Stud can
+# keep importing them from this module.
 from solitaireplus.games.poker.core import (
+    HAND_NAMES,
+    RANK_VALUES,
     PokerHandHistory,
+    award_pots,
+    bet_to_match,
+    betting_closed,
+    betting_reopened,
+    build_pots,
+    can_raise,
+    classify_wager,
+    collected_uncontested,
     describe_poker_score,
+    evaluate_best_hand as evaluate_best_poker_hand,
+    evaluate_five_cards as evaluate_five_poker_cards,
     format_poker_cards,
     format_poker_display_name,
+    hand_nets,
+    join_poker_names,
+    hand_winners,
+    minimum_raise_to,
+    opening_current_bet,
+    session_over,
+    settle_fold_win,
 )
 
 from solitaireplus.games.poker.ai import (
@@ -52,36 +82,13 @@ SUITS = [
     "Spades",
 ]
 
-RANK_VALUES = {
-    "2": 2,
-    "3": 3,
-    "4": 4,
-    "5": 5,
-    "6": 6,
-    "7": 7,
-    "8": 8,
-    "9": 9,
-    "10": 10,
-    "J": 11,
-    "Q": 12,
-    "K": 13,
-    "A": 14,
-}
-
-
-HAND_NAMES = {
-    8: "Straight Flush",
-    7: "Four of a Kind",
-    6: "Full House",
-    5: "Flush",
-    4: "Straight",
-    3: "Three of a Kind",
-    2: "Two Pair",
-    1: "Pair",
-    0: "High Card",
-}
-
 class TexasHoldemGame:
+
+    # A showdown with several winners lists each winner's hand in the payout
+    # banner. Hold'em's banner wraps; Draw's and Stud's is one fixed-width
+    # line, so they list names and amounts only (the hands are in the hand
+    # history), as they did before the shared showdown.
+    payout_text_names_hands = True
 
     def __init__(self):
 
@@ -156,12 +163,16 @@ class TexasHoldemGame:
 
         self.npc_hand_contributions = []
 
+        # How the last hand was settled (see resolve_showdown):
+        # one record per pot, and the uncalled chips returned.
         self.last_pot_awards = []
+        self.last_refunds = {}
         self.recap_open = False
         self.recap_page = 0
 
         # Final pot amount retained after payout so the UI can
         # continue showing the completed hand's pot at showdown.
+        # Uncalled chips returned to their owner are not included.
         self.last_resolved_pot = 0
 
         # ==================================================
@@ -212,6 +223,10 @@ class TexasHoldemGame:
 
         self.last_raise_size = 0
 
+        # Whether the last bet or raise was a full one (core.classify_wager).
+        # False after a short all-in or a raise that became a call.
+        self.last_wager_full = False
+
         self.betting_round_complete = False
 
         # ==================================================
@@ -248,17 +263,12 @@ class TexasHoldemGame:
         if event_type in ("call", "fold", "check"):
             previous_total = round_total - int(amount or 0) if event_type == "call" else round_total
             facing_amount = max(0, self.current_bet - previous_total)
-        if self.table_reads.learning:
-            self.table_reads.learning.active_observers = {
-                npc_identity(npc, seat) for seat, npc in enumerate(self.npcs, 1)
-                if seat - 1 >= len(self.npc_busted) or not self.npc_busted[seat - 1]
-            }
-        self.table_reads.observe(
-            event_type, actor_index, hand_number=self.hand_number,
-            stage=self.current_stage, amount=amount, round_total=round_total,
-            pot=self.pot, draw_count=data.get("draw_count"),
-            hand_name=data.get("hand_name"),
+        observe_public_action(
+            self, event_type, actor_index, stage=self.current_stage,
+            amount=amount, round_total=round_total,
             facing_amount=facing_amount,
+            hand_name=data.get("hand_name"),
+            draw_count=data.get("draw_count"),
         )
         self.hand_history.add(
             event_type,
@@ -377,10 +387,6 @@ class TexasHoldemGame:
         self.last_hand_busted_indexes = []
 
         self.hand_history.clear()
-        self.player_model.reset()
-        self.table_reads.clear()
-        self.personality_memory.clear()
-        reset_holdem_quick_chat(self)
         self.hand_seat_indexes = []
 
         # ==================================================
@@ -391,9 +397,9 @@ class TexasHoldemGame:
             npcs
         )
 
-        identities = {0: "player"}
-        identities.update({seat: npc_identity(npc, seat) for seat, npc in enumerate(self.npcs, 1)})
-        self.table_reads.bind_learning(self.learning_store, self.rating_game_key, identities)
+        # Grudges, quick chat, player tendencies and table reads start
+        # fresh; the reads bind to the career rival-learning store.
+        reset_session_memory(self, self.rating_game_key)
 
         self.starting_stack = int(
             starting_stack
@@ -463,6 +469,7 @@ class TexasHoldemGame:
         ]
 
         self.last_pot_awards = []
+        self.last_refunds = {}
         self.recap_open = False
         self.recap_page = 0
         self.last_resolved_pot = 0
@@ -944,6 +951,19 @@ class TexasHoldemGame:
     # NEW HAND
     # ==================================================
 
+    def begin_hand_records(self):
+        """Forget how the previous hand was settled.
+
+        Every variant's start_hand calls this, so a new hand never shows
+        the last hand's pots, refunds, resolved pot, winners or recap.
+        """
+        self.last_pot_awards = []
+        self.last_refunds = {}
+        self.last_resolved_pot = 0
+        self.winner_indexes = []
+        self.recap_open = False
+        self.recap_page = 0
+
     def start_hand(self):
 
         # ==================================================
@@ -1005,12 +1025,8 @@ class TexasHoldemGame:
         self.community_cards = []
         self.pot = 0
         self.hand_complete = False
-        self.winner_indexes = []
         self.result_text = ""
-        self.last_pot_awards = []
-        self.recap_open = False
-        self.recap_page = 0
-        self.last_resolved_pot = 0
+        self.begin_hand_records()
 
         # ==================================================
         # Reset ENTIRE-HAND contributions
@@ -1082,18 +1098,13 @@ class TexasHoldemGame:
             "BB"
         )
 
-        # A short big blind retains the nominal wager at a multiway table.
-        # Heads-up against an all-in opponent, only the actual contribution
-        # can be called: there is nobody left to contest any extra chips.
-        actual_blind = max([self.player_round_bet, *self.npc_round_bets])
-        lone_caller = len(self.get_active_player_indexes()) == 2 and len(self.get_actionable_player_indexes()) <= 1
-        self.current_bet = actual_blind if lone_caller else self.big_blind
-
-        self.last_raise_size = (
+        # A short all-in big blind keeps the nominal wager while two or
+        # more seats can still act; otherwise only what was posted can
+        # be called (core.opening_current_bet).
+        self.set_opening_wager(
+            self.big_blind,
             self.big_blind
         )
-
-        self.last_raiser = None
 
         # ==================================================
         # Busted seat labels
@@ -1169,6 +1180,7 @@ class TexasHoldemGame:
 
         self.ensure_npc_bet_chunk_state()
         self.ensure_npc_action_state()
+        self.last_wager_full = False
 
         if not (
                 0
@@ -1225,6 +1237,14 @@ class TexasHoldemGame:
             maximum_raise_to
         )
 
+        # B36: a raise needs somebody left to respond (and an open
+        # betting round). A short stack's all-in call is still allowed.
+        if (
+                target > self.current_bet
+                and not self.can_npc_raise(npc_index)
+        ):
+            return False
+
         old_current_bet = (
             self.current_bet
         )
@@ -1249,45 +1269,12 @@ class TexasHoldemGame:
         if amount_paid <= 0:
             return False
 
-        if (
-                self.npc_round_bets[
-                    npc_index
-                ]
-                > old_current_bet
-        ):
-
-            actual_raise_size = (
-                    self.npc_round_bets[
-                        npc_index
-                    ]
-                    - old_current_bet
-            )
-
-            self.current_bet = (
-                self.npc_round_bets[
-                    npc_index
-                ]
-            )
-
-            required_raise_size = (
-                self.get_minimum_raise_size()
-            )
-
-            if (
-                    actual_raise_size
-                    >= required_raise_size
-            ):
-                self.last_raise_size = (
-                    actual_raise_size
-                )
-
-                self.last_raiser = (
-                        npc_index + 1
-                )
-
-                self.reset_actions_after_aggression(
-                    npc_index + 1
-                )
+        self.apply_wager(
+            npc_index + 1,
+            old_current_bet,
+            self.npc_round_bets[npc_index],
+            self.get_minimum_raise_size()
+        )
 
         self.npc_has_acted[
             npc_index
@@ -1333,6 +1320,7 @@ class TexasHoldemGame:
 
         self.ensure_npc_bet_chunk_state()
         self.ensure_npc_action_state()
+        self.last_wager_full = False
 
         if not (
                 0
@@ -1358,6 +1346,10 @@ class TexasHoldemGame:
         )
 
         if stack <= 0:
+            return False
+
+        # B36: a bet needs somebody left to respond.
+        if not self.can_npc_raise(npc_index):
             return False
 
         amount = int(
@@ -1396,29 +1388,12 @@ class TexasHoldemGame:
         if amount_paid <= 0:
             return False
 
-        self.current_bet = (
-            self.npc_round_bets[
-                npc_index
-            ]
+        self.apply_wager(
+            npc_index + 1,
+            old_current_bet,
+            self.npc_round_bets[npc_index],
+            minimum_bet
         )
-
-        actual_raise_size = (
-                self.current_bet
-                - old_current_bet
-        )
-
-        if actual_raise_size >= minimum_bet:
-            self.last_raise_size = (
-                actual_raise_size
-            )
-
-            self.last_raiser = (
-                    npc_index + 1
-            )
-
-            self.reset_actions_after_aggression(
-                npc_index + 1
-            )
 
         self.npc_has_acted[
             npc_index
@@ -1449,6 +1424,40 @@ class TexasHoldemGame:
         )
 
         return True
+
+    def apply_wager(
+            self,
+            seat,
+            old_current_bet,
+            new_total,
+            minimum_size
+    ):
+        """Record a bet or raise that took seat's round bet to new_total.
+
+        The bet to call rises to new_total if it is higher. Only a full
+        wager (at least minimum_size more, core.classify_wager) sets the
+        next minimum raise, becomes the last raise and reopens betting
+        for the seats that already acted. Returns whether it was full.
+        """
+        increase, full = classify_wager(
+            old_current_bet,
+            new_total,
+            minimum_size
+        )
+
+        if increase > 0:
+            self.current_bet = new_total
+
+        if full:
+            self.last_raise_size = increase
+            self.last_raiser = seat
+            self.reset_actions_after_aggression(
+                seat
+            )
+
+        self.last_wager_full = full
+
+        return full
 
     # ==================================================
     # RESET ACTIONS AFTER BET / RAISE
@@ -1598,10 +1607,15 @@ class TexasHoldemGame:
         )
 
     def table_is_over(self):
+        """True when the session cannot go on (core.session_over).
 
-        return (
-                self.player_busted
-                or self.all_npcs_busted()
+        Meant for between hands: during a hand an all-in seat has 0 chips
+        but is still playing. Once refresh_busted_state() has run at the
+        end of a hand this equals player_busted or all_npcs_busted().
+        """
+
+        return session_over(
+            self.seat_stacks()
         )
 
     def ensure_npc_bet_chunk_state(self):
@@ -1718,6 +1732,25 @@ class TexasHoldemGame:
 
     def advance_to_next_actor(self):
 
+        # A fold or an all-in may have left one seat with chips. If it
+        # has already matched what the others put in, nobody can bet
+        # any more: no turn is offered and the hand runs out
+        # (core.bet_to_match, core.betting_closed).
+        self.settle_bet_to_match()
+
+        if (
+                len(self.get_active_player_indexes()) > 1
+                and betting_closed(
+                    self.seat_in_hand(),
+                    self.seat_stacks(),
+                    self.seat_round_bets(),
+                    self.current_bet
+                )
+        ):
+            self.current_actor = -1
+            self.betting_round_complete = True
+            return None
+
         actor_count = (
                 len(self.npcs) + 1
         )
@@ -1779,6 +1812,69 @@ class TexasHoldemGame:
         return active_indexes
 
     # ==================================================
+    # SEAT VIEWS
+    #
+    # Read-only per-seat lists for the shared table rules
+    # in core.py. Seat 0 is the human, seat i is npcs[i-1].
+    # ==================================================
+
+    def seat_count(self):
+
+        return len(self.npcs) + 1
+
+    def seat_stacks(self):
+
+        return [self.player_stack, *self.npc_stacks]
+
+    def seat_round_bets(self):
+
+        return [self.player_round_bet, *self.npc_round_bets]
+
+    def seat_in_hand(self):
+        """Per seat: not busted and not folded (get_active_player_indexes)."""
+
+        return [
+            not self.player_busted and not self.player_folded,
+            *(
+                not self.npc_busted[npc_index]
+                and not self.npc_folded[npc_index]
+                for npc_index in range(len(self.npcs))
+            ),
+        ]
+
+    def seat_at_table(self):
+        """Per seat: not knocked out of the session (npc_inputs' observers).
+
+        Busted is only set between hands, so a seat that is all-in with 0
+        chips is still at the table during the hand it is playing.
+        """
+
+        busted = self.npc_busted
+
+        return [
+            not self.player_busted,
+            *(
+                not (npc_index < len(busted) and busted[npc_index])
+                for npc_index in range(len(self.npcs))
+            ),
+        ]
+
+    def seat_can_act(self):
+        """Per seat: in the hand with chips left (get_actionable_player_indexes)."""
+
+        return [
+            in_hand and stack > 0
+            for in_hand, stack in zip(
+                self.seat_in_hand(),
+                self.seat_stacks()
+            )
+        ]
+
+    def seat_has_acted(self):
+
+        return [self.player_has_acted, *self.npc_has_acted]
+
+    # ==================================================
     # SIDE POT HELPERS
     # ==================================================
 
@@ -1823,70 +1919,18 @@ class TexasHoldemGame:
         )
 
     def build_side_pots(self):
+        """The main pot and side pots by core.build_pots (compatibility).
 
-        contributions = (
-            self.get_hand_contributions()
-        )
-
-        levels = sorted(
-            {
-                amount
-                for amount in contributions
-                if amount > 0
-            }
-        )
-
-        side_pots = []
-
-        previous_level = 0
-
-        for level in levels:
-
-            contributors = [
-                player_index
-                for player_index, amount
-                in enumerate(
-                    contributions
-                )
-                if amount >= level
+        Uncalled chips and layers no showdown-eligible seat paid into are
+        refunds there, not pots, so they are not in this list.
+        """
+        return build_pots(
+            self.get_hand_contributions(),
+            [
+                self.is_showdown_eligible(seat)
+                for seat in range(self.seat_count())
             ]
-
-            layer_size = (
-                    level
-                    - previous_level
-            )
-
-            pot_amount = (
-                    layer_size
-                    * len(contributors)
-            )
-
-            eligible = [
-                player_index
-                for player_index
-                in contributors
-                if self.is_showdown_eligible(
-                    player_index
-                )
-            ]
-
-            if pot_amount > 0:
-                side_pots.append(
-                    {
-                        "amount":
-                            pot_amount,
-
-                        "contributors":
-                            contributors,
-
-                        "eligible":
-                            eligible,
-                    }
-                )
-
-            previous_level = level
-
-        return side_pots
+        )[0]
 
     def get_display_pot_amount(self):
         """Pot amount the table should display right now."""
@@ -1907,10 +1951,9 @@ class TexasHoldemGame:
     def has_true_side_pots(self, showdown_indexes):
         """Return True only when live showdown players had unequal stakes.
 
-        Folded dead money can cause build_side_pots() to create accounting
-        layers even when every player still eligible for showdown invested
-        the same amount. Those layers are not useful to label as side pots
-        in the hand history.
+        core.build_pots already folds dead money from folded seats into
+        the pot it was paid towards, so with equal live stakes there is a
+        single pot. Only real side pots are labelled in the hand history.
         """
         contributions = self.get_hand_contributions()
 
@@ -1960,23 +2003,79 @@ class TexasHoldemGame:
                 for player_index in winners
             ]
 
+            # A pot only one seat could win beat nobody (core.
+            # collected_uncontested): it is collected, with no winning hand.
+            if winners and collected_uncontested(
+                    pot_award,
+                    self.last_pot_awards
+            ):
+                collector = winners[0]
+                collected = int(
+                    pot_award.get("payouts", {}).get(collector, pot_amount)
+                )
+                who = (
+                    "you collect"
+                    if collector == 0
+                    else f"{winner_names[0]} collects"
+                )
+                self.log_hand_event(
+                    "pot_award",
+                    f"{pot_label} ${pot_amount:,}: nobody else could win "
+                    f"it; {who} ${collected:,}.",
+                    amount=pot_amount,
+                    winners=winners,
+                    pot_index=pot_index
+                )
+                continue
+
+            # "You win" / "<Name> wins"; one winner "receives", tied
+            # winners "each receive".
             if len(winner_names) == 1:
+                human = winners[0] == 0
                 award_text = (
                     f"{pot_label} ${pot_amount:,}: "
-                    f"{winner_names[0]} wins."
+                    f"{winner_names[0]} {'win' if human else 'wins'}."
+                )
+                receives = (
+                    f"{winner_names[0]} "
+                    f"{'receive' if human else 'receives'}"
                 )
             else:
+                # "split between you and Ada" / "between Ada, Bo and you".
+                names = [
+                    "you" if player_index == 0 else name
+                    for player_index, name in zip(winners, winner_names)
+                ]
                 award_text = (
                     f"{pot_label} ${pot_amount:,}: "
-                    f"split between {', '.join(winner_names)}."
+                    f"split between {join_poker_names(names)}."
                 )
+                receives = "Each winner receives"
 
             detail = pot_award.get("hand", "")
             if detail:
                 share = int(pot_award.get("share", pot_amount))
-                award_text += f" Winning hand: {detail}. Each receives ${share:,}"
-                if pot_award.get("remainder", 0):
-                    award_text += " (plus odd chips in seat order)"
+                award_text += f" Winning hand: {detail}. {receives} ${share:,}"
+                # Name the winners who got an odd chip (the first ones in
+                # odd-chip order): "(odd chip to Ada)", "(odd chips to Ada
+                # and you)".
+                remainder = int(pot_award.get("remainder", 0) or 0)
+                if remainder:
+                    payouts = pot_award.get("payouts")
+                    odd_seats = [
+                        player_index
+                        for player_index in winners
+                        if int(payouts.get(player_index, 0)) > share
+                    ] if payouts else winners[:remainder]
+                    odd_names = [
+                        "you" if player_index == 0 else name
+                        for player_index, name in zip(winners, winner_names)
+                        if player_index in odd_seats
+                    ]
+                    award_text += (
+                        f" (odd chip{'s' if len(odd_names) > 1 else ''} "
+                        f"to {join_poker_names(odd_names)})"
+                    )
                 award_text += "."
             self.log_hand_event(
                 "pot_award",
@@ -2085,6 +2184,22 @@ class TexasHoldemGame:
                 npc_index
             ] += amount
 
+    def log_refund_events(self, refunds):
+        """Log one hand-history line per seat that got uncalled chips back."""
+        for player_index, amount in sorted(refunds.items()):
+            owner = (
+                "you"
+                if player_index == 0
+                else self.get_table_player_name(player_index)
+            )
+
+            self.log_hand_event(
+                "refund",
+                f"Uncalled ${amount:,} returned to {owner}.",
+                actor_index=player_index,
+                amount=amount
+            )
+
     # ==================================================
     # AWARD POT TO ONE REMAINING PLAYER
     # ==================================================
@@ -2101,7 +2216,15 @@ class TexasHoldemGame:
         if self.hand_complete:
             return False
 
-        winnings = self.pot
+        # core.settle_fold_win: settled like a showdown with one live
+        # seat. The winner wins the pot of matched chips; uncalled chips
+        # go back to whoever put them in, the winner's own included (a
+        # shove nobody called, or a short all-in big blind left alone by
+        # the folds, which can win only what it matched).
+        winnings, refunds = settle_fold_win(
+            self.get_hand_contributions(),
+            winner_index
+        )
         self.last_resolved_pot = max(
             0,
             int(winnings)
@@ -2111,6 +2234,12 @@ class TexasHoldemGame:
             winner_index,
             winnings
         )
+
+        for player_index, amount in refunds.items():
+            self.award_chips_to_player(
+                player_index,
+                amount
+            )
 
         winner_name = (
             self.get_table_player_name(
@@ -2131,6 +2260,7 @@ class TexasHoldemGame:
                 f"${winnings:,}."
             )
 
+        # The same record shape as a showdown pot (core.award_pots).
         self.last_pot_awards = [
             {
                 "amount":
@@ -2144,14 +2274,29 @@ class TexasHoldemGame:
                 "winners":
                     [winner_index],
 
+                "payouts":
+                    {winner_index: winnings},
+
                 "share":
                     winnings,
+
+                "remainder":
+                    0,
+
+                "hand":
+                    "",
             }
         ]
+
+        # Uncalled chips, the winner's own included, are refunds, not
+        # winnings (the recap lists them under 'Returned (uncalled):').
+        self.last_refunds = dict(refunds)
 
         self.winner_indexes = [
             winner_index
         ]
+
+        self.log_refund_events(refunds)
 
         self.log_hand_event(
             "result",
@@ -2180,49 +2325,9 @@ class TexasHoldemGame:
         return True
 
     # ==================================================
-    # COMPLETE BOARD AFTER PLAYER FOLDS
-    # ==================================================
-
-    def complete_board_after_fold(self):
-
-        # ------------------------------------------
-        # Preflop -> Flop
-        # ------------------------------------------
-
-        if self.current_stage == "preflop":
-
-            if not self.deal_flop():
-                return False
-
-        # ------------------------------------------
-        # Flop -> Turn
-        # ------------------------------------------
-
-        if self.current_stage == "flop":
-
-            if not self.deal_turn():
-                return False
-
-        # ------------------------------------------
-        # Turn -> River
-        # ------------------------------------------
-
-        if self.current_stage == "turn":
-
-            if not self.deal_river():
-                return False
-
-        # ------------------------------------------
-        # River -> Showdown
-        # ------------------------------------------
-
-        if self.current_stage == "river":
-            return self.showdown()
-
-        return False
-
-    # ==================================================
     # RESOLVE HAND AFTER FOLD
+    #
+    # Shared by Hold'em, Draw and Stud.
     # ==================================================
 
     def resolve_after_fold(self):
@@ -2261,15 +2366,18 @@ class TexasHoldemGame:
         # ------------------------------------------
         # Human folded, NPCs remain
         #
-        # Finish board and evaluate remaining NPCs.
+        # The hand goes on: the NPCs still in it keep
+        # betting street by street, on the same timers
+        # as when the human is all-in (NEW-3).
         # ------------------------------------------
 
-        if self.player_folded:
-            return (
-                self.complete_board_after_fold()
-            )
+        if (
+                self.player_folded
+                and self.current_actor == 0
+        ):
+            self.advance_to_next_actor()
 
-        return False
+        return True
 
     # ==================================================
     # ADVANCE AFTER BETTING ROUND
@@ -2411,6 +2519,8 @@ class TexasHoldemGame:
             self.award_pot_to_single_player(
                 active_indexes[0]
             )
+        else:
+            self.settle_bet_to_match()
 
         return True
 
@@ -2698,38 +2808,38 @@ class TexasHoldemGame:
             "last_raiser_is_player": (
                 self.last_raiser == 0
             ),
-            "player_active": (
+        }
+
+        # The inputs every poker variant shares: traits, skill, cash on
+        # hand, table reads, player tendencies and grudges.
+        context.update(npc_decision_inputs(
+            npc=self.npcs[npc_index],
+            seat=npc_index + 1,
+            rating_game_key=self.rating_game_key,
+            stack=stack,
+            starting_stack=self.starting_stack,
+            hand_number=self.hand_number,
+            opponents=self.get_npc_opponent_rows(npc_index),
+            last_raiser=self.last_raiser,
+            grudge_memory=self.personality_memory,
+            table_reads=self.table_reads,
+            player_model=self.player_model,
+            player_active=(
                 not self.player_busted
                 and not self.player_folded
             ),
-            "player_tendencies": self.get_player_tendencies(),
-            "skill_factor": self.get_npc_skill_factor(
-                npc_index
-            ),
-        }
-        context["personality_traits"] = get_npc_traits(self.npcs[npc_index])
-        context["starting_stack"] = self.starting_stack
-        context["wealth_ratio"] = (
-            stack / max(1, self.starting_stack)
-        )
-        context["wealth_pressure"] = self.get_npc_wealth_pressure(
+            wealth_scale=self.get_npc_wealth_scale(),
+        ))
+        context["skill_factor"] = self.get_npc_skill_factor(
             npc_index
         )
         context.update(get_npc_quick_chat_context(self, npc_index))
-        context["hand_number"] = self.hand_number
-        context["npc_identity"] = npc_identity(self.npcs[npc_index], npc_index + 1)
-        context["opponent_reads"] = [
-            self.table_reads.snapshot(seat, observer=context["npc_identity"])
-            for seat in active_indexes if seat != npc_index + 1
-        ]
-        context["public_opponents"] = [
-            {"seat": seat,
-             "stack": self.player_stack if seat == 0 else self.npc_stacks[seat - 1],
-             "round_bet": self.player_round_bet if seat == 0 else self.npc_round_bets[seat - 1]}
-            for seat in active_indexes if seat != npc_index + 1
-        ]
-        context.update(self.get_npc_grudge_context(npc_index))
         return context
+
+    def get_npc_wealth_scale(self):
+        """How much of the shared wealth pressure this variant uses (1.0 in Hold'em)."""
+
+        return 1.0
 
 
     # ==================================================
@@ -2744,20 +2854,21 @@ class TexasHoldemGame:
     # 1.00 = monster
     # ==================================================
 
+    def get_npc_opponent_rows(self, npc_index):
+        """Public rows (npc_inputs.opponent_rows) for every other seat in the hand."""
+        seat = npc_index + 1
+        active = self.get_active_player_indexes()
+        names = {
+            other: self.get_table_player_name(other)
+            for other in active if other != seat
+        }
+        return opponent_rows(seat, active, names, table_identities(self.npcs),
+                             self.seat_stacks(), self.seat_round_bets())
+
     def get_npc_grudge_context(self, npc_index):
-        opponents = []
-        for seat in self.get_active_player_indexes():
-            if seat == npc_index + 1:
-                continue
-            npc = self.npcs[seat - 1] if seat else {}
-            opponents.append({
-                "seat": seat, "id": npc_identity(npc, seat),
-                "name": self.get_table_player_name(seat),
-                "stack": self.player_stack if seat == 0 else self.npc_stacks[seat - 1],
-                "round_bet": self.player_round_bet if seat == 0 else self.npc_round_bets[seat - 1],
-            })
         return self.personality_memory.context(self.npcs[npc_index], npc_index + 1,
-                                              opponents, self.last_raiser, self.hand_number)
+                                              self.get_npc_opponent_rows(npc_index),
+                                              self.last_raiser, self.hand_number)
 
     def record_personality_showdown(self, results):
         """Only resent an opponent who actually beat this NPC in a contested pot.
@@ -2765,21 +2876,14 @@ class TexasHoldemGame:
         A side-pot winner may still lose another pot, and folded players do not
         get invented showdown grudges. The memory deduplicates repeated hooks.
         """
-        for pot in self.last_pot_awards:
-            eligible = set(pot.get("eligible", results)) & set(results)
-            winners = set(pot.get("winners", []))
-            for seat in eligible - winners:
-                if seat == 0:
-                    continue
-                npc = self.npcs[seat - 1]
-                observer = npc_identity(npc, seat)
-                severity = min(1.0, self.npc_hand_contributions[seat - 1]
-                               / max(1, self.starting_stack))
-                for winner in winners:
-                    opponent = self.npcs[winner - 1] if winner else {}
-                    self.personality_memory.record_loss(
-                        observer, npc_identity(opponent, winner), self.hand_number,
-                        get_npc_traits(npc)["bitterness"], severity)
+        awards = [
+            {"eligible": sorted(set(pot.get("eligible", results)) & set(results)),
+             "winners": list(pot.get("winners", []))}
+            for pot in self.last_pot_awards
+        ]
+        self.personality_memory.record_showdown(
+            awards, grudge_seats(self.npcs, self.get_hand_contributions()),
+            self.hand_number, self.starting_stack)
 
     def get_npc_hand_strength(
             self,
@@ -2998,40 +3102,33 @@ class TexasHoldemGame:
         ):
             return False
 
-        amount_to_call = (
-            self.get_npc_amount_to_call(
-                npc_index
-            )
+        # The shared rule (core.can_raise): chips beyond the call,
+        # somebody left to respond (B36), and betting reopened
+        # (seat_betting_reopened). An NPC that already acted and only
+        # returned because of a short all-in raise may call or fold, but
+        # not raise.
+        return can_raise(
+            npc_index + 1,
+            self.seat_in_hand(),
+            self.seat_stacks(),
+            self.seat_round_bets(),
+            self.current_bet,
+            reopened=self.seat_betting_reopened(npc_index + 1)
         )
 
-        stack = (
-            self.npc_stacks[
-                npc_index
-            ]
-        )
+    def seat_betting_reopened(self, seat):
+        """May seat bet or raise again this round (core.betting_reopened)?
 
-        if stack <= amount_to_call:
-            return False
-
-        # NPC already acted and only returned because
-        # of a short all-in raise.
-        #
-        # Call/Fold are legal, but raising is not reopened.
-        if self.npc_has_acted[
-            npc_index
-        ]:
-            return False
-
-        maximum_raise_to = (
-                self.npc_round_bets[
-                    npc_index
-                ]
-                + stack
-        )
-
-        return (
-                maximum_raise_to
-                > self.current_bet
+        No-limit (Hold'em, Draw): a seat that already acted may raise
+        again once the short all-ins it faces add up to a full raise
+        (TDA Rule 47). Seven-Card Stud overrides this with its
+        fixed-limit rule.
+        """
+        return betting_reopened(
+            self.seat_has_acted()[seat],
+            self.seat_round_bets()[seat],
+            self.current_bet,
+            self.get_minimum_raise_size()
         )
 
     # ==================================================
@@ -3059,19 +3156,9 @@ class TexasHoldemGame:
         if not (0 <= npc_index < len(self.npc_stacks)):
             return 0.0
 
-        starting_stack = max(1, int(self.starting_stack or 0))
-        stack = max(0, int(self.npc_stacks[npc_index]))
-        wealth_ratio = stack / starting_stack
-
-        if wealth_ratio <= 1.15:
-            return 0.0
-
-        return max(
-            0.0,
-            min(
-                1.0,
-                (wealth_ratio - 1.15) / 1.35
-            )
+        return wealth_pressure(
+            self.npc_stacks[npc_index],
+            self.starting_stack
         )
 
     def get_npc_stage_bet_cap(
@@ -3091,47 +3178,24 @@ class TexasHoldemGame:
             "river": 1.00,
         }
 
-        fraction = stage_fractions.get(
-            self.current_stage,
-            0.25
-        )
-
         # Wealthy stacks are allowed to exert more pressure on early/middle
         # streets. The personality AI still decides whether to use this extra
         # room; this merely prevents the old fixed buy-in cap from making a
         # huge chip leader bet exactly like a fresh stack.
-        wealth_pressure = self.get_npc_wealth_pressure(npc_index)
         stage_wealth_boost = {
             "preflop": 0.70,
             "flop": 0.85,
             "turn": 0.65,
             "river": 0.50,
-        }.get(self.current_stage, 0.45)
-        fraction *= 1.0 + wealth_pressure * stage_wealth_boost
+        }
 
-        base_stack = max(
-            1,
-            self.starting_stack
-        )
-
-        target_cap = int(
-            base_stack
-            * fraction
-        )
-
-        target_cap = max(
-            target_cap,
-            self.get_minimum_open_bet()
-        )
-
-        maximum_total = (
-            self.npc_round_bets[npc_index]
-            + stack
-        )
-
-        return min(
-            target_cap,
-            maximum_total
+        return soft_bet_cap(
+            self.starting_stack,
+            stage_fractions.get(self.current_stage, 0.25),
+            self.get_npc_wealth_pressure(npc_index),
+            stage_wealth_boost.get(self.current_stage, 0.45),
+            self.get_minimum_open_bet(),
+            self.npc_round_bets[npc_index] + stack,
         )
 
     def get_npc_open_bet_amount(
@@ -3389,14 +3453,17 @@ class TexasHoldemGame:
         """Expose live hands only once no further betting or outstanding call exists."""
         if self.current_stage not in ('preflop','flop','turn','river') or self.hand_complete:
             return False
-        if len(self.get_active_player_indexes())<2 or len(self.get_actionable_player_indexes())>1:
-            return False
-        if not self.player_folded and not self.player_busted and self.player_stack>0 and self.player_round_bet<self.current_bet:
-            return False
-        for index in range(len(self.npcs)):
-            if not self.npc_folded[index] and not self.npc_busted[index] and self.npc_stacks[index]>0 and self.npc_round_bets[index]<self.current_bet:
-                return False
-        return True
+        # Two or more seats still in the hand, and betting is closed for it
+        # (core.betting_closed: every call settled, at most one seat with chips).
+        return (
+                len(self.get_active_player_indexes()) >= 2
+                and betting_closed(
+                    self.seat_in_hand(),
+                    self.seat_stacks(),
+                    self.seat_round_bets(),
+                    self.current_bet
+                )
+        )
 
     def is_betting_round_complete(self):
 
@@ -3452,12 +3519,18 @@ class TexasHoldemGame:
         # ==================================================
         # Once all outstanding calls are settled, there is no
         # reason to make the lone player with chips check through
-        # empty streets against only all-in opponents.
+        # empty streets against only all-in opponents
+        # (core.betting_closed: the all-in run-out).
         # ==================================================
 
         if (
                 len(active_indexes) > 1
-                and len(actionable_indexes) <= 1
+                and betting_closed(
+                    self.seat_in_hand(),
+                    self.seat_stacks(),
+                    self.seat_round_bets(),
+                    self.current_bet
+                )
         ):
             return True
 
@@ -3494,6 +3567,7 @@ class TexasHoldemGame:
         self.current_bet = 0
         self.last_raise_size = 0
         self.last_raiser = None
+        self.last_wager_full = False
 
         # ==================================================
         # Round wagers
@@ -3595,12 +3669,48 @@ class TexasHoldemGame:
 
     def get_minimum_raise_to(self):
 
-        if self.current_bet <= 0:
-            return self.get_minimum_open_bet()
+        return minimum_raise_to(
+            self.current_bet,
+            self.last_raise_size,
+            self.get_minimum_open_bet()
+        )
 
-        return (
-                self.current_bet
-                + self.get_minimum_raise_size()
+    def set_opening_wager(
+            self,
+            nominal_bet,
+            minimum_raise
+    ):
+        """Set the bet to call once a hand's forced bets are posted.
+
+        nominal_bet is the forced wager (big blind or bring-in);
+        minimum_raise is the first full raise. With at most one seat able
+        to act, only what was really posted can be called
+        (core.opening_current_bet).
+        """
+        self.current_bet = opening_current_bet(
+            nominal_bet,
+            self.seat_round_bets(),
+            self.seat_can_act()
+        )
+        self.settle_bet_to_match()
+
+        self.last_raise_size = minimum_raise
+        self.last_raiser = None
+
+    def settle_bet_to_match(self):
+        """Lower the bet to call when nobody can contest it (core.bet_to_match).
+
+        With at most one seat in the hand holding chips, that seat only has
+        to match the largest round bet of the other seats in the hand. Run
+        at the deal, after every fold and before every turn, so a fold that
+        leaves the human alone against all-in seats never asks it for a call
+        that would only be returned.
+        """
+        self.current_bet = bet_to_match(
+            self.seat_in_hand(),
+            self.seat_stacks(),
+            self.seat_round_bets(),
+            self.current_bet
         )
 
     def get_player_maximum_raise_to(self):
@@ -3655,21 +3765,21 @@ class TexasHoldemGame:
 
     def can_player_raise(self):
 
-        if not self.can_player_act_now():
-            return False
-        if len(self.get_actionable_player_indexes()) <= 1:
-            return False
-
-        # If the player already acted and has only
-        # been brought back by a short all-in raise,
-        # Call/Fold are allowed, but raising is not
-        # reopened.
-        if self.player_has_acted:
-            return False
-
+        # The shared rule (core.can_raise): chips beyond the call,
+        # somebody left to respond, and betting reopened
+        # (seat_betting_reopened). If the player already acted and has
+        # only been brought back by a short all-in raise, Call/Fold are
+        # allowed, but raising is not reopened.
         return (
-                self.get_player_maximum_raise_to()
-                > self.current_bet
+                self.can_player_act_now()
+                and can_raise(
+                    0,
+                    self.seat_in_hand(),
+                    self.seat_stacks(),
+                    self.seat_round_bets(),
+                    self.current_bet,
+                    reopened=self.seat_betting_reopened(0)
+                )
         )
 
     def player_fold(self):
@@ -3781,6 +3891,8 @@ class TexasHoldemGame:
             amount
     ):
 
+        self.last_wager_full = False
+
         if not self.can_player_act_now():
             return False
 
@@ -3788,6 +3900,10 @@ class TexasHoldemGame:
             return False
 
         if self.player_stack <= 0:
+            return False
+
+        # B36: a bet needs somebody left to respond.
+        if not self.can_player_raise():
             return False
 
         amount = int(
@@ -3833,21 +3949,12 @@ class TexasHoldemGame:
             pot_before=pot_before
         )
 
-        self.current_bet = (
-            self.player_round_bet
+        self.apply_wager(
+            0,
+            old_current_bet,
+            self.player_round_bet,
+            minimum_bet
         )
-
-        actual_raise_size = (
-            self.current_bet
-            - old_current_bet
-        )
-
-        if actual_raise_size >= minimum_bet:
-            self.last_raise_size = actual_raise_size
-            self.last_raiser = 0
-            self.reset_actions_after_aggression(
-                0
-            )
 
         self.player_has_acted = True
 
@@ -3878,10 +3985,14 @@ class TexasHoldemGame:
             raise_to
     ):
 
+        self.last_wager_full = False
+
         # An all-in call uses the same chips as Call; it must remain available
         # even when the stack cannot reach the opponent's bet.
         if self.can_player_call() and self.get_player_amount_to_call() >= self.player_stack:
             return self.player_call()
+        # B36: anything else lifts the bet to call, so it needs a legal raise
+        # (somebody left to respond, betting still open to the player).
         if not self.can_player_raise():
             return False
 
@@ -3942,24 +4053,12 @@ class TexasHoldemGame:
             pot_before=pot_before
         )
 
-        if self.player_round_bet > old_current_bet:
-            actual_raise_size = (
-                self.player_round_bet
-                - old_current_bet
-            )
-
-            self.current_bet = self.player_round_bet
-
-            required_raise_size = (
-                self.get_minimum_raise_size()
-            )
-
-            if actual_raise_size >= required_raise_size:
-                self.last_raise_size = actual_raise_size
-                self.last_raiser = 0
-                self.reset_actions_after_aggression(
-                    0
-                )
+        self.apply_wager(
+            0,
+            old_current_bet,
+            self.player_round_bet,
+            self.get_minimum_raise_size()
+        )
 
         self.player_has_acted = True
 
@@ -4091,7 +4190,7 @@ class TexasHoldemGame:
         return True
 
     # ==================================================
-    # FIVE-CARD HAND EVALUATION
+    # HAND EVALUATION (shared scorer in core.py)
     # ==================================================
 
     def evaluate_five_cards(
@@ -4099,350 +4198,47 @@ class TexasHoldemGame:
             cards
     ):
 
-        values = sorted(
-            [
-                RANK_VALUES[
-                    card["rank"]
-                ]
-                for card in cards
-            ],
-            reverse=True
-        )
-
-        suits = [
-            card["suit"]
-            for card in cards
-        ]
-
-        counts = Counter(
-            values
-        )
-
-        is_flush = (
-            len(
-                set(
-                    suits
-                )
-            ) == 1
-        )
-
-        unique_values = sorted(
-            set(
-                values
-            ),
-            reverse=True
-        )
-
-        # Ace-low straight
-        if 14 in unique_values:
-            unique_values.append(
-                1
-            )
-
-        straight_high = None
-
-        for index in range(
-                len(
-                    unique_values
-                ) - 4
-        ):
-
-            window = (
-                unique_values[
-                    index:
-                    index + 5
-                ]
-            )
-
-            if (
-                    window[0]
-                    - window[4]
-                    == 4
-            ):
-
-                straight_high = (
-                    window[0]
-                )
-
-                break
-
-        # ==========================================
-        # Straight Flush
-        # ==========================================
-
-        if (
-                is_flush
-                and straight_high is not None
-        ):
-
-            return (
-                8,
-                straight_high
-            )
-
-        # ==========================================
-        # Four of a Kind
-        # ==========================================
-
-        quads = sorted(
-            [
-                value
-                for value, count
-                in counts.items()
-                if count == 4
-            ],
-            reverse=True
-        )
-
-        if quads:
-
-            quad_value = (
-                quads[0]
-            )
-
-            kicker = max(
-                value
-                for value in values
-                if value != quad_value
-            )
-
-            return (
-                7,
-                quad_value,
-                kicker
-            )
-
-        # ==========================================
-        # Full House
-        # ==========================================
-
-        triples = sorted(
-            [
-                value
-                for value, count
-                in counts.items()
-                if count == 3
-            ],
-            reverse=True
-        )
-
-        pairs = sorted(
-            [
-                value
-                for value, count
-                in counts.items()
-                if count >= 2
-            ],
-            reverse=True
-        )
-
-        if triples:
-
-            trip_value = (
-                triples[0]
-            )
-
-            pair_candidates = [
-                value
-                for value in pairs
-                if value != trip_value
-            ]
-
-            if len(
-                    triples
-            ) >= 2:
-
-                pair_candidates.append(
-                    triples[1]
-                )
-
-            if pair_candidates:
-
-                return (
-                    6,
-                    trip_value,
-                    max(
-                        pair_candidates
-                    )
-                )
-
-        # ==========================================
-        # Flush
-        # ==========================================
-
-        if is_flush:
-
-            return (
-                5,
-                *values
-            )
-
-        # ==========================================
-        # Straight
-        # ==========================================
-
-        if straight_high is not None:
-
-            return (
-                4,
-                straight_high
-            )
-
-        # ==========================================
-        # Three of a Kind
-        # ==========================================
-
-        if triples:
-
-            trip_value = (
-                triples[0]
-            )
-
-            kickers = sorted(
-                [
-                    value
-                    for value in values
-                    if value != trip_value
-                ],
-                reverse=True
-            )[:2]
-
-            return (
-                3,
-                trip_value,
-                *kickers
-            )
-
-        # ==========================================
-        # Two Pair / Pair
-        # ==========================================
-
-        exact_pairs = sorted(
-            [
-                value
-                for value, count
-                in counts.items()
-                if count == 2
-            ],
-            reverse=True
-        )
-
-        if len(
-                exact_pairs
-        ) >= 2:
-
-            high_pair = (
-                exact_pairs[0]
-            )
-
-            low_pair = (
-                exact_pairs[1]
-            )
-
-            kicker = max(
-                value
-                for value in values
-                if value not in (
-                    high_pair,
-                    low_pair
-                )
-            )
-
-            return (
-                2,
-                high_pair,
-                low_pair,
-                kicker
-            )
-
-        if len(
-                exact_pairs
-        ) == 1:
-
-            pair_value = (
-                exact_pairs[0]
-            )
-
-            kickers = sorted(
-                [
-                    value
-                    for value in values
-                    if value != pair_value
-                ],
-                reverse=True
-            )[:3]
-
-            return (
-                1,
-                pair_value,
-                *kickers
-            )
-
-        # ==========================================
-        # High Card
-        # ==========================================
-
-        return (
-            0,
-            *values
-        )
-
-    # ==================================================
-    # BEST 5 OF 7
-    # ==================================================
+        return evaluate_five_poker_cards(cards)
 
     def evaluate_best_hand(
             self,
             cards
     ):
 
-        if len(
-                cards
-        ) < 5:
-
-            return None
-
-        best_score = None
-        best_cards = None
-
-        for combo in combinations(
-                cards,
-                5
-        ):
-
-            score = (
-                self.evaluate_five_cards(
-                    combo
-                )
-            )
-
-            if (
-                    best_score is None
-                    or score > best_score
-            ):
-
-                best_score = (
-                    score
-                )
-
-                best_cards = list(
-                    combo
-                )
-
-        return (
-            best_score,
-            best_cards
-        )
+        return evaluate_best_poker_hand(cards)
 
     # ==================================================
     # SHOWDOWN
     # ==================================================
 
+    def showdown_ready(self):
+        """True once every card needed to settle the hand is out.
+
+        Hold'em needs the full board. Five-Card Draw and Seven-Card Stud
+        override this: their showdown comes after the last betting round.
+        """
+        return len(self.community_cards) == 5
+
     def showdown(self):
 
-        if len(
-                self.community_cards
-        ) != 5:
+        if not self.showdown_ready():
+            return False
+
+        return self.resolve_showdown()
+
+    def resolve_showdown(self):
+        """Settle the hand with the shared pot rules in core.py.
+
+        Shared by Hold'em, Five-Card Draw and Seven-Card Stud. Every live
+        hand is shown; core.build_pots builds the main pot and side pots
+        and returns uncalled chips; core.award_pots pays each pot to its
+        best eligible hand, splitting ties with odd chips from the
+        dealer's left. A seat that only got chips back is not a winner.
+        """
+
+        # A completed hand has already been resolved: never pay its
+        # pots a second time.
+        if self.hand_complete:
             return False
 
         active_indexes = (
@@ -4484,11 +4280,6 @@ class TexasHoldemGame:
 
         if not results:
             return False
-
-        self.last_resolved_pot = max(
-            0,
-            int(self.pot)
-        )
 
         self.log_hand_event(
             "showdown",
@@ -4538,147 +4329,87 @@ class TexasHoldemGame:
         # Build main pot + side pots
         # ==================================================
 
-        side_pots = (
-            self.build_side_pots()
+        # Only a seat with a shown hand can win; everyone else's chips
+        # are dead money in the pots they were paid towards.
+        seat_count = self.seat_count()
+
+        pots, refunds = build_pots(
+            self.get_hand_contributions(),
+            [
+                seat in results
+                for seat in range(seat_count)
+            ]
         )
-
-        payout_totals = {
-            player_index: 0
-            for player_index
-            in results
-        }
-
-        self.last_pot_awards = []
-        self.recap_open = False
-        self.recap_page = 0
 
         # ==================================================
         # Resolve each pot separately
         # ==================================================
 
-        for pot_data in side_pots:
+        awards, payout_totals = award_pots(
+            pots,
+            {
+                seat: result[0]
+                for seat, result in results.items()
+            },
+            self.dealer_index,
+            seat_count,
+            describe=lambda score: describe_poker_score(
+                score,
+                compact=True
+            )
+        )
 
-            pot_amount = (
-                pot_data[
-                    "amount"
-                ]
+        for player_index, amount in payout_totals.items():
+            self.award_chips_to_player(
+                player_index,
+                amount
             )
 
-            eligible = [
-                player_index
-                for player_index
-                in pot_data[
-                    "eligible"
-                ]
-                if player_index in results
-            ]
-
-            if not eligible:
-                continue
-
-            best_score = max(
-                results[
-                    player_index
-                ][0]
-                for player_index
-                in eligible
+        # Uncalled chips go back to whoever bet them: not a win.
+        for player_index, amount in refunds.items():
+            self.award_chips_to_player(
+                player_index,
+                amount
             )
 
-            winners = [
-                player_index
-                for player_index
-                in eligible
-                if (
-                        results[
-                            player_index
-                        ][0]
-                        == best_score
-                )
-            ]
-
-            if not winners:
-                continue
-
-            # Deterministic order for odd chips.
-            #
-            # Once we add a rotating dealer button,
-            # odd-chip priority can follow real position.
-            winners = sorted(
-                winners
-            )
-
-            share = (
-                    pot_amount
-                    // len(winners)
-            )
-
-            remainder = (
-                    pot_amount
-                    % len(winners)
-            )
-
-            for winner_order, winner_index in enumerate(
-                    winners
-            ):
-
-                winnings = share
-
-                if winner_order < remainder:
-                    winnings += 1
-
-                self.award_chips_to_player(
-                    winner_index,
-                    winnings
-                )
-
-                payout_totals[
-                    winner_index
-                ] += winnings
-
-            self.last_pot_awards.append(
-                {
-                    "amount":
-                        pot_amount,
-
-                    "eligible": eligible.copy(),
-                    "winners":
-                        winners.copy(),
-
-                    "share":
-                        share,
-
-                    "remainder":
-                        remainder,
-                    "hand": describe_poker_score(best_score, compact=True),
-                }
-            )
+        self.last_pot_awards = awards
+        self.last_refunds = dict(refunds)
+        self.last_resolved_pot = sum(
+            int(award["amount"])
+            for award in awards
+        )
+        self.recap_open = False
+        self.recap_page = 0
 
         # ==================================================
-        # Record everybody who won at least one pot
+        # Record everybody who won or tied a pot
+        #
+        # core.hand_winners: a pot whose only eligible seat is the
+        # seat that takes it (its own excess plus folded seats' dead
+        # money) is won only when that seat made money on the hand;
+        # otherwise it is just collected. winner_indexes drives the
+        # win sound, highlight, achievements and chat.
         # ==================================================
 
-        self.winner_indexes = sorted(
-            [
-                player_index
-                for player_index, winnings
-                in payout_totals.items()
-                if winnings > 0
-            ]
+        self.winner_indexes = hand_winners(
+            awards,
+            hand_nets(
+                self.get_hand_contributions(),
+                awards,
+                refunds
+            )
         )
 
         # ==================================================
-        # Result text
+        # Result text: every seat that collected a pot
         # ==================================================
 
-        payout_winners = [
+        payout_winners = sorted(
             player_index
-            for player_index
-            in self.winner_indexes
-            if payout_totals.get(
-                player_index,
-                0
-            ) > 0
-        ]
+            for player_index, winnings
+            in payout_totals.items()
+            if winnings > 0
+        )
 
         # ------------------------------------------
         # One player collected everything
@@ -4755,9 +4486,21 @@ class TexasHoldemGame:
                     ]
                 )
 
-                payout_parts.append(
-                    f"{name} ${winnings:,} with {describe_poker_score(results[player_index][0], compact=True)}"
-                )
+                part = f"{name} ${winnings:,}"
+
+                # A seat that only collected pots nobody else could win
+                # beat nobody, so no hand is named for it.
+                if self.payout_text_names_hands and any(
+                        player_index in award["payouts"]
+                        and not collected_uncontested(award, awards)
+                        for award in awards
+                ):
+                    part += (
+                        f" with "
+                        f"{describe_poker_score(results[player_index][0], compact=True)}"
+                    )
+
+                payout_parts.append(part)
 
             self.result_text = (
                     "Payouts: "
@@ -4768,8 +4511,10 @@ class TexasHoldemGame:
             )
 
         # ==================================================
-        # Detailed side-pot history
+        # Uncalled chips and detailed side-pot history
         # ==================================================
+
+        self.log_refund_events(refunds)
 
         # Keep the result in the normal payout banner. Detailed review is opt-in.
         self.recap_open = False
@@ -4782,10 +4527,8 @@ class TexasHoldemGame:
             self.result_text,
             winners=self.winner_indexes.copy(),
             payouts={
-                player_index: amount
-                for player_index, amount
-                in payout_totals.items()
-                if amount > 0
+                player_index: payout_totals[player_index]
+                for player_index in payout_winners
             }
         )
 

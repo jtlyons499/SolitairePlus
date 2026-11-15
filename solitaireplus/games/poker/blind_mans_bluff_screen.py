@@ -11,6 +11,7 @@ from solitaireplus.career import career_rewards
 from solitaireplus.games.poker.blind_mans_bluff_ui import draw_blind_mans_bluff
 from solitaireplus.games.poker.blind_mans_bluff_ui import get_blind_mans_bluff_action
 from solitaireplus.games.poker.blind_mans_bluff_ui import get_blind_mans_bluff_bet_amount
+from solitaireplus.games.poker.variant_quick_chat import reset_variant_quick_chat
 from solitaireplus.npc.manager import get_random_npc_group
 import pygame
 from solitaireplus.app import state
@@ -20,6 +21,7 @@ from solitaireplus.games.poker.bluff_presentation import update_bluff_presentati
 from solitaireplus.app.lazy import lazy
 table_stakes = lazy("solitaireplus.games.poker.table_stakes")
 holdem_screen = lazy("solitaireplus.games.poker.holdem_screen")
+holdem_ui = lazy("solitaireplus.games.poker.holdem_ui")
 training = lazy("solitaireplus.career.training")
 legacy = lazy("solitaireplus.legacy")
 window = lazy("solitaireplus.app.window")
@@ -54,6 +56,9 @@ def start_blind_mans_bluff_session(starting_stack=None):
     state.blind_mans_bluff_buy_in_active = True
     blind_mans_bluff_game.session_xp_rewarded = False
 
+    blind_mans_bluff_game.learning_store = legacy.game_namespace().get("career_poker_learning") if state.current_game_mode == "career" else None
+    # The last session's Quick Chat menu, queued replies and history do not carry over.
+    reset_variant_quick_chat("blind_mans_bluff")
     if not blind_mans_bluff_game.start_session(opponents, starting_stack):
         state.career_cash += starting_stack
         state.blind_mans_bluff_buy_in_active = False
@@ -174,9 +179,17 @@ def handle_event(event):
                 sounds.audio.play_sound("button_click")
 
 
+def sync_npc_delay(game):
+    """Pace the NPC turns by the table speed (as at the Hold'em tables)."""
+    game.npc_delay_seconds = holdem_ui.get_holdem_npc_delay() / 1000
+
+
 def draw():
     """Old draw-chain branch for STATE_BLIND_MANS_BLUFF."""
 
+    # A due NPC turn runs before the presentation, so its chips and sounds show this frame.
+    sync_npc_delay(blind_mans_bluff_game)
+    blind_mans_bluff_game.update()
     update_bluff_presentation(blind_mans_bluff_game, sounds.audio.play_sound)
     draw_blind_mans_bluff(
         window.game_surface,

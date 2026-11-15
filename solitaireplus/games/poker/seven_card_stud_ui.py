@@ -5,7 +5,8 @@ from types import SimpleNamespace
 
 import pygame
 
-from solitaireplus.games.poker.speech import PokerSpeechOverlay
+from solitaireplus.games.poker.log_rows import log_rows, max_log_scroll, visible_log_rows
+from solitaireplus.games.poker.speech import PokerSpeechOverlay, is_poker_chat_popups_enabled
 from solitaireplus.ui import text as ui_text
 
 # Module-private caches, animation keys and table UI state. Their starting values are
@@ -46,6 +47,20 @@ STUD_LOG_RECT = pygame.Rect(
     410,
     140
 )
+
+# The GAME LOG's text area: rows start 52 px below the panel top, 14 px in, and end
+# 4 px above its bottom edge.
+STUD_LOG_TEXT_WIDTH = STUD_LOG_RECT.width - 28
+STUD_LOG_TEXT_HEIGHT = STUD_LOG_RECT.height - 56
+STUD_LOG_LINE_STEP = 29
+# A log line too wide for the text area at the 15 px log font is drawn on one row in the
+# smaller font render_text_fit picks, exactly as the panel always drew it, when it fits
+# at 10 px or more, the smallest size the panel ever drew. The panel shows three rows,
+# so every line that wraps pushes an older line out of the end-of-hand view; a
+# seven-card showdown line often needs 10-12 px, and stays on one row. A line that
+# does not fit even at 10 px (a split or side-pot line, which used to run out of the
+# panel) wraps onto several rows at 15 px instead (log_rows).
+STUD_LOG_MIN_FIT_SIZE = 10
 
 STUD_ACTION_PANEL_RECT = pygame.Rect(
     925,
@@ -1458,6 +1473,8 @@ def draw_seven_card_stud_buy_in(
 # ==================================================
 
 def reset_seven_card_stud_ui_session():
+    # The Quick Chat menu, queued replies and history do not carry over (as in Hold'em).
+    _stud_variant_qc.reset_session()
     _ui.stud_chat_history = []
     _stud_speech_overlay.clear()
     _ui.stud_active_tab = "log"
@@ -1473,7 +1490,9 @@ def add_seven_card_stud_chat_message(
     if not message:
         return
 
-    if speaker:
+    # The 'Table Chat Pop-ups' setting decides the speech bubbles (as at Hold'em and
+    # Draw); the chat log always gets the line.
+    if speaker and is_poker_chat_popups_enabled():
         _stud_speech_overlay.post(
             speaker,
             message
@@ -1559,14 +1578,11 @@ def scroll_seven_card_stud_panel(
         )
 
     else:
-        lines = (
-            game.get_hand_history_lines()
-        )
-
-        max_scroll = max(
-            0,
-            len(lines)
-            - visible
+        # The log scrolls by rows: a long line wraps onto several (log_rows). The
+        # wheel stops where the oldest rows that fit fill the panel.
+        max_scroll = max_log_scroll(
+            get_seven_card_stud_log_rows(game),
+            *get_seven_card_stud_log_layout()
         )
 
         _ui.stud_log_scroll = max(
@@ -1740,80 +1756,126 @@ def draw_log_panel(
         )
     )
 
-    if _ui.stud_active_tab == "chat":
-        lines = list(
-            _ui.stud_chat_history
-        )
-        scroll = _ui.stud_chat_scroll
-    else:
-        lines = (
-            game.get_hand_history_lines()
-        )
-        scroll = _ui.stud_log_scroll
-
-    visible_count = (
-        4
-        if _ui.stud_active_tab == "chat"
-        else 3
-    )
-    line_step = (
-        19
-        if _ui.stud_active_tab == "chat"
-        else 29
-    )
-
-    max_scroll = max(
-        0,
-        len(lines)
-        - visible_count
-    )
-
-    scroll = max(
-        0,
-        min(
-            scroll,
-            max_scroll
-        )
-    )
-
-    start = max(
-        0,
-        len(lines)
-        - visible_count
-        - scroll
-    )
-
-    visible_lines = lines[
-        start:
-        start + visible_count
-    ]
-
     y = (
         STUD_LOG_RECT.y + 52
     )
 
-    for line in visible_lines:
-        text_surface = render_text_fit(
-            line,
-            fonts["tiny"],
-            (
-                232,
-                234,
-                230
-            ),
-            STUD_LOG_RECT.width - 28,
-            minimum_size=10
-        )
+    # Nothing is drawn outside the panel.
+    clip = surface.get_clip()
+    surface.set_clip(clip.clip(STUD_LOG_RECT.inflate(-4, -4)))
 
-        surface.blit(
-            text_surface,
-            (
-                STUD_LOG_RECT.x + 14,
-                y
+    try:
+        if _ui.stud_active_tab == "chat":
+            lines = list(
+                _ui.stud_chat_history
             )
-        )
+            scroll = max(
+                0,
+                min(
+                    _ui.stud_chat_scroll,
+                    max(0, len(lines) - 4)
+                )
+            )
+            start = max(
+                0,
+                len(lines)
+                - 4
+                - scroll
+            )
 
-        y += line_step
+            for line in lines[start:start + 4]:
+                text_surface = render_text_fit(
+                    line,
+                    fonts["tiny"],
+                    (
+                        232,
+                        234,
+                        230
+                    ),
+                    STUD_LOG_TEXT_WIDTH,
+                    minimum_size=10
+                )
+
+                surface.blit(
+                    text_surface,
+                    (
+                        STUD_LOG_RECT.x + 14,
+                        y
+                    )
+                )
+
+                y += 19
+
+        else:
+            # A long line wraps onto several rows at the log font size; the newest
+            # rows stay at the bottom (log_rows.visible_log_rows).
+            font = fonts["tiny"]
+            rows = get_seven_card_stud_log_rows(game)
+            layout = get_seven_card_stud_log_layout()
+            scroll = max(
+                0,
+                min(
+                    _ui.stud_log_scroll,
+                    max_log_scroll(rows, *layout)
+                )
+            )
+
+            for text, offset in visible_log_rows(
+                    rows,
+                    scroll,
+                    *layout
+            ):
+                # A wrapped row fits; a line too wide that fits at 10 px is one row
+                # in a smaller font, as it always was (get_seven_card_stud_log_rows).
+                surface.blit(
+                    render_text_fit(
+                        text,
+                        font,
+                        (
+                            232,
+                            234,
+                            230
+                        ),
+                        STUD_LOG_TEXT_WIDTH,
+                        minimum_size=STUD_LOG_MIN_FIT_SIZE
+                    ),
+                    (
+                        STUD_LOG_RECT.x + 14,
+                        y + offset
+                    )
+                )
+
+    finally:
+        surface.set_clip(clip)
+
+
+def get_seven_card_stud_log_rows(game):
+    """The GAME LOG's rows: a hand-history line too wide that fits at 10 px is one row
+    in a smaller font (_log_line_fits_legibly); a longer one word-wraps to the panel."""
+    return log_rows(
+        get_stud_fonts()["tiny"],
+        game.get_hand_history_lines(),
+        STUD_LOG_TEXT_WIDTH,
+        _log_line_fits_legibly
+    )
+
+
+def _log_line_fits_legibly(font, text, width):
+    """Whether render_text_fit fits this log line, too wide for ``width`` at
+    ``font``, at STUD_LOG_MIN_FIT_SIZE or more.
+
+    log_rows asks once per line and remembers the answer.
+    """
+    return render_text_fit(text, font, WHITE, width,
+                           minimum_size=STUD_LOG_MIN_FIT_SIZE).get_width() <= width
+
+
+def get_seven_card_stud_log_layout():
+    """The GAME LOG's height, line step, wrapped-row step and row height
+    (log_rows.visible_log_rows / max_log_scroll)."""
+    row_height = get_stud_fonts()["tiny"].size("Ag")[1]
+
+    return STUD_LOG_TEXT_HEIGHT, STUD_LOG_LINE_STEP, row_height, row_height
 
 
 # ==================================================
@@ -2103,12 +2165,13 @@ def draw_npc_seat(
     )
     surface.blit(name_surface, name_surface.get_rect(center=name_rect.center))
 
-    _stud_speech_overlay.draw(
-        surface,
-        game.get_table_player_name(index + 1),
-        name_rect,
-        fonts["tiny"]
-    )
+    if is_poker_chat_popups_enabled():
+        _stud_speech_overlay.draw(
+            surface,
+            game.get_table_player_name(index + 1),
+            name_rect,
+            fonts["tiny"]
+        )
 
     money_rect = pygame.Rect(name_rect.centerx - 59, name_rect.bottom - 2, 118, 28)
     stack = game.npc_stacks[index] if index < len(game.npc_stacks) else 0

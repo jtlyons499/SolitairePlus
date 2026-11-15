@@ -132,12 +132,28 @@ def get_action_type(
 # CHAT AFTER AN NPC ACTION
 # ==================================================
 
+def npc_action_chat_chance(npc, action):
+    """How likely an NPC is to talk after its own action, at every poker table.
+
+    action: check, call, bet, raise, fold or all_in (a call, bet or raise that
+    leaves the NPC with no chips). More unpredictable NPCs talk a little more.
+    """
+    traits = get_npc_traits(npc)
+    return ACTION_CHAT_CHANCE.get(action, 0.15) + 0.008*(traits["unpredictability"] - 1)
+
+
+def npc_action_chat_event(action, stack_after):
+    """The talk event for an NPC action: all_in when a call, bet or raise left it no chips."""
+    if action in ("call", "bet", "raise") and stack_after <= 0:
+        return "all_in"
+    return action
+
+
 def generate_npc_action_chat(holdem_game, npc_index):
     action = get_action_type(holdem_game, npc_index)
     if action is None:
         return None
-    traits = get_npc_traits(holdem_game.npcs[npc_index])
-    chance = ACTION_CHAT_CHANCE.get(action, 0.15) + 0.008*(traits["unpredictability"] - 1)
+    chance = npc_action_chat_chance(holdem_game.npcs[npc_index], action)
     if random.random() > chance:
         return None
     return get_npc_name(holdem_game, npc_index), game_trait_chat(holdem_game, npc_index, action)
@@ -212,6 +228,21 @@ def get_showdown_phrase(holdem_game, npc_index, reaction_type):
     return game_trait_chat(holdem_game, npc_index, reaction_type)
 
 
+def get_split_pot_npc_indexes(holdem_game):
+    """NPC indexes that shared a pot: a pot with two or more winners.
+
+    Two seats that each won a different pot did not split anything, so the
+    pot awards decide it, not how many seats are in winner_indexes.
+    """
+    return {
+        player_index - 1
+        for award in getattr(holdem_game, "last_pot_awards", [])
+        if len(award.get("winners", [])) >= 2
+        for player_index in award["winners"]
+        if player_index > 0
+    }
+
+
 def generate_showdown_chat(
         holdem_game
 ):
@@ -283,49 +314,52 @@ def generate_showdown_chat(
         holdem_game.winner_indexes
     )
 
+    split_npc_indexes = get_split_pot_npc_indexes(
+        holdem_game
+    )
+
     # ------------------------------------------
     # Player won at least part of the pot
     # ------------------------------------------
 
     if 0 in winner_indexes:
 
-        # True split pot
-        if len(winner_indexes) > 1:
+        # True split pot: an NPC shared a pot (P5)
+        npc_winners = [
+            player_index - 1
+            for player_index
+            in winner_indexes
+            if player_index > 0
+            and player_index - 1 in split_npc_indexes
+        ]
 
-            npc_winners = [
-                player_index - 1
-                for player_index
-                in winner_indexes
-                if player_index > 0
-            ]
+        if npc_winners:
 
-            if npc_winners:
+            npc_index = random.choice(
+                npc_winners
+            )
 
-                npc_index = random.choice(
-                    npc_winners
+            phrase = (
+                get_showdown_phrase(
+                    holdem_game,
+                    npc_index,
+                    "split"
                 )
+            )
 
-                phrase = (
-                    get_showdown_phrase(
-                        holdem_game,
-                        npc_index,
-                        "split"
+            if phrase:
+
+                messages.append(
+                    (
+                        get_npc_name(
+                            holdem_game,
+                            npc_index
+                        ),
+                        phrase
                     )
                 )
 
-                if phrase:
-
-                    messages.append(
-                        (
-                            get_npc_name(
-                                holdem_game,
-                                npc_index
-                            ),
-                            phrase
-                        )
-                    )
-
-        # Player won without an NPC co-winner.
+        # Nobody shared a pot: the player won its pots alone.
         else:
 
             possible_losers = []
@@ -340,6 +374,10 @@ def generate_showdown_chat(
                 if holdem_game.npc_busted[
                         npc_index
                 ]:
+                    continue
+
+                # An NPC that won another pot did not lose the hand.
+                if npc_index + 1 in winner_indexes:
                     continue
 
                 possible_losers.append(
@@ -410,7 +448,7 @@ def generate_showdown_chat(
 
             reaction_type = (
                 "split"
-                if len(winner_indexes) > 1
+                if npc_index in split_npc_indexes
                 else "win"
             )
 

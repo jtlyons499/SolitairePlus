@@ -10,6 +10,7 @@ from solitaireplus.games.poker.five_o import FiveOPokerGame
 from solitaireplus.career import career_rewards
 from solitaireplus.games.poker.five_o_ui import draw_five_o_poker
 from solitaireplus.games.poker.five_o_ui import get_five_o_action
+from solitaireplus.games.poker.variant_quick_chat import reset_variant_quick_chat
 from solitaireplus.npc.manager import get_random_npc
 import pygame
 from solitaireplus.app import state
@@ -18,6 +19,7 @@ from solitaireplus.career.session_summary import track_night_cash
 from solitaireplus.app.lazy import lazy
 table_stakes = lazy("solitaireplus.games.poker.table_stakes")
 holdem_screen = lazy("solitaireplus.games.poker.holdem_screen")
+holdem_ui = lazy("solitaireplus.games.poker.holdem_ui")
 legacy = lazy("solitaireplus.legacy")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
@@ -50,6 +52,9 @@ def start_five_o_poker_session(starting_stack=None):
     state.five_o_poker_buy_in_active = True
     five_o_poker_game.session_xp_rewarded = False
 
+    five_o_poker_game.learning_store = legacy.game_namespace().get("career_poker_learning") if state.current_game_mode == "career" else None
+    # The last session's Quick Chat menu, queued replies and history do not carry over.
+    reset_variant_quick_chat("five_o_poker")
     if not five_o_poker_game.start_session(opponent, starting_stack):
         state.career_cash += starting_stack
         state.five_o_poker_buy_in_active = False
@@ -175,9 +180,15 @@ def handle_event(event):
                 sounds.audio.play_sound("button_click")
 
 
+def sync_npc_delay(game):
+    """Pace the NPC's betting decisions by the table speed (as at the Hold'em tables)."""
+    game.npc_delay_seconds = holdem_ui.get_holdem_npc_delay() / 1000
+
+
 def draw():
     """Old draw-chain branch for STATE_FIVE_O_POKER."""
 
+    sync_npc_delay(five_o_poker_game)
     five_o_poker_game.update()
 
     draw_five_o_poker(

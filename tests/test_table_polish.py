@@ -13,9 +13,13 @@ from solitaireplus.games.poker.five_o_ui import draw_five_o_poker, get_five_o_ac
 
 class TablePolishTests(unittest.TestCase):
     def test_repeated_deals_compare_both_hands_and_conserve_chips(self):
+        # Every hand is played through the real betting flow: the NPC's queued turns (its
+        # opening on even hands included) run through update() once their pause is over, the
+        # human checks or calls, and the column reveal finishes through update() too.
         game = FiveOPokerGame(random.Random(17))
         game.start_session({'name': 'Rival'}, 100000)
         signatures = set()
+        npc_opening_bets = 0
         for hand in range(40):
             while game.phase == 'placement':
                 self.assertTrue(game.place_player_card(game.get_available_player_columns()[0]))
@@ -25,16 +29,33 @@ class TablePolishTests(unittest.TestCase):
             signatures.add(tuple((c['rank'], c['suit']) for c in cards))
             expected = [compare_scores(evaluate_five_card_hand(p), evaluate_five_card_hand(n))
                         for p, n in zip(game.player_columns, game.npc_columns)]
-            game._showdown()
+            self.assertEqual(game.phase, 'betting')
+            self.assertEqual(game.bet_state, 'npc_open' if game.opening_index == 1 else 'player_open')
+            for _ in range(10):
+                if game.phase != 'betting':
+                    break
+                if game.pending_npc_at:
+                    opening = game.bet_state == 'npc_open'
+                    game.pending_npc_at -= 1000.0   # the NPC's thinking pause is over
+                    game.update()
+                    npc_opening_bets += opening and game.bet_state == 'player_response'
+                    continue
+                actions = game.get_player_actions()
+                self.assertTrue(game.player_call() if 'call' in actions else game.player_check())
+            self.assertEqual(game.phase, 'showdown')
+            self.assertTrue(game.showdown_pending_finish)
             self.assertEqual(game.column_results, [{1:'player', -1:'npc', 0:'tie'}[x] for x in expected])
             after = (game.player_stack, game.npc_stack, game.hands_won, game.hands_lost, game.hands_tied)
             game._showdown()
             self.assertEqual(after, (game.player_stack, game.npc_stack, game.hands_won, game.hands_lost, game.hands_tied))
             self.assertEqual(game.player_stack + game.npc_stack + game.pot, 200000)
-            game.showdown_pending_finish = False
-            game._finish_hand()
+            game.showdown_reveal_started_at -= 1000.0   # every column has been revealed
+            game.update()
+            self.assertTrue(game.hand_complete)
+            self.assertEqual(game.pending_npc_at, 0.0)
             self.assertTrue(game.start_hand())
         self.assertEqual(len(signatures), 40)
+        self.assertGreater(npc_opening_bets, 0)   # the NPC's opening bets are exercised
 
     def test_reported_high_card_example_is_not_a_tie(self):
         def cards(ranks):

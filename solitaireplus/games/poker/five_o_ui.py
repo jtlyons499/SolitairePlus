@@ -1,7 +1,7 @@
 from solitaireplus.app import paths
 import pygame
 from pathlib import Path
-from solitaireplus.games.poker.speech import is_poker_chat_popups_enabled
+from solitaireplus.app import state
 
 from solitaireplus.games.poker.core import format_poker_display_name
 from solitaireplus.ui import text as ui_text
@@ -214,8 +214,10 @@ def get_five_o_action(mouse_pos, game):
         return "ui_click"
     for index, rect in enumerate(BET_PRESET_RECTS):
         if game.phase == "betting" and rect.collidepoint(mouse_pos):
-            game.bet_fraction = (.25, .5, 1, 100)[index]
-            return "ui_click"
+            # Locked while the NPC is thinking: the preset sizes its bet too.
+            if game.select_bet_fraction((.25, .5, 1, 100)[index]):
+                return "ui_click"
+            return None
     if game.hand_complete:
         if FIVE_O_RETURN_RECT.collidepoint(mouse_pos):
             return ACTION_RETURN
@@ -279,12 +281,15 @@ def draw_five_o_poker(surface, mouse_pos, game, player_name, draw_submenu_backgr
     font = ui_text.get_font(None, 24)
     def line(value, y, color=WHITE):
         surface.blit(_fit_line(font, value, 296, color), (32, y))
-    def wrap(value, y, color=WHITE):
+    def wrap(value, y, color=WHITE, upward=False):
         rows = [""]
         for word in str(value).split():
             trial = (rows[-1] + " " + word).strip()
             if font.size(trial)[0] > 296 and rows[-1]: rows.append(word)
             else: rows[-1] = trial
+        if upward:
+            # The last row stays at y: a longer text grows upward, clear of the chat strip.
+            y -= 23 * (len(rows) - 1)
         for row in rows:
             line(row, y, color); y += 23
         return y
@@ -341,7 +346,9 @@ def draw_five_o_poker(surface, mouse_pos, game, player_name, draw_submenu_backgr
         wrap(game.result_text, 260)
         wrap(game.last_player_action, 370, CREAM)
         wrap(game.last_npc_action, 420, CREAM)
-        for index, rect in enumerate(BET_PRESET_RECTS): _draw_button(surface, rect, ("1/4 POT", "1/2 POT", "POT", "MAX")[index], mouse_pos, ui_text.get_font(None, 22))
+        for index, rect in enumerate(BET_PRESET_RECTS):
+            _draw_button(surface, rect, ("1/4 POT", "1/2 POT", "POT", "MAX")[index], mouse_pos,
+                         ui_text.get_font(None, 22), enabled=game.can_select_bet_fraction())
     else:
         line(f"Columns: You {game.player_column_wins} / Rival {game.npc_column_wins}", 216, GOLD)
         for index in range(revealed):
@@ -351,7 +358,7 @@ def draw_five_o_poker(surface, mouse_pos, game, player_name, draw_submenu_backgr
             line(f"{index+1}. " + {"player": "Win", "npc": "Loss", "tie": "Tie"}.get(result, ""), y, color)
             line("You: " + game.get_column_description("player", index), y+20)
             line("Rival: " + game.get_column_description("npc", index), y+40)
-        if game.hand_complete: wrap(game.result_text, 594, GOLD)
+        if game.hand_complete: wrap(game.result_text, 594, GOLD, upward=True)
     actions = set(game.get_player_actions())
     for action in (ACTION_FOLD, ACTION_CHECK, ACTION_CALL, ACTION_BET):
         if action not in actions: continue
@@ -393,6 +400,13 @@ def draw_five_o_poker(*args, **kwargs):
     surface = args[0] if len(args) > 0 else kwargs.get("surface")
     mouse_pos = args[1] if len(args) > 1 else kwargs.get("mouse_pos")
     game = args[2] if len(args) > 2 else kwargs.get("game")
+    if surface is not None and game is not None:
+        # The NPC's table talk goes to the chat strip, like the Quick Chat replies. The
+        # strip is a chat log, so the 'Table Chat' setting decides it, as it does the other
+        # tables' chat tab; 'Table Chat Pop-ups' (speech bubbles) does not.
+        for chat_line in game.take_npc_chat() if hasattr(game, "take_npc_chat") else ():
+            if state.holdem_table_chat_enabled:
+                _five_o_variant_qc.add_history_line(game.get_npc_name(), chat_line)
     if surface is not None and game is not None and not getattr(game, "options_open", False):
         _five_o_variant_qc.draw_status_ribbon(surface, game, pygame.Rect(515, 68, 336, 34))
         _five_o_variant_qc.draw(

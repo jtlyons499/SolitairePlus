@@ -81,6 +81,25 @@ class VariantQuickChatController:
             self.adapter.sync()
         return self.adapter
 
+    def reset_session(self):
+        """Forget the last session, as Hold'em's reset_texas_holdem_ui_session does.
+
+        The menu closes, queued NPC replies are dropped, the local history is
+        cleared, and the next bind() builds a fresh adapter for the engine even
+        when the screen reuses the same engine object.
+        """
+        self.game = None
+        self.adapter = None
+        self.open = False
+        self.target_key = None
+        self.pending.clear()
+        self.local_history.clear()
+
+    def add_history_line(self, speaker, message):
+        """Add a line (an NPC's table talk) to the compact local history."""
+        if message:
+            self._post(speaker, message, None)
+
     def _post(self, speaker, message, post_message=None):
         if post_message is not None:
             post_message(speaker, message)
@@ -126,14 +145,17 @@ class VariantQuickChatController:
         adapter = self.bind(game)
         self._flush(post_message)
         options = self._options()
+        # Only the Quick Chat button and menu need options; the history strip below
+        # shows the table's talk whenever there is some (an NPC's line after the final
+        # call, during the Five-O reveal, is shown at once).
         if not options:
             self.open = False
             self.target_key = None
-            return
-        self._layout(anchor_rect, five_o=five_o)
-        _button(surface, self.button_rect, "QUICK CHAT", mouse_pos, selected=self.open)
+        else:
+            self._layout(anchor_rect, five_o=five_o)
+            _button(surface, self.button_rect, "QUICK CHAT", mouse_pos, selected=self.open)
 
-        if self.open:
+        if options and self.open:
             _panel(surface, self.popup_rect, (10, 14, 18, 246), (165, 173, 183), radius=12)
             if self.target_key:
                 for (npc_index, name), rect in self._target_rects:
@@ -245,3 +267,8 @@ def controller_for(game_id):
     if key not in _CONTROLLERS:
         _CONTROLLERS[key] = VariantQuickChatController(key)
     return _CONTROLLERS[key]
+
+
+def reset_variant_quick_chat(game_id):
+    """Reset the Quick Chat of one table (game_id) when a new session starts."""
+    controller_for(game_id).reset_session()

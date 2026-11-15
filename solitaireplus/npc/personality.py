@@ -135,6 +135,26 @@ class PokerGrudgeMemory:
             "score": min(1.0, prior + unit*(0.30 + 0.50*max(0.0, min(1.0, severity)))),
         }
 
+    def record_showdown(self, awards, seats, hand_number, starting_stack):
+        """Resent the winners of every contested pot a seat lost at showdown.
+
+        awards: the hand's pot records ({"eligible", "winners", ...}, core.award_pots).
+        seats: {seat: {"id", "bitterness" (None for the human), "contribution"}}.
+        A loser is an eligible seat that did not win that pot; it resents each of
+        the pot's winners with severity = its contribution / buy-in (at most 1).
+        Call this only for a showdown: never for fold wins or uncalled refunds.
+        """
+        for award in awards:
+            winners = [seat for seat in award.get("winners", ()) if seat in seats]
+            for loser in set(award.get("eligible", ())) - set(award.get("winners", ())):
+                row = seats.get(loser)
+                if row is None or row.get("bitterness") is None:
+                    continue
+                severity = min(1.0, row.get("contribution", 0) / max(1, starting_stack))
+                for winner in winners:
+                    self.record_loss(row["id"], seats[winner]["id"], hand_number,
+                                     row["bitterness"], severity)
+
     def context(self, npc, seat, opponents, last_raiser, hand_number):
         """Opponents contain only public identity, stack, round contribution."""
         observer = npc_identity(npc, seat)

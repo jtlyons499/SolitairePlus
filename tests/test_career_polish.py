@@ -9,6 +9,11 @@ from solitaireplus.career.events.press_interview import PRESS_INTERVIEW_QUESTION
 from solitaireplus.career.session_summary import poker_session_status, night_game_net, night_cash_total, track_night_cash
 from solitaireplus.career.event_progress import store_event_progress, restore_event_progress
 from solitaireplus.profile.unlocks import add_rating_catalogs, unlock_ratings, rating_lock_progress, lock_reason
+from solitaireplus.games.poker.table_timers import TABLE_TIMERS
+
+def env_table_timers(env):
+ """table_timers.reset_table_timers for a fake namespace: zero the table's timers in env."""
+ return lambda prefix:env.update({f'{prefix}_{name}':0 for name in TABLE_TIMERS})
 
 def production_function(name, env):
  locate.exec_functions([name],env,'production Career function')
@@ -69,6 +74,7 @@ class CareerPolishTests(unittest.TestCase):
   for key in ('texas_holdem','five_card_draw','seven_card_stud'):
    game=SimpleNamespace(current_stage='preflop',player_stack=1000,rating_seen_hands=set(),session_xp_rewarded=False)
    xp=[];env={f'{key}_game':game,f'{key}_buy_in_active':True,f'{key}_starting_stack':1000,f'{key}_session_net':0,'career_cash':0,'current_game_mode':'career','STATE_CAREER_EVENT_SELECT':'select','award_game_xp':lambda *a,**k:xp.append((a,k)),'rate_poker_cash_out':lambda *a:0,'track_night_cash':track_night_cash,'auto_save_career':lambda:None,'lose_fans_for_bad_result':lambda *a,**k:None}
+   env['reset_table_timers']=env_table_timers(env)
    finish=production_function('finish_'+key+'_session',env);finish()
    self.assertEqual(xp,[],key)
    game.rating_seen_hands.add(1);finish();finish()

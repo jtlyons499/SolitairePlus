@@ -3,10 +3,10 @@ from solitaireplus.npc.personality import get_npc_traits, trait_units
 from collections import Counter
 from itertools import combinations
 
-from solitaireplus.games.poker.core import describe_poker_score, format_poker_cards
+from solitaireplus.games.poker.core import format_poker_cards
+from solitaireplus.games.poker.npc_inputs import soft_bet_cap
 from solitaireplus.games.poker.ai import (
     get_poker_personality,
-    get_poker_skill_factor,
 )
 from solitaireplus.games.poker.holdem import (
     HAND_NAMES,
@@ -19,11 +19,14 @@ class FiveCardDrawGame(TexasHoldemGame):
     """Five-Card Draw built on the proven shared betting/table machinery.
 
     The Hold'em class currently owns the mature seat, blind, betting, all-in,
-    side-pot, hand-history and shared-AI plumbing. This subclass replaces only
-    the game-specific deal/draw/street/showdown behavior.
+    side-pot, showdown, hand-history and shared-AI plumbing. This subclass
+    replaces only the game-specific deal/draw/street behavior.
     """
 
     rating_game_key = "five_card_draw"
+
+    # The showdown banner is one fixed-width line (see TexasHoldemGame).
+    payout_text_names_hands = False
 
     def __init__(self):
         super().__init__()
@@ -137,10 +140,8 @@ class FiveCardDrawGame(TexasHoldemGame):
 
         self.pot = 0
         self.hand_complete = False
-        self.winner_indexes = []
         self.result_text = ""
-        self.last_pot_awards = []
-        self.last_resolved_pot = 0
+        self.begin_hand_records()
 
         self.player_hand_contribution = 0
         self.npc_hand_contributions = [
@@ -196,9 +197,12 @@ class FiveCardDrawGame(TexasHoldemGame):
             "BB",
         )
 
-        self.current_bet = self.big_blind
-        self.last_raise_size = self.big_blind
-        self.last_raiser = None
+        # B39: the same rule as Hold'em. A short all-in big blind keeps the
+        # nominal wager only while two or more seats can still act.
+        self.set_opening_wager(
+            self.big_blind,
+            self.big_blind,
+        )
 
         for npc_index in range(len(self.npcs)):
             if self.npc_busted[npc_index]:
@@ -333,8 +337,10 @@ class FiveCardDrawGame(TexasHoldemGame):
         personality = get_poker_personality(
             self.npcs[npc_index]
         )
-        skill_factor = get_poker_skill_factor(
-            self.npcs[npc_index]
+        # The same skill as this NPC's betting: its Five-Card Draw rating, or
+        # its skill tier without one (get_npc_skill_factor).
+        skill_factor = self.get_npc_skill_factor(
+            npc_index
         )
 
         # Occasional stand-pat bluff with a weak hand.
@@ -688,27 +694,6 @@ class FiveCardDrawGame(TexasHoldemGame):
 
         return False
 
-    def resolve_after_fold(self):
-        if self.hand_complete:
-            return False
-
-        active_indexes = self.get_active_player_indexes()
-
-        if not active_indexes:
-            return False
-
-        if len(active_indexes) == 1:
-            return self.award_pot_to_single_player(
-                active_indexes[0]
-            )
-
-        # Unlike Hold'em, there is no hidden board to run out. If the
-        # human folds, simply allow the remaining NPC action to continue.
-        if self.player_folded and self.current_actor == 0:
-            self.advance_to_next_actor()
-
-        return True
-
     def get_npc_stage_bet_cap(self, npc_index):
         stack = self.npc_stacks[npc_index]
 
@@ -720,34 +705,29 @@ class FiveCardDrawGame(TexasHoldemGame):
             "post_draw": 1.00,
         }
 
-        fraction = stage_fractions.get(
-            self.current_stage,
-            0.35,
-        )
-
         # A deep-stack Draw player should be able to press a chip advantage,
         # especially after the draw, without turning every rich NPC into a
         # maniac. Personality/hand strength still decide whether this extra
         # room is actually used.
-        wealth_pressure = self.get_npc_wealth_pressure(npc_index)
         stage_wealth_boost = {
             "preflop": 0.60,
             "post_draw": 0.35,
-        }.get(self.current_stage, 0.30)
-        fraction *= 1.0 + wealth_pressure * stage_wealth_boost
+        }
 
-        base_stack = max(1, self.starting_stack)
-        target_cap = max(
+        return soft_bet_cap(
+            self.starting_stack,
+            stage_fractions.get(self.current_stage, 0.35),
+            self.get_npc_wealth_pressure(npc_index),
+            stage_wealth_boost.get(self.current_stage, 0.30),
             self.get_minimum_open_bet(),
-            int(base_stack * fraction),
+            self.npc_round_bets[npc_index] + stack,
         )
 
-        maximum_total = (
-            self.npc_round_bets[npc_index]
-            + stack
-        )
-
-        return min(target_cap, maximum_total)
+    def get_npc_wealth_scale(self):
+        # Draw keeps most of the shared stack-wealth signal, but tones it down
+        # before cards are exchanged because the first betting round contains
+        # substantially less information.
+        return 0.80 if self.current_stage == "preflop" else 1.00
 
     def build_npc_ai_context(self, npc_index, strength=None):
         context = super().build_npc_ai_context(
@@ -766,21 +746,6 @@ class FiveCardDrawGame(TexasHoldemGame):
             if 0 <= npc_index < len(self.npc_stood_pat)
             else False
         )
-
-        # Hold'em supplies the shared stack-wealth signal. Draw keeps most of
-        # it, but tones it down before cards are exchanged because the first
-        # betting round contains substantially less information.
-        wealth_scale = (
-            0.80
-            if self.current_stage == "preflop"
-            else 1.00
-        )
-        context["wealth_pressure"] = min(
-            1.0,
-            max(0.0, float(context.get("wealth_pressure", 0.0)))
-            * wealth_scale,
-        )
-        context["wealth_variant_scale"] = wealth_scale
 
         return context
 
@@ -847,222 +812,14 @@ class FiveCardDrawGame(TexasHoldemGame):
 
     # ==================================================
     # SHOWDOWN
+    #
+    # TexasHoldemGame.resolve_showdown settles the hand
+    # with the shared pot rules; the cards shown are the
+    # five-card hands in player_hand / npc_hands.
     # ==================================================
 
-    def showdown(self):
-        active_indexes = self.get_active_player_indexes()
-
-        if not active_indexes:
-            return False
-
-        if len(active_indexes) == 1:
-            return self.award_pot_to_single_player(
-                active_indexes[0]
-            )
-
-        results = {}
-
-        for player_index in active_indexes:
-            result = self.get_showdown_result(
-                player_index
-            )
-            if result is not None:
-                results[player_index] = result
-
-        if not results:
-            return False
-
-        self.last_resolved_pot = max(
-            0,
-            int(self.pot)
-        )
-
-        self.log_hand_event(
-            "showdown",
-            "Showdown.",
-        )
-
-        for player_index, result in results.items():
-            if player_index == 0:
-                cards = self.player_hand
-                prefix = "You show"
-            else:
-                npc_index = player_index - 1
-                cards = self.npc_hands[npc_index]
-                prefix = (
-                    f"{self.get_table_player_name(player_index)} "
-                    f"shows"
-                )
-
-            category = HAND_NAMES[result[0][0]]
-            hand_detail = describe_poker_score(
-                result[0],
-                compact=True,
-            )
-
-            self.log_hand_event(
-                "showdown_hand",
-                (
-                    f"{prefix} {format_poker_cards(cards)} "
-                    f"({hand_detail})."
-                ),
-                actor_index=player_index,
-                cards=[
-                    dict(card)
-                    for card in cards
-                    if card
-                ],
-                hand_name=category,
-                hand_detail=hand_detail,
-            )
-
-        side_pots = self.build_side_pots()
-
-        payout_totals = {
-            player_index: 0
-            for player_index in results
-        }
-
-        self.last_pot_awards = []
-
-        for pot_data in side_pots:
-            pot_amount = pot_data["amount"]
-            eligible = [
-                player_index
-                for player_index in pot_data["eligible"]
-                if player_index in results
-            ]
-
-            if not eligible:
-                continue
-
-            best_score = max(
-                results[player_index][0]
-                for player_index in eligible
-            )
-
-            winners = [
-                player_index
-                for player_index in eligible
-                if results[player_index][0] == best_score
-            ]
-
-            if not winners:
-                continue
-
-            # Odd-chip priority begins left of the dealer.
-            actor_count = len(self.npcs) + 1
-            dealer = (
-                self.dealer_index
-                if self.dealer_index is not None
-                else -1
-            )
-            winners.sort(
-                key=lambda index: (
-                    index - dealer
-                ) % actor_count
-            )
-
-            share = pot_amount // len(winners)
-            remainder = pot_amount % len(winners)
-
-            for winner_order, winner_index in enumerate(winners):
-                winnings = share
-                if winner_order < remainder:
-                    winnings += 1
-
-                self.award_chips_to_player(
-                    winner_index,
-                    winnings,
-                )
-                payout_totals[winner_index] += winnings
-
-            self.last_pot_awards.append({
-                "amount": pot_amount,
-                "eligible": eligible.copy(),
-                "winners": winners.copy(),
-                "share": share,
-                "remainder": remainder,
-            })
-
-        self.winner_indexes = sorted([
-            player_index
-            for player_index, winnings in payout_totals.items()
-            if winnings > 0
-        ])
-
-        payout_winners = [
-            player_index
-            for player_index in self.winner_indexes
-            if payout_totals.get(player_index, 0) > 0
-        ]
-
-        if len(payout_winners) == 1:
-            winner_index = payout_winners[0]
-            winnings = payout_totals[winner_index]
-            category = HAND_NAMES[
-                results[winner_index][0][0]
-            ]
-            hand_detail = describe_poker_score(
-                results[winner_index][0],
-                compact=True,
-            )
-
-            if winner_index == 0:
-                self.result_text = (
-                    f"You win ${winnings:,} with {hand_detail}!"
-                )
-            else:
-                winner_name = self.get_table_player_name(
-                    winner_index
-                )
-                self.result_text = (
-                    f"{winner_name} wins ${winnings:,} "
-                    f"with {hand_detail}."
-                )
-        else:
-            payout_parts = []
-            for player_index in payout_winners:
-                payout_parts.append(
-                    f"{self.get_table_player_name(player_index)} "
-                    f"${payout_totals[player_index]:,}"
-                )
-
-            self.result_text = (
-                "Payouts: "
-                + "; ".join(payout_parts)
-                + "."
-            )
-
-        self.log_detailed_pot_awards(
-            results.keys()
-        )
-
-        self.log_hand_event(
-            "result",
-            self.result_text,
-            winners=self.winner_indexes.copy(),
-            payouts={
-                player_index: amount
-                for player_index, amount in payout_totals.items()
-                if amount > 0
-            },
-        )
-
-        self.record_personality_showdown(results)
-
-        self.pot = 0
-        self.hand_complete = True
-        self.current_actor = -1
-        self.current_stage = "showdown"
-
-        newly_busted = self.refresh_busted_state()
-        self.log_newly_busted_players(
-            newly_busted
-        )
-
-        self.finalize_showdown_display_state()
-
+    def showdown_ready(self):
+        # No board: the showdown follows the last betting round.
         return True
 
     def get_player_hand_name(self):

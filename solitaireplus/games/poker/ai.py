@@ -1,4 +1,4 @@
-from solitaireplus.games.poker.strategy import strategic_context, strategic_fraction, effective_wager_cap
+from solitaireplus.games.poker.strategy import EARLY_STREETS, strategic_context, strategic_fraction, effective_wager_cap
 import random
 from solitaireplus.npc.personality import get_npc_traits, build_trait_profile
 
@@ -907,13 +907,13 @@ def _decide_trait_action(
         profile["trap_chance"] = _clamp(profile["trap_chance"] + strategy["trap_delta"], 0, .35)
     t = profile["trait_units"]
 
-    # Hold'em can supply a session-wealth signal when an NPC has built a
-    # meaningfully larger stack than the table buy-in. Wealth never replaces
-    # hand strength: it only makes personalities that already like pressure
-    # a little more willing to use their chip advantage. Selective players
-    # primarily use the boost for value, while loose/aggressive players also
-    # gain a small bluffing bump. Other poker variants omit this context value
-    # and therefore retain their existing behavior.
+    # Every poker variant supplies a session-wealth signal (npc_inputs:
+    # wealth_pressure) for an NPC that has built a meaningfully larger stack
+    # than the table buy-in. Wealth never replaces hand strength: it only
+    # makes personalities that already like pressure a little more willing to
+    # use their chip advantage. Selective players primarily use the boost for
+    # value, while loose/aggressive players also gain a small bluffing bump.
+    # A context without the value (0.0) gets no wealth boost.
     wealth_pressure = _clamp(float(context.get("wealth_pressure", 0.0)))
     wealth_boldness = wealth_pressure * _clamp(
         0.08
@@ -960,8 +960,8 @@ def _decide_trait_action(
         )
 
     # Player quick-chat can temporarily tilt, calm, or make an NPC skeptical.
-    # These are intentionally small session-local deltas supplied only by
-    # Hold'em; other poker variants keep their existing behavior.
+    # These are intentionally small session-local deltas that every poker
+    # variant supplies (quick_chat.get_npc_quick_chat_context).
     quick_chat_aggression = max(
         -0.12,
         min(0.22, float(context.get("quick_chat_aggression", 0.0)))
@@ -1121,7 +1121,9 @@ def _decide_trait_action(
         )
     )
 
-    early_street = stage in ("preflop", "flop", "pre_draw", "third", "fourth", "forehead_bet")
+    # One classification for every variant (strategy.EARLY_STREETS): the single
+    # betting round of Five-O and Blind Man's Bluff is a final round, not an early one.
+    early_street = stage in EARLY_STREETS
     pessimism = t["pessimism"] * max(0.0, (0.48 - strength) / 0.48) if early_street else 0.0
     # A short stack must eventually take a reasonable stand rather than
     # letting a maximum-tenacity rival fold down indefinitely.

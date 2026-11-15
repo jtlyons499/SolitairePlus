@@ -545,12 +545,16 @@ def record_event(state, event_name, **data):
         _increment(stats, "poker_tables_cleared")
 
     elif event_name == "holdem_hand_win":
+        # winnings: every chip the hand's pots paid the human; largest_pot: its
+        # share of the biggest single pot (the 'single pot' flags). Refunds are
+        # in neither. A payload without largest_pot counts winnings as one pot.
         winnings = max(0, int(data.get("winnings", 0) or 0))
+        largest_pot = max(0, int(data.get("largest_pot", winnings) or 0))
         _increment(stats, "holdem_hand_wins")
         _increment(stats, "holdem_total_winnings", winnings)
-        if winnings >= 1000:
+        if largest_pot >= 1000:
             _set_flag(stats, "holdem_1000_win")
-        if winnings >= 25000:
+        if largest_pot >= 25000:
             _set_flag(stats, "holdem_25000_win")
 
         category = data.get("category")

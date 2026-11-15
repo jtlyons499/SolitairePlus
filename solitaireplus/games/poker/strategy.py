@@ -14,7 +14,12 @@ def clamp(value, low=0.0, high=1.0):
 
 
 ACTION_TYPES = frozenset(("check", "bet", "call", "raise", "fold"))
-LATE_STREETS = frozenset(("turn", "river", "post_draw", "fifth", "sixth", "seventh"))
+# Five-O's and Blind Man's Bluff's single betting round is also their last one.
+LATE_STREETS = frozenset(("turn", "river", "post_draw", "fifth", "sixth", "seventh",
+                          "showdown_bet", "forehead_bet"))
+# The betting rounds with more cards still to come. The single rounds are late
+# (above), so the AI's early-street traits (pessimism) never apply to them.
+EARLY_STREETS = frozenset(("preflop", "flop", "pre_draw", "third", "fourth"))
 SIGNATURES = {
     "pressure": "Pressure player",
     "trapper": "Patient trapper",
@@ -45,8 +50,11 @@ class PokerTableReads:
 
     def observe(self, event, actor, *, hand_number, stage, amount=0,
                 round_total=0, pot=0, draw_count=None, hand_name=None,
-                facing_amount=None):
+                facing_amount=None, weak=None):
         # The caller supplies only named public facts; never whole history data.
+        # weak: for "showdown_hand", whether the shown hand was weak. Variants that
+        # do not show one poker hand (Five-O, Blind Man's Bluff) pass whether the
+        # seat won nothing; otherwise the hand name decides.
         if hand_number != self.hand_number:
             self.hand_number = hand_number
             self.hand_actions = {}
@@ -65,7 +73,10 @@ class PokerTableReads:
             late_aggression = any(a[0] in ("bet", "raise") and a[1] in LATE_STREETS
                                   for a in self.hand_actions.get(actor, ()))
             if late_aggression:
-                weak = str(hand_name).casefold() in ("high card", "one pair", "pair")
+                if weak is None:
+                    weak = str(hand_name).casefold() in ("high card", "one pair", "pair")
+                else:
+                    weak = bool(weak)
                 self.reveals.setdefault(actor, deque(maxlen=24)).append(weak)
                 if self.learning:
                     self.learning.record(actor, "reveals", weak)

@@ -17,6 +17,7 @@ from solitaireplus.games.poker.holdem_chat import generate_npc_action_chat
 from solitaireplus.games.poker.holdem_chat import generate_player_action_reaction
 from solitaireplus.games.poker.holdem_chat import generate_showdown_chat
 from solitaireplus.games.poker.holdem_ui import get_holdem_bet_amount
+from solitaireplus.games.poker.holdem_ui import get_holdem_log_rows
 from solitaireplus.games.poker.holdem_ui import get_holdem_next_hand_delay
 from solitaireplus.games.poker.holdem_ui import get_holdem_npc_delay
 from solitaireplus.games.poker.holdem_ui import get_holdem_street_delay
@@ -28,9 +29,13 @@ from solitaireplus.games.poker.holdem_ui import handle_holdem_manual_bet_key
 from solitaireplus.games.poker.holdem_ui import handle_holdem_options_click
 from solitaireplus.games.poker.holdem_ui import handle_holdem_panel_click
 from solitaireplus.games.poker.recap import handle_recap_action
+from solitaireplus.games.poker.recap import player_hand_net
 from solitaireplus.games.poker.holdem_ui import holdem_log_history
 from solitaireplus.games.poker.holdem_ui import is_holdem_auto_deal_enabled
 from solitaireplus.games.poker.holdem_ui import is_holdem_options_open
+from solitaireplus.games.poker.holdem_ui import reset_texas_holdem_ui_session
+from solitaireplus.games.poker.table_timers import reset_table_session
+from solitaireplus.games.poker.table_timers import reset_table_timers
 import pygame
 import random
 from solitaireplus.career.rating_events import record_poker_showdown
@@ -65,9 +70,19 @@ TEXAS_HOLDEM_SESSION_END_DELAY = 5000
 TEXAS_HOLDEM_TABLE_SWEEP_RATING_BONUS = 100
 
 
-def get_holdem_player_winnings():
-    total = 0
-    for award in getattr(texas_holdem_game, "last_pot_awards", []):
+def _holdem_player_pot_shares(game):
+    """The human's chips from each of the last hand's pots, one entry per pot it won.
+
+    Refunds (uncalled chips, a fold win's included) are not pots, so they are
+    never counted.
+    """
+    shares = []
+    for award in getattr(game, "last_pot_awards", []):
+        if "payouts" in award:
+            if 0 in award["payouts"]:
+                shares.append(int(award["payouts"][0]))
+            continue
+        # A record without per-seat payouts: the old share and remainder rule.
         winners = list(award.get("winners", []))
         if 0 not in winners or not winners:
             continue
@@ -77,8 +92,33 @@ def get_holdem_player_winnings():
         player_share = share
         if ordered.index(0) < remainder:
             player_share += 1
-        total += player_share
-    return total
+        shares.append(player_share)
+    return shares
+
+
+def get_holdem_player_winnings(game=None):
+    """Chips the human won from the last hand's pots (refunds are not winnings).
+
+    game: the Hold'em, Draw or Stud engine (default: this screen's Hold'em game).
+    A fold win is settled like a showdown: the winner's own uncalled chips are
+    a refund, not winnings. The Hold'em win achievement adds it to
+    holdem_total_winnings; cash-win fans use the net (recap.player_hand_net).
+    """
+    if game is None:
+        game = texas_holdem_game
+    return sum(_holdem_player_pot_shares(game))
+
+
+def get_holdem_player_largest_pot(game=None):
+    """The human's share of the largest single pot it won in the last hand.
+
+    Refunds are excluded, as in get_holdem_player_winnings. The 'single pot'
+    achievement flags (holdem_1000_win, holdem_25000_win) read it, so side
+    pots won in one hand are never added together for them.
+    """
+    if game is None:
+        game = texas_holdem_game
+    return max(_holdem_player_pot_shares(game), default=0)
 
 
 def post_texas_holdem_chat(
@@ -141,16 +181,22 @@ def process_texas_holdem_showdown():
                 pygame.time.get_ticks()
                 + 450
         )
-        career_rewards.award_fans_for_cash_win(
-            max(1, int(getattr(texas_holdem_game, "last_resolved_pot", 0))),
-            "Hold'em hand win"
-        )
+        # Fans on what the human made on the hand (its net), as every casino
+        # game pays them: its own chips back (an uncalled shove, a refund)
+        # earn none, and a hand that won a pot but lost money pays nothing.
+        net_win = player_hand_net(texas_holdem_game)
+        if net_win > 0:
+            career_rewards.award_fans_for_cash_win(
+                net_win,
+                "Hold'em hand win"
+            )
 
         holdem_result = texas_holdem_game.get_showdown_result(0)
         holdem_score = holdem_result[0] if holdem_result else None
         leveling.process_achievement_event(
             "holdem_hand_win",
             winnings=get_holdem_player_winnings(),
+            largest_pot=get_holdem_player_largest_pot(),
             category=(holdem_score[0] if holdem_score else None),
             high=(holdem_score[1] if holdem_score and len(holdem_score) > 1 else None),
         )
@@ -420,18 +466,15 @@ def start_texas_holdem_session(
 
     state.texas_holdem_buy_in_active = True
     texas_holdem_game.session_xp_rewarded = False
-    state.texas_holdem_last_processed_showdown_hand = 0
-    # The table-clear bonus is paid once per session (as in Draw and Stud).
-    state.texas_holdem_table_sweep_rewarded = False
 
     # ==================================================
-    # Reset runtime timers
+    # Reset runtime timers, the processed-showdown marker
+    # and the once-per-session table-clear bonus (as in
+    # Draw and Stud), and the last session's chat.
     # ==================================================
 
-    state.texas_holdem_next_npc_action_at = 0
-    state.texas_holdem_round_advance_at = 0
-    state.texas_holdem_next_hand_at = 0
-    state.texas_holdem_session_end_at = 0
+    reset_table_session("texas_holdem")
+    reset_texas_holdem_ui_session()
 
     # ==================================================
     # Start poker session
@@ -479,7 +522,7 @@ def finish_texas_holdem_session():
 
         state.career_event_has_activity = True
 
-    state.texas_holdem_hand_win_sound_at = 0
+    reset_table_timers("texas_holdem")
 
     if (
             len(getattr(texas_holdem_game, "rating_seen_hands", ())) > 0
@@ -600,9 +643,10 @@ def loop_event_texas_holdem(event):
     )
     ):
 
+        # The log scrolls by rows: a long line wraps onto several.
         scroll_holdem_log(
             event.y,
-            len(holdem_log_history)
+            len(get_holdem_log_rows(holdem_log_history))
         )
 
     # ==================================================
@@ -775,6 +819,11 @@ def loop_event_texas_holdem(event):
                         )
 
                         state.career_event_has_activity = True
+
+                        # With two or more NPCs left the hand goes on:
+                        # their turns and the streets run on the usual
+                        # NPC and street delays (NEW-3).
+                        schedule_texas_holdem_npc_action()
 
                 # ------------------------------------------
                 # Check / Call

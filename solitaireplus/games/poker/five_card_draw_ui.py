@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 import pygame
 
+from solitaireplus.games.poker.log_rows import log_rows, max_log_scroll, visible_log_rows
 from solitaireplus.games.poker.speech import PokerSpeechOverlay, is_poker_chat_popups_enabled
 from solitaireplus.games.poker.ui_assets import draw_poker_logo
 from solitaireplus.ui import text as ui_text
@@ -45,6 +46,20 @@ PANEL_INNER = (10, 12, 14)
 # ==================================================
 
 DRAW_LOG_RECT = pygame.Rect(18, 610, 410, 140)
+# The GAME LOG's text area: rows start 50 px below the panel top, 14 px in, and end
+# 4 px above its bottom edge.
+DRAW_LOG_TEXT_WIDTH = DRAW_LOG_RECT.width - 28
+DRAW_LOG_TEXT_HEIGHT = DRAW_LOG_RECT.height - 54
+DRAW_LOG_LINE_STEP = 28
+# A log line too wide for the text area at the 15 px log font is drawn on one row in the
+# smaller font render_text_fit picks, exactly as the panel always drew it, when it fits
+# at 11 px or more, the smallest size the panel ever drew. The panel shows three rows,
+# so every line that wraps pushes an older line out of the end-of-hand view; the
+# showdown and winner lines of real hands fit at 11 px or more, so they stay on one
+# row. A line that
+# does not fit even at 11 px (a split or side-pot line, which used to run out of the
+# panel) wraps onto several rows at 15 px instead (log_rows).
+DRAW_LOG_MIN_FIT_SIZE = 11
 DRAW_ACTION_PANEL_RECT = pygame.Rect(925, 610, 420, 140)
 
 DRAW_FOLD_RECT = pygame.Rect(942, 622, 112, 40)
@@ -1175,6 +1190,8 @@ def draw_five_card_draw_buy_in(
 # ==================================================
 
 def reset_five_card_draw_ui_session():
+    # The Quick Chat menu, queued replies and history do not carry over (as in Hold'em).
+    _draw_variant_qc.reset_session()
     _ui.draw_selected_card_indexes = set()
     _ui.draw_chat_history = []
     _draw_speech_overlay.clear()
@@ -1264,11 +1281,11 @@ def scroll_five_card_draw_panel(wheel_y, game):
         )
 
     else:
-        lines = game.get_hand_history_lines()
-
-        max_scroll = max(
-            0,
-            len(lines) - visible
+        # The log scrolls by rows: a long line wraps onto several (log_rows). The
+        # wheel stops where the oldest rows that fit fill the panel.
+        max_scroll = max_log_scroll(
+            get_five_card_draw_log_rows(game),
+            *get_five_card_draw_log_layout()
         )
 
         _ui.draw_log_scroll = max(
@@ -1736,44 +1753,88 @@ def draw_log_panel(surface, game):
         )
     )
 
-    if _ui.draw_active_tab == "chat":
-        lines = _ui.draw_chat_history
-        scroll = _ui.draw_chat_scroll
-    else:
-        lines = game.get_hand_history_lines()
-        scroll = _ui.draw_log_scroll
-
-    visible = (
-        4
-        if _ui.draw_active_tab == "chat"
-        else 3
-    )
-    line_step = (
-        19
-        if _ui.draw_active_tab == "chat"
-        else 28
-    )
-    end = max(0, len(lines) - scroll)
-    start = max(0, end - visible)
-    shown = lines[start:end]
-
     y = DRAW_LOG_RECT.y + 50
 
-    for line in shown:
-        rendered = render_text_fit(
-            str(line),
-            fonts["tiny"],
-            (220, 225, 220),
-            DRAW_LOG_RECT.width - 28,
-            minimum_size=11
-        )
+    # Nothing is drawn outside the panel.
+    clip = surface.get_clip()
+    surface.set_clip(clip.clip(DRAW_LOG_RECT.inflate(-4, -4)))
 
-        surface.blit(
-            rendered,
-            (DRAW_LOG_RECT.x + 14, y)
-        )
+    try:
+        if _ui.draw_active_tab == "chat":
+            lines = _ui.draw_chat_history
+            end = max(0, len(lines) - _ui.draw_chat_scroll)
+            start = max(0, end - 4)
 
-        y += line_step
+            for line in lines[start:end]:
+                rendered = render_text_fit(
+                    str(line),
+                    fonts["tiny"],
+                    (220, 225, 220),
+                    DRAW_LOG_TEXT_WIDTH,
+                    minimum_size=11
+                )
+
+                surface.blit(
+                    rendered,
+                    (DRAW_LOG_RECT.x + 14, y)
+                )
+
+                y += 19
+
+        else:
+            # A long line wraps onto several rows at the log font size; the newest
+            # rows stay at the bottom (log_rows.visible_log_rows).
+            font = fonts["tiny"]
+
+            for text, offset in visible_log_rows(
+                    get_five_card_draw_log_rows(game),
+                    _ui.draw_log_scroll,
+                    *get_five_card_draw_log_layout()
+            ):
+                # A wrapped row fits; a line too wide that fits at 11 px is one row in a
+                # smaller font, as it always was (get_five_card_draw_log_rows).
+                surface.blit(
+                    render_text_fit(
+                        text,
+                        font,
+                        (220, 225, 220),
+                        DRAW_LOG_TEXT_WIDTH,
+                        minimum_size=DRAW_LOG_MIN_FIT_SIZE
+                    ),
+                    (DRAW_LOG_RECT.x + 14, y + offset)
+                )
+
+    finally:
+        surface.set_clip(clip)
+
+
+def get_five_card_draw_log_rows(game):
+    """The GAME LOG's rows: a hand-history line too wide that fits at 11 px is one row
+    in a smaller font (_log_line_fits_legibly); a longer one word-wraps to the panel."""
+    return log_rows(
+        get_draw_fonts()["tiny"],
+        game.get_hand_history_lines(),
+        DRAW_LOG_TEXT_WIDTH,
+        _log_line_fits_legibly
+    )
+
+
+def _log_line_fits_legibly(font, text, width):
+    """Whether render_text_fit fits this log line, too wide for ``width`` at
+    ``font``, at DRAW_LOG_MIN_FIT_SIZE or more.
+
+    log_rows asks once per line and remembers the answer.
+    """
+    return render_text_fit(text, font, WHITE, width,
+                           minimum_size=DRAW_LOG_MIN_FIT_SIZE).get_width() <= width
+
+
+def get_five_card_draw_log_layout():
+    """The GAME LOG's height, line step, wrapped-row step and row height
+    (log_rows.visible_log_rows / max_log_scroll)."""
+    row_height = get_draw_fonts()["tiny"].size("Ag")[1]
+
+    return DRAW_LOG_TEXT_HEIGHT, DRAW_LOG_LINE_STEP, row_height, row_height
 
 
 # ==================================================

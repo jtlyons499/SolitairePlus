@@ -22,6 +22,7 @@ from solitaireplus.career.session_summary import track_night_cash
 from solitaireplus.games.poker.holdem import TexasHoldemGame
 from solitaireplus.games.poker.five_card_draw import FiveCardDrawGame
 from solitaireplus.games.poker.seven_card_stud import SevenCardStudGame
+from solitaireplus.games.poker.table_timers import TABLE_TIMERS
 from solitaireplus.games.poker.five_o import FiveOPokerGame
 from solitaireplus.games.cards.score_four import ScoreFourGame
 
@@ -400,6 +401,9 @@ class RatingTests(unittest.TestCase):
             values.update({key + "_game": game, key + "_buy_in_active": True,
                            key + "_starting_stack": 1000, key + "_session_net": 0})
             env = main_functions("rate_poker_cash_out", "finish_" + key + "_session", **values)
+            # table_timers.reset_table_timers, writing the fake namespace instead of app state.
+            env["reset_table_timers"] = lambda prefix, env=env: env.update(
+                {f"{prefix}_{name}": 0 for name in TABLE_TIMERS})
             env["finish_" + key + "_session"]()
             self.assertEqual(env["career_cash"], 2500)
             self.assertEqual(env["career_rating_results"][key]["played"], 1)

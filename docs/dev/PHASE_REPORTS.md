@@ -551,3 +551,86 @@ review follow-ups (each reviewed again). B36–B39, B42 and B86 follow in the B8
   `speech.POKER_CHAT_POPUPS_ENABLED` shim.
 - **N35:** `tests/test_poker_recap.py` and `tests/test_table_polish.py` save previews to a hard-coded
   `/workspace/scratch` path (already quarantined; Phase 12 points them at a temporary folder).
+
+## Phase 7 (fix): B86 poker rules alignment (B36, B37, B38, B39, B42)
+
+B86 asked for one set of table rules across the five single-player poker tables, with the deliberate differences
+kept. Dan decided before the sprint that B86 would not stop for approval of the audit table: unify the shared rules,
+keep Stud's bring-in, Blind Man's Bluff's single card and Five-O's columns, and record the table for review. The
+original maintainer added that NPC behaviour should be the same in every variant, grudges and cash on hand included.
+
+- **The audit, the shared rules and the designer choices** are in [B86_POKER_AUDIT.md](B86_POKER_AUDIT.md):
+  §1 how each variant behaved before (the table Dan was to approve), §2 the shared rules now in force, §3 what
+  stays different on purpose, §4 thirteen choices taken by default.
+- **What changed for players, game by game** is in [../POKER_RULE_CHANGES.md](../POKER_RULE_CHANGES.md) (Dan
+  asked for this separate file).
+- **How it was done:** an audit workflow (one reader per variant), a design pass, six sequential implementation
+  steps (G1 hand evaluation and seat views, G2 pots, G3 betting, G4 hand flow and session resets, G5 NPC decision
+  inputs, G6 NPC timing), then three rounds of independent review and repair. The reviewers replayed thousands of
+  seeded hands per variant looking for created or lost chips, unanswerable bets, wrong winners and wrong texts.
+  The rounds found and fixed: fold wins paying a short all-in more than it matched; the bet to call after a short
+  all-in blind when the last seat had already covered it (F1); TDA Rule 47 re-opening (F2); Stud completion after
+  a short bring-in; and a polish round of texts and layout (P1–P11 below).
+- **New shared code:** `games/poker/core.py` (hand evaluation, pots, odd chips, betting, who won, session end),
+  `npc_inputs.py` (NPC decision inputs, cash-on-hand boldness and the soft bet cap), `table_timers.py`,
+  `log_rows.py` (GAME LOG wrapping), `PokerGrudgeMemory.record_showdown` in `npc/personality.py`,
+  `strategy.EARLY_STREETS`, and `learning.GAMES` now includes Five-O and Blind Man's Bluff.
+- **B36:** no bet or raise that nobody can answer, for the human and NPCs (`core.can_raise`).
+- **B37:** a pot layer that no live seat paid into goes back to whoever paid it; chips no longer vanish.
+- **B38:** odd chips go one at a time from the first tied winner left of the dealer (the opener first in Blind
+  Man's Bluff and Five-O). The history names who got them: "(odd chip to Ada)".
+- **B39:** after a short all-in blind or bring-in, a seat that is the only one left able to act only matches what
+  the others put in; if it already has, betting ends and the cards are dealt out.
+- **B42:** uncalled chips are returned, not won, in every variant, including fold wins ("Uncalled $980 returned to
+  you." then "You win $50."). Stacks end the same as before; the win, fans and Hold'em pot achievements count only
+  chips that were won. The Hold'em $1,000 and $25,000 pot achievements now look at the largest single pot.
+- **The other audit items (NEW-1 to NEW-7):** a top layer only one seat paid is a refund (NEW-1); Stud's pot
+  display after the hand no longer shows "Pot $0" and bogus side pots (NEW-2); Hold'em NPCs keep betting after you
+  fold instead of the board being dealt out at once (NEW-3); the Five-O NPC can raise (NEW-4); every table resets
+  its chat, quick chat and timers at session start and end (NEW-5); Stud short all-ins never use up one of the three
+  raises (NEW-6); a dealer who ties gets odd chips last, not first (NEW-7).
+- **NPCs, as the maintainer asked:** every variant now feeds NPCs the same inputs: personality, skill from their
+  career rating for that game, boldness from cash on hand with a soft bet cap above the buy-in, grudges recorded at
+  contested showdowns (severity = chips lost ÷ buy-in), table reads and advanced strategy, and career rival
+  learning. Five-O and Blind Man's Bluff NPCs had fewer inputs (no reads or learning; Five-O's grudge had a fixed
+  weight; Blind Man's Bluff had no big-stack boldness). Five-O and Blind Man's Bluff NPCs
+  now think for the table-speed delay (1.8 / 1.2 / 0.6 s) like the other tables; Five-O waited 0.65 s and Blind
+  Man's Bluff acted instantly.
+- **Blind Man's Bluff short stacks** play all-in on a short ante instead of sitting out; the session ends only at 0
+  chips. Five-O keeps its full-ante rule.
+- **Career fans** for a poker hand are paid on the net for the hand when it is above 0, like the casino games
+  (they used to count every pot, including other players' pots and the player's own uncalled chips).
+- **Polish round (P1–P11):** fold wins settle like a showdown with one live seat (P1); GAME LOG lines the old code
+  squashed below 65 % (Hold'em) or could not fit even at its minimum size (Draw 11 px, Stud 10 px) wrap onto extra
+  rows at the normal font; every other line is drawn on one row exactly as before, the row decision is cached,
+  scrolling goes by rows and text is clipped to the panel (P2; an earlier wrap-everything version lost the
+  end-of-hand lines in real hands, so the floors were set from 1,000+ simulated hands); odd-chip wording (P3); a pot only one seat could win reads
+  "nobody else could win it; X collects $N" (P4); NPC chat says "split" only for a shared pot (P5); "You win" instead
+  of "You wins" in Blind Man's Bluff and Five-O (P6); Blind Man's Bluff stake line "All-in raise to $X", no "Open
+  $0-$0", shorter prompt (P7); "(continued)" headings in the Hold'em payout recap (P8); Stud speech bubbles follow
+  the pop-ups option (P9); the Five-O chat strip follows Table Chat and shows NPC talk during the column reveal
+  (P10, P11).
+- **Tests added:** test_poker_core_eval (30), test_poker_pots (64), test_poker_betting_rules (43),
+  test_poker_hand_flow (28), test_poker_npc_inputs (43), test_poker_npc_timing (21), test_poker_session_resets (11),
+  test_poker_table_text (16), test_poker_log_panels (21), test_poker_cash_round_trip (3) and
+  test_poker_chip_conservation (1,000 seeded hands per variant, every seat's stack change equal to its net). The
+  per-variant tests run every variant through shared adapters in `tests/support/poker_variants.py` and
+  `poker_screens.py`. Updated: test_career_polish, test_career_ratings, test_poker_recap, test_rival_learning,
+  test_table_polish (fans on net, the new texts).
+
+**Results:** tests `PASSED`. `screen_harness compare` → `DIFFERENT 63/64`; `replay compare` → `DIFFERENT 17/18`
+(baseline `7195fb3`). Intended differences:
+- `poker_blind_mans_bluff__start`: the shorter hint "Everyone else can see your card. Read their betting." (P7).
+- `poker_blind_mans_bluff__showdown`: the stake line reads "Ante $10" without "Open $0-$0" (P7), and van Dijk's
+  "+$40" payout chips now show (the shared who-won rule drives the payout animation).
+- `11_seven_card_stud__cp_01_hand_complete`: the pot after the hand reads $82 with payout chips instead of $0
+  (NEW-2); the two bogus "Side pot N: You wins." lines are gone and the log shows both showdown lines; checkpoint
+  `career_fans` 3 → 24 (fans paid on the hand's net).
+- Every other scene and journey, including the Hold'em and Draw end-of-hand logs, is identical to `7195fb3`.
+
+**New findings (not fixed):**
+- **N36:** multiplayer Hold'em and Blind Man's Bluff (`multiplayer/`) still use their own pot, odd-chip and
+  fold-win code (BlindBluffAuthority drops dead layers, awards a lone top layer, gives odd chips to the lowest
+  seat). Phase 11 moves them onto `core.py`; the steps are in `tools/refactor/specs/phase11_plan.md`.
+- **N37:** `strategy.LATE_STREETS` changed value (single-round stages count as final rounds); multiplayer imports
+  `strategy` through a shim and gets the new value. Phase 11 confirms the room NPCs.

@@ -1,7 +1,8 @@
 from solitaireplus.app import paths
 from solitaireplus.app import state
 from solitaireplus.career.session_summary import poker_session_status
-from solitaireplus.games.poker.recap import draw_recap, get_recap_action
+from solitaireplus.games.poker.core import collected_uncontested
+from solitaireplus.games.poker.recap import draw_recap, get_recap_action, pot_explanation, received_total
 import math
 from types import SimpleNamespace
 
@@ -12,6 +13,7 @@ from solitaireplus.games.poker.speech import (
     is_poker_chat_popups_enabled,
     set_poker_chat_popups_enabled,
 )
+from solitaireplus.games.poker.log_rows import log_rows, visible_log_rows
 from solitaireplus.games.poker.ui_assets import draw_poker_logo
 from solitaireplus.games.poker.quick_chat import (
     quick_chat_options_for_game,
@@ -51,6 +53,23 @@ HOLDEM_LOG_RECT = pygame.Rect(
     410,
     140
 )
+
+# The GAME LOG's text area inside the panel's inner box (12 px in, 48 px down): rows
+# start 9 px into the box, 10 px in, are at most 24 px narrower than the box, and end
+# 2 px above its bottom edge.
+HOLDEM_LOG_TEXT_WIDTH = HOLDEM_LOG_RECT.width - 48
+HOLDEM_LOG_TEXT_HEIGHT = HOLDEM_LOG_RECT.height - 69
+HOLDEM_LOG_LINE_STEP = 23
+# A log line wider than the text area is squashed to fit on one row, exactly as the
+# panel always drew it, while that keeps at least 65 % of its size: up to 556 px wide
+# at the 17 px log font, which leaves text about 11 px, the smallest size the Draw log
+# ever drew. The panel shows three rows, so every line that wraps pushes an older
+# line out of the end-of-hand view; this floor keeps showdown and winner lines on one
+# row (a long one, 'Mohammed wins $12,345 with Two Pair, Queens and Sevens, 10
+# kicker.', squashes to 66 %). Split, side-pot and payout lines, which the panel
+# squashed to about 30-50 % and could not be read, wrap onto several rows at full
+# size (log_rows).
+HOLDEM_LOG_MIN_SQUASH = 0.65
 
 # Kept in solitaireplus/app/state.py: state.holdem_log_scroll.
 
@@ -1101,7 +1120,9 @@ def draw_holdem_showdown_banner(
     result = holdem_game.result_text.strip()
     awards = getattr(holdem_game, 'last_pot_awards', [])
     if ' with ' not in result.lower() and 'fold' not in result.lower():
-        explanations = list(dict.fromkeys(pot.get('hand') or 'Everyone else folded' for pot in awards))
+        # A pot nobody else could win beat nobody: the banner names no hand for it.
+        explanations = list(dict.fromkeys(pot_explanation(pot, awards) for pot in awards
+                                          if not collected_uncontested(pot, awards)))
         if explanations:
             result += ' — ' + '; '.join(explanations)
     font = ui_text.get_font(None, 32)
@@ -1113,8 +1134,8 @@ def draw_holdem_showdown_banner(
     # Keep the table visible; full pot-by-pot explanations remain in Payout details.
     if len(rows) > 3:
         if awards:
-            received = sum(int(pot.get('share', 0)) + (pot.get('winners', []).index(0) < int(pot.get('remainder', 0)))
-                           for pot in awards if 0 in pot.get('winners', []))
+            # The same amount as the recap's 'You received': pot payouts plus refunds.
+            received = received_total(holdem_game, 0)
             rows = [f"You received ${received:,} • {len(awards)} pot(s) resolved",
                     "See Payout details for winning hands and side pots."]
         else:
@@ -2643,6 +2664,62 @@ def get_holdem_bet_amount(
         )
     )
 
+def get_holdem_log_rows(log_lines):
+    """The GAME LOG's rows: a log line too wide that squashes to 65 % or more is one
+    row, squashed to fit (_holdem_log_line_squashes_legibly); a longer one
+    word-wraps to the panel (log_rows).
+
+    The log scrolls by these rows, so the screen passes their count to
+    scroll_holdem_log.
+    """
+    return log_rows(
+        get_holdem_fonts()["small"],
+        log_lines,
+        HOLDEM_LOG_TEXT_WIDTH,
+        _holdem_log_line_squashes_legibly
+    )
+
+
+def _holdem_log_line_squashes_legibly(font, text, width):
+    """Whether squash_holdem_log_text keeps this log line, too wide for ``width``,
+    at HOLDEM_LOG_MIN_SQUASH of its size or more (the same factor it squashes by).
+
+    log_rows asks once per line and remembers the answer.
+    """
+    return width / font.size(text)[0] >= HOLDEM_LOG_MIN_SQUASH
+
+
+def squash_holdem_log_text(text_surface, max_width):
+    """A rendered log or chat line squashed to ``max_width``, keeping its proportions,
+    if it is wider (as the panel always drew a long line); else the same surface."""
+    if text_surface.get_width() > max_width:
+        scale = max_width / text_surface.get_width()
+        new_width = max(1, int(text_surface.get_width() * scale))
+        new_height = max(1, int(text_surface.get_height() * scale))
+        text_surface = pygame.transform.smoothscale(text_surface, (new_width, new_height))
+
+    return text_surface
+
+
+def get_holdem_log_layout():
+    """The GAME LOG's height, line step, wrapped-row step and row height
+    (log_rows.visible_log_rows).
+
+    A row at offset y is centred HOLDEM_LOG_LINE_STEP // 2 below it (as every line
+    was), so its bottom is that plus the lower half of a rendered row. Three rows
+    always fit and four never do, so scroll_holdem_log stops three rows from the
+    oldest (log_rows.max_log_scroll).
+    """
+    rendered_height = get_holdem_fonts()["small"].size("Ag")[1]
+
+    return (
+        HOLDEM_LOG_TEXT_HEIGHT,
+        HOLDEM_LOG_LINE_STEP,
+        rendered_height,
+        HOLDEM_LOG_LINE_STEP // 2 + rendered_height - rendered_height // 2
+    )
+
+
 def scroll_holdem_log(
         wheel_y,
         total_lines
@@ -2703,6 +2780,25 @@ def scroll_holdem_log(
             max_scroll
         )
     )
+
+def reset_texas_holdem_ui_session():
+    """Forget the last session's table UI (like reset_five_card_draw_ui_session).
+
+    Clears the chat history in place (the module list is never rebound),
+    queued quick-chat replies and speech bubbles, and resets the chat
+    scroll and unread marker. A half-typed manual bet, a bet-slider drag
+    and an open quick-chat menu do not carry over into the new session.
+    """
+
+    holdem_chat_history.clear()
+    holdem_quick_chat_pending.clear()
+    _holdem_speech_overlay.clear()
+    state.holdem_chat_scroll = 0
+    state.holdem_chat_unread = False
+    clear_holdem_manual_bet()
+    stop_holdem_bet_slider_drag()
+    state.holdem_quick_chat_open = False
+    state.holdem_quick_chat_target_mode = None
 
 def add_holdem_chat_message(
         speaker,
@@ -3224,32 +3320,16 @@ def draw_holdem_log_panel(
 
     if active_tab == "log":
 
-        visible_line_count = 3
-        line_spacing = 23
+        line_spacing = HOLDEM_LOG_LINE_STEP
 
-        end_index = (
-            len(log_lines)
-            - state.holdem_log_scroll
+        # A long line wraps onto several rows at the log font size, and the log
+        # scrolls by rows; the newest rows stay at the bottom.
+        log_rows_all = get_holdem_log_rows(log_lines)
+        visible_rows = visible_log_rows(
+            log_rows_all,
+            state.holdem_log_scroll,
+            *get_holdem_log_layout()
         )
-
-        end_index = max(
-            0,
-            min(
-                end_index,
-                len(log_lines)
-            )
-        )
-
-        start_index = max(
-            0,
-            end_index
-            - visible_line_count
-        )
-
-        visible_lines = log_lines[
-            start_index:end_index
-        ]
-
 
     else:
 
@@ -3313,6 +3393,43 @@ def draw_holdem_log_panel(
         inner_rect.y + 9
     )
 
+    # Nothing is drawn outside the panel. Log rows stay inside the inner box (they
+    # end 2 px above its bottom); chat rows, shrunk to the box's width, keep their
+    # old place, where the fourth row's descenders reach the box's bottom edge.
+    panel_clip = game_surface.get_clip()
+    game_surface.set_clip(panel_clip.clip(
+        inner_rect if active_tab == "log" else outer_rect.inflate(-4, -4)
+    ))
+
+    if active_tab == "log":
+
+        for row_text, row_offset in visible_rows:
+
+            # A wrapped row fits; a line too wide but legible squashed is one row,
+            # squashed to fit as it always was (get_holdem_log_rows).
+            row_surface = squash_holdem_log_text(
+                holdem_small_font.render(
+                    row_text,
+                    True,
+                    WHITE
+                ),
+                HOLDEM_LOG_TEXT_WIDTH
+            )
+
+            game_surface.blit(
+                row_surface,
+                row_surface.get_rect(
+                    midleft=(
+                        inner_rect.x + 10,
+                        text_y
+                        + row_offset
+                        + line_spacing // 2
+                    )
+                )
+            )
+
+        visible_lines = []
+
     for line in visible_lines:
 
         line_surface = (
@@ -3327,40 +3444,10 @@ def draw_holdem_log_panel(
                 inner_rect.width - 24
         )
 
-        if (
-                line_surface.get_width()
-                > max_text_width
-        ):
-            scale = (
-                    max_text_width
-                    / line_surface.get_width()
-            )
-
-            new_width = max(
-                1,
-                int(
-                    line_surface.get_width()
-                    * scale
-                )
-            )
-
-            new_height = max(
-                1,
-                int(
-                    line_surface.get_height()
-                    * scale
-                )
-            )
-
-            line_surface = (
-                pygame.transform.smoothscale(
-                    line_surface,
-                    (
-                        new_width,
-                        new_height
-                    )
-                )
-            )
+        line_surface = squash_holdem_log_text(
+            line_surface,
+            max_text_width
+        )
 
         line_rect = (
             line_surface.get_rect(
@@ -3379,13 +3466,15 @@ def draw_holdem_log_panel(
 
         text_y += line_spacing
 
+    game_surface.set_clip(panel_clip)
+
     # ==================================================
-    # Scroll indicator
+    # Scroll indicator (log rows, newest at the bottom)
     # ==================================================
 
     if (
             active_tab == "log"
-            and len(log_lines) > 3
+            and len(log_rows_all) > 3
     ):
 
         track_rect = pygame.Rect(
@@ -3408,7 +3497,7 @@ def draw_holdem_log_panel(
 
         max_scroll = max(
             1,
-            len(log_lines) - 3
+            len(log_rows_all) - 3
         )
 
         thumb_height = max(
@@ -3417,7 +3506,7 @@ def draw_holdem_log_panel(
                 track_rect.height
                 * (
                     3
-                    / len(log_lines)
+                    / len(log_rows_all)
                 )
             )
         )

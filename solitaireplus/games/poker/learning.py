@@ -1,7 +1,7 @@
 """Profile-owned, game-specific memories of facts a rival actually witnessed."""
 import math
 
-GAMES = ('texas_holdem', 'five_card_draw', 'seven_card_stud')
+GAMES = ('texas_holdem', 'five_card_draw', 'seven_card_stud', 'five_o_poker', 'blind_mans_bluff')
 ACTIONS = {'check', 'bet', 'call', 'raise', 'fold'}
 
 
