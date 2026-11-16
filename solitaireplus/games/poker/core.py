@@ -9,8 +9,10 @@
 # variant uses (see HAND EVALUATION) and the shared
 # pot and betting rules (see ODD CHIPS, POTS and
 # BETTING at the end).
-# Multiplayer re-exports this module, so it must not
-# import any other project module.
+# Keep it free of other project imports: every poker
+# table and the multiplayer room code (room_protocol.py,
+# mp_widgets.py) import it directly, and a leaf module
+# can't take part in an import cycle.
 # ==================================================
 
 from collections import Counter

@@ -8,18 +8,18 @@ from unittest.mock import patch
 import pygame
 from room_table import RoomAuthority
 from room_session import RoomTable
-from lan_protocol import ClientGame
+from room_protocol import ClientGame
 from mp_widgets import TextInput,hand_type
 from mp_options import Options
 from mp_profile import MultiplayerProfile
 from mp_appearance import Appearance
-from standalone_view import TableView
+from mp_assets import TableView
 from room_view import RoomView
+from solitaireplus.app import state
 
 class FlowTests(unittest.TestCase):
     def setUp(self):
-        import texas_holdem_ui as ui
-        ui.holdem_table_speed="normal"
+        state.holdem_table_speed="normal"
     def finish(self,t,now=0):
         for _ in range(700):
             if t.game.hand_complete:return now

@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
@@ -37,20 +38,26 @@ class LauncherTests(unittest.TestCase):
             self.assertFalse(ui.launch())
             self.assertIn('Missing multiplayer', ui.error)
 
-    def test_real_dispatch_uses_multiplayer_engine(self):
+    def test_real_dispatch_uses_shared_engine(self):
+        # Phase 11: the room tables play on the single-player Hold'em engine;
+        # the multiplayer copy of it is gone.
+        self.assertFalse((launcher.ROOT / 'multiplayer' / 'texas_holdem.py').exists())
         script = '''
 import pygame
 from solitaireplus.app import multiplayer_launcher
 pygame.event.get = lambda: [pygame.event.Event(pygame.QUIT)]
 multiplayer_launcher.run_multiplayer()
-import texas_holdem
+import room_game
 from pathlib import Path
-assert Path(texas_holdem.__file__).parent.name == 'multiplayer'
+assert Path(room_game.__file__).parent.name == 'multiplayer', room_game.__file__
+assert room_game.TexasHoldemGame.__module__ == 'solitaireplus.games.poker.holdem', room_game.TexasHoldemGame.__module__
 '''
-        env = os.environ.copy()
-        env.update(SDL_VIDEODRIVER='dummy', SDL_AUDIODRIVER='dummy')
-        result = subprocess.run([sys.executable, '-c', script], cwd=launcher.ROOT, env=env,
-                                capture_output=True, text=True, timeout=20)
+        with tempfile.TemporaryDirectory() as profile_dir:
+            env = os.environ.copy()
+            # The multiplayer main loop writes its options, profile and log here, never the real profile.
+            env.update(SDL_VIDEODRIVER='dummy', SDL_AUDIODRIVER='dummy', LOCALAPPDATA=profile_dir)
+            result = subprocess.run([sys.executable, '-c', script], cwd=launcher.ROOT, env=env,
+                                    capture_output=True, text=True, timeout=20)
         self.assertEqual(result.returncode, 0, result.stderr)
 
 

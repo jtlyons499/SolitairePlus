@@ -1,7 +1,7 @@
 """Shared artwork buttons, clipboard text entry and private hand descriptions."""
 import pygame
-from poker_core import describe_poker_score
-from multiplayer_paths import ROOT
+from solitaireplus.app import paths
+from solitaireplus.games.poker.core import describe_poker_score
 
 BUTTON_ART={}
 
@@ -13,7 +13,7 @@ def wooden_button(surface,appearance,rect,label,font,enabled=True,hover=False):
     else:
         key=(path,rect.size)
         if key not in BUTTON_ART:
-            try:BUTTON_ART[key]=pygame.transform.smoothscale(pygame.image.load(str(ROOT/path)).convert_alpha(),rect.size)
+            try:BUTTON_ART[key]=pygame.transform.smoothscale(pygame.image.load(str(paths.resolve(path))).convert_alpha(),rect.size)
             except (OSError,pygame.error):BUTTON_ART[key]=None
         image=BUTTON_ART[key]
     if image:

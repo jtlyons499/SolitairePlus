@@ -15,7 +15,7 @@ from fractions import Fraction
 from solitaireplus.games.poker.niche_common import RANK_VALUES, build_standard_deck, round_chip_amount
 from solitaireplus.games.cards.score_four_difficulty import puzzle_pool
 from solitaireplus.games.casino.roulette import ROULETTE_NUMBERS, RED_NUMBERS
-from multiplayer_paths import ROOT
+from solitaireplus.app import paths
 
 SKILL_KEYS = ("low", "mid", "strong", "elite")
 SKILL_LABELS = {
@@ -30,7 +30,7 @@ SCORE_FOUR_DIFFICULTIES = ("easy", "standard", "difficult", "extreme")
 
 
 def _load_npc_roster():
-    roster = json.loads((ROOT / "data" / "npcs.json").read_text(encoding="utf-8"))
+    roster = json.loads(paths.data("npcs.json").read_text(encoding="utf-8"))
     if not isinstance(roster, list) or not roster:
         raise ValueError("data/npcs.json must contain NPC records")
     return roster

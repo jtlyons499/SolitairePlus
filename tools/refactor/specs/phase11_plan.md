@@ -57,6 +57,11 @@
    - The installer gets `[InstallDelete]` for the loose `multiplayer\*.py` files.
 8. **Relay room versions stay at 1 and 2.** `relay_server.py:77-97` and `room_relay.py:23-32` accept only those, so a bump would need a Railway redeploy. Room messages get an app-level `protocol` stamp instead (see the open questions).
 9. **B68 seating order:** busted NPC seats first, with the normal buy-in. Otherwise the joiner takes over a funded NPC seat as today.
+10. **Two additive room state fields (move stage).** The shared engine records per-winner payouts and uncalled refunds, so `room_protocol.snapshot` sends them seat-relative with string keys: `data.last_refunds` (`{seat: chips}`) and `payouts` (`{seat: chips}`) inside each `last_pot_awards` entry.
+   - Old clients only set them as attributes and ignore them; the relay room versions are unchanged.
+   - `ClientGame.apply` turns the keys back into numbers and drops malformed entries instead of raising.
+   - The Payout History (`mp_showdown.payout_lines`, kept in `room_session.last_payout`) reads `last_refunds`; `payouts` is read only by the shared recap helpers.
+11. **RoomGame.start_hand changed in the move stage** (a deviation from "move RoomGame unchanged"). After the deal it no longer marks every seat with 0 chips as busted; a seat dealt in (in `hand_seat_indexes`) stays live even when posting its blind put it all in. The shared engine's rule is that busted is set only between hands, and the old re-flagging left such a seat out of every pot it paid into. Resting (sit-out) seats are still flagged and folded as before. Guarded by test_room_engine `test_preflop_first_actor_with_all_in_blinds_matches_shared_engine`.
 
 ## 2. Order and parallel waves
 | Wave | Groups (run in parallel within a wave) | Notes |
@@ -94,7 +99,15 @@
 ## 4. Multiplayer changes players will notice (for the hand-back)
 - **Room NPCs fold less with high-tenacity short stacks.** In the test spot (tenacity 10, stack 200), folds drop from 66% to 38%.
 - **Portraits:** layered NPC portraits gain the `outline.png` layer.
-- **Fold-win recaps** show the eligible player.
+- **Room Hold'em rules now follow the single-player B86 rules** (shared engine; see docs/POKER_RULE_CHANGES.md "Every poker table"):
+  - Fold wins settle like a one-seat showdown. The winner wins the matched chips and its uncalled bet comes back as a refund; stacks end the same. Example: seat 3 raises to 150 and everyone folds. The pot showed $225 during the hand; "Last pot" and the Payout History now show a $125 main pot, and the Payout History adds "Returned (uncalled): Uncalled $100 returned to Guest 3". Before: a $225 pot.
+  - Uncalled chips and folded players' chips are refunds or join the pot they were paid into, instead of making extra side pots (for example one $4,025 pot instead of $100, $1,725 and $2,200 pots).
+  - No bet or raise that nobody can answer: when every other seat still in the hand is all in, a raise is refused for the host and for guests. Before, both could raise.
+  - A seat whose blind puts it all in now plays the hand and can win the pots it paid into. Before, it was shown as busted for the whole hand, was left out of every pot and lost its blind (RoomGame.start_hand, decision 11).
+  - Calls after a short all-in blind, short all-ins re-opening the betting, odd chips to the first winner left of the dealer, and the winner rule (which seats `winner_indexes` names, so who is shown as winning) are the single-player ones.
+  - A busted host who spectates no longer gets an empty "You are dealt ." line in the game log.
+  - The Payout History footnote now reads "Amounts above are gross payouts and returned uncalled bets; your own wagers were already deducted."
+  - (Not visible in rooms: the shared recap's "Eligible:" line. Rooms show the multiplayer Payout History, not the shared recap; only test_room_ai renders the recap.)
 - **Window:**
   - It opens at the single-player default size, clamped to the screen and centred.
   - F11 gives letterboxed desktop fullscreen (no monitor mode switch).
@@ -115,6 +128,7 @@
 - A stray file written by the deleted `test_standalone.py` exists at `C:\Users\Dan Fiscus\Documents\standalone_preview.png`. It is outside the repository; Dan can delete it.
 - If final-packaged cannot script a real two-window hand, play one by hand. The two-player recipe goes in `docs/TESTING.md`.
 - Answer the open questions. Each one has a default that the plan follows.
+- Do not release the move commit on its own. Until the fix stage's protocol stamp (bugs-holdem-room step 9), a guest on an older Solitaire+ can join a newer host unwarned, and its old ClientGame offers a Raise over an all-in that the host silently refuses (call and minimum-raise amounts agree).
 
 
 ## Groups

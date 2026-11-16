@@ -11,7 +11,7 @@ from mp_appearance import Appearance
 from mp_profile_ui import ProfileScreen
 from room_session import RoomTable
 from room_view import RoomView
-from standalone_view import TableView
+from mp_assets import TableView
 import test_relay
 
 
@@ -52,7 +52,7 @@ class ProfileTests(unittest.TestCase):
 
     def test_profile_screen_locks_and_table_slider(self):
         from room_table import RoomAuthority
-        from lan_protocol import ClientGame
+        from room_protocol import ClientGame
         pygame.init();surface=pygame.display.set_mode((1366,768));appearance=Appearance(self.p)
         panel=ProfileScreen(self.p,appearance);panel.draw(surface)
         t=RoomAuthority('Host');t.start();g=ClientGame();m=t.view(0);g.apply(m);g.current_actor=0

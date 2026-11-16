@@ -1,9 +1,27 @@
-"""Public seat-relative snapshots. Never serialize a deck, AI memory or hidden hand."""
+"""Public seat-relative room snapshots. Never serialize a deck, AI memory or hidden hand."""
 import copy
-from texas_holdem import TexasHoldemGame
+from solitaireplus.games.poker.holdem import TexasHoldemGame
+from solitaireplus.games.poker.core import describe_poker_score
 
 PAIRS=(('player_stack','npc_stacks'),('player_hand_contribution','npc_hand_contributions'),('player_busted','npc_busted'),('player_bet_chunks','npc_bet_chunks'),('player_action_text','npc_action_texts'),('player_round_bet','npc_round_bets'),('player_folded','npc_folded'),('player_all_in','npc_all_in'),('player_has_acted','npc_has_acted'))
 FIELDS=('hand_number','starting_stack','ante','small_blind','big_blind','pot','last_resolved_pot','current_bet','last_raise_size','betting_round_complete','current_stage','hand_complete','community_cards')
+
+def seat_keys(mapping,index):
+    """A {seat: chips} record seat-relative, with JSON-safe string keys (ClientGame turns them back)."""
+    return {str(index[seat]):copy.deepcopy(value) for seat,value in mapping.items() if seat in index}
+
+def int_keys(mapping):
+    """seat_keys() back to {int seat: int chips}. Malformed host data is dropped, never raised on."""
+    if not isinstance(mapping,dict):return {}
+    result={}
+    for seat,value in mapping.items():
+        try:seat=int(seat)
+        except (TypeError,ValueError):continue
+        if isinstance(value,int) and not isinstance(value,bool):result[seat]=value
+    return result
+
+def clean_name(value):
+    return ''.join(c for c in str(value) if c.isprintable())[:32].strip() or 'Player'
 
 def snapshot(game,viewer,revision,names):
     order=[viewer]+[i for i in range(len(names)) if i!=viewer];index={seat:i for i,seat in enumerate(order)}
@@ -27,7 +45,6 @@ def snapshot(game,viewer,revision,names):
         data['npcs'].append(public)
     data['showdown_hands']={}
     if game.current_stage=='showdown':
-        from poker_core import describe_poker_score
         for seat in order:
             if not folded[seat] and len(hands[seat])==2:
                 evaluated=game.evaluate_best_hand(hands[seat]+game.community_cards)
@@ -36,16 +53,25 @@ def snapshot(game,viewer,revision,names):
     for pot in data['last_pot_awards']:
         for key in ('winners','eligible'): 
             if key in pot:pot[key]=[index[i] for i in pot[key] if i in index]
+        # The shared engine's per-winner amounts (odd-chip order kept).
+        if 'payouts' in pot:pot['payouts']=seat_keys(pot['payouts'],index)
+    # Uncalled chips handed back (not a pot): the shared recap's 'Returned (uncalled):' lines.
+    data['last_refunds']=seat_keys(getattr(game,'last_refunds',{}),index)
     data['result_text']=' | '.join(f"{names[i]} wins" for i in game.winner_indexes) if game.hand_complete else ''
     return {'type':'state','revision':revision,'data':data,'names':[names[i] for i in order]}
 
 class ClientGame(TexasHoldemGame):
+    quick_chat_enabled=False
     def __init__(self):super().__init__();self.names=[];self.revision=-1;self.ready_count=0;self.you_ready=False
     def apply(self,message):
         if message['data']['hand_number']!=self.hand_number:self.recap_open=False;self.recap_page=0
         self.revision=message['revision'];self.names=message['names']
         self.ready_count=message.get('ready_count',0);self.you_ready=message.get('you_ready',False)
         for key,value in message['data'].items():setattr(self,key,value)
+        # Seat keys back to numbers for the shared recap and engine helpers (the message is not changed).
+        if isinstance(self.last_pot_awards,list):
+            self.last_pot_awards=[{**pot,'payouts':int_keys(pot['payouts'])} if isinstance(pot,dict) and 'payouts' in pot else pot for pot in self.last_pot_awards]
+        self.last_refunds=int_keys(getattr(self,'last_refunds',{}))
     def get_table_player_name(self,index):return self.names[index] if 0<=index<len(self.names) else 'Player'
     def get_hand_history_lines(self):
         lines=[f'Hand {self.hand_number}: {self.current_stage.title()}',f'Blinds ${self.small_blind} / ${self.big_blind}']

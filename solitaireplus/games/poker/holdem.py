@@ -90,6 +90,14 @@ class TexasHoldemGame:
     # history), as they did before the shared showdown.
     payout_text_names_hands = True
 
+    # Network table options: the defaults are single-player behaviour.
+    # Multiplayer room subclasses turn this on (a busted seat 0 watches, dealt no cards).
+    allow_network_spectator = False
+    # Multiplayer room subclasses turn this off (a fold settles only the last seat left).
+    finish_hand_after_player_fold = True
+    # Multiplayer room subclasses turn this off (no quick-chat state or NPC nudges).
+    quick_chat_enabled = True
+
     def __init__(self):
 
         # ==================================================
@@ -400,6 +408,17 @@ class TexasHoldemGame:
         # Grudges, quick chat, player tendencies and table reads start
         # fresh; the reads bind to the career rival-learning store.
         reset_session_memory(self, self.rating_game_key)
+
+        if not self.quick_chat_enabled:
+            # A table without quick chat keeps no quick-chat state: drop
+            # what reset_session_memory just set up (everything else it
+            # reset stays reset).
+            for name in (
+                    "quick_chat_state",
+                    "_quick_chat_event_counter",
+                    "_quick_chat_event_signature",
+            ):
+                self.__dict__.pop(name, None)
 
         self.starting_stack = int(
             starting_stack
@@ -972,7 +991,12 @@ class TexasHoldemGame:
 
         self.refresh_busted_state()
 
-        if self.player_busted:
+        # A network spectator table plays on without a busted seat 0
+        # (it is dealt no hole cards below).
+        if (
+                self.player_busted
+                and not self.allow_network_spectator
+        ):
             self.hand_complete = True
             self.current_actor = -1
             self.current_stage = "busted"
@@ -1123,11 +1147,15 @@ class TexasHoldemGame:
         # Hole cards
         # ==================================================
 
+        # A busted seat 0 is dealt nothing. Only a network spectator
+        # table gets here with one (single-player stopped above), so the
+        # single-player deal order is unchanged.
         for _ in range(2):
 
-            self.player_hand.append(
-                self.draw_card()
-            )
+            if not self.player_busted:
+                self.player_hand.append(
+                    self.draw_card()
+                )
 
             for npc_index in range(
                     len(self.npcs)
@@ -1144,20 +1172,22 @@ class TexasHoldemGame:
                     self.draw_card()
                 )
 
-        player_cards_text = format_poker_cards(
-            self.player_hand
-        )
+        if self.player_hand:
 
-        self.log_hand_event(
-            "hole_cards",
-            f"You are dealt {player_cards_text}.",
-            actor_index=0,
-            cards=[
-                dict(card)
-                for card in self.player_hand
-                if card
-            ]
-        )
+            player_cards_text = format_poker_cards(
+                self.player_hand
+            )
+
+            self.log_hand_event(
+                "hole_cards",
+                f"You are dealt {player_cards_text}.",
+                actor_index=0,
+                cards=[
+                    dict(card)
+                    for card in self.player_hand
+                    if card
+                ]
+            )
 
         # ==================================================
         # Correct preflop action order
@@ -2345,6 +2375,21 @@ class TexasHoldemGame:
         )
 
         # ------------------------------------------
+        # Network room table: settle the hand only
+        # when one seat is left. The room moves the
+        # turn on after every fold itself.
+        # ------------------------------------------
+
+        if not self.finish_hand_after_player_fold:
+            return (
+                self.award_pot_to_single_player(
+                    active_indexes[0]
+                )
+                if len(active_indexes) == 1
+                else False
+            )
+
+        # ------------------------------------------
         # Nobody active
         # Should never happen, but guard against it.
         # ------------------------------------------
@@ -2833,7 +2878,10 @@ class TexasHoldemGame:
         context["skill_factor"] = self.get_npc_skill_factor(
             npc_index
         )
-        context.update(get_npc_quick_chat_context(self, npc_index))
+
+        if self.quick_chat_enabled:
+            context.update(get_npc_quick_chat_context(self, npc_index))
+
         return context
 
     def get_npc_wealth_scale(self):

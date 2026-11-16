@@ -7,7 +7,8 @@
 How it works (see docs/TESTING.md for the full explanation):
 * There are two suites. "game" is tests/ (single-player code). "multiplayer"
   is multiplayer/tests/ and needs multiplayer/ first on the import path,
-  because multiplayer/ has its own copies of some modules.
+  because the multiplayer modules import each other by bare name (it has no
+  copies of game modules any more; shared code comes from solitaireplus/).
 * Test files (test_*.py) are found in the suite folder and all its subfolders
   (except helper folders such as tests/support/). A test's id is always
   <file name>.Class.test (or <file name>.test_function), whatever subfolder the

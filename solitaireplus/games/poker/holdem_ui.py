@@ -112,6 +112,20 @@ def get_poker_chip_images():
 # ==================================================
 
 _ui.holdem_fonts = None
+_ui.holdem_fonts_quit_hooked = False
+
+
+def clear_holdem_fonts():
+    """Forget the cached fonts; the next get_holdem_fonts() builds them again."""
+    _ui.holdem_fonts = None
+
+
+def _holdem_fonts_quit_hook():
+    # Registered with pygame.register_quit: fonts don't survive pygame.quit(), and pygame
+    # forgets this hook once it has run, so the next get_holdem_fonts() registers it again.
+    # Only this hook clears the flag; a direct clear_holdem_fonts() call leaves the hook in place.
+    _ui.holdem_fonts_quit_hooked = False
+    clear_holdem_fonts()
 
 
 def get_holdem_fonts():
@@ -120,6 +134,11 @@ def get_holdem_fonts():
 
         if not pygame.font.get_init():
             pygame.font.init()
+
+        # pygame forgets its quit hooks once they have run, so hook again after each quit.
+        if not _ui.holdem_fonts_quit_hooked:
+            pygame.register_quit(_holdem_fonts_quit_hook)
+            _ui.holdem_fonts_quit_hooked = True
 
         _ui.holdem_fonts = {
             "title": pygame.font.SysFont(
@@ -558,8 +577,9 @@ def is_holdem_table_chat_popups_enabled():
     return is_poker_chat_popups_enabled()
 
 
-def get_holdem_npc_delay():
+def get_holdem_npc_delay(speed=None):
 
+    # speed: "slow", "normal" or "fast"; None means the table speed in state.
     delays = {
         "slow": 1800,
         "normal": 1200,
@@ -567,15 +587,16 @@ def get_holdem_npc_delay():
     }
 
     return delays.get(
-        state.holdem_table_speed,
+        state.holdem_table_speed if speed is None else speed,
         1200
     )
 
 
-def get_holdem_street_delay():
+def get_holdem_street_delay(speed=None):
 
     # Keep enough time for the chip sweep animation
     # to finish before the next street appears.
+    # speed: as get_holdem_npc_delay.
     delays = {
         "slow": 1700,
         "normal": 1200,
@@ -583,15 +604,16 @@ def get_holdem_street_delay():
     }
 
     return delays.get(
-        state.holdem_table_speed,
+        state.holdem_table_speed if speed is None else speed,
         1200
     )
 
 
-def get_holdem_next_hand_delay():
+def get_holdem_next_hand_delay(speed=None):
 
     # Auto-deal countdown itself stays reasonably
     # relaxed, but fast mode trims it somewhat.
+    # speed: as get_holdem_npc_delay.
     delays = {
         "slow": 18000,
         "normal": 15000,
@@ -599,7 +621,7 @@ def get_holdem_next_hand_delay():
     }
 
     return delays.get(
-        state.holdem_table_speed,
+        state.holdem_table_speed if speed is None else speed,
         15000
     )
 

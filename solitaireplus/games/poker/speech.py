@@ -11,13 +11,6 @@ def is_poker_chat_popups_enabled():
     return bool(state.poker_chat_popups_enabled)
 
 
-def __getattr__(name):
-    # multiplayer/poker_speech.py still imports POKER_CHAT_POPUPS_ENABLED by name (until Phase 11).
-    if name == "POKER_CHAT_POPUPS_ENABLED":
-        return state.poker_chat_popups_enabled
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-
 class PokerSpeechOverlay:
     """Short-lived NPC table chatter drawn beside a player's name plate."""
 

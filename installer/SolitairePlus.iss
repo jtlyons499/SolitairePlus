@@ -71,6 +71,12 @@ Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription
 Name: "trustcert"; Description: "Trust the Solitaire+ publisher (recommended). Windows will ask you to confirm."; GroupDescription: "Security:"
 #endif
 
+[InstallDelete]
+; Multiplayer ships as loose .py files, so a file removed in a release must not linger
+; after an upgrade: delete them (and their compiled cache) before [Files] copies the new set.
+Type: files; Name: "{app}\SolitairePlus_Data\multiplayer\*.py"
+Type: filesandordirs; Name: "{app}\SolitairePlus_Data\multiplayer\__pycache__"
+
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 #ifdef PublisherCer

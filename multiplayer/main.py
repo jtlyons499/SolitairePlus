@@ -3,6 +3,7 @@ import os
 import pygame
 
 from multiplayer_paths import ROOT
+from solitaireplus.app import paths
 from solitaireplus.app.runtime_support import bootstrap
 bootstrap()
 
@@ -16,9 +17,19 @@ from mp_profile import MultiplayerProfile
 from mp_appearance import Appearance
 from mp_profile_ui import ProfileScreen
 from mp_options import Options
-from standalone_view import TableView
-from dead_mans_hand_pvp import DeadMansHandPvPMode
-from texas_holdem_ui import draw_holdem_glossy_button
+from mp_assets import TableView
+from mp_toast import LeaveToast
+from net_client import open_peer
+from solitaireplus.games.dead_mans_hand.pvp import DeadMansHandPvPMode
+from solitaireplus.games.poker.holdem_ui import draw_holdem_glossy_button
+
+
+def make_duel(name, relay_address, sound):
+    """A Dead Man's Hand PvP lobby plus its leave toast.
+
+    The PvP mode lives in solitaireplus/ and has no network code of its own:
+    it gets net_client.open_peer from here, and main() draws the toast over it."""
+    return DeadMansHandPvPMode(name, relay_address, sound=sound, open_peer=open_peer), LeaveToast()
 
 
 def main():
@@ -50,16 +61,18 @@ def main():
     text_input = TextInput()
     table = None
     pvp_mode = None
+    duel_toast = None
     running = True
 
+    # Sounds are keyed by file name. rglob also finds the dead_mans_hand/ subfolder.
+    # This deliberately uses neither solitaireplus.app.sounds nor solitaireplus.app.audio.
     sounds = {}
     if pygame.mixer.get_init():
-        for folder in ("assets/sounds", "assets/sfx"):
-            for path in (ROOT / folder).rglob("*"):
-                if path.suffix.lower() not in (".wav", ".ogg", ".mp3"):
-                    continue
-                try: sounds[path.stem] = pygame.mixer.Sound(path)
-                except pygame.error: continue
+        for path in paths.asset("sounds").rglob("*"):
+            if path.suffix.lower() not in (".wav", ".ogg", ".mp3"):
+                continue
+            try: sounds[path.stem] = pygame.mixer.Sound(path)
+            except pygame.error: continue
 
     def sound(key):
         aliases = {"chip_move": "chips_1", "win": "hand_win"}
@@ -106,6 +119,7 @@ def main():
                 pvp_mode.handle_event(event, mouse)
                 if pvp_mode.closed:
                     pvp_mode = None
+                    duel_toast = None
                     pygame.key.start_text_input()
                 continue
 
@@ -174,7 +188,7 @@ def main():
                         running = False
                     elif clicked == "dmh":
                         profile.save(); connection_settings.save(profile.data["name"], relay_address)
-                        pvp_mode = DeadMansHandPvPMode(profile.data["name"], relay_address, sound=sound)
+                        pvp_mode, duel_toast = make_duel(profile.data["name"], relay_address, sound)
                         pygame.key.stop_text_input()
                 continue
 
@@ -213,6 +227,9 @@ def main():
         if pvp_mode is not None:
             pvp_mode.update(min(0.05, max(0.0, clock.get_time() / 1000.0)))
             pvp_mode.draw(canvas, mouse)
+            # Same font the duel used for its own toast before the toast moved here.
+            duel_toast.sync(pvp_mode)
+            duel_toast.draw(canvas, pvp_mode.small)
         elif table is None:
             hub.draw(canvas, mouse, room_code, code_active)
             wooden_button(canvas, appearance, options_rect, "Options", pygame.font.Font(None, 24), hover=options_rect.collidepoint(mouse))

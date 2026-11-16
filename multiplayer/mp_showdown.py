@@ -13,6 +13,13 @@ def payout_lines(game):
             lines.append(f'{game.names[seat]} receives ${share+(1 if j<extra else 0):,}')
         if len(winners)>1:lines.append('Equal best five-card hands; hole cards may differ.')
         lines.append('')
+    # Uncalled chips go back to whoever bet them (B86): not part of any pot above, but chips
+    # the table showed in the pot during the hand, so the history lists them too.
+    refunds=sorted((getattr(game,'last_refunds',None) or {}).items())
+    if refunds:
+        lines.append('Returned (uncalled):')
+        for seat,amount in refunds:lines.append(f'Uncalled ${amount:,} returned to {game.names[seat]}')
+        lines.append('')
     return lines or [game.result_text or 'Hand complete.']
 
 

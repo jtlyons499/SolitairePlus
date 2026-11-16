@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import pygame
 from mp_widgets import wooden_button
-import texas_holdem_ui as ui
+from solitaireplus.app import state
 
 SIZES=((1366,768),(1600,900),(1920,1080),(2560,1440))
 
@@ -28,7 +28,7 @@ class Options:
             size=tuple(map(int,inherited))
             if size in SIZES:self.values['size']=list(size);self.values['fullscreen']=os.environ.get('SOLITAIRE_MP_FULLSCREEN')=='1'
         except ValueError:pass
-        ui.holdem_table_speed=self.values['speed'];self.open=False;self.buttons=[]
+        state.holdem_table_speed=self.values['speed'];self.open=False;self.buttons=[]
         self.font=pygame.font.Font(None,30);self.small=pygame.font.Font(None,25)
 
     def display(self):
@@ -71,7 +71,7 @@ class Options:
                 elif action[0]=='toggle':self.values[action[1]]=not self.values[action[1]];resize=action[1]=='fullscreen'
                 elif action[0]=='volume':self.values['volume']=max(0,min(100,self.values['volume']+action[1]))
                 elif action[0]=='speed':
-                    self.values['speed']=action[1];ui.holdem_table_speed=action[1]
+                    self.values['speed']=action[1];state.holdem_table_speed=action[1]
                     authority=getattr(table,'authority',None)
                     if getattr(table,'hosting',False) and authority is not None and hasattr(authority,'set_speed'):authority.set_speed(action[1])
                 elif action[0]=='motion':self.values['motion']=action[1]

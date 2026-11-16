@@ -12,7 +12,7 @@ from party_authority import SKILL_LABELS, STACK_OPTIONS, ROULETTE_TIMERS, SCORE_
 from mp_widgets import wooden_button
 from mp_toast import LeaveToast
 from mp_chat import MultiplayerChat
-from texas_holdem_ui import draw_holdem_glossy_button, get_card_key
+from solitaireplus.games.poker.holdem_ui import draw_holdem_glossy_button, get_card_key
 
 WHITE = (246, 239, 216)
 MUTED = (190, 204, 197)

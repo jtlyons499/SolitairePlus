@@ -33,12 +33,8 @@ game:test_npc_development.ProspectTests.test_rare_prodigy_reaches_2500_then_cont
 
 # --- Multiplayer: tests written for older menus or table code
 multiplayer:test_menu_followup.MenuFollowupTests.test_lobby_quit_button_ends_the_loop   # scripted clicks target the old hub layout; script runs out of events (StopIteration). Without pygame initialised it hung forever.
-multiplayer:test_menu_followup.MenuFollowupTests.test_practice_does_not_draw_its_own_options_exit_buttons   # standalone_view passes show_utility_buttons, which draw_texas_holdem no longer accepts (Practice table is unreachable since Practice was removed)
 multiplayer:test_table_flow.FlowTests.test_last_payout_survives_new_hand   # RoomTable built without the newer 'mode' attribute
 multiplayer:test_table_polish.PolishTests.test_local_animation_never_mutates_game_and_sound_edges_once   # fake game object lacks player_action_text
-
-# --- Intermittent (timing-dependent) - fails some runs, passes others
-multiplayer:test_relay.RelayTests.test_online_table_hand   # FLAKY: ~3 in 15 runs on unmodified main (2026-11-14); old LAN-era OnlineTable, unreachable in the shipped game
 
 # --- POSSIBLY A REAL BUG - ask the designer: six-seat late joiners
 multiplayer:test_six_seat.SixSeatTests.test_late_join_no_mid_hand_takeover   # FLAKY: ~1 in 25-50 runs the late joiner is not seated after the hand ('9 not found in {0: 0, 1: 1}'); table code unchanged since main - likely the same late-join bug as below

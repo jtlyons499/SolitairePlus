@@ -75,9 +75,10 @@ The network service (`netservice/`, built as `SolitaireNet.exe`) is tested in th
 `tests/test_netservice.py`, which uses small fake servers on `127.0.0.1` (no internet needed). The real
 game path (game → `SolitaireNet` child process → relay server) is tested in `multiplayer/tests/test_net_client.py`.
 
-The multiplayer suite **must** have `multiplayer/` ahead of the root on the import path. `multiplayer/` contains
-its own versions of some modules (for example `texas_holdem.py`), and those must win. The runner handles this; don't
-run `python -m unittest discover` from the root yourself, because it picks the wrong modules.
+The multiplayer suite **must** have `multiplayer/` on the import path, ahead of the root. Since Phase 11
+`multiplayer/` has no copies of game modules (the shared code comes from `solitaireplus/`), but its modules import
+each other by bare name (`import room_protocol`, `from mp_widgets import ...`). The runner handles this; don't
+run `python -m unittest discover` from the root yourself, because those imports then fail.
 
 Useful options:
 
@@ -117,7 +118,7 @@ The target is a file name (found in any subfolder), a dotted test id, or the pat
 ## Quarantined tests (`tests/KNOWN_FAILURES.txt`)
 
 When automated testing was switched on (November 2026), 14 tests were **already broken on `main`**, and one more
-(`test_relay...test_online_table_hand`) was found to fail about 1 run in 5. Most were
+was found to fail about 1 run in 5 (it tested the old LAN table and was deleted with it in Phase 11). Most were
 outdated tests rather than game bugs: they expected older menus or numbers, or wrote images to a folder that only
 existed on the original author's AI tool. So that releases weren't blocked from day one, each one is listed in
 `tests/KNOWN_FAILURES.txt` with a one-line reason.

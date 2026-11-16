@@ -4,6 +4,10 @@ The host is authoritative for health, scoring, hit confirmation and respawns.
 Movement remains client-side for responsiveness and poses are synchronized at
 20 Hz.  The protocol deliberately rides the legacy two-player relay so the
 currently deployed relay server needs no update.
+
+This module opens no connection itself: multiplayer/main.py passes in the
+function that does (open_peer), so it imports only the standard library,
+pygame and solitaireplus modules.
 """
 from __future__ import annotations
 
@@ -23,7 +27,6 @@ from solitaireplus.games.dead_mans_hand.game import (
     DeadMansHandGame,
 )
 from solitaireplus.games.dead_mans_hand.weapons import WEAPON_DEFINITIONS
-from relay_transport import RelayPeer
 
 ARENA_LEVEL_INDEX = 5  # O.K. Corral
 SYNC_INTERVAL = 0.05   # 20 Hz
@@ -122,6 +125,38 @@ class PvPGame(DeadMansHandGame):
         self.kill_feed = []
         self._shot_events = []
         self.respawn(side)
+
+    def capture_mouse(self, force=False):
+        """Capture relative mouse input, including after this window regains focus."""
+        try:
+            # SDL/Windows can drop the *effective* grab when another game window
+            # takes focus even though our old bookkeeping flag remains True.
+            # Re-applying the grab is harmless and prevents the cursor from
+            # reaching a desktop/window edge and capping 360-degree look.
+            already_grabbed = bool(pygame.event.get_grab())
+            pygame.event.set_grab(True)
+            pygame.mouse.set_visible(False)
+            if force or not self._mouse_captured or not already_grabbed:
+                pygame.mouse.get_rel()  # discard stale delta accumulated while unfocused
+            self._mouse_captured = True
+        except pygame.error:
+            self._mouse_captured = False
+
+    def maintain_mouse_capture(self):
+        """Repair a dropped OS/SDL mouse grab after alt-tab or window switching."""
+        try:
+            focused = bool(pygame.key.get_focused())
+        except pygame.error:
+            focused = False
+        if not focused:
+            return
+        try:
+            if not pygame.event.get_grab() or not self._mouse_captured:
+                self.capture_mouse(force=True)
+            elif pygame.mouse.get_visible():
+                pygame.mouse.set_visible(False)
+        except pygame.error:
+            pass
 
     def respawn(self, side=None):
         if side is not None:
@@ -488,10 +523,14 @@ class PvPGame(DeadMansHandGame):
 
 
 class DeadMansHandPvPMode:
-    """Lobby + 1v1 network coordinator embedded in multiplayer/main.py."""
-    def __init__(self, name, relay_address, sound=None):
+    """Lobby + 1v1 network coordinator created by multiplayer/main.py."""
+    def __init__(self, name, relay_address, sound=None, open_peer=None):
         self.name = (name or "Player")[:24]
-        self.relay_address = relay_address or "tcp://yamanote.proxy.rlwy.net:40274"
+        # open_peer(hosting, address, name, code, version) returns the connection
+        # (an object with inbox, send(), close() and code). None means no online play.
+        self._open_peer = open_peer
+        # Empty means "use the default server" (decided by SolitaireNet.exe, not the game).
+        self.relay_address = relay_address or ""
         self.code = ""
         self.focus = "code"
         self.peer = None
@@ -510,6 +549,9 @@ class DeadMansHandPvPMode:
         self.last_guest_event_seq = 0
         self.last_sync = 0.0
         self.closed = False
+        # Read by multiplayer/main.py's LeaveToast.sync(); bump the seq to show a notice.
+        self.leave_notice = ""
+        self.leave_notice_seq = 0
         self.sound = sound or (lambda _key: None)
         self.font = pygame.font.Font(None, 34)
         self.small = pygame.font.Font(None, 25)
@@ -527,12 +569,16 @@ class DeadMansHandPvPMode:
         self.closed = True
 
     def _start(self, hosting):
+        if self._open_peer is None:
+            self.status = "Online play is not available."
+            return
         if self.peer:
             self.peer.close()
         self.hosting = bool(hosting)
         self.connected = False
         self.remote_pose = None
         self.remote_name = "Opponent"
+        self.leave_notice = ""
         self.authority = {
             0: {"health": 100, "score": 0, "dead_until": 0.0, "protected_until": 0.0},
             1: {"health": 100, "score": 0, "dead_until": 0.0, "protected_until": 0.0},
@@ -542,7 +588,7 @@ class DeadMansHandPvPMode:
         self.last_guest_event_seq = 0
         self.game = PvPGame(0 if self.hosting else 1)
         self.game.local_name = self.name
-        self.peer = RelayPeer(self.hosting, self.relay_address, self.name, self.code, version=1)
+        self.peer = self._open_peer(self.hosting, self.relay_address or None, self.name, self.code, version=1)
         self.status = "Creating duel room…" if self.hosting else "Joining duel room…"
         self.last_sync = 0.0
         pygame.key.stop_text_input()
@@ -733,8 +779,13 @@ class DeadMansHandPvPMode:
                     self.authority[1]["protected_until"] = now + SPAWN_PROTECTION_SECONDS
                 self.game.capture_mouse()
             elif kind == "disconnected":
+                was_connected = self.connected
+                leaving_name = self.remote_name or "Opponent"
                 self.status = m.get("text", "Disconnected")
                 self.connected = False
+                if was_connected:
+                    self.leave_notice_seq += 1
+                    self.leave_notice = f"{leaving_name} left the game."
                 if self.game:
                     self.game.release_mouse()
             elif kind == "action" and self.hosting:
@@ -798,6 +849,7 @@ class DeadMansHandPvPMode:
         self._process_network()
         if not self.game or not self.connected:
             return
+        self.game.maintain_mouse_capture()
         self.game.update(dt, pygame.key.get_pressed())
         self._play_sound_events()
         now = time.monotonic()
@@ -864,7 +916,14 @@ class DeadMansHandPvPMode:
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             self.close(); return
         if self.game and self.connected:
-            if event.type == pygame.MOUSEMOTION: self.game.handle_mouse_motion(event.rel[0])
+            # Reassert relative mouse capture whenever this instance regains focus.
+            # This matters when two local PvP instances are being swapped between.
+            focus_gained = getattr(pygame, "WINDOWFOCUSGAINED", None)
+            if focus_gained is not None and event.type == focus_gained:
+                self.game.capture_mouse(force=True)
+            elif event.type == pygame.ACTIVEEVENT and getattr(event, "gain", 0) and getattr(event, "state", 0):
+                self.game.capture_mouse(force=True)
+            elif event.type == pygame.MOUSEMOTION: self.game.handle_mouse_motion(event.rel[0])
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1: self.game.set_trigger_held(True); self.game.fire()
                 elif event.button == 3: self.game.set_aiming(True)
@@ -886,22 +945,27 @@ class DeadMansHandPvPMode:
             elif self.join_rect.collidepoint(mouse) and self.code.strip(): self._start(False)
         if event.type == pygame.TEXTINPUT:
             if self.focus == "relay": self.relay_address = (self.relay_address + event.text)[:128]
-            else: self.code = (self.code + event.text.upper())[:8]
+            else: self.code = (self.code + ''.join(c for c in event.text.upper() if c.isascii() and c.isalnum()))[:6]
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_BACKSPACE:
             if self.focus == "relay": self.relay_address = self.relay_address[:-1]
             else: self.code = self.code[:-1]
 
     def draw(self, canvas, mouse):
+        # The leave notice toast is drawn on top by multiplayer/main.py (LeaveToast, with self.small).
         if self.game and self.connected:
-            self.game.draw(canvas); return
+            self.game.draw(canvas)
+            return
         canvas.fill((17, 23, 27))
         title = self.title.render("DEAD MAN'S HAND • PvP", True, (224, 56, 48)); canvas.blit(title, title.get_rect(center=(683, 135)))
         sub = self.small.render("1v1 prototype • First to 5 kills • Host-authoritative hit confirmation", True, (225, 215, 190)); canvas.blit(sub, sub.get_rect(center=(683, 190)))
         canvas.blit(self.small.render("Relay address", True, (235, 225, 200)), (325, 297))
         canvas.blit(self.small.render("Room code", True, (235, 225, 200)), (483, 388))
-        for rect, text, active in ((self.relay_rect, self.relay_address, self.focus == "relay"), (self.code_rect, self.code, self.focus == "code")):
+        relay_placeholder = not self.relay_address and self.focus != "relay"
+        relay_text = "Default server" if relay_placeholder else self.relay_address
+        for rect, text, active, dim in ((self.relay_rect, relay_text, self.focus == "relay", relay_placeholder), (self.code_rect, self.code, self.focus == "code", False)):
             pygame.draw.rect(canvas, (31, 65, 57), rect); pygame.draw.rect(canvas, (221, 183, 91) if active else (103, 142, 126), rect, 2)
-            clip = canvas.get_clip(); canvas.set_clip(rect.inflate(-10, -4)); canvas.blit(self.font.render(text, True, (248, 240, 216)), (rect.x + 12, rect.y + 12)); canvas.set_clip(clip)
+            colour = (150, 165, 155) if dim else (248, 240, 216)
+            clip = canvas.get_clip(); canvas.set_clip(rect.inflate(-10, -4)); canvas.blit(self.font.render(text, True, colour), (rect.x + 12, rect.y + 12)); canvas.set_clip(clip)
         for rect, label in ((self.host_rect, "Host Duel"), (self.join_rect, "Join Duel"), (self.back_rect, "Back")):
             pygame.draw.rect(canvas, (104, 65, 39) if rect.collidepoint(mouse) else (82, 50, 32), rect, border_radius=7); pygame.draw.rect(canvas, (184, 139, 82), rect, 2, border_radius=7)
             img = self.font.render(label, True, (248, 235, 205)); canvas.blit(img, img.get_rect(center=rect.center))

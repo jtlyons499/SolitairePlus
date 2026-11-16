@@ -8,8 +8,6 @@ from pathlib import Path
 import uuid
 import tempfile
 
-from multiplayer_paths import ROOT
-
 
 def catalogs():
     from solitaireplus.app.settings import MENU_BACKGROUNDS, FELTS, CARD_BACKS, TITLES

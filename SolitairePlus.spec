@@ -51,7 +51,7 @@ game = Analysis(
         # Loose, so a release that only changes the version number does not change the exe.
         (str(project / 'version.py'), '.'),
     ] + mp_files,
-    # Standard-library modules that only the loose multiplayer/*.py files use.
+    # Modules (mostly standard library) that only the loose multiplayer/*.py files use.
     # PyInstaller cannot see those imports. If the frozen self-test fails with
     # "No module named X", add X here (see docs/TESTING.md).
     hiddenimports=[
@@ -65,6 +65,9 @@ game = Analysis(
         'uuid',
         'base64',
         'io',
+        # Dead Man's Hand PvP: only the loose multiplayer/main.py imports it,
+        # so PyInstaller cannot see it from main.py.
+        'solitaireplus.games.dead_mans_hand.pvp',
     ]
     # Every game module. The main loop opens screens by module name
     # (solitaireplus/app/loop.py SCREENS) and some modules reach each other through

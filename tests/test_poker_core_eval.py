@@ -143,7 +143,7 @@ class HandEvaluationTests(unittest.TestCase):
         self.assertIs(draw_values, stud_values)
 
     def test_core_imports_no_project_module(self):
-        # Multiplayer re-exports core.py through a shim, so it must stay import-free.
+        # core.py stays a leaf module (see its header comment): standard library imports only.
         tree = ast.parse((ROOT / "solitaireplus/games/poker/core.py").read_text(encoding="utf-8"))
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom):

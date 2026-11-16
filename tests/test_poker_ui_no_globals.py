@@ -47,9 +47,6 @@ class PokerUiNoGlobalsTests(unittest.TestCase):
             self.assertFalse(speech.is_poker_chat_popups_enabled())
             speech.set_poker_chat_popups_enabled(1)
             self.assertIs(speech.is_poker_chat_popups_enabled(), True)
-            # multiplayer/poker_speech.py still imports this name from the module.
-            from solitaireplus.games.poker.speech import POKER_CHAT_POPUPS_ENABLED
-            self.assertIs(POKER_CHAT_POPUPS_ENABLED, True)
         finally:
             speech.set_poker_chat_popups_enabled(before)
 

@@ -5,13 +5,13 @@ import unittest
 import pygame
 
 from room_table import RoomAuthority
-from lan_protocol import ClientGame, snapshot
+from room_protocol import ClientGame, snapshot
 from mp_showdown import payout_lines
 from mp_profile import MultiplayerProfile
 from mp_appearance import Appearance
 from mp_presentation import Presentation
 from room_view import RoomView
-from standalone_view import TableView
+from mp_assets import TableView
 from mp_options import Options,SIZES
 
 

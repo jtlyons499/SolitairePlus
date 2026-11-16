@@ -1,9 +1,11 @@
 """Main-thread room coordinator; relay routes only explicitly targeted views."""
+import copy
 import queue
 import uuid
+from types import SimpleNamespace
 from mp_profile import clean_public, winning_xp
-from lan_protocol import ClientGame
-from lan_session import clean_name
+from room_protocol import ClientGame, clean_name
+from solitaireplus.games.poker.holdem_ui import get_card_key
 from net_client import open_peer
 from room_table import RoomAuthority
 from party_authority import make_party_authority
@@ -95,9 +97,7 @@ class RoomTable:
             self.mode='holdem'
             self.game.apply(m)
             if self.game.hand_complete:
-                import copy
-                from types import SimpleNamespace
-                self.last_payout=SimpleNamespace(**copy.deepcopy(dict(names=self.game.names,last_pot_awards=self.game.last_pot_awards,result_text=self.game.result_text,showdown_hands=self.game.showdown_hands,hand_number=self.game.hand_number)))
+                self.last_payout=SimpleNamespace(**copy.deepcopy(dict(names=self.game.names,last_pot_awards=self.game.last_pot_awards,last_refunds=getattr(self.game,'last_refunds',{}),result_text=self.game.result_text,showdown_hands=self.game.showdown_hands,hand_number=self.game.hand_number)))
                 if not hasattr(self,'payout_history'):self.payout_history=[]
                 if not self.payout_history or self.payout_history[-1].hand_number!=self.game.hand_number:
                     self.payout_history.append(self.last_payout);self.payout_history=self.payout_history[-30:]
@@ -197,7 +197,6 @@ class RoomTable:
         if self.log_stage!=g.current_stage:
             self.log_stage=g.current_stage
             if g.community_cards:
-                from texas_holdem_ui import get_card_key
                 self.public_log.append(g.current_stage.title()+': '+' '.join(get_card_key(c) for c in g.community_cards))
         actions=[g.player_action_text,*g.npc_action_texts]
         for i,action in enumerate(actions):

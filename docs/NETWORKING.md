@@ -106,8 +106,10 @@ The game doesn't change: players get the new connection method through an update
   time, which would have kept players on an old server forever. `multiplayer/connection_settings.py` ignores those
   old saved defaults.
 * **`multiplayer/relay_transport.py` still exists.** It runs the same connector code inside the current process. Only
-  the tests use it (set by `tools/run_tests.py` via `SOLITAIRE_NET_INPROCESS=1`), plus the old LAN-era `OnlineTable`.
-  The shipped game always uses `SolitaireNet.exe`.
+  the tests use it (set by `tools/run_tests.py` via `SOLITAIRE_NET_INPROCESS=1`), so room tests can connect
+  `RoomTable` clients to a local test relay without starting a `SolitaireNet` child process per player. The shipped
+  game always uses `SolitaireNet.exe`. (The old LAN table and the offline Practice table were removed in Phase 11;
+  online play is rooms only.)
 * **The service checks the connection is alive.** It sends a ping every 20 seconds, and if nothing at all comes back
   for 45 seconds it reports "Lost contact with the server". Before, a silently dropped connection could leave a
   player waiting forever.

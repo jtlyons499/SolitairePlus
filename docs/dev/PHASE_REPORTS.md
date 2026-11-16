@@ -1166,3 +1166,147 @@ shared helpers. The fixes did not touch it.
       loop, so a later change to the opening side would not be caught there.
     - `test_debug_no_globals`'s "clamped to 250 ms" assertion (`drawn() or elapsed >= 250`) is close to always true.
       The AST check is the real regression test.
+
+## Phase 11 (move): merge the multiplayer copies
+
+Built as `ff82492` on B86 (`707be96`) in its own worktree, then applied on top of Phase 10; the only conflict was the spec's game `hiddenimports`, where both the PvP entry and `collect_submodules('solitaireplus')` were kept. The plan is `tools/refactor/specs/phase11_plan.md`. Multiplayer has no copies of
+game code left: room Hold'em runs on the shared engine and UI in `solitaireplus/`, and the LAN table and the offline
+Practice table are gone. `multiplayer/` shrank by about 15,700 lines.
+
+**LAN and Practice removed** (lan-removal). The parts the rooms still use moved unchanged into three new modules:
+- `multiplayer/room_protocol.py`: `PAIRS`, `FIELDS`, `snapshot()`, `ClientGame` (from `lan_protocol.py`) and
+  `clean_name()` (from `lan_session.py`).
+- `multiplayer/room_game.py`: `TwoHumanGame` (from `lan_table.py`), `RoomGame` (from `room_table.py`) and
+  `load_roster()` (from `standalone_table.py`).
+- `multiplayer/mp_assets.py`: `TableView` as an asset loader only (card faces, card back, font, NPC portraits). The
+  Practice drawing code was not moved.
+
+Deleted: `lan_transport.py`, `lan_session.py`, `lan_protocol.py`, `lan_table.py`, `standalone_table.py`,
+`standalone_view.py`, `tests/test_lan.py`, `tests/test_standalone.py` and `test_relay.test_online_table_hand`. The
+launcher test moved into `test_menu_followup.py` as `test_launcher_starts_and_quits`, with a temporary LOCALAPPDATA.
+Two quarantine lines went with the deleted tests. Coverage moved first, into the new `test_room_protocol.py` (8
+tests), and passed before anything was moved. In `relay_transport.py` only the docstring changed.
+
+**Engine merged** (engine-flags, engine-merge).
+- `TexasHoldemGame` has three new class options. Each defaults to single-player behaviour:
+  - `allow_network_spectator=False`
+  - `finish_hand_after_player_fold=True`
+  - `quick_chat_enabled=True` (room tables set it to False: no quick-chat state and no NPC quick-chat context)
+- A busted seat 0 is never dealt hole cards and gets no "You are dealt" line. Single-player has already stopped by
+  then, so its deal order does not change.
+- `TwoHumanGame` is now just those three settings.
+- `multiplayer/texas_holdem.py` is deleted, so room tables follow the B86 pot and betting rules (see Deviations).
+- New tests: `tests/test_holdem_network_options.py` (13) and `multiplayer/tests/test_room_engine.py` (6).
+- `test_multiplayer_launcher` now checks that the shared engine is used.
+
+**UI merged** (ui-merge).
+- Multiplayer imports `solitaireplus.games.poker.holdem_ui`, and `texas_holdem_ui.py` is deleted.
+- The three Hold'em delay helpers take an optional `speed`. A room table passes its own speed. Table speed lives in
+  `solitaireplus.app.state`.
+- A pygame quit hook clears the Hold'em font cache.
+- No draw options were added: no multiplayer code draws the full Hold'em screen any more. B85 is resolved because the
+  code that caused it was deleted.
+- New `test_shared_ui_usage.py` (7). It checks every holdem_ui attribute and keyword that multiplayer uses (the B85
+  guard), and that importing multiplayer does not load the single-player game.
+
+**AI and recap** (ai-recap). `poker_ai.py` and `poker_recap.py` are deleted; the single-player versions are used with
+no flags. New `test_room_ai.py` (6). It checks that the Payout History amounts match the real stack changes for a split
+pot with an odd chip and for a side pot. Measured NPC fold rates, 3,000 seeded decisions each (flop, strength 0.40, 100
+to call into 300):
+
+| Spot | Old multiplayer copy | Shared `ai.py` |
+|---|---|---|
+| tenacity 10, stack 200 | 66.2% | 38.4% |
+| tenacity 5, stack 200 | 40.0% | 32.2% |
+| tenacity 1, stack 200 | 22.7% | 22.7% |
+| tenacity 10, stack 5000 | 0% | 0% |
+
+**NPC, audio and shim copies** (npc-audio-shims).
+- Deleted: `npc_portraits.py`, `npc_avatars.py`, `audio.py`, `npc_personality.py`, `npc_personality_chat.py`,
+  `poker_core.py`, `poker_learning.py`, `poker_speech.py`, `poker_strategy.py`, `poker_ui_assets.py` and
+  `texas_holdem_chat.py`.
+- Portraits, card art, button art, appearance images and the NPC roster load through `solitaireplus.npc.portraits` and
+  `solitaireplus.app.paths`. Layered portraits now include the `outline.png` layer.
+- The sound adapter is still in `multiplayer/main.py`. It reads `paths.asset('sounds')` (all subfolders), keeps its
+  file-name keys and aliases, and imports neither `app.sounds` nor `app.audio`.
+- `speech.py` no longer has the `POKER_CHAT_POPUPS_ENABLED` shim.
+- `tests/test_shared_imports.py` now checks that none of the 22 old names exists as a file or is imported anywhere.
+
+**Dead Man's Hand PvP** (dmh-merge, dmh-wire).
+- The newest multiplayer copy is now `solitaireplus/games/dead_mans_hand/pvp.py`. It imports only the standard
+  library, pygame and solitaireplus modules.
+- `open_peer` is passed in. Without it the lobby says "Online play is not available."
+- The leave toast is drawn by `multiplayer/main.py`. `make_duel()` creates the duel and its toast.
+- `multiplayer/dead_mans_hand_pvp.py` is deleted, and the spec's game `hiddenimports` gain the module.
+- New tests: `tests/test_dead_mans_hand_pvp.py` (7) and `multiplayer/tests/test_duel_launch.py` (3).
+
+**Packaging** (packaging-lists).
+- `SELFTEST_SKIP` and `MP_EXCLUDED` are unchanged (the four server and test-only files).
+- The installer gets an `[InstallDelete]` entry for the loose `SolitairePlus_Data\multiplayer\*.py` files and their
+  `__pycache__`, so files deleted in a release do not stay behind after an upgrade.
+- The function-level imports in `room_session.py` moved to module level. The ones that remain are allowlisted in
+  `test_packaging.py`, each with a reason: `net_client.open_peer` imports the test-only `relay_transport`, and
+  `mp_profile.py` was not in this group's files.
+- Three new tests in `test_packaging.py`: the self-test report lists the new modules and none of the deleted ones, the
+  function-import scan, and the installer delete lines.
+- Docs: `docs/NETWORKING.md` and `docs/TESTING.md` describe rooms only, and the `tools/run_tests.py` docstring says why
+  `multiplayer/` still comes first on the import path.
+
+**Decisions** (plan section 1):
+1. LAN and Practice were removed first, with the shared parts moved unchanged.
+2. The engine options are class attributes with single-player defaults. Sit-out stays in `RoomGame`.
+3. No draw options on holdem_ui. B85 is resolved by the deletion, plus a guard test.
+4. The single-player AI and recap win, with no flags.
+5. Multiplayer imports neither `app.audio` nor `app.sounds`. This departs from the brief's wording of section 7, step
+   2.
+6. DMH PvP is in the package, with `open_peer` passed in and `LeaveToast` owned by `multiplayer/main.py`.
+7. The packaging lists are unchanged, apart from the PvP `hiddenimports` entry and the installer `[InstallDelete]`.
+8. The relay room versions stay at 1 and 2. The protocol stamp comes in the fix stage.
+9. B68 seating order (applies in the fix stage).
+10. Two room state fields were added: `data.last_refunds` and per-pot `payouts`, both seat-relative with string keys.
+    `ClientGame` turns the keys back into numbers and drops malformed entries without raising. The Payout History reads
+    `last_refunds`.
+11. `RoomGame.start_hand` changed (see Deviations).
+
+**Deviations**
+- **`RoomGame.start_hand` changed**, although the plan said to move it unchanged. After the deal it no longer marks a
+  seat that was dealt in as busted when posting its blind put it all in. The old code left such a seat out of every pot
+  it had paid into, which clashes with the shared engine's rule that busted is set only between hands. Seats sitting
+  out are still marked busted and folded. The guard is `test_room_engine`
+  `test_preflop_first_actor_with_all_in_blinds_matches_shared_engine`.
+- **Room Hold'em now follows the single-player B86 rules.** This came with deleting the engine copy. Players will
+  notice it (plan section 4):
+  - A fold win settles like a one-seat showdown: the uncalled bet is returned and stacks end the same. In the plan's
+    example the Payout History shows a $125 main pot plus "Returned (uncalled): Uncalled $100 returned to Guest 3",
+    where it used to show a $225 pot. The footnote now reads "Amounts above are gross payouts and returned uncalled
+    bets; your own wagers were already deducted."
+  - Uncalled chips and folded players' chips no longer make extra side pots.
+  - When every other seat still in the hand is all in, the host and guests can no longer raise.
+  - A seat whose blind puts it all in plays the hand.
+  - A busted host who spectates no longer gets an empty "You are dealt ." line.
+- **Do not release this commit on its own.** Until the fix stage adds the room protocol stamp, a guest on an older
+  Solitaire+ can join without a warning. Its old `ClientGame` then offers a Raise over an all-in, which the host
+  silently refuses.
+
+**Found here, already fixed on the branch**: the packaged single-player game crashed at start (`No module named
+'solitaireplus.menus.splash'`), because `solitaireplus/app/loop.py` opens screens through module-name strings that
+PyInstaller cannot follow. The base `707be96` has the same problem. It is fixed by "Phase 7 (fix): packaged game ships
+every solitaireplus module" (`collect_submodules('solitaireplus')` in the spec, guarded by
+`tests/test_packaged_game_modules.py`).
+
+**Results**
+- Tests `PASSED`: game 118 files, 1,056 tests; multiplayer 14 files, 78 tests.
+- Quarantine: the game list is unchanged. Multiplayer has 5 left, after removing the 2 entries for deleted tests.
+- `test_six_seat.SixSeatTests.test_late_join_no_mid_hand_takeover` (quarantined, flaky) failed once in the full run. It
+  then passed 10 of 10 runs alone and 8 of 8 runs of the whole file.
+- `screen_harness compare` → `IDENTICAL 64/64`; `replay compare` → `IDENTICAL 18/18` (baseline
+  `707be96fde55c792a4a112f3901ec84c7bc8bf53`). There was no `contributors` difference at this stage.
+- Packaged (`build_release.ps1 -SkipTests`):
+  - All three self-tests pass. `SolitaireNet 1.1.0 ok; connectors: tcp, tls, ws, wss`. The updater self-test exited 0.
+  - `release/selftest-multiplayer.txt` lists 22 modules, including `room_protocol`, `room_game` and `mp_assets`, and
+    ends with `PASSED: every multiplayer module imported`.
+  - Every solitaireplus module imported by the shipped `multiplayer/*.py` is in `PYZ-00.toc` (19 checked).
+  - A 10 s packaged `--multiplayer` run with a temporary LOCALAPPDATA left an empty `game-*.log`.
+
+Hand-back: `test_standalone.py` (now deleted) left a stray file at
+`C:\Users\Dan Fiscus\Documents\standalone_preview.png`, outside the repository. Dan can delete it.

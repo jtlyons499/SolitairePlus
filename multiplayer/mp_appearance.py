@@ -2,7 +2,7 @@
 import base64
 import io
 import pygame
-from multiplayer_paths import ROOT
+from solitaireplus.app import paths
 
 
 class Appearance:
@@ -12,7 +12,7 @@ class Appearance:
     def image(self, path, size):
         key=(path, size)
         if key not in self.cache:
-            try:self.cache[key]=pygame.transform.smoothscale(pygame.image.load(str(ROOT/path)).convert_alpha(),size)
+            try:self.cache[key]=pygame.transform.smoothscale(pygame.image.load(str(paths.resolve(path))).convert_alpha(),size)
             except (pygame.error,OSError):self.cache[key]=None
         return self.cache[key]
 

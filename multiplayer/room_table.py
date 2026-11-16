@@ -2,35 +2,10 @@
 import copy
 import math
 import random
-import texas_holdem_ui as ui
-from lan_table import TwoHumanGame
-from lan_protocol import snapshot
-from standalone_table import load_roster
-
-class RoomGame(TwoHumanGame):
-    """Exclude resting seats without moving, spending or removing their chips."""
-    def __init__(self):
-        super().__init__();self.sitting_out=set();self.starting_network_hand=False
-    def get_live_player_indexes(self):
-        return [seat for seat in super().get_live_player_indexes() if seat not in self.sitting_out]
-    def refresh_busted_state(self):
-        newly_busted=super().refresh_busted_state()
-        if self.starting_network_hand:
-            if 0 in self.sitting_out:self.player_busted=True
-            for seat in self.sitting_out:
-                if seat:self.npc_busted[seat-1]=True
-        return newly_busted
-    def start_hand(self):
-        self.starting_network_hand=True
-        try:result=super().start_hand()
-        finally:self.starting_network_hand=False
-        self.player_busted=self.player_stack<=0
-        self.npc_busted=[stack<=0 for stack in self.npc_stacks]
-        if result:
-            if 0 in self.sitting_out:self.player_folded=True;self.player_action_text='Sitting out'
-            for seat in self.sitting_out:
-                if seat:self.npc_folded[seat-1]=True;self.npc_action_texts[seat-1]='Sitting out'
-        return result
+from solitaireplus.app import state
+from solitaireplus.games.poker import holdem_ui as ui
+from room_game import RoomGame, load_roster
+from room_protocol import snapshot
 
 class RoomAuthority:
     def __init__(self, host_name, roster=None):
@@ -39,7 +14,7 @@ class RoomAuthority:
         self.names=[host_name]+[n['name'] for n in self.npcs]
         self.humans={0:0};self.connections={0:host_name};self.waiting=[];self.departed=set()
         self.game=None;self.revision=0;self.ready=set();self.due=0;self.starting_stack=5000;self.new_seats=set()
-        self.chips_added=0;self.table_notices=[];self.sit_out=set();self.pending_buybacks=set();self.resume_at=None;self.completed_hand=0;self.next_hand_seconds=6;self.table_speed=ui.holdem_table_speed
+        self.chips_added=0;self.table_notices=[];self.sit_out=set();self.pending_buybacks=set();self.resume_at=None;self.completed_hand=0;self.next_hand_seconds=6;self.table_speed=state.holdem_table_speed
     def join(self, identity, name):
         if identity in self.connections:return
         self.connections[identity]=name
@@ -209,7 +184,7 @@ class RoomAuthority:
             self.table_notices.append(f'{replacement["name"]} replaces {old} with ${self.starting_stack:,}.')
     def set_speed(self,speed):
         if speed not in ('slow','normal','fast') or speed==self.table_speed:return
-        old=self.table_speed;self.table_speed=speed;ui.holdem_table_speed=speed
+        old=self.table_speed;self.table_speed=speed;state.holdem_table_speed=speed
         self.table_notices.append(f'Host has set table speed from {old.title()} to {speed.title()}.');self.revision+=1
     def update(self, now):
         g=self.game
@@ -227,7 +202,7 @@ class RoomAuthority:
         seat=g.current_actor
         controlling=next((identity for identity,s in self.humans.items() if s==seat),None)
         if not complete and controlling in self.connections:self.due=0;return
-        if not self.due:self.due=now+(ui.get_holdem_street_delay() if complete else ui.get_holdem_npc_delay());return
+        if not self.due:self.due=now+(ui.get_holdem_street_delay(speed=self.table_speed) if complete else ui.get_holdem_npc_delay(speed=self.table_speed));return
         if now<self.due:return
         self.due=0
         if complete:g.advance_after_betting_round()

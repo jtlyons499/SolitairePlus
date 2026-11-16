@@ -7,7 +7,7 @@ from mp_presentation import Presentation
 from mp_showdown import payout_lines,compact_result
 from mp_toast import LeaveToast
 from mp_chat import MultiplayerChat
-from texas_holdem_ui import get_card_key as card_key,draw_holdem_glossy_button,get_holdem_fonts
+from solitaireplus.games.poker.holdem_ui import get_card_key as card_key,draw_holdem_glossy_button,get_holdem_fonts
 
 class RoomView:
     def __init__(self,surface,assets,appearance=None,options=None,sound=None):
@@ -291,7 +291,7 @@ class RoomView:
         self.button('Close',(1020,165,105,38),'close_details')
         lines=payout_lines(g)
         lines+=['Revealed hands:']+[g.names[int(i)]+': '+hand for i,hand in getattr(g,'showdown_hands',{}).items()]
-        lines.append('Amounts above are gross payouts; your own wagers were already deducted.')
+        lines.append('Amounts above are gross payouts and returned uncalled bets; your own wagers were already deducted.')
         # Wrap whole explanations rather than cutting names or hand kickers off.
         wrapped=[]
         for line in lines:

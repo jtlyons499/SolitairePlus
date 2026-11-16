@@ -5,7 +5,6 @@ import time
 import unittest
 from relay_server import RelayServer
 from relay_transport import RelayPeer
-from lan_session import OnlineTable
 
 class RelayTests(unittest.TestCase):
     def setUp(self):
@@ -61,26 +60,3 @@ class RelayTests(unittest.TestCase):
         self.assertIn('two players',self.wait(third,'disconnected')['text'])
         guest.send({'type':'action','action':'check_call'})
         self.assertEqual(self.wait(host,'action')['action'],'check_call')
-    def test_online_table_hand(self):
-        host=OnlineTable('Host',True,self.address,relay=True);self.peers.append(host)
-        deadline=time.monotonic()+5
-        while not host.peer.code and time.monotonic()<deadline:
-            host.update(0);time.sleep(.01)
-        self.assertTrue(host.peer.code)
-        guest=OnlineTable('Guest',False,self.address,relay=True,code=host.peer.code);self.peers.append(guest)
-        deadline=time.monotonic()+10;now=0
-        while time.monotonic()<deadline:
-            now+=10000;host.update(now);guest.update(now)
-            for table in (host,guest):
-                if table.playable and not table.game.hand_complete and table.game.current_actor==0:
-                    table.act('check_call')
-            if host.playable and guest.playable and host.game.hand_complete and guest.game.hand_complete:break
-            time.sleep(.003)
-        self.assertTrue(host.game.hand_complete)
-        self.assertTrue(guest.game.hand_complete)
-        self.assertEqual(sum([host.game.player_stack,*host.game.npc_stacks]),20000)
-        host.act('next_hand');guest.act('next_hand')
-        deadline=time.monotonic()+3
-        while time.monotonic()<deadline and guest.game.hand_number==1:
-            now+=100;host.update(now);guest.update(now);time.sleep(.01)
-        self.assertEqual(guest.game.hand_number,2)

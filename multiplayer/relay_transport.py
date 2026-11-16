@@ -1,4 +1,4 @@
-"""In-process connection, kept for tests and the old LAN-era OnlineTable.
+"""In-process connection, kept for tests.
 
 The real game does not use this: online play goes through SolitaireNet.exe
 via net_client.open_peer(). This wrapper runs the SAME connector code
