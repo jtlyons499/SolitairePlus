@@ -47,8 +47,7 @@ activities and Head-to-Head" comes after the Phase 11 fix.
 
 ## 2. Tests
 
-Final run, `tools
-un_tests.py` on the Phase 12 tree: **PASSED**.
+Final run, `tools\run_tests.py` on the Phase 12 tree: **PASSED**.
 
 | Suite | Files | Tests | Quarantined |
 |---|---|---|---|
@@ -591,7 +590,7 @@ Tests and tools:
    Options window size. The scripted checks passed (section 4), but nobody looked at the screen, the Multiplayer
    window was only checked at 100% scaling (your PC was at 125% in Phase 2). They were re-run on the final build
    and passed. Run `tools\window_check.py source` and `packaged`, each also with `--multiplayer`, and watch.
-4. **Delete the stray file** `C:\Users\Dan Fiscus\Documents\standalone_preview.png` (outside the repository; still
+4. **Delete the stray file** `%USERPROFILE%\Documents\standalone_preview.png` (outside the repository; still
    there on 2026-11-16). The deleted `multiplayer/tests/test_standalone.py` wrote it.
 5. **User docs:** `docs/RELEASING.md`, `docs/INSTALLING.md`, `docs/CODE_SIGNING.md` and `AGENTS.md` are not written;
    the original session writes them (brief §7 Phase 12). `updater/__init__.py` already points at `RELEASING.md` and

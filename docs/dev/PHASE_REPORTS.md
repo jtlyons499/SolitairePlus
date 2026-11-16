@@ -1324,7 +1324,7 @@ every solitaireplus module" (`collect_submodules('solitaireplus')` in the spec, 
   - A 10 s packaged `--multiplayer` run with a temporary LOCALAPPDATA left an empty `game-*.log`.
 
 Hand-back: `test_standalone.py` (now deleted) left a stray file at
-`C:\Users\Dan Fiscus\Documents\standalone_preview.png`, outside the repository. Dan can delete it.
+`%USERPROFILE%\Documents\standalone_preview.png`, outside the repository. Dan can delete it.
 
 ## Phase 11 (fix): B67-B85, W1 (multiplayer)
 
@@ -1698,10 +1698,10 @@ record is unchanged.
     person.
 
 **Stray files**
-- `C:\Users\Dan Fiscus\Documents\standalone_preview.png` (outside the repository) was written by the now-deleted
+- `%USERPROFILE%\Documents\standalone_preview.png` (outside the repository) was written by the now-deleted
   `multiplayer/tests/test_standalone.py` (`'../standalone_preview.png'`). Dan may delete it.
 - The same test, run at the base inside a sprint worktree, also left
-  `C:\Users\Dan Fiscus\Documents\SolitairePlus\.harness_out\wt\standalone_preview.png` (harness area, never
+  `%USERPROFILE%\Documents\SolitairePlus\.harness_out\wt\standalone_preview.png` (harness area, never
   committed). Deleted at integration.
 
 **Manual items for Dan**
@@ -2140,7 +2140,8 @@ The 145 game test files moved out of the flat `tests/` folder with `git mv`, so 
 
 ### Results
 All on the final Phase 12 tree.
-- Tests: `toolsun_tests.py` PASSED. game: 146 files, 1,246 tests; the 3 quarantined `test_npc_development` tests
+- Tests: `tools
+un_tests.py` PASSED. game: 146 files, 1,246 tests; the 3 quarantined `test_npc_development` tests
   still fail, as listed. multiplayer: 18 files, 148 tests, none quarantined.
 - Compares against "Phase 11 (fix): per-frame fonts in the Dead Man's Hand duel and the Multiplayer screens":
   `screen_harness compare` IDENTICAL 64/64 scenes, then `replay compare` IDENTICAL 18/18 journeys.

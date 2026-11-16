@@ -125,7 +125,7 @@
   - Score Four solves are checked by the host.
 
 ## 5. Hand-back items for Dan
-- A stray file written by the deleted `test_standalone.py` exists at `C:\Users\Dan Fiscus\Documents\standalone_preview.png`. It is outside the repository; Dan can delete it.
+- A stray file written by the deleted `test_standalone.py` exists at `%USERPROFILE%\Documents\standalone_preview.png`. It is outside the repository; Dan can delete it.
 - If final-packaged cannot script a real two-window hand, play one by hand. The two-player recipe goes in `docs/TESTING.md`.
 - Answer the open questions. Each one has a default that the plan follows.
 - Do not release the move commit on its own. Until the fix stage's protocol stamp (bugs-holdem-room step 9), a guest on an older Solitaire+ can join a newer host unwarned, and its old ClientGame offers a Raise over an all-in that the host silently refuses (call and minimum-raise amounts agree).
@@ -786,7 +786,7 @@ Final checks, the local two-player test, and the phase report.
      - the multiplayer-visible behaviour changes, including the measured NPC fold-rate table;
      - un-quarantine results;
      - open questions with the defaults taken;
-     - the stray file C:\Users\Dan Fiscus\Documents\standalone_preview.png (outside the repo; Dan may delete it).
+     - the stray file %USERPROFILE%\Documents\standalone_preview.png (outside the repo; Dan may delete it).
 
 Verify: - tools/run_tests.py prints PASSED.
 - The harness compares are IDENTICAL, or show only listed differences.
