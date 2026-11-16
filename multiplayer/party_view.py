@@ -8,6 +8,7 @@ import pygame
 from solitaireplus.games.cards import score_four_ui as sfui
 from solitaireplus.games.cards.score_four import ScoreFourGame
 from solitaireplus.games.casino.roulette import AMERICAN_WHEEL_ORDER, RED_NUMBERS
+from solitaireplus.ui import text as ui_text
 from party_authority import SKILL_LABELS, STACK_OPTIONS, ROULETTE_TIMERS, SCORE_FOUR_DIFFICULTIES
 from room_protocol import countdown_offset
 from mp_widgets import wooden_button
@@ -214,7 +215,7 @@ class PartyView:
         self.panel((65, 62, 1236, 648), (8, 28, 22, 235), (220, 227, 220), 2, 16)
         self.text(m.get("title", "Multiplayer"), (100, 88), self.large, GOLD)
         self.text("Room code", (100, 138), self.small, MUTED)
-        self.text(table.code or "...", (100, 162), pygame.font.Font(None, 48), WHITE)
+        self.text(table.code or "...", (100, 162), ui_text.get_font(None, 48), WHITE)   # cached (N74)
         self.text("Share only this 5-digit code. The joining player does not need to choose the game first.", (100, 208), self.small, MUTED)
 
         # Four seat cards.
@@ -510,7 +511,7 @@ class PartyView:
 
     def _draw_roulette_table_chips(self, m):
         offsets = ((-12,-11),(12,-11),(-12,11),(12,11))
-        tiny = pygame.font.Font(None, 13)
+        tiny = ui_text.get_font(None, 13)   # cached: this runs every frame (N74)
         for seat, bets in enumerate(m.get('all_bets', [])[:4]):
             color = ROULETTE_PLAYER_COLORS[seat]
             for bet in bets:

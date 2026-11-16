@@ -27,6 +27,7 @@ import pygame
 from solitaireplus.games.dead_mans_hand import pvp
 from solitaireplus.games.dead_mans_hand.levels import wall_at
 from solitaireplus.games.dead_mans_hand.pvp import PVP_DAMAGE, SPAWNS, DeadMansHandPvPMode
+from solitaireplus.ui import text as ui_text
 
 ROOT = Path(__file__).resolve().parents[1]
 MULTIPLAYER_ONLY = ("net_client", "mp_toast", "relay_transport")
@@ -994,6 +995,61 @@ class DisconnectResultTests(PvPCase):
         self.assertTrue(mode.finished)
         mode.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE), (0, 0))
         self.assertTrue(mode.closed)
+
+
+class FontCounter:
+    """Stands in for pygame.font.Font or SysFont: builds the real font and records its arguments."""
+
+    def __init__(self, real, built):
+        self.real, self.built = real, built
+
+    def __call__(self, *args, **kwargs):
+        self.built.append(args)
+        return self.real(*args, **kwargs)
+
+
+class FrameFontTests(PvPCase):
+    """N73: the duel builds its fonts on the first frame only, and opening the lobby again builds none.
+
+    The opponent's name and gun plate used new fonts every frame. They now come from the shared
+    font cache (solitaireplus.ui.text.get_font), so the tests empty it first."""
+
+    def setUp(self):
+        ui_text.clear_font_cache()
+
+    def count_fonts(self, action):
+        """The font arguments built by the first and by the second call of action()."""
+        built = []
+        with mock.patch("pygame.font.Font", FontCounter(pygame.font.Font, built)), \
+                mock.patch("pygame.font.SysFont", FontCounter(pygame.font.SysFont, built)):
+            action()
+            first = list(built)
+            del built[:]
+            action()
+        return first, built
+
+    def test_duel_with_the_opponent_in_view_builds_fonts_once(self):
+        mode, peer = self.host_after_hello()
+        gx, gy = self.guest_at_spawn(mode, peer)
+        host_facing_guest_spawn(mode)
+        mode.game.set_remote(dict(pose(gx, gy), health=100), "Guesty")
+        canvas = pygame.Surface((1366, 768))
+        first, second = self.count_fonts(lambda: mode.draw(canvas, (0, 0)))
+        # The first frame drew the opponent's name (size 10) and gun (size 8) plate.
+        self.assertIn((None, 10), first)
+        self.assertIn((None, 8), first)
+        self.assertEqual(second, [], "fonts were built again on the second frame")
+
+    def test_opening_the_lobby_again_builds_no_font(self):
+        # multiplayer/main.py makes a new mode each time the duel lobby opens.
+        canvas = pygame.Surface((1366, 768))
+
+        def open_and_draw_lobby():
+            DeadMansHandPvPMode("Hosty", "", open_peer=RecordingOpenPeer()).draw(canvas, (0, 0))
+
+        first, second = self.count_fonts(open_and_draw_lobby)
+        self.assertTrue(first, "the lobby did not reach its font code")
+        self.assertEqual(second, [], "opening the lobby again built its fonts again")
 
 
 if __name__ == "__main__":

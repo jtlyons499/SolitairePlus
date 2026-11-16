@@ -40,6 +40,7 @@ from solitaireplus.games.dead_mans_hand.game import (
     DeadMansHandGame,
 )
 from solitaireplus.games.dead_mans_hand.weapons import WEAPON_DEFINITIONS
+from solitaireplus.ui import text as ui_text
 
 ARENA_LEVEL_INDEX = 5  # O.K. Corral
 SYNC_INTERVAL = 0.05   # 20 Hz
@@ -500,12 +501,13 @@ class PvPGame(DeadMansHandGame):
         pygame.draw.rect(self.render_surface, (220, 48, 48), (bx, by, int(bw * ratio), 4))
         if protected:
             pygame.draw.rect(self.render_surface, (246, 210, 96), (bx - 1, by - 1, bw + 2, 6), 1)
-        label_font = pygame.font.Font(None, 10)
+        # Shared cached fonts: this runs every frame (N73).
+        label_font = ui_text.get_font(None, 10)
         name = label_font.render(self.remote_name[:16], True, (246, 236, 210))
         self.render_surface.blit(name, name.get_rect(midbottom=(cx, by - 1)))
         weapon_name = WEAPON_DEFINITIONS.get(str(r.get("weapon", "pistol")), {}).get("name", "")
         if weapon_name:
-            weapon = pygame.font.Font(None, 8).render(str(weapon_name), True, (224, 200, 139))
+            weapon = ui_text.get_font(None, 8).render(str(weapon_name), True, (224, 200, 139))
             self.render_surface.blit(weapon, weapon.get_rect(midtop=(cx, by + 5)))
 
     def draw(self, target):
@@ -659,9 +661,10 @@ class DeadMansHandPvPMode:
         self.leave_notice = ""
         self.leave_notice_seq = 0
         self.sound = sound or (lambda _key: None)
-        self.font = pygame.font.Font(None, 34)
-        self.small = pygame.font.Font(None, 25)
-        self.title = pygame.font.Font(None, 60)
+        # Shared cached fonts: multiplayer/main.py makes a new mode each time the lobby opens.
+        self.font = ui_text.get_font(None, 34)
+        self.small = ui_text.get_font(None, 25)
+        self.title = ui_text.get_font(None, 60)
         self.relay_rect = pygame.Rect(325, 330, 716, 52)
         self.code_rect = pygame.Rect(483, 420, 400, 52)
         self.host_rect = pygame.Rect(350, 510, 300, 58)

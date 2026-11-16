@@ -1755,3 +1755,35 @@ before, so the screens look the same.
   `mp_appearance.py` (the avatar initial when there is no image), `mp_hub.py` (the title fallback), `party_view.py`
   (lobby code and roulette chip labels) and `room_view.py` (a `SysFont` per button whose label is too wide; see B84).
 - **N75:** `Card.draw` in `games/solitaire/card.py` has no caller in the game. It is dead code.
+
+## Phase 11 (fix, late): per-frame fonts in the Dead Man's Hand duel and the Multiplayer screens
+
+This fixes N73 and N74 from the B44 late fix report. Every changed font now comes from the shared cache (`ui_text.get_font`), with the same font, size and flags as before, so the screens look the same. Multiplayer already imported `solitaireplus.ui.text` (through `score_four_ui`), so no new single-player module is loaded.
+
+- **N73, fixed.** `games/dead_mans_hand/pvp.py`:
+  - `PvPGame._render_remote` built `Font(None, 10)` and `Font(None, 8)` every frame for the opponent's name and gun plate. It now uses `ui_text.get_font(None, 10)` and `ui_text.get_font(None, 8)`.
+  - `DeadMansHandPvPMode.__init__` built 3 fonts (34, 25, 60). `multiplayer/main.py` makes a new mode each time the duel lobby opens, so these were built on every click. They now come from the cache too.
+- **N74, fixed.** Each site in the base was checked:
+  - `main.py` (top buttons, table status), `mp_appearance.py` (avatar initial) and `room_view.py` (smaller font for a too-wide button): B84 had already cached these. No change.
+  - `mp_hub.py`: the "SOLITAIRE+" title, drawn when the logo picture is missing, uses `ui_text.get_font(None, 64)`.
+  - `party_view.py`: the lobby room code uses `ui_text.get_font(None, 48)`. The Roulette chip labels on the board use `ui_text.get_font(None, 13)`. That one ran on every Roulette frame, with or without bets.
+- **Scan.** Every other `Font`/`SysFont` call in `multiplayer/` and `solitaireplus/` was checked (`legacy.py` has none and was not touched). Each one runs at import time, in a constructor that runs once, or behind a cache.
+
+**Tests (written first; they failed before the fix):**
+- `tests/test_dead_mans_hand_pvp.py`, new `FrameFontTests`. It empties the font cache, then counts `pygame.font.Font` / `SysFont` calls.
+  - `test_duel_with_the_opponent_in_view_builds_fonts_once`: the host faces the guest, and the duel is drawn twice. The first frame must build `(None, 10)` and `(None, 8)`. The second frame must build nothing.
+  - `test_opening_the_lobby_again_builds_no_font`: opening and drawing the lobby a second time builds no font.
+- `multiplayer/tests/test_frame_fonts.py` (new) draws each Multiplayer screen twice. The second draw must build no font. The tables come from the real host code (`party_authority`, seeded), and `get_ticks` is fixed.
+  - The three fixed screens must build their font on the first draw: hub without the logo, party lobby, and Roulette with chips and chat open.
+  - Also covered: hub with the logo (Hold'em and duel panels), Score-Four, Blind Man's Bluff, the Hold'em room table, the profile screen and the options panel (with a temporary LOCALAPPDATA).
+- Before the fix, 5 tests failed (2 pvp, 3 multiplayer). Putting the old call back at each of the 8 fixed lines, one at a time, made a test fail every time.
+- A pixel hash of the hub fallback, party lobby, Roulette board, duel frame and duel lobby was the same before and after the fix. The screen harness has no multiplayer scenes, so this was checked separately.
+
+**Results:**
+- `tools\run_tests.py` printed `PASSED`. No new `KNOWN_FAILURES.txt` lines. `test_shared_ui_usage` (including `test_multiplayer_import_does_not_start_single_player`) passes.
+- `screen_harness compare --baseline 2448d18` gave `IDENTICAL 64/64 scenes`. `replay compare --baseline 2448d18` gave `IDENTICAL 18/18 journeys`.
+- `tools\window_check.py source --multiplayer` was not run. It is optional, and it sends F11 to a real window on the desktop.
+
+**New findings (not fixed here):**
+- **N76:** `multiplayer/party_view.py` `draw_lobby` still says "Share only this 5-digit code." Room codes are now 6 letters/digits (CHANGELOG, Online play). Changing it changes what the lobby shows, so it was left alone.
+- **N77:** `DeadMansHandGame._font` / `_dmh_font` (`games/dead_mans_hand/game.py`) cache fonts per game object. Each new duel (`PvPGame`) and each single-player run builds its HUD fonts again on its first frame, including the Dead Man's Hand TTF files. That is once per game, not per frame. A move to `ui_text.get_font` would need `set_bold` to move into `get_font`'s `bold` flag.

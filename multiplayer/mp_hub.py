@@ -1,6 +1,7 @@
 """Base-game-styled multiplayer front page."""
 import pygame
 from mp_widgets import wooden_button
+from solitaireplus.ui import text as ui_text
 
 MODES = (
     ("holdem", "Texas Hold'em", "Up to six seats • room-code poker"),
@@ -32,7 +33,7 @@ class MultiplayerHub:
         shade=pygame.Surface(surface.get_size(),pygame.SRCALPHA);shade.fill((0,0,0,38));surface.blit(shade,(0,0))
         logo=self.appearance.image('assets/ui/menu_ui/floating_logo.png',(560,158))
         if logo:surface.blit(logo,logo.get_rect(center=(683,92)))
-        else:self.text(surface,'SOLITAIRE+',(683,76),pygame.font.Font(None,64),(255,220,110),True)
+        else:self.text(surface,'SOLITAIRE+',(683,76),ui_text.get_font(None,64),(255,220,110),True)  # cached (N74)
         self.text(surface,'MULTIPLAYER',(683,152),self.large,(255,220,110),True)
 
         # Player card.

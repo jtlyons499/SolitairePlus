@@ -115,6 +115,7 @@ How to use this file (maintainers and AI agents):
 - Dead Man's Hand duels: the host ignores impossible or broken moves and shots from the guest (jumps across the map, bursts faster than the gun can fire, shots from far away, garbage data), so a broken or modified copy can no longer crash the duel or land impossible hits.
 - Dead Man's Hand duels: mouse-look speed now scales with the window size, as in single-player.
 - The Multiplayer window now follows the single-player window rules: it opens at a size that fits your screen, centred, it is sharp with Windows display scaling, F11 gives fullscreen without stretching the picture, and window sizes too large for your screen are greyed out in Options. The size and fullscreen choice handed over from the game are kept.
+- Dead Man's Hand duels, the Multiplayer front page, the room lobby and the Roulette board no longer build new fonts on every frame, and opening the duel lobby again reuses its fonts. They look exactly the same.
 
 ### Behind the scenes
 - The game's version number now comes from one place (`version.py`), so the in-game version always matches the GitHub release.
