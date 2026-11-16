@@ -5,7 +5,7 @@ from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
 career_saving = lazy("solitaireplus.career.career_saving")
-legacy = lazy("solitaireplus.legacy")
+free_play_select = lazy("solitaireplus.menus.free_play_select")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 
@@ -17,7 +17,7 @@ def handle_event(event):
     """Old main-loop event branch for STATE_CASE_OPENING."""
     if case_screen.handle_event(event, state.game_mouse_pos) == "return":
         if state.current_game_mode == "free":
-            legacy.leave_free_play_game()
+            free_play_select.leave_free_play_game()
         else:
             try:
                 career_saving.auto_save_career()

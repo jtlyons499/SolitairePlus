@@ -332,7 +332,7 @@ if sys.platform.startswith("win"):
     if ctypes.windll.shcore.GetProcessDpiAwareness(None, ctypes.byref(value)) == 0:
         awareness = value.value
 options_file = Path(os.environ["LOCALAPPDATA"]) / "SolitaireMultiplayer" / "options.json"
-loaded = [name for name in ("solitaireplus.legacy", "solitaireplus.ui.cursors") if name in sys.modules]
+loaded = [name for name in ("solitaireplus.app.startup", "solitaireplus.ui.cursors") if name in sys.modules]
 print("@@CHILD " + json.dumps({
     "loaded": loaded, "errors": errors, "passes": current[0], "extra": extra[0], "frames": frames,
     "toggles": toggle.call_count,

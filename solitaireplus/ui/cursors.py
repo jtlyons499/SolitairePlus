@@ -7,7 +7,7 @@ import ctypes
 import pygame
 from solitaireplus.app import state
 from solitaireplus.app.lazy import lazy
-legacy = lazy("solitaireplus.legacy")
+cosmetics = lazy("solitaireplus.profile.cosmetics")
 
 # ==================================================
 # CUSTOM CURSORS
@@ -128,7 +128,7 @@ for cursor_index, filename in enumerate(state.cursor_files):
         "order": (cursor_index + 1) * 10,
     }
 
-unlocked_cursors = set(cursor_cosmetics.keys()) - legacy.REWARD_CURSOR_IDS
+unlocked_cursors = set(cursor_cosmetics.keys()) - cosmetics.REWARD_CURSOR_IDS
 
 if state.selected_cursor not in cursor_runtime_surfaces:
     if "cursor" in cursor_runtime_surfaces:

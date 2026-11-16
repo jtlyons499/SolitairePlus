@@ -22,7 +22,8 @@ from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
 machine_select = lazy("solitaireplus.games.arcade.machine_select")
 hub_screens = lazy("solitaireplus.games.arcade.hub_screens")
-legacy = lazy("solitaireplus.legacy")
+game_portraits = lazy("solitaireplus.npc.game_portraits")
+profile_editor = lazy("solitaireplus.profile.profile_editor")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 night = lazy("solitaireplus.career.events.night")
@@ -429,7 +430,7 @@ def draw_king_pong_screen():
             'detail': fonts.difficulty_detail_font,
             'small': fonts.ui_small_font,
         },
-        portrait_loader=legacy.get_npc_portrait_surface,
+        portrait_loader=game_portraits.get_npc_portrait_surface,
     )
     hub_screens.draw_arcade_action_image_button(
         king_pong_return_rect,
@@ -440,7 +441,7 @@ def draw_king_pong_screen():
 
 def draw_battle_bosses_screen():
     try:
-        player_portrait = legacy.get_profile_avatar()
+        player_portrait = profile_editor.get_profile_avatar()
     except Exception:
         player_portrait = None
 
@@ -452,7 +453,7 @@ def draw_battle_bosses_screen():
             'detail': fonts.difficulty_detail_font,
             'small': fonts.ui_small_font,
         },
-        portrait_loader=legacy.get_npc_portrait_surface,
+        portrait_loader=game_portraits.get_npc_portrait_surface,
         player_portrait=player_portrait,
     )
     hub_screens.draw_arcade_action_image_button(

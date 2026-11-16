@@ -7,7 +7,10 @@ from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.career.session_summary import track_night_cash
 from solitaireplus.app.lazy import lazy
-legacy = lazy("solitaireplus.legacy")
+free_play_select = lazy("solitaireplus.menus.free_play_select")
+game_globals = lazy("solitaireplus.app.game_globals")
+game_portraits = lazy("solitaireplus.npc.game_portraits")
+table = lazy("solitaireplus.games.solitaire.table")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 leveling = lazy("solitaireplus.profile.leveling")
@@ -35,10 +38,6 @@ blackjack_bet_dropdown_rects = [
     pygame.Rect(1180, 419, 116, 44),
     pygame.Rect(1052, 473, 244, 44),
 ]
-
-# Kept for compatibility with older state, but no longer drawn as a two-step
-# Change Bet control.
-blackjack_change_bet_rect = pygame.Rect(0, 0, 0, 0)
 
 blackjack_hit_rect = pygame.Rect(430, 660, 150, 50)
 blackjack_stand_rect = pygame.Rect(595, 660, 150, 50)
@@ -109,7 +108,7 @@ def _draw_blackjack_dealer_identity(rect):
     )
 
     if state.blackjack_dealer_npc is not None:
-        legacy.draw_npc_portrait(
+        game_portraits.draw_npc_portrait(
             state.blackjack_dealer_npc,
             portrait_rect,
             "blackjack"
@@ -325,18 +324,18 @@ def draw_blackjack():
 
             if flip_progress is None or flip_progress <= 0.0:
                 window.game_surface.blit(
-                    legacy.game.get_card_back_surface(),
+                    table.game.get_card_back_surface(),
                     (x, y)
                 )
                 continue
 
             if flip_progress < 1.0:
                 if flip_progress < 0.5:
-                    image = legacy.game.get_card_back_surface()
+                    image = table.game.get_card_back_surface()
                     scale_progress = 1.0 - flip_progress * 2.0
                 else:
                     card_key = get_card_key(card)
-                    image = legacy.game.card_fronts[card_key]
+                    image = table.game.card_fronts[card_key]
                     scale_progress = (flip_progress - 0.5) * 2.0
 
                 original_width = image.get_width()
@@ -357,7 +356,7 @@ def draw_blackjack():
 
         card_key = get_card_key(card)
         window.game_surface.blit(
-            legacy.game.card_fronts[card_key],
+            table.game.card_fronts[card_key],
             (x, y)
         )
 
@@ -432,7 +431,7 @@ def draw_blackjack():
                     continue
                 x, y = position
                 card_key = get_card_key(card)
-                window.game_surface.blit(legacy.game.card_fronts[card_key], (x, y))
+                window.game_surface.blit(table.game.card_fronts[card_key], (x, y))
 
             value = blackjack_game.get_hand_value_at(hand_index)
             wager = blackjack_game.player_hand_bets[hand_index]
@@ -498,7 +497,7 @@ def draw_blackjack():
             x, y = position
             card_key = get_card_key(card)
             window.game_surface.blit(
-                legacy.game.card_fronts[card_key],
+                table.game.card_fronts[card_key],
                 (x, y)
             )
 
@@ -823,7 +822,7 @@ def settle_blackjack_round():
             blackjack_game.rating_change = career_rewards.rate_house_game("blackjack", net_result)
     else:
         blackjack_game.rating_change = None
-    state.blackjack_session_rating_change = legacy.game_namespace().get("blackjack_session_rating_change", 0) + int(blackjack_game.rating_change or 0)
+    state.blackjack_session_rating_change = game_globals.game_namespace().get("blackjack_session_rating_change", 0) + int(blackjack_game.rating_change or 0)
 
     if net_result > 0:
         career_rewards.award_fans_for_cash_win(
@@ -831,7 +830,7 @@ def settle_blackjack_round():
             "Blackjack win"
         )
     elif state.current_game_mode == "career" and net_result <= -500:
-        legacy.lose_fans_for_bad_result(
+        career_rewards.lose_fans_for_bad_result(
             "Rough Blackjack hand",
             net_loss=abs(net_result),
             severity=0.65,
@@ -871,7 +870,7 @@ def settle_blackjack_round():
         starting_bet=state.blackjack_round_start_bet,
     )
 
-    track_night_cash(legacy.game_namespace(), "blackjack", net_result)
+    track_night_cash(game_globals.game_namespace(), "blackjack", net_result)
     blackjack_game.payout_claimed = True
 
 
@@ -1066,7 +1065,7 @@ def loop_event_blackjack_bet(event):
             )
 
             if state.current_game_mode == "free":
-                legacy.finish_free_play_sandbox()
+                free_play_select.finish_free_play_sandbox()
             state.current_state = (
                 state_names.STATE_FREE_PLAY_SELECT if state.current_game_mode == "free" else state_names.STATE_CAREER_EVENT_SELECT
             )
@@ -1095,10 +1094,9 @@ def loop_event_blackjack(event):
         ]
         next_bet_clicked = False
 
-        for state.index, state.rect in enumerate(blackjack_bet_dropdown_rects):
-            if state.rect.collidepoint(state.game_mouse_pos):
-                state.blackjack_selected_bet_percentage = next_bet_choices[state.index]
-                state.blackjack_bet_dropdown_open = False
+        for bet_index, bet_rect in enumerate(blackjack_bet_dropdown_rects):
+            if bet_rect.collidepoint(state.game_mouse_pos):
+                state.blackjack_selected_bet_percentage = next_bet_choices[bet_index]
                 sounds.audio.play_sound("button_click")
                 next_bet_clicked = True
                 break
@@ -1234,8 +1232,6 @@ def loop_event_blackjack(event):
                         next_bet
                     )
 
-                    state.blackjack_bet_dropdown_open = False
-
         # ==========================================
         # Return
         # ==========================================
@@ -1251,10 +1247,8 @@ def loop_event_blackjack(event):
                 "button_click"
             )
 
-            state.blackjack_bet_dropdown_open = False
-
             if state.current_game_mode == "free":
-                legacy.finish_free_play_sandbox()
+                free_play_select.finish_free_play_sandbox()
             state.current_state = (
                 state_names.STATE_FREE_PLAY_SELECT if state.current_game_mode == "free" else state_names.STATE_CAREER_EVENT_SELECT
             )

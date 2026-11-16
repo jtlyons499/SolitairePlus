@@ -18,7 +18,7 @@ from solitaireplus.app.lazy import lazy
 seven_card_stud_screen = lazy("solitaireplus.games.poker.seven_card_stud_screen")
 holdem_screen = lazy("solitaireplus.games.poker.holdem_screen")
 five_card_draw_screen = lazy("solitaireplus.games.poker.five_card_draw_screen")
-legacy = lazy("solitaireplus.legacy")
+game_portraits = lazy("solitaireplus.npc.game_portraits")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 
@@ -115,7 +115,7 @@ def draw():
         debug_game_labels.get(state.debug_poker_select_game_id, "Poker"),
         NPCS,
         state.debug_poker_selected_ids,
-        portrait_loader=legacy.get_npc_portrait_surface,
+        portrait_loader=game_portraits.get_npc_portrait_surface,
         can_start=(state.career_cash >= 100),
         cash=state.career_cash,
     )

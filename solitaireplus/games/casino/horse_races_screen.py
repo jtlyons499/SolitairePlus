@@ -20,7 +20,8 @@ from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.career.session_summary import track_night_cash
 from solitaireplus.app.lazy import lazy
-legacy = lazy("solitaireplus.legacy")
+free_play_select = lazy("solitaireplus.menus.free_play_select")
+game_globals = lazy("solitaireplus.app.game_globals")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 night = lazy("solitaireplus.career.events.night")
@@ -142,11 +143,11 @@ def finish_horse_races_session():
             races=horse_races_game.races_completed,
             profitable_races=horse_races_game.races_with_profit,
         )
-        track_night_cash(legacy.game_namespace(), "horse_races", state.horse_races_session_net)
+        track_night_cash(game_globals.game_namespace(), "horse_races", state.horse_races_session_net)
         horse_races_game.reward_claimed = True
 
     if state.current_game_mode == "free":
-        legacy.finish_free_play_sandbox()
+        free_play_select.finish_free_play_sandbox()
         state.current_state = state_names.STATE_FREE_PLAY_SELECT
     else:
         state.current_state = state_names.STATE_CAREER_EVENT_SELECT

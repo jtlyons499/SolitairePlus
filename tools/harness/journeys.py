@@ -7,7 +7,7 @@ import pygame
 
 from harness.scripts import (PROFILE_SLOT_1, enter_career_hub, journey, leave_splash,  # noqa: F401
                              load_fixture_profile, to_main_menu)
-from harness.scenes_menus import card_click, instant_solitaire_win, to_free_play_solitaire
+from harness.scenes_menus import card_click, to_free_play_solitaire
 
 PROFILE_SLOT_2 = (450, 345)
 
@@ -93,7 +93,15 @@ def solitaire(h):
         yield from card_click(h, game.stock_rect.center)
         yield 20
     h.checkpoint("after_stock_moves")
-    instant_solitaire_win(h)          # the designer's instant win (F8 today, the F10 menu after D1)
+    # The designer's instant win, the way a tester does it: F10 from the table, then the
+    # menu's "Win this Solitaire round" button (D1; it replaced the old F8 key).
+    h.key(pygame.K_F10)
+    yield from h.until_state("DEBUG_MENU", 30)
+    yield 10
+    if not h.call("solitaire_win_available"):
+        raise AssertionError("the Win this Solitaire round button is disabled on the menu opened from the table")
+    h.checkpoint("debug_menu_from_table")
+    h.click("_WIN_SOLITAIRE_ROUND_RECT")   # back to the table, then the victory animation
     yield from h.until_state("RECAP", 1800)
     yield 10
     h.checkpoint("recap_reward", "level_up_queue")

@@ -12,7 +12,9 @@ night = lazy("solitaireplus.career.events.night")
 event_screen = lazy("solitaireplus.career.events.event_screen")
 calendar = lazy("solitaireplus.career.calendar")
 head_to_head_screen = lazy("solitaireplus.games.solitaire.head_to_head_screen")
-legacy = lazy("solitaireplus.legacy")
+free_play_select = lazy("solitaireplus.menus.free_play_select")
+game_portraits = lazy("solitaireplus.npc.game_portraits")
+table = lazy("solitaireplus.games.solitaire.table")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 leveling = lazy("solitaireplus.profile.leveling")
@@ -109,31 +111,31 @@ pause_menu_rect = pygame.Rect(
 
 def get_hint_tooltip_text():
 
-    if not legacy.game.hints_enabled:
+    if not table.game.hints_enabled:
         return "Hint (H): disabled"
 
-    if legacy.game.hints_remaining is None:
+    if table.game.hints_remaining is None:
         return "Hint (H): unlimited"
 
-    if legacy.game.hints_remaining == 1:
+    if table.game.hints_remaining == 1:
         return "Hint (H): 1 remaining"
 
-    return f"Hint (H): {legacy.game.hints_remaining} remaining"
+    return f"Hint (H): {table.game.hints_remaining} remaining"
 
 
 def get_undo_tooltip_text():
 
-    if legacy.game.challenge_id == "no_undo":
+    if table.game.challenge_id == "no_undo":
         return "Undo disabled"
 
-    if legacy.game.undo_history_limit is None:
+    if table.game.undo_history_limit is None:
         return "Unlimited undo"
 
-    if legacy.game.undo_history_limit == 0:
+    if table.game.undo_history_limit == 0:
         return "Undo disabled"
 
     return (
-        f"Last {legacy.game.undo_history_limit} moves"
+        f"Last {table.game.undo_history_limit} moves"
     )
 
 
@@ -143,10 +145,10 @@ def draw_gameplay_ui():
     # MINI BUTTON LAYOUT
     # ==================================================
 
-    show_shuffle = legacy.game.shuffle_enabled
+    show_shuffle = table.game.shuffle_enabled
     show_auto_solve = (
-            legacy.game.can_auto_solve()
-            and not legacy.game.auto_solving
+            table.game.can_auto_solve()
+            and not table.game.auto_solving
     )
 
     mini_button_count = (
@@ -215,7 +217,7 @@ def draw_gameplay_ui():
     # Difficulty / stock status
     # --------------------------------------------------
 
-    if legacy.game.challenge_id is not None:
+    if table.game.challenge_id is not None:
 
         challenge_display_names = {
             "draw_3": "3 DRAW",
@@ -226,7 +228,7 @@ def draw_gameplay_ui():
 
         difficulty_name = (
             challenge_display_names.get(
-                legacy.game.challenge_id,
+                table.game.challenge_id,
                 "CHALLENGE"
             )
         )
@@ -244,7 +246,7 @@ def draw_gameplay_ui():
         difficulty_name = (
             difficulty_display_names.get(
                 getattr(
-                    legacy.game,
+                    table.game,
                     "difficulty",
                     "normal"
                 ),
@@ -253,20 +255,20 @@ def draw_gameplay_ui():
         )
 
     multiplier = (
-        legacy.game.reward_multiplier
+        table.game.reward_multiplier
     )
 
     status_line_1 = (
         f"DIFFICULTY: {difficulty_name} (x{multiplier:.2f})"
     )
 
-    if legacy.game.stock_pass_limit is None:
+    if table.game.stock_pass_limit is None:
         status_line_2 = (
             "STOCK PASSES: UNLIMITED"
         )
     else:
         status_line_2 = (
-            f"STOCK PASSES: {legacy.game.stock_passes_used}/{legacy.game.stock_pass_limit}"
+            f"STOCK PASSES: {table.game.stock_passes_used}/{table.game.stock_pass_limit}"
         )
 
     difficulty_surface = fonts.ui_small_font.render(
@@ -281,25 +283,25 @@ def draw_gameplay_ui():
         (255, 230, 0)
     )
 
-    if legacy.game.stock_pass_limit is None:
+    if table.game.stock_pass_limit is None:
         stock_text = "STOCK: UNLIMITED"
     else:
         stock_text = (
             f"STOCK: "
-            f"{legacy.game.stock_passes_used}/"
-            f"{legacy.game.stock_pass_limit}"
+            f"{table.game.stock_passes_used}/"
+            f"{table.game.stock_pass_limit}"
         )
 
     status_text = (
         f"{difficulty_name}  "
         f"x{multiplier:.2f}     "
         f"{stock_text}"
-        f"     DEAL: {legacy.game.get_deal_status_label()}"
+        f"     DEAL: {table.game.get_deal_status_label()}"
     )
 
 
 
-    if legacy.game.challenge_id is not None:
+    if table.game.challenge_id is not None:
         challenge_display_names = {
             "draw_3":
                 "3 DRAW",
@@ -316,8 +318,8 @@ def draw_gameplay_ui():
 
         challenge_name = (
             challenge_display_names.get(
-                legacy.game.challenge_id,
-                legacy.game.challenge_id.upper()
+                table.game.challenge_id,
+                table.game.challenge_id.upper()
             )
         )
 
@@ -345,7 +347,7 @@ def draw_gameplay_ui():
 
     current_hint_icon = (
         assets.hint_button_icon
-        if legacy.game.hints_enabled
+        if table.game.hints_enabled
         else assets.hint_lock_icon
     )
 
@@ -598,7 +600,7 @@ def draw_game_pause_menu():
         return_label
     )
 
-    if solitaire_restart_prompt.allowed(legacy.game, state.current_game_mode):
+    if solitaire_restart_prompt.allowed(table.game, state.current_game_mode):
         buttons.draw_button(solitaire_restart_prompt.button, "Restart Hand")
 
 def draw_return_confirmation():
@@ -708,9 +710,9 @@ def instant_win_round():
     (Phase 10) calls this.
     """
 
-    legacy.game.round_won = True
+    table.game.round_won = True
 
-    legacy.game.round_summary = {
+    table.game.round_summary = {
         "moves": 112,
         "elapsed_seconds": 387,
         "base_score": 5000,
@@ -721,23 +723,23 @@ def instant_win_round():
         "remark": "Efficient work.",
     }
 
-    legacy.game.audio.play_sound(
+    table.game.audio.play_sound(
         "celebration_1"
     )
 
-    legacy.game.start_debug_victory_animation()
+    table.game.start_debug_victory_animation()
 
 
 def handle_event(event):
     """Old main-loop event branch for STATE_PLAYING."""
 
     if solitaire_restart_prompt.open:
-        solitaire_restart_prompt.event(event, state.game_mouse_pos, legacy.game, sounds.audio)
+        solitaire_restart_prompt.event(event, state.game_mouse_pos, table.game, sounds.audio)
         return
     if (state.game_pause_menu_open and event.type == pygame.MOUSEBUTTONDOWN
             and event.button == 1 and state.game_mouse_pos is not None
             and solitaire_restart_prompt.button.collidepoint(state.game_mouse_pos)
-            and solitaire_restart_prompt.allowed(legacy.game, state.current_game_mode)):
+            and solitaire_restart_prompt.allowed(table.game, state.current_game_mode)):
         solitaire_restart_prompt.open = True
         state.game_pause_menu_open = False
         sounds.audio.play_sound("button_click")
@@ -750,9 +752,9 @@ def handle_event(event):
             and event.key == pygame.K_h
             and not state.game_pause_menu_open
             and not state.confirm_return_to_menu
-            and not legacy.game.auto_solving
+            and not table.game.auto_solving
     ):
-        if legacy.game.request_hint():
+        if table.game.request_hint():
             sounds.audio.play_sound("button_click")
 
     # ==================================================
@@ -824,10 +826,10 @@ def handle_event(event):
                     state.pending_career_activity_index = None
                     state.pending_career_activity_type = None
                     state.pending_career_challenge_id = None
-                    legacy.game.clear_challenge()
+                    table.game.clear_challenge()
                     state.current_state = state_names.STATE_CAREER_HUB
                 elif state.current_game_mode == "free":
-                    legacy.finish_free_play_sandbox()
+                    free_play_select.finish_free_play_sandbox()
                     state.current_state = state_names.STATE_FREE_PLAY_SELECT
                 elif state.current_game_mode == "head_to_head":
                     head_to_head_screen.finish_head_to_head_race(
@@ -876,7 +878,7 @@ def handle_event(event):
         # Auto-solve input lock
         # ----------------------------
 
-        elif legacy.game.auto_solving:
+        elif table.game.auto_solving:
             pass
 
 
@@ -885,24 +887,24 @@ def handle_event(event):
         # ----------------------------
 
         elif (
-                legacy.game.shuffle_enabled
+                table.game.shuffle_enabled
                 and game_shuffle_rect.collidepoint(
             state.game_mouse_pos
         )
         ):
-            legacy.game.shuffle_stock()
+            table.game.shuffle_stock()
 
         # ----------------------------
         # AUTO SOLVE
         # ----------------------------
 
         elif (
-                legacy.game.can_auto_solve()
+                table.game.can_auto_solve()
                 and game_auto_solve_rect.collidepoint(
             state.game_mouse_pos
         )
         ):
-            legacy.game.auto_solve()
+            table.game.auto_solve()
 
 
 
@@ -913,7 +915,7 @@ def handle_event(event):
         elif game_hint_rect.collidepoint(
                 state.game_mouse_pos
         ):
-            if legacy.game.request_hint():
+            if table.game.request_hint():
                 sounds.audio.play_sound(
                     "button_click"
                 )
@@ -925,7 +927,7 @@ def handle_event(event):
         elif game_undo_rect.collidepoint(
                 state.game_mouse_pos
         ):
-            if legacy.game.undo():
+            if table.game.undo():
                 sounds.audio.play_sound(
                     "button_click"
                 )
@@ -935,7 +937,7 @@ def handle_event(event):
         # ----------------------------
 
         else:
-            legacy.game.handle_mouse_down(
+            table.game.handle_mouse_down(
                 state.game_mouse_pos,
                 event.clicks
             )
@@ -946,7 +948,7 @@ def handle_event(event):
 
     elif event.type == pygame.MOUSEMOTION:
 
-        legacy.game.handle_mouse_motion(
+        table.game.handle_mouse_motion(
             state.game_mouse_pos
         )
 
@@ -960,7 +962,7 @@ def handle_event(event):
             and event.button == 1
     ):
 
-        legacy.game.handle_mouse_up(
+        table.game.handle_mouse_up(
             state.game_mouse_pos
         )
 
@@ -968,9 +970,9 @@ def handle_event(event):
 def draw():
     """Old draw-chain branch for STATE_PLAYING."""
 
-    legacy.game.update_auto_solve()
+    table.game.update_auto_solve()
 
-    legacy.game.draw()
+    table.game.draw()
 
     draw_gameplay_ui()
 
@@ -982,10 +984,10 @@ def draw():
             window.game_surface,
             event_screen.head_to_head_race,
             event_screen.head_to_head_race.player_progress_from_foundations(
-                legacy.game.foundations
+                table.game.foundations
             ),
             pygame.time.get_ticks(),
-            legacy.get_npc_portrait_surface,
+            game_portraits.get_npc_portrait_surface,
             fonts.option_label_font,
             fonts.difficulty_detail_font,
             fonts.ui_small_font,
@@ -1018,14 +1020,14 @@ def update_solitaire_round():
             if event_screen.head_to_head_race.resume(now) and paused_at is not None:
                 # The player's own round clock started with the race clock (B3):
                 # skip the same time away so both keep showing the same race time.
-                legacy.game.round_start_ticks += max(0, now - paused_at)
+                table.game.round_start_ticks += max(0, now - paused_at)
         else:
             event_screen.head_to_head_race.pause(pygame.time.get_ticks())
 
     if (
             state.current_state == state_names.STATE_PLAYING
             and state.current_game_mode == "head_to_head"
-            and legacy.game.round_summary is None
+            and table.game.round_summary is None
     ):
         event_screen.head_to_head_race.update(
             pygame.time.get_ticks()
@@ -1042,9 +1044,9 @@ def update_solitaire_round():
     if (
             state.current_state == state_names.STATE_PLAYING
             and state.current_game_mode == "head_to_head"
-            and legacy.game.round_summary is not None
+            and table.game.round_summary is not None
     ):
-        head_to_head_round = legacy.game.consume_round_summary()
+        head_to_head_round = table.game.consume_round_summary()
         head_to_head_screen.finish_head_to_head_race(
             True,
             round_data=head_to_head_round
@@ -1056,7 +1058,7 @@ def update_solitaire_round():
 
     if state.current_state == state_names.STATE_PLAYING:
         completed_round = (
-            legacy.game.consume_round_summary()
+            table.game.consume_round_summary()
         )
 
         if completed_round is not None:
@@ -1071,7 +1073,7 @@ def update_solitaire_round():
                 challenge_id=(
                     state.pending_career_challenge_id
                     if state.current_game_mode == "career"
-                    else legacy.game.challenge_id
+                    else table.game.challenge_id
                 ),
             )
 
@@ -1098,7 +1100,7 @@ def update_solitaire_round():
             )
 
             if state.current_game_mode == "free":
-                legacy.finish_free_play_sandbox()
+                free_play_select.finish_free_play_sandbox()
 
             # ==========================================
             # CAREER ACTIVITY COMPLETION

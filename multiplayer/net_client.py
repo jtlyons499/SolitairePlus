@@ -25,7 +25,7 @@ from pathlib import Path
 
 from multiplayer_paths import ROOT
 
-# Must equal netservice/protocol.py API_VERSION (tests/test_netservice.py checks this).
+# Must equal netservice/protocol.py API_VERSION (tests/netservice/test_netservice.py checks this).
 API_VERSION = 1
 
 SERVICE_EXE = "SolitaireNet.exe"

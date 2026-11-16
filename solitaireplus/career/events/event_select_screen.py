@@ -30,7 +30,9 @@ faro_screen = lazy("solitaireplus.games.casino.faro_screen")
 news_screen = lazy("solitaireplus.career.news_screen")
 night = lazy("solitaireplus.career.events.night")
 career_saving = lazy("solitaireplus.career.career_saving")
-legacy = lazy("solitaireplus.legacy")
+game_globals = lazy("solitaireplus.app.game_globals")
+images = lazy("solitaireplus.ui.images")
+leveling = lazy("solitaireplus.profile.leveling")
 window = lazy("solitaireplus.app.window")
 ui_text = lazy("solitaireplus.ui.text")
 sounds = lazy("solitaireplus.app.sounds")
@@ -196,7 +198,7 @@ EVENT_BUTTON_ASSET_PATHS = {
 
 def draw_event_image_button(rect, activity_type, button_kind, fallback_text, enabled=True):
     path = EVENT_BUTTON_ASSET_PATHS.get(activity_type, {}).get(button_kind)
-    image = legacy.get_event_ui_asset(path, rect.size)
+    image = images.get_event_ui_asset(path, rect.size)
     hovered = (
         enabled
         and state.game_mouse_pos is not None
@@ -336,7 +338,7 @@ def draw_poker_night_high_stakes_label(
 
 
 def draw_arcade_night_select():
-    background = legacy.get_event_ui_asset(str(paths.asset("arcade/ui/background.png")), (BASE_WIDTH, BASE_HEIGHT))
+    background = images.get_event_ui_asset(str(paths.asset("arcade/ui/background.png")), (BASE_WIDTH, BASE_HEIGHT))
     if background is not None:
         window.game_surface.blit(background, (0, 0))
     else:
@@ -346,7 +348,7 @@ def draw_arcade_night_select():
     shade.fill((0, 0, 0, 42))
     window.game_surface.blit(shade, (0, 0))
 
-    title_asset = legacy.get_event_ui_asset(str(paths.asset("arcade/ui/title.png")), (350, 84))
+    title_asset = images.get_event_ui_asset(str(paths.asset("arcade/ui/title.png")), (350, 84))
     if title_asset is not None:
         window.game_surface.blit(
             title_asset,
@@ -447,7 +449,7 @@ def draw_arcade_night_select():
 
     for index, game_id in enumerate(machine_ids):
         rect = pygame.Rect(start_x + index * (card_width + card_gap), card_y, card_width, card_height)
-        unlocked = legacy.is_game_unlocked(game_id)
+        unlocked = leveling.is_game_unlocked(game_id)
         coming_soon = game_id in ARCADE_COMING_SOON_GAME_IDS
         hovered = (
             unlocked
@@ -572,14 +574,14 @@ def _draw_career_event_select():
     event_title = night.CAREER_EVENT_NAMES.get(activity_type, "Card Event")
 
     background_path = EVENT_BACKGROUND_ASSET_PATHS.get(activity_type)
-    background = legacy.get_event_ui_asset(background_path, (BASE_WIDTH, BASE_HEIGHT))
+    background = images.get_event_ui_asset(background_path, (BASE_WIDTH, BASE_HEIGHT))
     if background is not None:
         window.game_surface.blit(background, (0, 0))
         shade = pygame.Surface((BASE_WIDTH, BASE_HEIGHT), pygame.SRCALPHA)
         shade.fill((0, 0, 0, 45))
         window.game_surface.blit(shade, (0, 0))
 
-    title_asset = legacy.get_event_ui_asset(EVENT_TITLE_ASSET_PATHS.get(activity_type), (360, 96))
+    title_asset = images.get_event_ui_asset(EVENT_TITLE_ASSET_PATHS.get(activity_type), (360, 96))
     if title_asset is not None:
         window.game_surface.blit(title_asset, title_asset.get_rect(center=(BASE_WIDTH // 2, 66)))
     else:
@@ -664,7 +666,7 @@ def _draw_career_event_select():
 
     for index, game_id in enumerate(game_ids):
         rect = pygame.Rect(start_x + index * (card_width + card_gap), card_y, card_width, card_height)
-        unlocked = legacy.is_game_unlocked(game_id)
+        unlocked = leveling.is_game_unlocked(game_id)
         coming_soon = is_arcade_night and game_id in ARCADE_COMING_SOON_GAME_IDS
         clickable = unlocked and not coming_soon
         hovered = clickable and state.game_mouse_pos is not None and rect.collidepoint(state.game_mouse_pos)
@@ -808,12 +810,12 @@ def handle_event(event):
                 else "Placeholder arcade music disabled."
             )
 
-        for (state.rect, game_id) in career_event_card_rects:
+        for (card_rect, game_id) in career_event_card_rects:
 
-            if not game_clicked and state.rect.collidepoint(state.menu_mouse_pos):
+            if not game_clicked and card_rect.collidepoint(state.menu_mouse_pos):
                 game_clicked = True
 
-                if not legacy.is_game_unlocked(game_id):
+                if not leveling.is_game_unlocked(game_id):
                     break
 
                 if (
@@ -838,7 +840,6 @@ def handle_event(event):
 
                 elif game_id == "blackjack":
                     state.blackjack_selected_bet_percentage = None
-                    state.blackjack_bet_dropdown_open = False
                     state.blackjack_session_net = 0
                     state.blackjack_session_rating_change = 0
                     state.blackjack_dealer_npc = get_random_blackjack_dealer()
@@ -901,7 +902,7 @@ def handle_event(event):
 
             if career_event_return_rect.collidepoint(state.menu_mouse_pos):
                 sounds.audio.play_sound("button_click")
-                store_event_progress(state.career_event_entry, legacy.game_namespace())
+                store_event_progress(state.career_event_entry, game_globals.game_namespace())
                 end_debug_game_mode()   # a debug night cannot be resumed from the hub (B22)
                 career_saving.auto_save_career()
                 state.current_state = state_names.STATE_CAREER_HUB

@@ -41,7 +41,10 @@ from solitaireplus.career.session_summary import track_night_cash
 from solitaireplus.app.lazy import lazy
 table_stakes = lazy("solitaireplus.games.poker.table_stakes")
 holdem_screen = lazy("solitaireplus.games.poker.holdem_screen")
-legacy = lazy("solitaireplus.legacy")
+free_play_select = lazy("solitaireplus.menus.free_play_select")
+game_globals = lazy("solitaireplus.app.game_globals")
+game_portraits = lazy("solitaireplus.npc.game_portraits")
+table = lazy("solitaireplus.games.solitaire.table")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 panels = lazy("solitaireplus.ui.panels")
@@ -180,7 +183,7 @@ def start_seven_card_stud_session(
     reset_seven_card_stud_ui_session()
 
     seven_card_stud_game.career_session_rated = state.current_game_mode == "career"
-    seven_card_stud_game.learning_store = legacy.game_namespace().get("career_poker_learning") if state.current_game_mode == "career" else None
+    seven_card_stud_game.learning_store = game_globals.game_namespace().get("career_poker_learning") if state.current_game_mode == "career" else None
     seven_card_stud_game.start_session(
         opponents,
         starting_stack,
@@ -212,7 +215,7 @@ def finish_seven_card_stud_session():
         )
 
         state.seven_card_stud_buy_in_active = False
-        track_night_cash(legacy.game_namespace(), "seven_card_stud", state.seven_card_stud_session_net)
+        track_night_cash(game_globals.game_namespace(), "seven_card_stud", state.seven_card_stud_session_net)
         career_rewards.rate_poker_cash_out("seven_card_stud", seven_card_stud_game)
 
     if (
@@ -230,14 +233,14 @@ def finish_seven_card_stud_session():
         won_session = state.seven_card_stud_session_net > 0
         leveling.award_game_xp("seven_card_stud", won=won_session)
         if state.current_game_mode == "career" and state.seven_card_stud_session_net < 0:
-            legacy.lose_fans_for_bad_result(
+            career_rewards.lose_fans_for_bad_result(
                 "Rough Seven-Card Stud session",
                 net_loss=abs(state.seven_card_stud_session_net),
             )
         seven_card_stud_game.session_xp_rewarded = True
 
     if state.current_game_mode == "free":
-        legacy.finish_free_play_sandbox()
+        free_play_select.finish_free_play_sandbox()
         state.current_state = state_names.STATE_FREE_PLAY_SELECT
     else:
         state.current_state = state_names.STATE_CAREER_EVENT_SELECT
@@ -406,7 +409,7 @@ def loop_event_seven_card_stud_buy_in(event):
                 )
 
                 if state.current_game_mode == "free":
-                    legacy.finish_free_play_sandbox()
+                    free_play_select.finish_free_play_sandbox()
                     state.current_state = state_names.STATE_FREE_PLAY_SELECT
                 else:
                     state.current_state = state_names.STATE_CAREER_EVENT_SELECT
@@ -642,12 +645,12 @@ def loop_draw_seven_card_stud():
         window.game_surface,
         state.game_mouse_pos,
         seven_card_stud_game,
-        legacy.game.card_fronts,
-        legacy.game.get_card_back_surface(),
+        table.game.card_fronts,
+        table.game.get_card_back_surface(),
         panels.draw_submenu_background,
-        legacy.draw_npc_portrait,
+        game_portraits.draw_npc_portrait,
         state.player_name,
-        legacy.game.felt_surface,
+        table.game.felt_surface,
         next_hand_seconds=(
             seven_card_stud_next_hand_seconds
         )

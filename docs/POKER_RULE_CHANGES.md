@@ -604,7 +604,10 @@ These changed what you see, not the rules.
   Each engine posts its own blinds, antes and bring-in. Five-O Poker keeps its own session-end rule.
 - `solitaireplus/games/poker/holdem.py`: the Hold'em engine. Five-Card Draw and Seven-Card Stud are built on it
   and share its betting, showdown and fold-win code; each game's own structure is in `five_card_draw.py`,
-  `seven_card_stud.py`, `five_o.py` and `blind_mans_bluff.py`.
+  `seven_card_stud.py`, `five_o.py` and `blind_mans_bluff.py`. The engine's class is built from topic modules:
+  `holdem_seats.py` (blinds, seat order, whose turn it is), `holdem_betting.py` (the betting rules and the
+  player's actions), `holdem_npc.py` (NPC actions and bet sizing), `holdem_pots.py` (side pots, pot awards,
+  fold wins) and `holdem_showdown.py` (the showdown); `holdem.py` keeps the session, the hand flow and the deal.
 - `solitaireplus/games/poker/npc_inputs.py`: what every NPC decides from (cash on hand, skill, grudges, reads,
   rival learning); grudges are recorded in `solitaireplus/npc/personality.py`.
 - `solitaireplus/games/poker/recap.py` (the payout recap and the net used for fans), `table_timers.py` (table
@@ -612,6 +615,6 @@ These changed what you see, not the rules.
 - `solitaireplus/games/poker/ai.py` and `strategy.py` (how NPCs use their inputs; a single betting round counts
   as a final round), `quick_chat.py` (which Quick Chat lines show while you are out of the hand),
   `variant_quick_chat.py` (the Quick Chat reset at Draw, Stud, Five-O Poker and Blind Man's Bluff) and
-  `holdem_ui.py` (the Table Speed delay every table uses).
+  `holdem_ui_options.py` (the Table Speed delay every table uses; `holdem_ui.py` re-exports it).
 - `solitaireplus/profile/achievements.py`: the Hold'em pot achievements.
 - Technical audit and designer choices: [dev/B86_POKER_AUDIT.md](dev/B86_POKER_AUDIT.md).

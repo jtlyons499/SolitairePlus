@@ -9,7 +9,6 @@ hub_screen = lazy("solitaireplus.career.hub_screen")
 career_saving = lazy("solitaireplus.career.career_saving")
 save_data = lazy("solitaireplus.profile.save_data")
 profile_select = lazy("solitaireplus.profile.profile_select")
-legacy = lazy("solitaireplus.legacy")
 window = lazy("solitaireplus.app.window")
 ui_text = lazy("solitaireplus.ui.text")
 sounds = lazy("solitaireplus.app.sounds")
@@ -246,7 +245,7 @@ def draw_profile_screen():
         border_radius=12
     )
 
-    avatar = legacy.get_profile_avatar()
+    avatar = get_profile_avatar()
     max_avatar_rect = profile_avatar_frame_rect.inflate(-18, -18)
     src_w, src_h = avatar.get_size()
     avatar_scale = min(
@@ -664,9 +663,9 @@ def handle_event(event):
         # --------------------------------------
 
         if state.gender_dropdown_open:
-            for state.index, state.rect in enumerate(profile_gender_option_rects):
-                if state.rect.collidepoint(state.game_mouse_pos):
-                    state.profile_gender = gender_options[state.index]
+            for gender_index, gender_rect in enumerate(profile_gender_option_rects):
+                if gender_rect.collidepoint(state.game_mouse_pos):
+                    state.profile_gender = gender_options[gender_index]
                     state.gender_dropdown_open = False
                     state.favorite_suit_dropdown_open = False
                     sounds.audio.play_sound("button_click")
@@ -676,9 +675,9 @@ def handle_event(event):
                 state.gender_dropdown_open = False
 
         if not click_consumed and state.favorite_suit_dropdown_open:
-            for state.index, state.rect in enumerate(profile_favorite_suit_option_rects):
-                if state.rect.collidepoint(state.game_mouse_pos):
-                    state.profile_favorite_suit = profile_select.favorite_suit_options[state.index]
+            for suit_index, suit_rect in enumerate(profile_favorite_suit_option_rects):
+                if suit_rect.collidepoint(state.game_mouse_pos):
+                    state.profile_favorite_suit = profile_select.favorite_suit_options[suit_index]
                     state.favorite_suit_dropdown_open = False
                     state.gender_dropdown_open = False
                     sounds.audio.play_sound("button_click")
@@ -735,41 +734,41 @@ def handle_event(event):
 
         avatar_selector_clicked = False
 
-        for state.index in range(5):
-            if avatar_selector_left_rects[state.index].collidepoint(state.game_mouse_pos):
+        for part_index in range(5):
+            if avatar_selector_left_rects[part_index].collidepoint(state.game_mouse_pos):
                 state.direction = -1
                 avatar_selector_clicked = True
-            elif avatar_selector_right_rects[state.index].collidepoint(state.game_mouse_pos):
+            elif avatar_selector_right_rects[part_index].collidepoint(state.game_mouse_pos):
                 state.direction = 1
                 avatar_selector_clicked = True
             else:
                 continue
 
-            if state.index == 0:
+            if part_index == 0:
                 state.selected_avatar_base = cycle_option(
                     state.selected_avatar_base,
                     assets.avatar_base_options,
                     state.direction
                 )
-            elif state.index == 1:
+            elif part_index == 1:
                 state.selected_avatar_eyes = cycle_option(
                     state.selected_avatar_eyes,
                     assets.avatar_eye_options,
                     state.direction
                 )
-            elif state.index == 2:
+            elif part_index == 2:
                 state.selected_avatar_hair = cycle_option(
                     state.selected_avatar_hair,
                     assets.avatar_hair_options,
                     state.direction
                 )
-            elif state.index == 3:
+            elif part_index == 3:
                 state.selected_avatar_glasses = cycle_option(
                     state.selected_avatar_glasses,
                     assets.avatar_glasses_options,
                     state.direction
                 )
-            elif state.index == 4:
+            elif part_index == 4:
                 state.selected_avatar_top = cycle_option(
                     state.selected_avatar_top,
                     assets.avatar_top_options,
@@ -917,3 +916,34 @@ def draw():
     """Old draw-chain branch for STATE_PROFILE."""
 
     draw_profile_screen()
+
+
+def get_profile_avatar():
+
+    avatar_surface = pygame.Surface(
+        (
+            300,
+            360
+        ),
+        pygame.SRCALPHA
+    )
+
+    # B11: a part that is missing from its bank (for example the "base_01"
+    # fallback when that file is absent) is skipped instead of raising
+    # KeyError; the other layers still draw.
+    layers = (
+        (assets.avatar_bases, state.selected_avatar_base),
+        (assets.avatar_eyes, state.selected_avatar_eyes),
+        (assets.avatar_hair, state.selected_avatar_hair),
+        (assets.avatar_glasses, state.selected_avatar_glasses),
+        (assets.avatar_tops, state.selected_avatar_top),
+    )
+
+    for bank, key in layers:
+        if key is None:
+            continue
+        layer = bank.get(key)
+        if layer is not None:
+            avatar_surface.blit(layer, (0, 0))
+
+    return avatar_surface

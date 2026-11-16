@@ -7,7 +7,7 @@ import pygame
 from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
-legacy = lazy("solitaireplus.legacy")
+images = lazy("solitaireplus.ui.images")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 fonts = lazy("solitaireplus.app.fonts")
@@ -172,7 +172,7 @@ def draw_level_up_screen():
 
             preview_height = min(105 if card_height >= 210 else 82, max(30, card_height - 95))
             if asset_surface is not None:
-                preview = legacy.scale_surface_to_fit(
+                preview = images.scale_surface_to_fit(
                     asset_surface,
                     card_width - 34,
                     preview_height,

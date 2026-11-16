@@ -23,7 +23,9 @@ table_stakes = lazy("solitaireplus.games.poker.table_stakes")
 holdem_screen = lazy("solitaireplus.games.poker.holdem_screen")
 holdem_ui = lazy("solitaireplus.games.poker.holdem_ui")
 training = lazy("solitaireplus.career.training")
-legacy = lazy("solitaireplus.legacy")
+free_play_select = lazy("solitaireplus.menus.free_play_select")
+game_globals = lazy("solitaireplus.app.game_globals")
+table = lazy("solitaireplus.games.solitaire.table")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 panels = lazy("solitaireplus.ui.panels")
@@ -56,7 +58,7 @@ def start_blind_mans_bluff_session(starting_stack=None):
     state.blind_mans_bluff_buy_in_active = True
     blind_mans_bluff_game.session_xp_rewarded = False
 
-    blind_mans_bluff_game.learning_store = legacy.game_namespace().get("career_poker_learning") if state.current_game_mode == "career" else None
+    blind_mans_bluff_game.learning_store = game_globals.game_namespace().get("career_poker_learning") if state.current_game_mode == "career" else None
     # The last session's Quick Chat menu, queued replies and history do not carry over.
     reset_variant_quick_chat("blind_mans_bluff")
     if not blind_mans_bluff_game.start_session(opponents, starting_stack):
@@ -123,11 +125,11 @@ def finish_blind_mans_bluff_session():
             hands=blind_mans_bluff_game.hands_played,
             hands_won=blind_mans_bluff_game.hands_won,
         )
-        track_night_cash(legacy.game_namespace(), "blind_mans_bluff", state.blind_mans_bluff_session_net)
+        track_night_cash(game_globals.game_namespace(), "blind_mans_bluff", state.blind_mans_bluff_session_net)
         blind_mans_bluff_game.reward_claimed = True
 
     if state.current_game_mode == "free":
-        legacy.finish_free_play_sandbox()
+        free_play_select.finish_free_play_sandbox()
         state.current_state = state_names.STATE_FREE_PLAY_SELECT
     else:
         state.current_state = state_names.STATE_CAREER_EVENT_SELECT
@@ -200,6 +202,6 @@ def draw():
         fonts.options_title_font,
         fonts.option_label_font,
         fonts.difficulty_detail_font,
-        card_fronts=legacy.game.card_fronts,
-        card_back_surface=legacy.game.get_card_back_surface(),
+        card_fronts=table.game.card_fronts,
+        card_back_surface=table.game.get_card_back_surface(),
     )

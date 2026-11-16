@@ -17,7 +17,9 @@ from solitaireplus.app import state_names
 from solitaireplus.career.session_summary import track_night_cash
 from solitaireplus.app.lazy import lazy
 training = lazy("solitaireplus.career.training")
-legacy = lazy("solitaireplus.legacy")
+free_play_select = lazy("solitaireplus.menus.free_play_select")
+game_globals = lazy("solitaireplus.app.game_globals")
+table = lazy("solitaireplus.games.solitaire.table")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 panels = lazy("solitaireplus.ui.panels")
@@ -87,7 +89,7 @@ def claim_faro_session_result():
         turns=faro_game.turns_dealt,
     )
 
-    track_night_cash(legacy.game_namespace(), "faro", state.faro_session_net)
+    track_night_cash(game_globals.game_namespace(), "faro", state.faro_session_net)
     faro_game.reward_claimed = True
     return state.faro_session_net
 
@@ -154,7 +156,7 @@ def handle_event(event):
             sounds.audio.play_sound("button_click")
             claim_faro_session_result()
             if state.current_game_mode == "free":
-                legacy.finish_free_play_sandbox()
+                free_play_select.finish_free_play_sandbox()
                 state.current_state = state_names.STATE_FREE_PLAY_SELECT
             else:
                 state.current_state = state_names.STATE_CAREER_EVENT_SELECT
@@ -174,6 +176,6 @@ def draw():
         fonts.options_title_font,
         fonts.option_label_font,
         fonts.difficulty_detail_font,
-        card_fronts=legacy.game.card_fronts,
-        card_back_surface=legacy.game.get_card_back_surface(),
+        card_fronts=table.game.card_fronts,
+        card_back_surface=table.game.get_card_back_surface(),
     )

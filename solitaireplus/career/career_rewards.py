@@ -8,6 +8,7 @@ from solitaireplus.career.fans import clamp_fans
 from solitaireplus.career.ratings import elo_delta
 from solitaireplus.career.fans import fan_gain_from_cash_win
 from solitaireplus.career.fans import fan_gain_from_rating_win
+from solitaireplus.career.fans import fan_loss_from_bad_result
 from solitaireplus.career.world_flavor import rating_milestone_stories
 from solitaireplus.career.fans import record_fan_trend
 from solitaireplus.career.rating_events import settle_competitive_result
@@ -18,7 +19,7 @@ from solitaireplus.profile.unlocks import unlock_ratings
 from solitaireplus.app.lazy import lazy
 news_screen = lazy("solitaireplus.career.news_screen")
 leaderboard_engine = lazy("solitaireplus.career.leaderboard_engine")
-legacy = lazy("solitaireplus.legacy")
+game_globals = lazy("solitaireplus.app.game_globals")
 
 
 def check_player_rating_world_reactions():
@@ -117,7 +118,7 @@ def award_career_fans(amount, reason=""):
         state.career_fan_trend,
         actual,
         reason=state.career_last_fan_reason,
-        day=legacy.game_namespace().get("career_day"),
+        day=game_globals.game_namespace().get("career_day"),
     )
 
     if actual > 0:
@@ -162,3 +163,14 @@ def award_fans_for_cash_win(net_win, reason="Casino win"):
         current_rating=state.career_rating
     )
     return award_career_fans(gain, reason)
+
+
+def lose_fans_for_bad_result(reason="Poor performance", net_loss=0, severity=1.0):
+    loss = fan_loss_from_bad_result(
+        current_fans=state.career_fans,
+        net_loss=net_loss,
+        severity=severity,
+    )
+    if loss <= 0:
+        return 0
+    return award_career_fans(-loss, reason)

@@ -2,6 +2,14 @@
 
 Reports for the phases in [RESTRUCTURE_BRIEF.md](RESTRUCTURE_BRIEF.md), newest at the bottom.
 
+Phases 8 to 12 were built at the same time in separate worktrees and then applied to this branch in order, each
+checked again there. Some of their reports name the worktree commits, which are not on the branch: `1184437`
+(Phase 8), `8a0775b` and `fde74a4` (Phase 9), `3ce7a33` and `070b45e` (Phase 10), `ff82492` and `e795414`
+(Phase 11), and `e7d8e80` (the base the Phase 12 groups worked on). The branch commits have the same first lines:
+use `git log --oneline` to find them. Two late fixes carry the label of the phase whose bug they finish
+("Phase 7 (fix): packaged game ..." after Phase 10, "Phase 7 (fix): B44 ..." and "Phase 11 (fix): per-frame
+fonts ..." after Phase 11).
+
 Dan's decisions before the sprint started (2026-11-15) changed two rules of the brief:
 
 - **No stop between phases.** Dan is away, so each phase is committed locally (never pushed)
@@ -72,7 +80,8 @@ How to check a phase yourself:
 `verify_solitaire_state.py`, root `test_dead_mans_hand_weapon_system.py`) is now in `solitaireplus/`
 (`app/`, `ui/`, `menus/`, `profile/`, `career/` + `career/events/`, `npc/`, `games/<family>/`, `debug/`), with
 the names from brief §6.1 (`game.py` → `games/solitaire/rules.py`, `profile.py` → `profile/saves.py`,
-`texas_holdem.py` → `games/poker/holdem.py`, …; full table in `tools/refactor/phase1_move.py`). `shared/` was
+`texas_holdem.py` → `games/poker/holdem.py`, …; full table in `tools/refactor/phase1_move.py`, deleted in
+Phase 12; read it with `git show d924025:tools/refactor/phase1_move.py`). `shared/` was
 merged into `games/poker/` (core, strategy, speech, ui_assets, learning, holdem_chat), `npc/` (personality,
 personality_chat) and `ui/image_cache.py`; the eight root shims are deleted. Multiplayer keeps its own shims
 (they now point at `solitaireplus`) until Phase 11.
@@ -581,9 +590,15 @@ original maintainer added that NPC behaviour should be the same in every variant
   Man's Bluff and Five-O). The history names who got them: "(odd chip to Ada)".
 - **B39:** after a short all-in blind or bring-in, a seat that is the only one left able to act only matches what
   the others put in; if it already has, betting ends and the cards are dealt out.
-- **B42:** uncalled chips are returned, not won, in every variant, including fold wins ("Uncalled $980 returned to
-  you." then "You win $50."). Stacks end the same as before; the win, fans and Hold'em pot achievements count only
-  chips that were won. The Hold'em $1,000 and $25,000 pot achievements now look at the largest single pot.
+- **B42:** Blind Man's Bluff refunded a pot layer that no live seat paid into with `//`, which lost the remainder,
+  and it counted a hand as tied whenever the human shared winnings across the main and side pots. It now uses the
+  shared `core.build_pots` (exact refunds) and `award_pots` (B38 odd chips), and `core.hand_outcome` counts a tie
+  only when the human shared a pot and won none alone. Tests (`test_poker_pots`):
+  `test_blind_mans_bluff_counts_wins_ties_and_losses_by_pot`, `test_a_layer_no_live_seat_paid_into_goes_back_exactly`.
+- **NEW-1 (uncalled chips):** uncalled chips are returned, not won, in every variant, including fold wins
+  ("Uncalled $980 returned to you." then "You win $50."). Stacks end the same as before; the win, fans and
+  Hold'em pot achievements count only chips that were won. The Hold'em $1,000 and $25,000 pot achievements now
+  look at the largest single pot.
 - **The other audit items (NEW-1 to NEW-7):** a top layer only one seat paid is a refund (NEW-1); Stud's pot
   display after the hand no longer shows "Pot $0" and bogus side pots (NEW-2); Hold'em NPCs keep betting after you
   fold instead of the board being dealt out at once (NEW-3); the Five-O NPC can raise (NEW-4); every table resets
@@ -631,7 +646,7 @@ original maintainer added that NPC behaviour should be the same in every variant
 **New findings (not fixed):**
 - **N36:** multiplayer Hold'em and Blind Man's Bluff (`multiplayer/`) still use their own pot, odd-chip and
   fold-win code (BlindBluffAuthority drops dead layers, awards a lone top layer, gives odd chips to the lowest
-  seat). Phase 11 moves them onto `core.py`; the steps are in `tools/refactor/specs/phase11_plan.md`.
+  seat). Phase 11 moves them onto `core.py`; the steps are in `docs/dev/PHASE11_PLAN.md`.
 - **N37:** `strategy.LATE_STREETS` changed value (single-round stages count as final rounds); multiplayer imports
   `strategy` through a shim and gets the new value. Phase 11 confirms the room NPCs.
 
@@ -1169,7 +1184,7 @@ shared helpers. The fixes did not touch it.
 
 ## Phase 11 (move): merge the multiplayer copies
 
-Built as `ff82492` on B86 (`707be96`) in its own worktree, then applied on top of Phase 10; the only conflict was the spec's game `hiddenimports`, where both the PvP entry and `collect_submodules('solitaireplus')` were kept. The plan is `tools/refactor/specs/phase11_plan.md`. Multiplayer has no copies of
+Built as `ff82492` on B86 (`707be96`) in its own worktree, then applied on top of Phase 10; the only conflict was the spec's game `hiddenimports`, where both the PvP entry and `collect_submodules('solitaireplus')` were kept. The plan is `docs/dev/PHASE11_PLAN.md`. Multiplayer has no copies of
 game code left: room Hold'em runs on the shared engine and UI in `solitaireplus/`, and the LAN table and the offline
 Practice table are gone. `multiplayer/` shrank by about 15,700 lines.
 
@@ -1314,7 +1329,7 @@ Hand-back: `test_standalone.py` (now deleted) left a stray file at
 ## Phase 11 (fix): B67-B85, W1 (multiplayer)
 
 Built as `e795414` in the Phase 11 worktree, on top of the move commit `ff82492` (which sits on B86, `707be96`), then applied on top of the integrated move. At integration the spec conflict was settled in favour of the branch's `collect_submodules('solitaireplus')` (see N68), and the two out-of-date docs in N71 were updated. The plan is
-`tools/refactor/specs/phase11_plan.md`. This stage fixed B67-B84 in the merged multiplayer code, moved the
+`docs/dev/PHASE11_PLAN.md`. This stage fixed B67-B84 in the merged multiplayer code, moved the
 Multiplayer window onto `solitaireplus/app/window.py` (W1, multiplayer part), and fixed the packaged game, which
 crashed at start (found in the move stage). B80 and B85 were resolved by the merge itself. Single-player is
 unchanged on the safety net: `screen_harness compare` IDENTICAL 64/64 and `replay compare` IDENTICAL 18/18 against
@@ -1787,3 +1802,380 @@ This fixes N73 and N74 from the B44 late fix report. Every changed font now come
 **New findings (not fixed here):**
 - **N76:** `multiplayer/party_view.py` `draw_lobby` still says "Share only this 5-digit code." Room codes are now 6 letters/digits (CHANGELOG, Online play). Changing it changes what the lobby shows, so it was left alone.
 - **N77:** `DeadMansHandGame._font` / `_dmh_font` (`games/dead_mans_hand/game.py`) cache fonts per game object. Each new duel (`PvPGame`) and each single-player run builds its HUD fonts again on its first frame, including the Dead Man's Hand TTF files. That is once per game, not per frame. A move to `ui_text.get_font` would need `set_bold` to move into `get_font`'s `bold` flag.
+
+## Phase 12: cleanup
+
+One commit. The work was done in detached worktrees: the parts that did not depend on Phase 11 on top of Phase 10
+(`73dc94c`), and the rest in four groups on top of Phase 11 and the late fixes, each reviewed. It was then put
+together on top of "Phase 11 (fix): per-frame fonts in the Dead Man's Hand duel and the Multiplayer screens" and
+squashed into this commit. Nothing in it changes what the game shows. The one change a player can notice is log
+pruning (#15). Test file paths in the first sections are the paths before the move into `tests/<area>/`.
+
+### legacy.py emptied and deleted
+- `solitaireplus/legacy.py` (1,992 lines on the integration line) is gone. Every name it still held has a home.
+  Every `legacy.<name>` use in `solitaireplus/`, `tests/`, `tests/support/`, `tools/harness/sim.py` and
+  `docs/TESTING.md` now points at that home, through lazy imports as before.
+- **Start-up** runs from the new `app/startup.py`. `app/loop.py` imports it where it used to import `legacy`, so
+  modules are first imported, engines built and state defaults set in the same order as before. Start-up does
+  this, in order:
+  - imports the modules in the old order;
+  - registers the reward cosmetics;
+  - starts pygame and opens the window;
+  - sets the state defaults;
+  - prints the NPC portrait count.
+
+  `app/startup.py` defines nothing that other modules use.
+- Where the rest went:
+  - `games/solitaire/table.py` (new): the Solitaire engine `game` (still built at its old place in start-up),
+    `VERIFIED_DEALS_ENABLED`, `sync_selected_cosmetics`.
+  - `menus/help_content.py` (new): `HOW_TO_PLAY_CONTENT`, `HELP_NAVIGATION`, `HELP_CONTENT` and the History pages
+    merge.
+  - `npc/game_portraits.py` (new): `NPC_PORTRAIT_STYLES`, `draw_npc_portrait`, `get_npc_portrait_surface`,
+    `npc_icon_cache`. `get_npc_icon_surface` came here too and was then deleted as dead code (below).
+  - `ui/images.py` (new): `get_event_ui_asset` and its cache, `get_cover_scaled_ui_asset`,
+    `scale_surface_to_fit`.
+  - `app/game_globals.py` (new): `game_namespace()`. It now adds by name the 8 things it could only find in
+    `legacy.py`: `game`, `draw_npc_portrait`, `REWARD_CURSOR_IDS`, `CASE_ITEMS`, `ARCADE_PRIZE_CATALOG`,
+    `ACHIEVEMENT_DEFINITIONS`, `LEVEL_XP_THRESHOLDS` and `award_level_packs`.
+  - `app/state.py`: `career_event_start_arcade_tokens` and `_tickets` (default 0). `app/loop.py`:
+    `loop_post_event_updates`.
+  - `menus/free_play_select.py`: `FREE_PLAY_GAME_IDS`, `free_play_game_rects`, `finish_free_play_sandbox`,
+    `leave_free_play_game`, `get_free_play_return_state`.
+  - `profile/leveling.py`: `is_game_unlocked`, `unlock_achievement_cosmetic`, `queue_achievement_popup`,
+    `update_achievement_popup`.
+  - `profile/cosmetics.py`: `REWARD_CURSOR_IDS`, `register_reward_cosmetics()`.
+  - `profile/profile_editor.py`: `get_profile_avatar`.
+  - `career/hub_screen.py`: `career_hub_controls`.
+  - `career/calendar.py`: `get_current_career_activity_index`.
+  - `career/news_screen.py`: `maybe_add_monthly_flavor_news`.
+  - `career/career_rewards.py`: `lose_fans_for_bad_result`.
+  - `career/events/event_select_screen.py`: `get_unlocked_games_for_event`.
+  - `menus/customize.py`: `CUSTOMIZE_BACKGROUNDS`.
+  - Deleted, because nothing read them: `how_to_play_tab`, `how_to_play_tab_rects`, `free_play_rect`,
+    `career_mode_rect`.
+- Checked: after start-up the state, the random state, the catalogs and the help pages are identical, and every
+  module that existed before is first imported in the same order.
+
+### rules.py split
+- `games/solitaire/rules.py` went from 4,360 lines to 571. It keeps 9 methods of `Game`: `__init__`,
+  `set_deal_mode`, `get_deal_status_label`, `new_race_game`, `new_game`, `set_difficulty`,
+  `apply_difficulty_rules`, `set_challenge` and `clear_challenge`. It also has a new module docstring that maps the
+  package.
+- `Game` gets its other 65 methods from 8 topic mixins:
+  `class Game(LayoutMixin, MovesMixin, ScoringMixin, HintMixin, AutoSolveMixin, AnimationMixin, DrawingMixin, ControlsMixin)`.
+  - `layout.py` `LayoutMixin` (6 methods, 226 lines): tableau spacing, card and drop-target rects, the card, column
+    or foundation under the mouse.
+  - `moves.py` `MovesMixin` (15 methods, 833 lines): placement rules, the stock, the `move_*` methods, the
+    all-or-nothing rule, auto-moves, `save_undo_state`, `undo`.
+  - `scoring.py` `ScoringMixin` (8 methods, 227 lines): `record_move`, elapsed time, round score, XP and remark, the
+    round summary, `is_game_won`, `check_for_win`.
+  - `hints.py` `HintMixin` (4 methods, 544 lines): the hint system.
+  - `auto_solve.py` `AutoSolveMixin` (4 methods, 366 lines): auto-solve and `debug_auto_solve_state`.
+  - `animation.py` `AnimationMixin` (6 methods, 320 lines): the flip and victory animations.
+  - `drawing.py` `DrawingMixin` (13 methods, 650 lines): card art and every `draw_*` table method.
+  - `controls.py` `ControlsMixin` (9 methods, 759 lines): mouse input and `handle_event`.
+- `constants.py` (45 lines) holds the module constants (base size, colours, tableau layout, animation timings).
+  `rules.py` imports each one by name, without a star-import. So every old `rules.<name>` still works, including
+  `BASE_WIDTH`/`BASE_HEIGHT`, which about 40 callers import, and the `rules.pygame` patch target. No caller changed.
+- Verified by an AST check against the parent commit:
+  - all 74 methods are present, each exactly once;
+  - every method body is AST-identical, with no renames;
+  - no name a method uses is left unresolved in its new module;
+  - all 44 old module-level names can still be imported from `rules`, and the 17 constants have their old values;
+  - the MRO is `Game` first, then the 8 mixins in order.
+- Start-up order is unchanged. `rules.py` keeps its original import block word for word and in the same order.
+  The mixins import only modules that block already loads.
+- Five 3-line section headers were added. In each place the original header had moved to another module with its
+  neighbouring method.
+- New files use CRLF, like their siblings. Packaging needs no change: the `.spec` uses
+  `collect_submodules('solitaireplus')`, and `make_manifest` globs `solitaireplus/**/*.py`.
+
+### Dead code deleted
+How each name was checked:
+- `grep -w` over `main.py`, `solitaireplus/`, `tests/`, `tools/` (including `tools/harness`), `multiplayer/`,
+  `netservice/`, `updater/` and `installer/`, in `*.py/json/spec/ps1/md/txt`, string literals included. The only
+  hits were the definition, the brief and report text, and old move plans in `tools/refactor/specs/`.
+- An AST scan: no Name or Attribute load, string constant or keyword argument uses any of these names.
+- At the `154b890` baseline (`git grep -w -c`), each name appears exactly once in `main.py` (its definition), so it
+  was already dead before the restructure. Two exceptions, both explained below: `score_four_npc_font` and
+  `blackjack_bet_dropdown_open`.
+- Re-checked after the commit: `grep -w` finds none of them anywhere outside `tools/refactor/`.
+
+From brief §5.1:
+- `STATE_WIN` (`app/state_names.py`).
+- `get_unlocked_games_for_event` (`career/events/event_select_screen.py`).
+- `get_career_weekday_name` (`career/calendar.py`). `CAREER_WEEKDAY_NAMES` stays because `hub_screen` uses it.
+- `get_npc_icon_surface` (`npc/game_portraits.py`). `npc_icon_cache` stays because `get_npc_portrait_surface` uses
+  it.
+- `get_selected_suit_snake_difficulty` (`games/arcade/machine_select.py`), a "backward-compatible alias" for
+  `get_selected_suit_snake_mode`.
+- `get_free_play_return_state` (`menus/free_play_select.py`).
+- `draw_score_four_npc_panel` (`games/cards/score_four_screen.py`, 200 lines). Its helpers stay:
+  `get_score_four_npc_progress` is read by `score_four_ui` through `namespace.get`.
+
+Duplicate definitions and assignments from §5.1 were already fixed earlier:
+- B45 (Phase 7) left one binding each for the three Hold'em sound helpers, `STATE_CAREER_NEWS`,
+  `play_background_image`, `profile_switch_rect` and the career hub rects. `test_b45_duplicates` passes.
+- `career_play_rect` was removed under B4.
+- `blackjack_dealer_npc` is bound once, as `None`, in `state.py`.
+
+Other dead code, clearly from `main.py` and never read:
+- `fonts.score_four_npc_font`: its only reader was the deleted panel, so at `154b890` it had 2 hits, the definition
+  and the panel's render.
+- `fonts.blackjack_title_font`: never read. The casino-typography comment stays on the other blackjack fonts.
+- `state.blackjack_bet_dropdown_open` (N2): write-only since the baseline. At `154b890` it had 9 hits: the default,
+  2 `global` lines and 6 writes, with no reads. Removed: the default in `state.py` and the 6 writes in
+  `event_select_screen`, `debug/actions`, `free_play_select` and `blackjack_screen` (3).
+- `blackjack_screen.blackjack_change_bet_rect`: a zero-size Rect "kept for compatibility", and its comment.
+- `holdem_screen` `TEXAS_HOLDEM_NPC_DELAY`, `TEXAS_HOLDEM_STREET_DELAY` and `TEXAS_HOLDEM_NEXT_HAND_DELAY`: never
+  read. `TEXAS_HOLDEM_SESSION_END_DELAY` stays.
+- `career/training.TRAINING_GAMES`: never read.
+- `suit_snake.SUIT_SNAKE_DIFFICULTIES` and `get_suit_snake_difficulty`: labelled backward-compatible aliases, dead
+  since the baseline. They are the engine-side twin of the `machine_select` alias.
+- No import was added or removed, so start-up order is unchanged.
+
+### Stray root files
+- `verify_solitaire_state.py` is now `tools/verify_solitaire_state.py`.
+  - `ROOT` is now `Path(__file__).resolve().parents[1]`, so the script still checks the repository root and still
+    writes `SOLITAIRE_STATE_REPORT.txt` there. The docstring says how to run it.
+  - Its "possibly misplaced files" scan now skips `.harness_out`. Without that, the harness worktrees were listed as
+    misplaced copies of `main.py`.
+  - Run from another folder, it found the right root and the report contained the expected sections. The report it
+    wrote was deleted.
+  - Nothing else referenced the old path. The only other mentions are in the brief and `tools/refactor/`.
+- The root `test_dead_mans_hand_weapon_system.py` (N66) was merged into `tests/test_dead_mans_hand_weapon_system.py`
+  and deleted. It now lives in `tests/games/dead_mans_hand/` (see "Tests moved into tests/<area>/" below); the test ids are
+  unchanged. The root copy was an older prototype: 4 of its 8 tests failed on current code.
+  - Ported: the right-mouse-button aiming wiring, and the sound-name map, now checked for every weapon's shot and
+    reload.
+  - New behaviour test `test_viewmodel_prefers_weapon_folders_but_keeps_old_pistol_fallback` (on a temporary art
+    folder): `sniper/` beats `scar20/`, `pistol/pistol_ads.png` is found, the old `weapon.png` is used for the
+    pistol, and a weapon with no art gets `None`.
+  - New `test_hud_fonts_prefer_the_custom_font_files`: Scary Halloween, then `dead_mans_hand_numbers.ttf` or
+    `dead_mans_hand_ui.ttf`, then the default font.
+  - Dropped as duplicates or out of date: the old `assets/sounds/...` path strings, `PISTOL_VIEWMODEL` and
+    `ADS_FOV`, and the old anchor numbers.
+- `dead_mans_hand_pvp.py` is not at the root any more (§7 step 2). Phase 11 owns the pvp code.
+- `main.py` (27 lines) and `version.py` stay at the root.
+
+### Quarantine changes
+Five lines left `tests/KNOWN_FAILURES.txt`. Each test now passes and checks current behaviour, and the two empty
+section headers went too.
+- The 3 `/workspace/scratch` preview-image tests now save into a `tempfile.TemporaryDirectory()` that is deleted
+  afterwards (brief §7 step 6). Their assertions are unchanged:
+  - `game:test_case_opening.CaseTests.test_reel_ends_on_committed_item_and_skip_does_not_purchase_twice`
+  - `game:test_poker_recap.RecapTests.test_recap_render_and_chip_events_do_not_change_rules_or_repeat_sfx`
+  - `game:test_table_polish.TablePolishTests.test_large_card_layout_and_next_hand_hit_target_render`
+- The 2 out-of-date Dead Man's Hand source checks were rewritten as behaviour tests with the same names:
+  - `test_hud_supports_custom_assets_without_health_or_ammo_numbers` builds a real `DeadMansHandGame` on a
+    temporary folder of custom HUD PNGs and draws `_draw_hud`. It checks:
+    - every custom file is used, including the Sniper icon found by its `asset_slug` name `sniper.png`;
+    - the kill count is drawn and is the kills so far, not the enemies left (2 of 5 enemies dead, `total_kills = 7`,
+      and a guard that the two numbers differ);
+    - no drawn text contains the health (73), ammo (9) or magazine size (12). The text is recorded through the
+      game's cached fonts and also through `pygame.font.Font` and `SysFont`;
+    - the old weapon-id icon name `scar20.png` still loads, and a missing icon gives `None`.
+  - `test_pistol_tuning_keeps_separate_ads_and_hip_muzzle_anchors`: for every weapon, the hip and ADS anchors and
+    muzzle points differ, the hip anchor is right of centre, the ADS anchor is closer to the centre, and the ADS
+    view is bigger. The pistol renderer puts the viewmodel exactly on the hip anchor and height when not aiming,
+    and on the ADS anchor and height when fully aimed. The test no longer pins the numbers.
+  - Mutation checks from the review repair, each run in memory:
+    - showing the enemies left (`kill_count_value = alive`) now fails the HUD test;
+    - so does a health number drawn through `pygame.font.Font`, `SysFont` or `self._font`;
+    - so does an ammo number drawn through `self._dmh_font`.
+- Still quarantined:
+  - the 3 `test_npc_development` "rebalance" tests, by designer decision;
+  - the multiplayer lines: Phase 11 removed six of them (fixed or deleted with their feature), and the last one
+    went in the cleanups group (below).
+
+### Tests that wrote outside a temporary folder
+- `tests/test_packaging.py` `test_multiplayer_selftest_passes_from_source` now gives its child process
+  `LOCALAPPDATA=<temp folder>`. A probe showed that without it, `main.py --multiplayer --selftest` wrote
+  `SimpleSolitaire/logs/game-<pid>.log` into the real folder. With log pruning, the child could also delete real
+  logs.
+- `tests/test_multiplayer_launcher.py` `test_real_dispatch_uses_multiplayer_engine` had the same problem: its child
+  runs `multiplayer/main.py`, which writes a game log and `SolitaireMultiplayer/profiles/profile_1.json`. It now
+  runs in a `TemporaryDirectory` with `LOCALAPPDATA` pointed at it.
+- `docs/TESTING.md`: new paragraph. Files a test writes go into a temporary folder. A test that runs `main.py` or
+  `multiplayer/main.py` passes `LOCALAPPDATA=<temp folder>` in the child's `env`, because both start with
+  `bootstrap()`. The quarantine section notes that the three image-folder tests were fixed, and its example line no
+  longer names a test that now passes.
+- Audit: each suite was run with `LOCALAPPDATA` pointed at an empty scratch folder. The game suite now writes
+  nothing there. The multiplayer suite still did; see below.
+
+### Log pruning (#15) and its test
+- `app/runtime_support.py` has a new `prune_game_logs(logdir, current, keep=KEPT_GAME_LOGS)`, with
+  `KEPT_GAME_LOGS = 10`. `bootstrap()` calls it right after `logging.basicConfig(...)`.
+- It keeps the newest 10 `game-*.log` files by modification time, and this process's new log is always one of them.
+- It only looks at files: a folder named `game-x.log` and any other file in `logs/` are never touched.
+- It skips files it cannot delete silently and logs nothing, so a normal start still leaves the new log empty (the
+  §10.2 packaged check). That covers a file locked by another running copy (Windows refuses to delete an open file)
+  and a file that vanishes while it looks.
+- An `OSError` from listing the folder skips pruning altogether.
+- `tests/test_log_pruning.py` (6 tests) runs the real `bootstrap()` against a temporary `LOCALAPPDATA`, then puts
+  back the working folder, root logger handlers and level, `sys.excepthook` and `threading.excepthook`. It checks:
+  - the 10 newest are kept, the new log included, and older ones are deleted;
+  - other files and a folder are left alone;
+  - with only a few logs, all are kept;
+  - an old log that has this process's name (a reused pid) is the current log: it is kept, appended to and counted;
+  - a locked and a vanished log don't stop start-up, and nothing about them is written to the new log;
+  - a log held open by another copy is skipped (Windows only);
+  - the rest of `bootstrap()` is unchanged: working folder, WARNING level, one FileHandler on the new log, both
+    exception hooks.
+- Review repair: the fixture names are now `game-old00.log` and so on, from `old_log_names()`, so they can never
+  match `game-<pid>.log`. Before that, the old numbered names failed under patched pids 90004, 80000 and 70008.
+- `docs/TESTING.md` describes the test.
+
+### Globals and the new no-globals test
+- `games/solitaire/race_deals.py` keeps its verified deal pool in `_cache = SimpleNamespace(pool=None)` instead of
+  `global _pool`. This was the last `global` statement in `solitaireplus/` (N65). The behaviour is the same: the
+  pool loads and is verified once, on first use.
+- `tests/test_no_global_statements.py` parses every `.py` file under `solitaireplus/`, plus `main.py`. It fails on
+  any `ast.Global` node and on any call to `globals()` or `builtins.globals()`. Names that only contain the word
+  pass, such as `game_globals` or a docstring that mentions `globals()`. It also checks:
+  - that the scan really covers the game code (more than 100 files, `main.py` and `app/state.py` included);
+  - that the detector catches all three forms;
+  - that the race pool still loads and verifies once.
+- Current state for checklist §10.4: no `global` statement and no `globals()` call in `solitaireplus/` or
+  `main.py`. No `__file__` lookup outside `app/paths.py`.
+- The per-area tests stay: `test_poker_ui_no_globals`, `test_cards_ui_no_globals`, `test_debug_no_globals` and
+  `test_casino_frame_caches`. They also check each area's cache behaviour.
+
+### Hold'em engine and UI split
+holdem.py and holdem_ui.py are split into topic modules under solitaireplus/games/poker/. Game behaviour is unchanged. Every function and method moved verbatim and none were renamed. No file in solitaireplus/ is over 3,000 lines now. The largest is five_card_draw_ui.py at 2,599.
+
+- holdem.py went from 4,714 lines to 1,399. TexasHoldemGame is now built from 5 mixins, the same way the solitaire rules.py split was done:
+  - holdem_seats.py, 825 lines: SeatsMixin (chips, seat order, blinds, whose turn it is, seat views).
+  - holdem_npc.py, 1,118 lines: NpcMixin (NPC actions, personality, hand strength, bet sizing).
+  - holdem_betting.py, 492 lines: BettingMixin (apply_wager, the betting rules, the player's actions).
+  - holdem_pots.py, 532 lines: PotsMixin (side pots, pot awards, fold wins).
+  - holdem_showdown.py, 459 lines: ShowdownMixin (hand evaluation, the showdown, hand names).
+  - holdem.py keeps the class settings, __init__, hand history, the deck, sessions, new hands, the betting-round reset and the streets. It also keeps run_next_npc_action. Tests patch holdem.decide_poker_action, and that patch only works where the method looks the name up.
+- holdem_ui.py went from 7,241 lines to 1,867. It keeps draw_texas_holdem, get_texas_holdem_action and the session reset. It re-exports every old name with explicit imports. The 8 topic modules are:
+  - holdem_ui_state.py, 325 lines: the one _ui holder, action names, log sizes, colours, HUD rects, the log and chat histories, the Quick Chat queue, fonts and chip images.
+  - holdem_ui_widgets.py, 359 lines: translucent panels, buttons, fitted text.
+  - holdem_ui_options.py, 1,077 lines: the buy-in screen, the Options overlay, table settings and delays.
+  - holdem_ui_pot.py, 1,073 lines: the pot stack, chip and wager animations, payouts, the showdown banner.
+  - holdem_ui_cards.py, 571 lines: card faces and backs, deal and flip animations.
+  - holdem_ui_log.py, 887 lines: the GAME LOG / TABLE CHAT panel and Quick Chat.
+  - holdem_ui_controls.py, 844 lines: the bet slider, manual bet entry, the action panel.
+  - holdem_ui_hud.py, 554 lines: the player's hand text, the dealer and blind badges, the player HUD.
+- Proof: an AST check against e7d8e80 finds all 71 functions, 108 methods and 6 class settings exactly once, with the same source. It also finds all 77 non-import module statements exactly once. Every old name still imports from holdem / holdem_ui. Every name a new module shares with the old module is the same object, so module state (_ui, the histories, the font cache) is still one object. Both old modules keep their import block first and in the same order, so the import order and seeded RNG do not change.
+- Tests: the log-panel test now patches the squash helper in holdem_ui_log.py, where the log code looks it up. The font-cache test expects the showdown banner font in holdem_ui_pot.py. The no-globals and debug-hotkey checks scan the new modules. Each one now has a test that fails if a holdem_ui*.py file is not in its list: test_every_holdem_ui_module_is_checked and test_every_holdem_ui_module_is_scanned. A reviewer found that the debug-hotkey check had no such guard. I added it and checked that it fails when an unlisted holdem_ui_*.py module is added.
+- Docs: POKER_RULE_CHANGES.md "Where the rules live", the paths note in B86_POKER_AUDIT.md, and the comment in state.py. docs/TESTING.md and docs/NETWORKING.md do not name these files, so they needed no change.
+- Line counts in solitaireplus/games/poker/: five_card_draw_ui 2,599; seven_card_stud_ui 2,544; holdem_ui 1,867; seven_card_stud 1,646; ai 1,519; holdem 1,399; holdem_screen 1,259; holdem_npc 1,118; core 1,108; holdem_ui_options 1,077; holdem_ui_pot 1,073; five_o 989; five_card_draw_screen 988; holdem_ui_log 887; seven_card_stud_screen 865; five_card_draw 851; holdem_ui_controls 844; holdem_seats 825; blind_mans_bluff 592; quick_chat 582; holdem_ui_cards 571; holdem_ui_hud 554; holdem_pots 532; holdem_betting 492; holdem_chat 475; holdem_showdown 459; blind_mans_bluff_ui 432; five_o_ui 423; holdem_ui_widgets 359; holdem_ui_state 325; strategy 281; variant_quick_chat 274; recap 220; blind_mans_bluff_screen 207; five_o_screen 207; log_rows 191; speech 159; npc_inputs 146; quick_chat_adapter 142; bluff_presentation 82; learning 75; table_stakes 55; niche_common 40; ui_assets 38; table_timers 28; turn_flow 12; __init__ 1.
+- Checks: full suite PASSED. screen_harness compare against e7d8e80 is IDENTICAL (64/64), then replay compare is IDENTICAL (18/18).
+
+### Tests moved into tests/<area>/
+The 145 game test files moved out of the flat `tests/` folder with `git mv`, so history follows. They now sit in `tests/app`, `ui`, `menus`, `profile`, `career`, `npc`, `games/<area>` (solitaire, poker, casino, cards, arcade, cryptid, dead_mans_hand), `debug`, `packaging`, `updater` and `netservice`. `tests/support/` and `tests/KNOWN_FAILURES.txt` stay. `multiplayer/tests/` did not change. Test ids still use the file name, so the quarantine list did not change.
+
+- Fixed in the moved files: the repo-root depth from `__file__` (28 files), imports of other test files (`from tests.app import ...`, `tests.career`), the test_shared_imports path in test_packaging, and docstrings that name test paths. docs/NETWORKING.md and a `multiplayer/net_client.py` comment now use the new path.
+- The new folders have no `__init__.py`. One there would hide the real `updater` and `netservice` packages and the standard-library `profile` module. `tools/run_tests.py` stops with an error if a test folder has one.
+- Review fix: that check only ran when the runner searched the suite. A worker given a `.py` path skipped it, and full runs give every worker a path. The check now runs for every target. New test `tests/packaging/test_run_tests_layout.py` (5 tests). 2 of them failed before the fix.
+- docs/TESTING.md has one line per folder, says where new tests go, and explains the no-`__init__.py` rule.
+- Proof: the per-file test counts before (e7d8e80) and after match file for file for all 145 moved files and all 17 multiplayer files (game 1237 tests, multiplayer 141). The only new line is the review test, so the game suite now has 146 files and 1242 tests. The quarantine lines are the same. Each test file is found exactly once. Full suite PASSED. Screen compare 64/64 and replay compare 18/18 IDENTICAL against e7d8e80.
+
+### tools/refactor, Card.draw, README, the last multiplayer quarantine line, B42, checklist
+- **tools/refactor/ and requirements-dev.txt deleted.** References were searched in docs/, tools/ (harness included), tests/, multiplayer/tests/, build_release.ps1, SolitairePlus.spec, .github/workflows/, CHANGELOG.md and README.md. Only docs pointed at the tool. The one markdown document in it, `specs/phase11_plan.md`, moved to `docs/dev/PHASE11_PLAN.md` (git mv). The four links to it in `PHASE_REPORTS.md` (N36, Phase 11 move, Phase 11 fix) and `B86_POKER_AUDIT.md` now point there. The Phase 1 report sent readers to `tools/refactor/phase1_move.py` for the full old-to-new module table. It now says the file was deleted in Phase 12 and gives `git show d924025:tools/refactor/phase1_move.py` (d924025 is the Phase 1 commit on the branch). The other mentions in PHASE_REPORTS.md ("plan from tools/refactor/specs/phaseN.json" and the like) and RESTRUCTURE_BRIEF.md only describe what was done, so they stay. No test tested tools/refactor code, so no test was deleted. AGENTS.md does not exist in the repo yet, so there were no lines to report. libcst is still installed in the shared venv (the orchestrator removes it).
+- **Card.draw deleted (N75).** A repo-wide search (solitaireplus, multiplayer, tools, tests, main.py, netservice, updater) found no caller. The Solitaire table draws cards with `DrawingMixin.draw_card_sprite`. Only Card.draw used the `import pygame` and `ui_text` imports in card.py, so they were removed too. The `card_draw_unused_by_game` entry, its Card setup and its docstring sentence were removed from `tests/test_frame_font_sites.py`.
+- **README (N60).** The F9 line now says: press F10 at the Solitaire table and click "Win this Solitaire round" (under SOLITAIRE CHALLENGES). The build command had a backspace byte where the backslash should be (`.^Huild_release.ps1`). It now reads `.\build_release.ps1`. No other stale debug key, button or run step was found. README does not describe the code layout, and `python main.py` still works.
+- **Multiplayer quarantine.** `test_local_animation_never_mutates_game_and_sound_edges_once` now uses a fake with every field that today's `Presentation.update` reads. It checks that each field is a real `ClientGame` field, so the fake cannot drift again. It checks one deal sound, then one chip, one check and one fold sound per edge (chip sounds are now `chips_1..3`, not `chip_move`), then one flip and one win sound at the end. It also checks that the game is never changed. Its KNOWN_FAILURES line and the empty "Multiplayer" header are gone. The three test_npc_development lines stay. In docs/TESTING.md, the bullet saying test_six_seat "may be a real bug" was stale: it was fixed as B67 and taken off the list. TESTING.md now says, in its own paragraph after the rules list, that only the three test_npc_development lines are left and that they wait for the designer. The KNOWN_FAILURES.txt header said fixing them was "on the future refactor sprint list (see AGENTS.md)". It now says "The three left wait for the designer (see docs/TESTING.md)."
+- **B42 line reworded** in the Phase 7 fix report. B42 was Blind Man's Bluff losing the remainder of a refund (`//`) and counting split main/side pot wins as ties. The line now says that, says it was fixed with the shared `core.build_pots` (exact refunds), `award_pots` (B38 odd chips) and `core.hand_outcome` (a tie only when the human shared a pot and won none alone), and names the tests in `test_poker_pots` (`test_blind_mans_bluff_counts_wins_ties_and_losses_by_pot`, `test_a_layer_no_live_seat_paid_into_goes_back_exactly`). The old text (uncalled chips returned, not won) is kept as its own NEW-1 line.
+- **§10.4 checklist** (all `git grep` on the commit):
+  - `main.py` is the small entry point: 27 lines.
+  - `solitaireplus/legacy.py`, `tools/refactor/`, `requirements-dev.txt`: all gone (`ls` finds none).
+  - `git grep -nE '^\s*global\s' -- solitaireplus main.py`: no hits. `git grep -nE '\bglobals\s*\(' -- solitaireplus main.py`: no hits.
+  - No duplicate engine modules in `multiplayer/`: no file name in `multiplayer/*.py` matches a file in `solitaireplus/`. A scan for any block of 12 identical non-blank, non-import lines shared by `multiplayer/*.py` and `solitaireplus/**/*.py` found 0.
+  - `git grep -n __file__ -- solitaireplus main.py`: only `solitaireplus/app/paths.py:18`. In `multiplayer/` (tests excluded) there are two more `Path(__file__)` roots, and neither is an asset lookup. `multiplayer/multiplayer_paths.py:5` `ROOT` adds the repo to `sys.path`. `multiplayer/main.py:36` uses it for `os.chdir(ROOT)`, which is how relative paths in the Multiplayer window resolve, and `net_client.py:68` uses it as the cwd of the net service child. `multiplayer/relay_transport.py:19` `_ROOT` is only a `sys.path` entry. They are left as they are (see N80).
+  - Deleted hotkeys: `git grep -nE 'K_F6|K_F7|K_F8|debug_xp_rect' -- solitaireplus main.py multiplayer ':!multiplayer/tests'`: no hits. `git grep -nE 'K_SPACE|K_b\b' -- 'solitaireplus/games/poker/holdem*.py'`: no hits. The remaining `K_SPACE` uses are normal game controls (Ace Invaders fire, arcade restart, Cryptid pack and battle, Dead Man's Hand jump, level-up dismiss).
+  - Root files: `.github`, `.gitignore`, `CHANGELOG.md`, `PLAYING.txt` (copied into the build by build_release.ps1), `README.md`, `SolitairePlus.spec`, `build_release.ps1`, `main.py`, `requirements.txt`, `requirements-build.txt`, `version.py`, and the folders `assets`, `data`, `docs`, `installer`, `multiplayer`, `netservice`, `solitaireplus`, `tests`, `tools`, `updater`. No stray files.
+  - Files over about 3,000 lines in `solitaireplus/`: none after the Hold'em split (above). The largest is `games/poker/five_card_draw_ui.py` (2,599).
+  - The build, self-test, on-screen window and bug-table items are for the final Phase 12 run and the original session, not this group.
+- Tests: full suite PASSED (game 145 files, 1237 tests, 3 quarantined; multiplayer 17 files, 141 tests, 0 quarantined). screen_harness compare against e7d8e80 IDENTICAL 64/64, then replay compare IDENTICAL 18/18.
+
+### Loop variables (N24)
+- N24 is fixed. Moving the old `main.py` globals to `app/state.py` had left 25 `for` loops in 13 modules writing
+  their loop variable to state: `state.rect`, `state.index`, `state.package_index` or `state.free_game_id`. The
+  finding listed 20; an AST scan found 5 more (`profile_editor.py` 678 and 737, `profile_select.py` 638 and 672,
+  and a target split over several lines in `score_four_screen.py` 723). No comprehension or `with` target wrote to
+  state.
+- Each loop now uses a local name, such as `job_rect`, `bet_index`, `slot_rect` or `part_index`. Every read of the
+  four names was inside its own loop body; no `getattr`, `vars(state)`, `game_namespace()` or harness Probe lookup
+  and nothing in multiplayer reads them. The two module-level loops (`hub_screens.py`, `free_play_select.py`) leave
+  `package_index` and `free_game_id` beside the loop names they already left, and nothing reads them.
+- `app/state.py` had no defaults for these names; they left its "Set during start-up" list. Three tests stopped
+  saving or patching `state.rect` and `state.index` (test_career_job_news, test_customize_no_debug_button,
+  test_profile_save_failed_message).
+- A reviewer found no problems. Full suite PASSED; scenes IDENTICAL 64/64 and journeys IDENTICAL 18/18.
+
+### Journey 03_solitaire wins through the F10 button (N59)
+- N59 is fixed. Journey `03_solitaire` (`tools/harness/journeys.py`) now wins the way a tester does: it presses F10
+  on the Solitaire table, checks that "Win this Solitaire round" is enabled, and clicks it. It no longer calls
+  `instant_solitaire_win()`, which stays only for the `solitaire_recap` scene (that scene pictures the animation and
+  the recap, not how you get there).
+- The journey has one new checkpoint, `debug_menu_from_table`, whose screenshot shows the button enabled.
+  `recap_reward` and `after_recap` now come 12 frames later (620 and 650 instead of 608 and 638). Their values and
+  screenshots are unchanged, because the button uses the same fixed round summary as the old F8 code.
+- `replay compare` stays IDENTICAL: the harness runs the working tree's journey scripts against both checkouts. The
+  old and new journey were compared with `replay.py run`; a second run and `replay.py selfcheck` matched exactly.
+
+### Fitting Phase 12 onto Phase 11
+- The two Phase 12 cleanup commits applied on top of Phase 11 with two small test conflicts
+  (`tests/test_packaging.py` and `tests/test_multiplayer_launcher.py`). Phase 11's versions already run their
+  child processes with a temporary `LOCALAPPDATA`, so they were kept.
+- Four Phase 11 checks looked for `solitaireplus.legacy` to prove that the Multiplayer window does not start the
+  single-player game. That module is gone, so the checks passed whatever happened. They now look for
+  `solitaireplus.app.startup`, the module that starts the single-player game now:
+  `multiplayer/tests/test_shared_ui_usage.py`, `multiplayer/tests/test_mp_window.py`, `tests/test_window.py` and
+  `tools/window_check.py` (its printout now says "start-up/cursors").
+- The B44 test (`test_frame_font_sites`) took two helpers from `legacy`; it now imports them from their new homes
+  (`npc.manager.get_score_four_opponent_choices`, `npc.game_portraits.get_npc_portrait_surface`).
+- The prep report expected the no-globals test to fail once Phase 11's merged modules arrived. It did not: the
+  merge brought no `global` statement into `solitaireplus/`.
+- `multiplayer/tests/test_menu_followup.py` imported `main` at module level, so `bootstrap()` wrote a game log into
+  the real `%LOCALAPPDATA%` on every run and, with pruning, could delete the player's own old logs. It now points
+  `LOCALAPPDATA` at a scratch folder before the import and cleans up afterwards, as `test_duel_launch.py` does.
+- Checked: a full run of both suites with `LOCALAPPDATA` pointed at an empty folder now writes nothing there. The
+  same check with the old `test_menu_followup.py` finds its `SimpleSolitaire\logs\game-<pid>.log`.
+
+### Results
+All on the final Phase 12 tree.
+- Tests: `toolsun_tests.py` PASSED. game: 146 files, 1,246 tests; the 3 quarantined `test_npc_development` tests
+  still fail, as listed. multiplayer: 18 files, 148 tests, none quarantined.
+- Compares against "Phase 11 (fix): per-frame fonts in the Dead Man's Hand duel and the Multiplayer screens":
+  `screen_harness compare` IDENTICAL 64/64 scenes, then `replay compare` IDENTICAL 18/18 journeys.
+- Packaged (`build_release.ps1 -SkipTests -Installer`): `release\SolitairePlus-Setup-0.0.7.exe` and the zip were
+  built, with a 1,794-file `manifest.json`. Self-tests: `SolitaireNet 1.1.0 ok; connectors: tcp, tls, ws, wss`, the
+  updater exited 0, and the multiplayer report ends `PASSED: every multiplayer module imported`. `PYZ-00.toc` has
+  all 22 `solitaireplus` modules the shipped `multiplayer/*.py` import and all 74 modules named in importlib or
+  `lazy()` strings.
+- 10 s packaged launches with a temporary `LOCALAPPDATA` and the update check off: `SolitairePlus.exe` and
+  `SolitairePlus.exe --multiplayer` were still running, and each newest `game-*.log` was 0 bytes.
+- Local two-player test (relay from source bound to 127.0.0.1:50111 and :50112; the packaged `SolitaireNet.exe`;
+  every address checked to be 127.0.0.1 first): 72/72 OK. Hold'em (chips conserved, no hidden cards in 184 guest
+  views, protocol stamp seen), Blind Man's Bluff (the guest never saw its own card) and Score Four (a wrong solve
+  refused, a valid one won the round).
+- Window checks on this PC (monitor 1920x1200, work area 1920x1152, 100% scaling): `window_check.py source` 41/41,
+  `packaged` 11/11, `source --multiplayer` 110/110, `packaged --multiplayer` 84/84. Start-up (103, 87, 1817, 1082),
+  client 1712x963, centred; F11 gives (0, 0, 1920, 1200); Options 1920x1080 and 2560x1440 greyed out.
+- Checklist §10.4: `main.py` 27 lines; the largest file in `solitaireplus/` is `five_card_draw_ui.py` (2,599);
+  `legacy.py`, `tools/refactor/` and `requirements-dev.txt` are gone; no `global` or `globals()`; no `multiplayer/`
+  file shares a name with a game module; `__file__` only in `app/paths.py`; none of the deleted hotkeys; no
+  `state.<name>` loop targets. `libcst` was uninstalled from the venv after this commit.
+
+### New findings (not fixed)
+- **N78:** on Windows, pruning cannot delete the log of a copy that is still running, because the file is
+  open. On Linux or macOS it could: a long-running copy's log could be removed once 9 newer starts have happened.
+  The game ships for Windows only, so this only matters if a non-Windows build appears.
+- **N79:** `tests/updater/test_updater.py` (ApplyTests) failed now and then on this PC: 1 of 2 full runs and
+  1 of 7 solo runs, a different test each time, with `OSError` or `PermissionError` while applying an update in a
+  temporary folder. It does not touch game code. It looks like another program (for example a virus scanner)
+  briefly holding a new file. Not quarantined (that would hide it).
+- **N80:** `multiplayer/multiplayer_paths.py:5` and `multiplayer/relay_transport.py:19` find the repo root
+  with `Path(__file__)`. They are not asset lookups: one sets `sys.path` and the working folder
+  (`multiplayer/main.py`, `net_client.py`), the other only sets `sys.path`. The original session may still want them
+  on `solitaireplus.app.paths` when it checks §10.4.
+- **N81:** `updater/__init__.py:12` says "See docs/RELEASING.md and AGENTS.md". AGENTS.md is not in the repo
+  yet. It is a user doc the original session writes, so the line was left alone.
+- N63 (unchanged): `Game.debug_auto_solve_state` still has no caller. It moved verbatim to
+  `games/solitaire/auto_solve.py`. It is not on the §5.1 list, so it was kept.

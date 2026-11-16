@@ -5,7 +5,7 @@ from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
 level_up = lazy("solitaireplus.profile.level_up")
-legacy = lazy("solitaireplus.legacy")
+table = lazy("solitaireplus.games.solitaire.table")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 fonts = lazy("solitaireplus.app.fonts")
@@ -372,7 +372,7 @@ def handle_event(event):
                 # Stay at the table and deal another hand. If the completed
                 # round earned one or more levels, show those screens first
                 # and then return directly to the fresh deal.
-                legacy.game.new_game()
+                table.game.new_game()
                 state.post_round_return_state = state_names.STATE_PLAYING
 
             if (

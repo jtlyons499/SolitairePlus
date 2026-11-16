@@ -78,7 +78,8 @@ Press F10 to pull up the debug menu, which lets you select from some of the foll
 3. Play solitaire challenge modes and all minigames
 4. Advance progression by adding cash / profile XP / level / rating / customization unlocks
 
-Press F9 during games of Solitaire to automatically win.
+To win a Solitaire round automatically, press F10 at the Solitaire table and click
+"Win this Solitaire round" (under SOLITAIRE CHALLENGES).
 
 ## Prioritized changes to come
 - Overhaul Dead Man's Hand minigame in both singleplayer and multiplayer
@@ -126,7 +127,7 @@ dependencies, runs all tests and the asset check, and builds the game:
 
 ```powershell
 py -3.14 -m venv .venv
-.uild_release.ps1
+.\build_release.ps1
 ```
 
 The playable folder is created at `dist/SolitairePlus/` and a test ZIP at `release/Solitaire-Windows.zip`.

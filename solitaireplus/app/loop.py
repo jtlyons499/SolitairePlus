@@ -4,9 +4,12 @@ Each frame: poll the update check and settings, sync audio, handle events (globa
 mouse mapping, then the current screen), run per-frame updates, draw the current screen,
 then overlays, then present. The order is exactly the old loop's order.
 
+Importing this module runs the start-up sequence first (solitaireplus/app/startup.py).
+
 SCREENS maps a screen name to the code that runs it: "package.module" for a screen module
 (functions handle_event(event), draw(), and optionally update(), late_update(), enter() and
-leave()), or "solitaireplus.legacy:<screen>" for screens still in solitaireplus/legacy.py.
+leave()), or "package.module:<screen>" for a module that holds several screens (functions
+loop_event_<screen>, loop_draw_<screen>, ...).
 
 When state.current_state changes, the old screen's leave() and the new screen's enter() run
 (checked after each event and at the start of each frame).
@@ -19,7 +22,7 @@ import importlib
 import pygame
 from solitaireplus.menus.achievements_screen import draw_achievement_popup
 from solitaireplus.app import state, state_names
-from solitaireplus import legacy  # noqa: I001 (must come before the modules below)
+from solitaireplus.app import startup  # noqa: F401,I001 (runs the start-up sequence; must come before the modules below)
 from solitaireplus.debug import actions  # loaded at start-up, as in main.py: tools find the F10 actions by name
 from solitaireplus.app import fonts
 from solitaireplus.app import sounds
@@ -28,6 +31,10 @@ from solitaireplus.menus import main_menu
 from solitaireplus.menus import options_screen
 from solitaireplus.games.arcade import machine_music
 from solitaireplus.games.dead_mans_hand import game_screen
+from solitaireplus.games.casino import horse_races_screen
+from solitaireplus.games.solitaire import screen as solitaire_screen
+from solitaireplus.profile import level_up
+from solitaireplus.profile import leveling
 from solitaireplus.app.lazy import lazy
 five_card_draw_ui = lazy("solitaireplus.games.poker.five_card_draw_ui")
 
@@ -98,7 +105,8 @@ DRAWN_LATE = {state_names.STATE_DEBUG_POKER_NPC_SELECT, state_names.STATE_DEBUG_
 
 
 class _LegacyScreen:
-    """A screen whose code is still in solitaireplus/legacy.py (loop_event_<screen>, loop_draw_<screen>, ...)."""
+    """A screen in a module that holds several screens: its code is that module's loop_event_<screen>,
+    loop_draw_<screen>, ... functions (the naming the screens had in the old legacy.py)."""
 
     def __init__(self, module, slug, draws_late):
         self.handle_event = getattr(module, f"loop_event_{slug}", None)
@@ -158,6 +166,33 @@ def typing_in_a_text_field():
     if state.current_state == state_names.STATE_FIVE_CARD_DRAW:
         return bool(five_card_draw_ui.five_card_draw_manual_bet_active())
     return False
+
+
+def loop_post_event_updates():
+    """Old per-frame updates between the event loop and drawing."""
+    solitaire_screen.update_solitaire_round()
+
+    if (
+            state.current_state != state_names.STATE_HORSE_RACES
+            and state.horse_race_music_channel is not None
+    ):
+        horse_races_screen.stop_horse_race_music(300)
+
+    # Non-Solitaire games award XP too. If that XP crossed a level threshold,
+    # wait until the player has safely returned to a hub/selection screen before
+    # presenting the queued level-up cards.
+    if (
+            state.level_up_queue
+            and state.current_level_up_data is None
+            and state.current_state in (
+                state_names.STATE_MENU,
+                state_names.STATE_CAREER_HUB,
+                state_names.STATE_CAREER_EVENT_SELECT,
+                state_names.STATE_FREE_PLAY_SELECT,
+            )
+    ):
+        state.post_round_return_state = state.current_state
+        level_up.advance_level_up_screen()
 
 
 def run():
@@ -282,7 +317,7 @@ def run():
 
             entered_state = run_screen_hooks(entered_state)
 
-        legacy.loop_post_event_updates()
+        loop_post_event_updates()
 
         # Drawing uses where the mouse is this frame, not the last event's position (which is
         # None after a key press, so nothing would be hovered until the mouse moved).
@@ -317,7 +352,7 @@ def run():
                 screen.draw()
 
 
-        legacy.update_achievement_popup()
+        leveling.update_achievement_popup()
         if state.achievement_popup_current is not None:
             draw_achievement_popup(
                 window.game_surface,

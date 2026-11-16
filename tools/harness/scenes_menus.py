@@ -58,7 +58,13 @@ def to_free_play_solitaire(h):
 
 
 def instant_solitaire_win(h):
-    """What the old F8 debug key does: mark the round won with a fixed summary and start the win animation."""
+    """Win the Solitaire round directly: a copy of the old F8 key body, which is now the F10 menu's
+    "Win this Solitaire round" button (instant_win_round). Marks the round won with a fixed summary
+    and starts the win animation.
+
+    Only the solitaire_recap scene uses it: it pictures the victory animation and the recap, not the
+    way there. Journey 03_solitaire wins through the real F10 button.
+    """
     game = h.get("game")
     game.round_won = True
     game.round_summary = {

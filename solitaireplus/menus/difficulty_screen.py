@@ -4,7 +4,8 @@ import pygame
 from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
-legacy = lazy("solitaireplus.legacy")
+free_play_select = lazy("solitaireplus.menus.free_play_select")
+table = lazy("solitaireplus.games.solitaire.table")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 fonts = lazy("solitaireplus.app.fonts")
@@ -299,14 +300,14 @@ def handle_event(event):
                 state.pending_career_activity_index = None
                 state.pending_career_activity_type = None
                 state.pending_career_challenge_id = None
-                legacy.game.clear_challenge()
+                table.game.clear_challenge()
                 state.current_state = state_names.STATE_CAREER_HUB
 
 
             else:
 
                 if state.current_game_mode == "free":
-                    legacy.finish_free_play_sandbox()
+                    free_play_select.finish_free_play_sandbox()
                     state.current_state = state_names.STATE_FREE_PLAY_SELECT
                 else:
                     state.current_state = state_names.STATE_MODE_SELECT
@@ -316,12 +317,12 @@ def handle_event(event):
                 "button_click"
             )
 
-            legacy.game.set_difficulty(
+            table.game.set_difficulty(
                 selected_difficulty
             )
 
 
-            legacy.game.new_game()
+            table.game.new_game()
 
             state.current_state = state_names.STATE_PLAYING
 

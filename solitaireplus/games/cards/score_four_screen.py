@@ -11,7 +11,9 @@ import sys
 import time
 from solitaireplus.app.lazy import lazy
 score_four_tiers = lazy("solitaireplus.games.cards.score_four_tiers")
-legacy = lazy("solitaireplus.legacy")
+free_play_select = lazy("solitaireplus.menus.free_play_select")
+game_globals = lazy("solitaireplus.app.game_globals")
+game_portraits = lazy("solitaireplus.npc.game_portraits")
 window = lazy("solitaireplus.app.window")
 ui_text = lazy("solitaireplus.ui.text")
 sounds = lazy("solitaireplus.app.sounds")
@@ -250,7 +252,7 @@ def draw_score_four_opponent_select():
             105
         )
 
-        legacy.draw_npc_portrait(
+        game_portraits.draw_npc_portrait(
             npc,
             portrait_rect,
             "score_four"
@@ -351,206 +353,6 @@ def draw_score_four_opponent_select():
         font=fonts.difficulty_detail_font
     )
 
-def draw_score_four_npc_panel():
-
-    if (
-            score_four_game.mode
-            != "competitive"
-            or state.score_four_opponent_npc is None
-    ):
-        return
-
-    npc_panel = pygame.Rect(
-        1040,
-        180,
-        285,
-        235
-    )
-
-    pygame.draw.rect(
-        window.game_surface,
-        (
-            25,
-            45,
-            30
-        ),
-        npc_panel
-    )
-
-    pygame.draw.rect(
-        window.game_surface,
-        (
-            255,
-            255,
-            255
-        ),
-        npc_panel,
-        2
-    )
-
-    avatar_rect = pygame.Rect(
-        npc_panel.x + 15,
-        npc_panel.y + 15,
-        80,
-        80
-    )
-
-    legacy.draw_npc_portrait(
-        state.score_four_opponent_npc,
-        avatar_rect,
-        "score_four"
-    )
-
-    # ==================================================
-    # NPC name
-    # ==================================================
-
-    npc_name_surface = (
-        fonts.score_four_npc_font.render(
-            state.score_four_opponent_npc[
-                "name"
-            ],
-            True,
-            (
-                255,
-                255,
-                255
-            )
-        )
-    )
-
-    window.game_surface.blit(
-        npc_name_surface,
-        (
-            npc_panel.x + 110,
-            npc_panel.y + 20
-        )
-    )
-
-    # ==================================================
-    # Skill display
-    # ==================================================
-
-    tier_name = (
-        score_four_tiers.SCORE_FOUR_TIER_DISPLAY_NAMES.get(
-            state.score_four_opponent_npc[
-                "skill_tier"
-            ],
-            state.score_four_opponent_npc[
-                "skill_tier"
-            ]
-        )
-    )
-
-    tier_surface = (
-        fonts.score_four_round_font.render(
-            tier_name,
-            True,
-            (
-                255,
-                230,
-                0
-            )
-        )
-    )
-
-    window.game_surface.blit(
-        tier_surface,
-        (
-            npc_panel.x + 110,
-            npc_panel.y + 60
-        )
-    )
-
-    # ==================================================
-    # Status
-    # ==================================================
-
-    if score_four_game.round_complete:
-
-        thinking_text = "Finished"
-
-    else:
-
-        thinking_text = "Thinking..."
-
-    thinking_surface = (
-        fonts.score_four_round_font.render(
-            thinking_text,
-            True,
-            (
-                220,
-                220,
-                220
-            )
-        )
-    )
-
-    window.game_surface.blit(
-        thinking_surface,
-        (
-            npc_panel.x + 15,
-            npc_panel.y + 125
-        )
-    )
-
-    # ==================================================
-    # Progress bar
-    # ==================================================
-
-    progress = (
-        get_score_four_npc_progress()
-    )
-
-    bar_rect = pygame.Rect(
-        npc_panel.x + 15,
-        npc_panel.y + 170,
-        npc_panel.width - 30,
-        24
-    )
-
-    pygame.draw.rect(
-        window.game_surface,
-        (
-            80,
-            80,
-            80
-        ),
-        bar_rect
-    )
-
-    fill_rect = pygame.Rect(
-        bar_rect.x,
-        bar_rect.y,
-        int(
-            bar_rect.width
-            * progress
-        ),
-        bar_rect.height
-    )
-
-    pygame.draw.rect(
-        window.game_surface,
-        (
-            220,
-            220,
-            220
-        ),
-        fill_rect
-    )
-
-    pygame.draw.rect(
-        window.game_surface,
-        (
-            255,
-            255,
-            255
-        ),
-        bar_rect,
-        2
-    )
-
-
 
 def settle_score_four_session_result():
     """Bank the completed result once, before the player dismisses the screen."""
@@ -582,10 +384,10 @@ def settle_score_four_session_result():
 
 
 def score_four_namespace():
-    """legacy.game_namespace() (the old globals()) with this module added last: score_four_ui looks
+    """game_globals.game_namespace() (the old main.py globals) with this module added last: score_four_ui looks
     up the Score Four engine, rects and helpers by name, and they live here now. Writes still go to
     state, and every name the old namespace had is still found first."""
-    namespace = legacy.game_namespace()
+    namespace = game_globals.game_namespace()
     namespace.maps.append(vars(sys.modules[__name__]))
     return namespace
 
@@ -698,7 +500,7 @@ def loop_event_score_four_mode_select(event):
             )
 
             if state.current_game_mode == "free":
-                legacy.finish_free_play_sandbox()
+                free_play_select.finish_free_play_sandbox()
                 state.current_state = state_names.STATE_FREE_PLAY_SELECT
             else:
                 state.current_state = state_names.STATE_CAREER_EVENT_SELECT
@@ -719,22 +521,22 @@ def loop_event_score_four_opponent_select(event):
         # Opponent cards
         # ------------------------------------------
 
-        for state.index, state.rect in enumerate(
+        for opponent_index, opponent_rect in enumerate(
                 score_four_opponent_rects
         ):
 
             if (
-                    state.index
+                    opponent_index
                     < len(
                 state.score_four_opponent_choices
             )
-                    and state.rect.collidepoint(
+                    and opponent_rect.collidepoint(
                 state.game_mouse_pos
             )
             ):
                 state.score_four_opponent_npc = (
                     state.score_four_opponent_choices[
-                        state.index
+                        opponent_index
                     ]
                 )
 
@@ -829,7 +631,7 @@ def loop_event_score_four(event):
                 )
 
                 if state.current_game_mode == "free":
-                    legacy.finish_free_play_sandbox()
+                    free_play_select.finish_free_play_sandbox()
                     state.current_state = state_names.STATE_FREE_PLAY_SELECT
                 else:
                     state.current_state = state_names.STATE_CAREER_EVENT_SELECT
@@ -859,7 +661,7 @@ def loop_event_score_four(event):
                 )
 
                 if state.current_game_mode == "free":
-                    legacy.finish_free_play_sandbox()
+                    free_play_select.finish_free_play_sandbox()
                     state.current_state = state_names.STATE_FREE_PLAY_SELECT
                 else:
                     state.current_state = state_names.STATE_CAREER_EVENT_SELECT
@@ -884,22 +686,22 @@ def loop_event_score_four(event):
         # Number tiles
         # ------------------------------------------
 
-        reset_rect = legacy.game_namespace().get("score_four_reset_rect")
+        reset_rect = game_globals.game_namespace().get("score_four_reset_rect")
         if reset_rect is not None and state.menu_mouse_pos is not None and reset_rect.collidepoint(state.menu_mouse_pos):
             if score_four_game.reset_current_puzzle(): play_control_sound(sounds.audio, "reset")
             return
 
         clicked_number = False
 
-        for state.index, state.rect in enumerate(
+        for number_index, number_rect in enumerate(
                 score_four_number_rects
         ):
 
-            if state.rect.collidepoint(
+            if number_rect.collidepoint(
                     state.menu_mouse_pos
             ):
                 score_four_game.select_number(
-                    state.index
+                    number_index
                 )
 
                 if not score_four_game.round_complete:
@@ -920,10 +722,10 @@ def loop_event_score_four(event):
 
             for (
                     operator_id,
-                    state.rect
+                    operator_rect
             ) in score_four_operator_rects.items():
 
-                if state.rect.collidepoint(
+                if operator_rect.collidepoint(
                         state.menu_mouse_pos
                 ):
                     score_four_game.select_operator(
@@ -967,7 +769,7 @@ def loop_event_score_four(event):
             ):
 
                 if state.current_game_mode == "free":
-                    legacy.finish_free_play_sandbox()
+                    free_play_select.finish_free_play_sandbox()
                     state.current_state = state_names.STATE_FREE_PLAY_SELECT
                 else:
                     state.current_state = state_names.STATE_CAREER_EVENT_SELECT

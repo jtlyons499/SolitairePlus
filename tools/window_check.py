@@ -179,7 +179,7 @@ def extra_check(label, awareness, caption, loaded, dpi):
     ok = not problems
     modules = "not checked (packaged)" if loaded is None else ("none loaded" if not loaded else ", ".join(loaded))
     print(f"  {'ok ' if ok else 'BAD'} {label:<34} DPI awareness {awareness}, window DPI {dpi} "
-          f"({dpi * 100 // 96 if dpi else '?'}%), caption {caption!r}, legacy/cursors: {modules}"
+          f"({dpi * 100 // 96 if dpi else '?'}%), caption {caption!r}, start-up/cursors: {modules}"
           + (f"  -- {'; '.join(problems)}" if problems else ""), flush=True)
     return {"label": label, "awareness": awareness, "caption": caption, "loaded": loaded, "dpi": dpi, "ok": ok}
 
@@ -242,7 +242,7 @@ def source_child(out_path: str, multiplayer: bool = False) -> None:
     frames = {"n": 0}
 
     def single_player_loaded():
-        return [name for name in ("solitaireplus.legacy", "solitaireplus.ui.cursors") if name in sys.modules]
+        return [name for name in ("solitaireplus.app.startup", "solitaireplus.ui.cursors") if name in sys.modules]
 
     def steps():
         from solitaireplus.app import state, window

@@ -8,7 +8,6 @@ from solitaireplus.app.lazy import lazy
 news_screen = lazy("solitaireplus.career.news_screen")
 leaderboard_engine = lazy("solitaireplus.career.leaderboard_engine")
 calendar = lazy("solitaireplus.career.calendar")
-legacy = lazy("solitaireplus.legacy")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 fonts = lazy("solitaireplus.app.fonts")

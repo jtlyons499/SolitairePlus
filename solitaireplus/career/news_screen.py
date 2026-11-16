@@ -1,11 +1,13 @@
 """Career news screen (moved out of legacy.py)."""
+import random
+from solitaireplus.career.news import build_monthly_flavor_story
 from solitaireplus.games.solitaire.rules import BASE_WIDTH
 import pygame
 from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
 web_pages = lazy("solitaireplus.career.web_pages")
-legacy = lazy("solitaireplus.legacy")
+leaderboard_engine = lazy("solitaireplus.career.leaderboard_engine")
 window = lazy("solitaireplus.app.window")
 ui_text = lazy("solitaireplus.ui.text")
 sounds = lazy("solitaireplus.app.sounds")
@@ -535,3 +537,17 @@ def draw():
     """Old draw-chain branch for STATE_CAREER_NEWS."""
 
     draw_career_news()
+
+
+def maybe_add_monthly_flavor_news():
+    if random.random() > 0.72:
+        return False
+
+    npc_names = [
+        npc.get("name", "")
+        for npc in leaderboard_engine.CAREER_LEADERBOARD_PLAYERS
+        if isinstance(npc, dict)
+    ]
+    headline, body, category = build_monthly_flavor_story(npc_names)
+    add_career_news(headline, body, category)
+    return True

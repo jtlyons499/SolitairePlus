@@ -9,7 +9,7 @@
 
 stub() swaps the screen module's engine instance for `game` and replaces career cash-outs, rating
 events, achievements, sounds and saving with no-ops (the approach of
-tests/test_holdem_session_end_timer.py), so the real session starters, finishers and timed loops
+tests/games/poker/test_holdem_session_end_timer.py), so the real session starters, finishers and timed loops
 run without a window. Fan awards for cash wins are recorded in `cash_wins`. Only the names a
 screen module has are replaced. The Five-O and Blind Man's Bluff screens pick their own
 opponents, so for them the NPC pickers return OPPONENTS.
@@ -84,15 +84,13 @@ class ScreenHarness:
                 get_poker_ante=lambda stack, high_stakes=False: 10,
                 get_niche_poker_starting_stack=lambda minimum_buy_in=100: 1000,
             ),
-            "legacy": SimpleNamespace(
-                game_namespace=dict,
-                lose_fans_for_bad_result=_no_op,
-                finish_free_play_sandbox=_no_op,
-            ),
+            "game_globals": SimpleNamespace(game_namespace=dict),
+            "free_play_select": SimpleNamespace(finish_free_play_sandbox=_no_op),
             "sounds": SimpleNamespace(audio=SimpleNamespace(play_sound=_no_op)),
             "leveling": SimpleNamespace(award_game_xp=_no_op, process_achievement_event=_no_op),
             "career_rewards": SimpleNamespace(
                 rate_poker_cash_out=_no_op,
+                lose_fans_for_bad_result=_no_op,
                 award_fans_for_cash_win=lambda amount, label: self.cash_wins.append(amount),
                 award_fans_for_rating_win=lambda *args: 0,
             ),

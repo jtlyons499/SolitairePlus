@@ -14,7 +14,8 @@ from solitaireplus.app import state_names
 from solitaireplus.profile.unlocks import unlock_ratings
 from solitaireplus.app.lazy import lazy
 career_saving = lazy("solitaireplus.career.career_saving")
-legacy = lazy("solitaireplus.legacy")
+images = lazy("solitaireplus.ui.images")
+table = lazy("solitaireplus.games.solitaire.table")
 window = lazy("solitaireplus.app.window")
 ui_text = lazy("solitaireplus.ui.text")
 sounds = lazy("solitaireplus.app.sounds")
@@ -89,6 +90,7 @@ customize_next_rect = pygame.Rect(
     180,
     50
 )
+CUSTOMIZE_BACKGROUNDS = "backgrounds"
 CUSTOMIZE_FELTS = "felts"
 CUSTOMIZE_TITLES = "titles"
 CUSTOMIZE_CURSORS = "cursors"
@@ -99,11 +101,11 @@ def refresh_cosmetic_assets():
     assets.background_catalog.refresh()
     assets.title_catalog.refresh()
     if assets.felt_catalog.refresh():
-        legacy.sync_selected_cosmetics()
+        table.sync_selected_cosmetics()
 
 
 def cosmetic_art_available(asset_id):
-    catalog = {legacy.CUSTOMIZE_BACKGROUNDS: assets.background_catalog,
+    catalog = {CUSTOMIZE_BACKGROUNDS: assets.background_catalog,
                CUSTOMIZE_FELTS: assets.felt_catalog, CUSTOMIZE_TITLES: assets.title_catalog}.get(state.customize_category)
     return catalog.available(asset_id) if catalog is not None else True
 
@@ -113,7 +115,7 @@ def get_customize_data():
     if state.current_game_mode in ("career", "head_to_head") or state.current_profile_slot is not None:
         unlock_ratings(state.career_ratings, (MENU_BACKGROUNDS, FELTS, TITLES),
                        (state.unlocked_menu_backgrounds, state.unlocked_felts, state.unlocked_titles))
-    if state.customize_category == legacy.CUSTOMIZE_BACKGROUNDS:
+    if state.customize_category == CUSTOMIZE_BACKGROUNDS:
         return (
             MENU_BACKGROUNDS,
             assets.menu_background_surfaces,
@@ -188,7 +190,7 @@ def equip_customize_item(asset_id):
     if not cosmetic_art_available(asset_id):
         return
 
-    if state.customize_category == legacy.CUSTOMIZE_BACKGROUNDS:
+    if state.customize_category == CUSTOMIZE_BACKGROUNDS:
         if asset_id not in state.unlocked_menu_backgrounds:
             return
 
@@ -200,7 +202,7 @@ def equip_customize_item(asset_id):
 
         state.selected_felt = asset_id
 
-        legacy.sync_selected_cosmetics()
+        table.sync_selected_cosmetics()
 
     elif state.customize_category == CUSTOMIZE_TITLES:
         if asset_id not in state.unlocked_titles:
@@ -260,7 +262,7 @@ def draw_customize_menu():
         state.game_mouse_pos,
         selected=(
                 state.customize_category
-                == legacy.CUSTOMIZE_BACKGROUNDS
+                == CUSTOMIZE_BACKGROUNDS
         ),
         font=fonts.difficulty_detail_font
     )
@@ -459,7 +461,7 @@ def draw_customize_menu():
                 preview = source_surface
             else:
                 preview = (
-                    legacy.scale_surface_to_fit(
+                    images.scale_surface_to_fit(
                         source_surface,
                         rect.width - 30,
                         rect.height - 60
@@ -524,7 +526,7 @@ def draw_customize_menu():
                 locked_text,
                 locked_rect
             )
-            kind = {legacy.CUSTOMIZE_BACKGROUNDS: "backgrounds", CUSTOMIZE_FELTS: "felts", CUSTOMIZE_TITLES: "titles"}.get(state.customize_category, "cursors")
+            kind = {CUSTOMIZE_BACKGROUNDS: "backgrounds", CUSTOMIZE_FELTS: "felts", CUSTOMIZE_TITLES: "titles"}.get(state.customize_category, "cursors")
             requirement = os.path.basename(data.get("path", "")) if unlocked else lock_reason(asset_id, data, kind, LEVEL_UNLOCKS, ACHIEVEMENT_DEFINITIONS)
             reason_font = ui_text.get_font(None, 23)
             words, rows = requirement.split(), [""]
@@ -662,7 +664,7 @@ def handle_event(event):
                 "button_click"
             )
 
-            state.customize_category = legacy.CUSTOMIZE_BACKGROUNDS
+            state.customize_category = CUSTOMIZE_BACKGROUNDS
 
             state.customize_page = 0
 
@@ -775,19 +777,19 @@ def handle_event(event):
                 + CUSTOMIZE_ITEMS_PER_PAGE
             ]
 
-            for state.index, state.rect in enumerate(
+            for item_index, item_rect in enumerate(
                     customize_item_rects
             ):
-                if state.index >= len(
+                if item_index >= len(
                         visible_ids
                 ):
                     break
 
-                if state.rect.collidepoint(
+                if item_rect.collidepoint(
                         state.game_mouse_pos
                 ):
                     state.asset_id = (
-                        visible_ids[state.index]
+                        visible_ids[item_index]
                     )
 
                     (

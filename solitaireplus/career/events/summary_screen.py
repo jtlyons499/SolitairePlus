@@ -6,7 +6,6 @@ from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
 from solitaireplus.debug.game_mode import end_debug_game_mode
 calendar = lazy("solitaireplus.career.calendar")
-legacy = lazy("solitaireplus.legacy")
 window = lazy("solitaireplus.app.window")
 ui_text = lazy("solitaireplus.ui.text")
 sounds = lazy("solitaireplus.app.sounds")

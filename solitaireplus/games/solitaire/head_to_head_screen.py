@@ -10,7 +10,7 @@ news_screen = lazy("solitaireplus.career.news_screen")
 leaderboard_engine = lazy("solitaireplus.career.leaderboard_engine")
 event_screen = lazy("solitaireplus.career.events.event_screen")
 career_rewards = lazy("solitaireplus.career.career_rewards")
-legacy = lazy("solitaireplus.legacy")
+table = lazy("solitaireplus.games.solitaire.table")
 leveling = lazy("solitaireplus.profile.leveling")
 
 
@@ -33,19 +33,19 @@ def start_head_to_head_event():
 def restore_head_to_head_game_settings():
 
     if state.head_to_head_previous_deal_mode is not None:
-        legacy.game.set_deal_mode(
+        table.game.set_deal_mode(
             state.head_to_head_previous_deal_mode
         )
 
     if state.head_to_head_previous_difficulty is not None:
-        legacy.game.set_difficulty(
+        table.game.set_difficulty(
             state.head_to_head_previous_difficulty
         )
 
     if state.head_to_head_previous_stock_draw_count is not None:
-        legacy.game.stock_draw_count = state.head_to_head_previous_stock_draw_count
+        table.game.stock_draw_count = state.head_to_head_previous_stock_draw_count
 
-    legacy.game.clear_challenge()
+    table.game.clear_challenge()
     state.head_to_head_previous_deal_mode = None
     state.head_to_head_previous_difficulty = None
     state.head_to_head_previous_stock_draw_count = None
@@ -87,7 +87,7 @@ def finish_head_to_head_race(
         52
         if won
         else event_screen.head_to_head_race.player_progress_from_foundations(
-            legacy.game.foundations
+            table.game.foundations
         )
     )
     elapsed_text = event_screen.head_to_head_race.format_elapsed(
@@ -105,7 +105,7 @@ def finish_head_to_head_race(
                 "Head-to-Head win"
             )
         else:
-            fans_earned = legacy.lose_fans_for_bad_result(
+            fans_earned = career_rewards.lose_fans_for_bad_result(
                 "Head-to-Head loss",
                 severity=1.05,
             )

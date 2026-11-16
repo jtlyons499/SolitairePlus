@@ -1,6 +1,3 @@
-import pygame
-from solitaireplus.ui import text as ui_text
-
 CARD_WIDTH = 120
 CARD_HEIGHT = 168
 
@@ -37,66 +34,3 @@ class Card:
     @property
     def value(self):
         return RANK_VALUES[self.rank]
-
-    def draw(self, screen, x, y, selected=False):
-        rect = pygame.Rect(
-            x,
-            y,
-            CARD_WIDTH,
-            CARD_HEIGHT
-        )
-
-        if self.face_up:
-            pygame.draw.rect(
-                screen,
-                (245, 245, 245),
-                rect
-            )
-
-            pygame.draw.rect(
-                screen,
-                (30, 30, 30),
-                rect,
-                2
-            )
-
-            if self.is_red:
-                color = (180, 30, 30)
-            else:
-                color = (20, 20, 20)
-
-            font = ui_text.get_font(None, 28, sysfont=True)   # shared cache (B44)
-
-            text = font.render(
-                f"{self.rank} {self.suit[0]}",
-                True,
-                color
-            )
-
-            screen.blit(
-                text,
-                (x + 8, y + 8)
-            )
-
-        else:
-            pygame.draw.rect(
-                screen,
-                (40, 60, 150),
-                rect
-            )
-
-            pygame.draw.rect(
-                screen,
-                (240, 240, 240),
-                rect,
-                2
-            )
-
-        # Gold outline when selected
-        if selected:
-            pygame.draw.rect(
-                screen,
-                (255, 215, 0),
-                rect,
-                4
-            )

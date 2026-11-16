@@ -18,7 +18,8 @@ career_saving = lazy("solitaireplus.career.career_saving")
 calendar = lazy("solitaireplus.career.calendar")
 save_data = lazy("solitaireplus.profile.save_data")
 leveling = lazy("solitaireplus.profile.leveling")
-legacy = lazy("solitaireplus.legacy")
+hub_screen = lazy("solitaireplus.career.hub_screen")
+images = lazy("solitaireplus.ui.images")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 fonts = lazy("solitaireplus.app.fonts")
@@ -130,7 +131,7 @@ def sync_achievement_cosmetic_rewards():
         if not definition:
             continue
         for reward in iter_achievement_rewards(definition):
-            legacy.unlock_achievement_cosmetic(reward)
+            leveling.unlock_achievement_cosmetic(reward)
 
 # ==================================================
 # PROFILE HELPERS
@@ -223,7 +224,7 @@ def draw_profile_select_screen():
         )
     )
 
-    profile_select_title = legacy.get_event_ui_asset(
+    profile_select_title = images.get_event_ui_asset(
         str(paths.asset("ui/profile/select_profile_title.png")),
         (360, 96)
     )
@@ -479,7 +480,7 @@ def draw_profile_select_screen():
     )
 
     if state.profile_select_return_state == state_names.STATE_CAREER_HUB:
-        buttons.draw_button(legacy.career_hub_controls.profile_cancel_rect, "Back to Career",
+        buttons.draw_button(hub_screen.career_hub_controls.profile_cancel_rect, "Back to Career",
                     font=fonts.option_value_font)
 
 def draw_delete_profile_confirmation():
@@ -627,17 +628,17 @@ def handle_event(event):
             return
 
         if (state.profile_select_return_state == state_names.STATE_CAREER_HUB
-                and legacy.career_hub_controls.profile_cancel_rect.collidepoint(state.game_mouse_pos)):
+                and hub_screen.career_hub_controls.profile_cancel_rect.collidepoint(state.game_mouse_pos)):
             sounds.audio.play_sound("button_click")
             cancel_career_profile_switch()
             return
 
         delete_clicked = False
 
-        for state.index, delete_rect in enumerate(
+        for delete_index, delete_rect in enumerate(
                 profile_delete_rects
         ):
-            slot = state.index + 1
+            slot = delete_index + 1
 
             # The Delete buttons drawn are the cached slot data's (B10), so the
             # click checks the same data instead of the disk.
@@ -668,14 +669,14 @@ def handle_event(event):
 
         slot_selected = None
 
-        for state.index, state.rect in enumerate(
+        for slot_index, slot_rect in enumerate(
                 profile_slot_rects
         ):
-            if state.rect.collidepoint(
+            if slot_rect.collidepoint(
                     state.game_mouse_pos
             ):
                 slot_selected = (
-                        state.index + 1
+                        slot_index + 1
                 )
 
                 break

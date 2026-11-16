@@ -345,7 +345,7 @@ sys.path.insert(0, os.getcwd())
 import main
 assert Path(main.__file__).resolve().parent.name == 'multiplayer', main.__file__
 assert 'solitaireplus.games.poker.holdem_ui' in sys.modules
-started = [name for name in ('solitaireplus.legacy', 'solitaireplus.ui.cursors') if name in sys.modules]
+started = [name for name in ('solitaireplus.app.startup', 'solitaireplus.ui.cursors') if name in sys.modules]
 assert not started, started
 '''
         with tempfile.TemporaryDirectory() as profile_dir:

@@ -12,7 +12,6 @@ news_screen = lazy("solitaireplus.career.news_screen")
 career_saving = lazy("solitaireplus.career.career_saving")
 career_rewards = lazy("solitaireplus.career.career_rewards")
 career_names = lazy("solitaireplus.career.career_names")
-legacy = lazy("solitaireplus.legacy")
 window = lazy("solitaireplus.app.window")
 ui_text = lazy("solitaireplus.ui.text")
 sounds = lazy("solitaireplus.app.sounds")
@@ -639,11 +638,11 @@ def handle_event(event):
 
         residence_clicked = None
 
-        for residence_id, state.rect in (
+        for residence_id, residence_rect in (
                 career_residence_option_rects.items()
         ):
 
-            if state.rect.collidepoint(
+            if residence_rect.collidepoint(
                     state.game_mouse_pos
             ):
                 residence_clicked = (

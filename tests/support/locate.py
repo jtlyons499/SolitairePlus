@@ -110,8 +110,8 @@ def compile_functions(*names: str, filename: str = "located functions", path=Non
 
 
 # Module aliases that game code uses for shared state and for code moved out of main.py
-# (``state.career_cash``, ``fonts.option_label_font``, ``legacy.auto_save_career()`` ...).
-MODULE_ALIASES = {"state", "state_names", "legacy", "sounds", "window", "assets", "fonts", "cursors",
+# (``state.career_cash``, ``fonts.option_label_font``, ``table.game`` ...).
+MODULE_ALIASES = {"state", "state_names", "sounds", "window", "assets", "fonts", "cursors",
                   "buttons", "ui_text", "panels", "backgrounds"}
 # Every module of the package can be an alias once code moves into it (leveling.add_player_xp ...).
 MODULE_ALIASES |= {path.stem for path in (ROOT / "solitaireplus").rglob("*.py")
@@ -129,7 +129,7 @@ class EnvModule:
         try:
             return self._env[name]
         except KeyError:
-            if name == "game_namespace":          # legacy.game_namespace(): the old globals(), i.e. env
+            if name == "game_namespace":          # game_globals.game_namespace(): the old globals(), i.e. env
                 return lambda: self._env
             raise AttributeError(name) from None
 
@@ -198,8 +198,8 @@ def walk() -> Iterator[ast.AST]:
 def module_defining(name: str):
     """The imported game module whose top level defines ``name`` (def, class or assignment).
 
-    Code moves out of solitaireplus/legacy.py phase by phase; tests that patch or call a
-    function by name use this instead of hard-coding the module it lives in today.
+    Tests that patch or call a function by name use this instead of hard-coding the module it
+    lives in.
     Raises LookupError when no package module (main.py excluded) defines it.
     """
     import importlib

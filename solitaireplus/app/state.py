@@ -1,7 +1,7 @@
 """Shared runtime state: the variables that used to be globals of main.py.
 
 Read and write them as ``state.name``. Values below are the starting values; the names
-listed at the end get their first value during start-up (solitaireplus.legacy and the
+listed at the end get their first value during start-up (solitaireplus/app/startup.py and the
 modules it imports), in the same order as in the old main.py.
 """
 
@@ -64,8 +64,8 @@ seven_card_stud_session_end_at = 0
 seven_card_stud_hand_win_sound_at = 0
 seven_card_stud_last_processed_showdown_hand = 0
 seven_card_stud_table_sweep_rewarded = False
-# Poker table UI (games/poker/holdem_ui.py). The options panel and its settings are shared by
-# the Hold'em, Five Card Draw and Seven Card Stud tables.
+# Poker table UI (games/poker/holdem_ui.py and its holdem_ui_* modules). The options panel and its
+# settings are shared by the Hold'em, Five Card Draw and Seven Card Stud tables.
 holdem_bet_fraction = 0.25
 holdem_bet_slider_dragging = False
 holdem_manual_bet_text = ""
@@ -111,7 +111,6 @@ blind_mans_bluff_buy_in_active = False
 blackjack_session_net = 0
 blackjack_session_rating_change = 0
 blackjack_selected_bet_percentage = None
-blackjack_bet_dropdown_open = False
 score_four_opponent_choices = []
 score_four_opponent_npc = None
 debug_previous_state = None
@@ -121,6 +120,8 @@ debug_poker_selected_ids = []
 debug_poker_select_entered_debug_mode = False   # open_debug_poker_npc_select switched "debug" on (Back ends it)
 debug_poker_select_saved_night = None   # the night in progress when the poker table picker opened (Back restores it)
 career_event_entry = None
+career_event_start_arcade_tokens = 0     # the night's starting arcade tokens and tickets
+career_event_start_arcade_tickets = 0    # (set when a calendar night starts or resumes)
 career_event_has_activity = False
 career_event_summary_title = ""
 career_event_summary_lines = []
@@ -239,10 +240,10 @@ frame_dt = 1 / 60   # seconds the last frame took (what window.clock.tick return
 #   career_poker_learning, career_ratings, career_real_estate_rect, case_collection_state,
 #   column_index, courrier_title_font, cryptid_collection_state, current_index, current_state,
 #   cursor_files, cursor_image, customize_category, customize_return_state,
-#   dead_mans_hand_return_state, direction, display_name, free_game_id, game_mouse_pos, horse_index,
-#   index, loaded, modern_splash_background, modern_splash_logo, options_return_state,
-#   package_index, play_background_image, player_chat_action, player_level, player_name, player_xp,
+#   dead_mans_hand_return_state, direction, display_name, game_mouse_pos, horse_index,
+#   loaded, modern_splash_background, modern_splash_logo, options_return_state,
+#   play_background_image, player_chat_action, player_level, player_name, player_xp,
 #   player_xp_to_next, post_round_return_state, preview_source, preview_surface, profile_name_text,
-#   profile_return_state, profile_select_return_state, profile_switch_rect, rect, relative_x,
+#   profile_return_state, profile_select_return_state, profile_switch_rect, relative_x,
 #   running, screen, selected_felt, selected_menu_background, selected_title, success,
 #   system_cursor_metrics, unlocked_felts, unlocked_menu_backgrounds, unlocked_titles, volume, wager

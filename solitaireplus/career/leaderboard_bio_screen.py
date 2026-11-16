@@ -11,7 +11,8 @@ from solitaireplus.career.world_flavor import strongest_rating_status
 from solitaireplus.app.lazy import lazy
 web_pages = lazy("solitaireplus.career.web_pages")
 career_names = lazy("solitaireplus.career.career_names")
-legacy = lazy("solitaireplus.legacy")
+game_portraits = lazy("solitaireplus.npc.game_portraits")
+profile_editor = lazy("solitaireplus.profile.profile_editor")
 window = lazy("solitaireplus.app.window")
 ui_text = lazy("solitaireplus.ui.text")
 sounds = lazy("solitaireplus.app.sounds")
@@ -145,9 +146,9 @@ def draw_career_leaderboard_bio():
 
     npc = entry.get("npc")
     if is_player:
-        portrait = legacy.get_profile_avatar()
+        portrait = profile_editor.get_profile_avatar()
     elif isinstance(npc, dict):
-        portrait = legacy.get_npc_portrait_surface(npc, 260)
+        portrait = game_portraits.get_npc_portrait_surface(npc, 260)
     else:
         portrait = None
 

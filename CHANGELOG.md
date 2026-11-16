@@ -84,6 +84,7 @@ How to use this file (maintainers and AI agents):
 - Dead Man's Hand: enemies can no longer be placed somewhere you can't walk to. None of the current levels has such a spot.
 - On a small screen (a usable area below about 1366x800, such as a 1366x768 laptop), the game window now really opens at the smaller size that fits, and a smaller size you drag it to stays. Before, it was held at 1366x768 and did not fit.
 - Score Four, the Bigfoot and Alien story nights, Head-to-Head (opponent choice and the race countdown) and the Solitaire "Restart this hand?" box no longer build new fonts on every frame, so these screens run a little smoother. They look exactly the same.
+- The game now keeps only its 10 newest log files (in `%LOCALAPPDATA%\SimpleSolitaire\logs`) instead of adding one more at every start. Logs of a copy that is still running are left alone.
 
 ### Online play
 - Room codes are now 6 letters/digits instead of 5 digits, and guessing other people's room codes is slowed down and then blocked. Old 5-digit codes still work with players who haven't updated.
@@ -129,6 +130,7 @@ How to use this file (maintainers and AI agents):
 - The game's code now lives in one `solitaireplus/` package, organised by area (app, menus, profile, career, NPCs, and one folder per game family) instead of 110 files in the top folder. Game files are found from the install folder, not the current folder. Nothing changes for players.
 - New developer safety net for the upcoming code reorganisation: every screen is rendered headless and compared pixel by pixel between versions, and 18 scripted playthroughs check that money, XP and progress come out the same (`tools/screen_harness.py`, `tools/replay.py`).
 - Menus and career screens do much less work every frame: fonts and scaled button art are made once and reused, and the drifting main-menu background is pre-scaled instead of shrinking a 4300x2500 picture 60 times a second. The picture is exactly the same.
+- The code reorganisation is finished: the last leftover of the old 32,000-line `main.py` is gone, the biggest files (the Solitaire rules, the Hold'em engine and the Hold'em table) are split into smaller topic files, the tests are sorted into one folder per area, and the one-off reorganisation tools are removed. Nothing changes for players.
 
 ## [0.0.6b] - 2026-11-02
 

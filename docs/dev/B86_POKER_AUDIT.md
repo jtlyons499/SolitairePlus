@@ -13,7 +13,7 @@ lists the visible changes and tests.
 
 ## 1. Audit: behaviour before B86
 
-Paths: single-player files are under solitaireplus/games/poker/ (holdem.py, five_card_draw.py, seven_card_stud.py, five_o.py, blind_mans_bluff.py, niche_common.py, ai.py, strategy.py, learning.py, *_screen.py, *_ui.py). solitaireplus/npc/personality.py is written as personality.py. mp/ = multiplayer/. Line numbers are for commit 7195fb3 (before B86). NEW-n marks problems not in the brief: NEW-1 an uncalled-bet refund is counted as a won pot; NEW-2 Stud never sets last_resolved_pot at showdown; NEW-3 a human fold in Hold'em fast-forwards the board; NEW-4 the Five-O NPC can never raise; NEW-5 Hold'em chat history is never cleared; NEW-6 a short all-in counts toward Stud's raise cap. Seeded sims (scratchpad only, no repo edits): 0 chips lost in about 1,260 random Hold'em/Draw/Stud hands; B36 seen 2 times in Hold'em and 3 times in Stud; NEW-1 seen in Hold'em and Draw; NEW-2 seen in 25 of 25 Stud showdowns.
+Paths: single-player files are under solitaireplus/games/poker/ (holdem.py, five_card_draw.py, seven_card_stud.py, five_o.py, blind_mans_bluff.py, niche_common.py, ai.py, strategy.py, learning.py, *_screen.py, *_ui.py). solitaireplus/npc/personality.py is written as personality.py. mp/ = multiplayer/. Line numbers are for commit 7195fb3 (before B86). Since Phase 12, holdem.py is split into topic mixins (holdem_seats.py, holdem_npc.py, holdem_betting.py, holdem_pots.py, holdem_showdown.py) and holdem_ui.py into topic modules (holdem_ui_state.py, holdem_ui_widgets.py, holdem_ui_options.py, holdem_ui_pot.py, holdem_ui_cards.py, holdem_ui_log.py, holdem_ui_controls.py, holdem_ui_hud.py); the function names below did not change, and the line numbers still mean the old single files at 7195fb3. NEW-n marks problems not in the brief: NEW-1 an uncalled-bet refund is counted as a won pot; NEW-2 Stud never sets last_resolved_pot at showdown; NEW-3 a human fold in Hold'em fast-forwards the board; NEW-4 the Five-O NPC can never raise; NEW-5 Hold'em chat history is never cleared; NEW-6 a short all-in counts toward Stud's raise cap. Seeded sims (scratchpad only, no repo edits): 0 chips lost in about 1,260 random Hold'em/Draw/Stud hands; B36 seen 2 times in Hold'em and 3 times in Stud; NEW-1 seen in Hold'em and Draw; NEW-2 seen in 25 of 25 Stud showdowns.
 
 | Rule | Hold'em | Five-Card Draw | Seven-Card Stud | Five-O | Blind Man's Bluff | Multiplayer Hold'em |
 |---|---|---|---|---|---|---|
@@ -38,8 +38,10 @@ Paths: single-player files are under solitaireplus/games/poker/ (holdem.py, five
 
 Each rule is written once and every single-player variant calls it. Table rules, pots, betting and hand evaluation
 are in `solitaireplus/games/poker/core.py`, NPC decision inputs in `npc_inputs.py`, grudge recording in
-`npc/personality.py` (`PokerGrudgeMemory.record_showdown`) and screen timers in `table_timers.py`. Multiplayer
-Hold'em and Blind Man's Bluff move onto the same code in Phase 11 (steps in `tools/refactor/specs/phase11_plan.md`).
+`npc/personality.py` (`PokerGrudgeMemory.record_showdown`) and screen timers in `table_timers.py`. Since Phase 11,
+multiplayer Hold'em rooms play on the same engine, and Blind Man's Bluff rooms settle pots, raises and winners with
+the same core rules; room Blind Man's Bluff NPCs still use their own simpler decisions (see `docs/POKER_RULE_CHANGES.md`,
+"Online play"). The Phase 11 steps are in `docs/dev/PHASE11_PLAN.md`.
 
 | Rule | Shared code | What changed |
 |---|---|---|
@@ -67,7 +69,7 @@ Hold'em and Blind Man's Bluff move onto the same code in Phase 11 (steps in `too
 - **Per-variant stakes and wealth scaling factors (Hold'em/Draw blinds at 1% of buy-in, Stud ante/bring-in fractions, Five-O 1% ante and pot-based bet, BMB 0.8% ante; Draw scales wealth by 0.80 before the draw, Stud by 0.45-0.85 by street).** This is tuning for each table's structure and the information it reveals. Only the formula and signal are shared; the scale stays per variant.
 - **Position labels: blinds, button and cutoff in Hold'em and Draw; 'unknown' in Stud, Five-O and BMB.** Stud acts by exposed cards, and the niche games have no button, so there is no positional meaning.
 - **Manual next hand and Return in Five-O and BMB, vs auto-deal and a 5 s session-end timer in Hold'em, Draw and Stud.** This is session UX rather than a poker rule. Changing it would alter each screen's visible flow without a rules benefit; revisit only if Dan wants identical session flow.
-- **Multiplayer room features: buy-back, NPC replacement, sit-out, spectating host, auto-fold of absent humans, 6 s between hands.** Networked play needs these, and the single-player tables have no equivalent. Phase 11 moves multiplayer onto the shared engine without touching these features.
+- **Multiplayer room features: buy-back, NPC replacement, sit-out, spectating host, auto-fold of absent humans, 6 s between hands.** Networked play needs these, and the single-player tables have no equivalent. Phase 11 moved multiplayer onto the shared engine without changing these features.
 - **Showdown order and mucking: every live hand is shown in seat order, with no mucking.** This is already the same in every variant; no change is needed. Five-O's timed column reveal and BMB's always-visible cards are part of their structures.
 
 ## 4. Choices for the designer

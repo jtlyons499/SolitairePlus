@@ -54,10 +54,6 @@ SUIT_SNAKE_MODES = {
     },
 }
 
-# Backward-compatible alias for any older integration code that still imports
-# the original name. New UI/code should refer to modes.
-SUIT_SNAKE_DIFFICULTIES = SUIT_SNAKE_MODES
-
 SUIT_SNAKE_MOVEMENT_STYLES = {
     "step": {
         "label": "STEP MOVEMENT",
@@ -84,11 +80,6 @@ def get_suit_snake_mode(mode_id):
         mode_id,
         SUIT_SNAKE_MODES["classic_standard"],
     )
-
-
-def get_suit_snake_difficulty(difficulty_id):
-    """Backward-compatible wrapper around the new mode system."""
-    return get_suit_snake_mode(difficulty_id)
 
 
 def get_suit_snake_movement_style(style_id):

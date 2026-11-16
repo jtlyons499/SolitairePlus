@@ -2,8 +2,8 @@
 import pygame
 from solitaireplus.app import state
 from solitaireplus.app import state_names
+from solitaireplus.menus import help_content   # builds the help pages when the help screen loads
 from solitaireplus.app.lazy import lazy
-legacy = lazy("solitaireplus.legacy")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 panels = lazy("solitaireplus.ui.panels")
@@ -326,7 +326,7 @@ def draw_how_to_play():
     current_y = nav_panel.y + 20 - state.help_nav_scroll
     unscrolled_y = nav_panel.y + 20
 
-    for category_id, category_data in legacy.HELP_NAVIGATION.items():
+    for category_id, category_data in help_content.HELP_NAVIGATION.items():
         category_rect = pygame.Rect(
             nav_panel.x + 15,
             current_y,
@@ -399,9 +399,9 @@ def draw_how_to_play():
     # Content page
     # ==================================================
 
-    content = legacy.HELP_CONTENT.get(
+    content = help_content.HELP_CONTENT.get(
         state.help_current_page,
-        legacy.HELP_CONTENT["solitaire_basics"]
+        help_content.HELP_CONTENT["solitaire_basics"]
     )
 
     section_title = fonts.option_label_font.render(
@@ -643,8 +643,8 @@ def handle_event(event):
 
         click_handled = False
 
-        for category_id, state.rect in help_category_rects.items():
-            if state.rect.collidepoint(state.game_mouse_pos):
+        for category_id, category_rect in help_category_rects.items():
+            if category_rect.collidepoint(state.game_mouse_pos):
                 sounds.audio.play_sound("button_click")
 
                 was_expanded = help_expanded_categories.get(
@@ -662,8 +662,8 @@ def handle_event(event):
                 break
 
         if not click_handled:
-            for page_id, state.rect in help_page_rects.items():
-                if state.rect.collidepoint(state.game_mouse_pos):
+            for page_id, page_rect in help_page_rects.items():
+                if page_rect.collidepoint(state.game_mouse_pos):
                     sounds.audio.play_sound("button_click")
                     state.help_current_page = page_id
                     state.help_content_scroll = 0

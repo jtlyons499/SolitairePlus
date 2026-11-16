@@ -7,7 +7,7 @@ from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
 career_saving = lazy("solitaireplus.career.career_saving")
 main_menu = lazy("solitaireplus.menus.main_menu")
-legacy = lazy("solitaireplus.legacy")
+table = lazy("solitaireplus.games.solitaire.table")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 panels = lazy("solitaireplus.ui.panels")
@@ -175,7 +175,7 @@ def current_app_settings_values():
         "music_mode": sounds.audio.music_mode,
         "music_volume": sounds.audio.music_volume,
         "sfx_volume": sounds.audio.sfx_volume,
-        "double_click_mode": legacy.game.double_click_mode,
+        "double_click_mode": table.game.double_click_mode,
         "window_size": [state.WINDOWED_WIDTH, state.WINDOWED_HEIGHT],
         "fullscreen": state.fullscreen_enabled,
     }
@@ -191,7 +191,7 @@ def apply_saved_app_settings():
     if app_settings.get("sfx_volume") is not None:
         sounds.audio.set_sfx_volume(app_settings.get("sfx_volume"))
     if app_settings.get("double_click_mode"):
-        legacy.game.double_click_mode = app_settings.get("double_click_mode")
+        table.game.double_click_mode = app_settings.get("double_click_mode")
     size = app_settings.get("window_size")
     if size and tuple(size) in RESOLUTION_OPTIONS:
         # A size saved on a bigger monitor may not fit this one: then keep the default size.
@@ -529,7 +529,7 @@ def draw_options_menu():
         "Foundation Only",
         state.game_mouse_pos,
         selected=(
-                legacy.game.double_click_mode
+                table.game.double_click_mode
                 == "foundation"
         ),
         font=fonts.option_value_font
@@ -540,7 +540,7 @@ def draw_options_menu():
         "Foundation + Tableau",
         state.game_mouse_pos,
         selected=(
-                legacy.game.double_click_mode
+                table.game.double_click_mode
                 == "foundation_and_tableau"
         ),
         font=fonts.option_value_font
@@ -573,18 +573,18 @@ def draw_options_menu():
         "Random",
         state.game_mouse_pos,
         selected=(
-                legacy.game.deal_mode
+                table.game.deal_mode
                 == "random"
         ),
         font=fonts.option_value_font
     )
 
-    if legacy.VERIFIED_DEALS_ENABLED:
+    if table.VERIFIED_DEALS_ENABLED:
         buttons.draw_menu_button(
             deal_verified_rect,
             "Verified Solvable",
             state.game_mouse_pos,
-            selected=(legacy.game.deal_mode == "verified"),
+            selected=(table.game.deal_mode == "verified"),
             font=fonts.option_value_font
         )
     else:
@@ -873,7 +873,7 @@ def handle_event(event):
                 "button_click"
             )
 
-            legacy.game.double_click_mode = (
+            table.game.double_click_mode = (
                 "foundation"
             )
 
@@ -884,7 +884,7 @@ def handle_event(event):
                 "button_click"
             )
 
-            legacy.game.double_click_mode = (
+            table.game.double_click_mode = (
                 "foundation_and_tableau"
             )
 
@@ -898,16 +898,16 @@ def handle_event(event):
             sounds.audio.play_sound(
                 "button_click"
             )
-            legacy.game.set_deal_mode(
+            table.game.set_deal_mode(
                 "random"
             )
 
         elif deal_verified_rect.collidepoint(
                 state.game_mouse_pos
         ):
-            if legacy.VERIFIED_DEALS_ENABLED:
+            if table.VERIFIED_DEALS_ENABLED:
                 sounds.audio.play_sound("button_click")
-                legacy.game.set_deal_mode("verified")
+                table.game.set_deal_mode("verified")
 
         # ----------------------------
         # Fullscreen
@@ -944,15 +944,15 @@ def handle_event(event):
         else:
             resolution_clicked = False
 
-            for state.index, state.rect in enumerate(
+            for resolution_index, resolution_rect in enumerate(
                     resolution_rects
             ):
-                if state.rect.collidepoint(
+                if resolution_rect.collidepoint(
                         state.game_mouse_pos
                 ):
                     width, height = (
                         RESOLUTION_OPTIONS[
-                            state.index
+                            resolution_index
                         ]
                     )
 

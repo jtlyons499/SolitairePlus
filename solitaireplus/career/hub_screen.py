@@ -7,6 +7,7 @@ from solitaireplus.npc.manager import NPCS
 from solitaireplus.career.time_warp import advance_months
 from solitaireplus.career.ratings import apply_rating_change
 from solitaireplus.career.case_opening import award_earned_trophies
+from solitaireplus.career.hub_controls import CareerHubControls
 from solitaireplus.career.fans import clamp_fans
 import copy
 from solitaireplus.career.asset_images import get_career_hub_image
@@ -30,7 +31,10 @@ case_opening_screen = lazy("solitaireplus.career.case_opening_screen")
 career_saving = lazy("solitaireplus.career.career_saving")
 career_names = lazy("solitaireplus.career.career_names")
 calendar = lazy("solitaireplus.career.calendar")
-legacy = lazy("solitaireplus.legacy")
+customize = lazy("solitaireplus.menus.customize")
+game_globals = lazy("solitaireplus.app.game_globals")
+profile_editor = lazy("solitaireplus.profile.profile_editor")
+table = lazy("solitaireplus.games.solitaire.table")
 window = lazy("solitaireplus.app.window")
 ui_text = lazy("solitaireplus.ui.text")
 sounds = lazy("solitaireplus.app.sounds")
@@ -38,6 +42,8 @@ leveling = lazy("solitaireplus.profile.leveling")
 fonts = lazy("solitaireplus.app.fonts")
 cursors = lazy("solitaireplus.ui.cursors")
 buttons = lazy("solitaireplus.ui.buttons")
+
+career_hub_controls = CareerHubControls()
 
 
 def get_career_month_name():
@@ -159,7 +165,7 @@ def skip_career_day():
 
 def skip_to_selected_career_day():
     calendar.ensure_career_schedule()
-    skipped = legacy.career_hub_controls.days_to_skip(
+    skipped = career_hub_controls.days_to_skip(
         state.career_current_schedule, state.career_day_of_month
     )
     if not skipped:
@@ -170,7 +176,7 @@ def skip_to_selected_career_day():
     for _ in range(skipped):
         calendar.advance_career_day(completed=False, save_after=False)
     career_saving.auto_save_career()
-    legacy.career_hub_controls.show_message(
+    career_hub_controls.show_message(
         f"Skipped {skipped} day{'s' if skipped != 1 else ''}. "
         f"Day {state.career_day_of_month} is ready to play.", pygame.time.get_ticks()
     )
@@ -181,7 +187,7 @@ def time_warp_career(months):
     calendar.reset_career_hub_runtime()
     skipped=advance_months(months,lambda:(state.career_year,state.career_month,state.career_day_of_month),calendar.advance_career_day)
     career_saving.auto_save_career()
-    legacy.career_hub_controls.show_message(f"Time Warp: skipped {months} month(s), {skipped} days.",pygame.time.get_ticks(),duration=4000)
+    career_hub_controls.show_message(f"Time Warp: skipped {months} month(s), {skipped} days.",pygame.time.get_ticks(),duration=4000)
 
 
 def get_ordinal_day(number):
@@ -276,14 +282,14 @@ def buy_case_for_screen(case_id):
 def start_career_cryptid():
     state.current_game_mode='career'
     collection_screen.cryptid_screen.enter_career(NPCS,state.cryptid_collection_state,career_saving.auto_save_career,settle_career_cryptid,
-                                temporary=legacy.game_namespace().get("guest_mode",False) or legacy.game_namespace().get("current_profile_slot",1) is None)
+                                temporary=game_globals.game_namespace().get("guest_mode",False) or game_globals.game_namespace().get("current_profile_slot",1) is None)
     state.current_state=state_names.STATE_CRYPTID_CREATURES
 
 
 def settle_career_cryptid(serial,winner):
     previous=copy.deepcopy(state.cryptid_collection_state)
     previous_progress=(state.player_xp,state.player_level,state.player_xp_to_next,list(state.level_up_queue))
-    previous_cosmetics={name:set(legacy.game_namespace()[name]) for name in ('unlocked_menu_backgrounds','unlocked_felts','unlocked_titles') if name in legacy.game_namespace()}
+    previous_cosmetics={name:set(game_globals.game_namespace()[name]) for name in ('unlocked_menu_backgrounds','unlocked_felts','unlocked_titles') if name in game_globals.game_namespace()}
     try:
         result=reward_battle(state.cryptid_collection_state,serial,winner)
         if result:
@@ -296,7 +302,7 @@ def settle_career_cryptid(serial,winner):
         state.player_xp,state.player_level,state.player_xp_to_next,queued=previous_progress
         state.level_up_queue[:]=queued
         for name,values in previous_cosmetics.items():
-            legacy.game_namespace()[name].clear();legacy.game_namespace()[name].update(values)
+            game_globals.game_namespace()[name].clear();game_globals.game_namespace()[name].update(values)
         raise
 
 
@@ -521,7 +527,7 @@ def draw_career_hub():
         2
     )
 
-    avatar = legacy.get_profile_avatar()
+    avatar = profile_editor.get_profile_avatar()
 
     avatar_preview = pygame.transform.smoothscale(
         avatar,
@@ -953,7 +959,7 @@ def draw_career_hub():
         calendar_page_start:calendar_page_start + 15
     ]
 
-    legacy.career_hub_controls.begin_calendar(
+    career_hub_controls.begin_calendar(
         state.career_current_schedule,
         state.career_day_of_month
     )
@@ -1047,8 +1053,8 @@ def draw_career_hub():
             cell_rect
         )
 
-        legacy.career_hub_controls.register_day(entry["day_number"], cell_rect)
-        if legacy.career_hub_controls.selected_day == entry["day_number"]:
+        career_hub_controls.register_day(entry["day_number"], cell_rect)
+        if career_hub_controls.selected_day == entry["day_number"]:
             cell_fill = (220, 238, 255)
             pygame.draw.rect(window.game_surface, cell_fill, cell_rect)
 
@@ -1058,7 +1064,7 @@ def draw_career_hub():
             (220, 0, 0)
             if is_current_day
             else (35, 110, 190)
-            if legacy.career_hub_controls.selected_day == entry["day_number"]
+            if career_hub_controls.selected_day == entry["day_number"]
             else (0, 0, 0)
         )
 
@@ -1163,7 +1169,7 @@ def draw_career_hub():
                 24,
                 20
             )
-            legacy.career_hub_controls.register_fast_skip(
+            career_hub_controls.register_fast_skip(
                 entry["day_number"],
                 fast_skip_rect
             )
@@ -1919,10 +1925,10 @@ def draw_career_hub():
         font=fonts.difficulty_detail_font
     )
 
-    legacy.career_hub_controls.draw_time_warp(window.game_surface,date_header_rect,buttons.draw_button,legacy.career_hub_controls.font)
+    career_hub_controls.draw_time_warp(window.game_surface,date_header_rect,buttons.draw_button,career_hub_controls.font)
 
-    legacy.career_hub_controls.draw_toolbar(
-        window.game_surface, buttons.draw_button, legacy.career_hub_controls.font, pygame.time.get_ticks()
+    career_hub_controls.draw_toolbar(
+        window.game_surface, buttons.draw_button, career_hub_controls.font, pygame.time.get_ticks()
     )
 
     buttons.draw_button(
@@ -1934,8 +1940,8 @@ def draw_career_hub():
     # FAST-SKIP CONFIRMATION
     # ==================================================
 
-    if legacy.career_hub_controls.confirm_skip_day is not None:
-        confirm_day = legacy.career_hub_controls.confirm_skip_day
+    if career_hub_controls.confirm_skip_day is not None:
+        confirm_day = career_hub_controls.confirm_skip_day
         confirm_entry = get_career_day_entry(confirm_day)
         if confirm_entry is not None:
             weekday = calendar.CAREER_WEEKDAY_NAMES[
@@ -2028,26 +2034,26 @@ def handle_event(event):
             and event.button == 1
     ):
 
-        if legacy.career_hub_controls.confirm_skip_day is not None:
+        if career_hub_controls.confirm_skip_day is not None:
             if career_fast_skip_yes_rect.collidepoint(state.game_mouse_pos):
                 sounds.audio.play_sound("button_click")
-                target_day = legacy.career_hub_controls.confirm_skip_day
-                legacy.career_hub_controls.selected_day = target_day
-                legacy.career_hub_controls.clear_skip_confirmation()
+                target_day = career_hub_controls.confirm_skip_day
+                career_hub_controls.selected_day = target_day
+                career_hub_controls.clear_skip_confirmation()
                 skip_to_selected_career_day()
             elif career_fast_skip_no_rect.collidepoint(state.game_mouse_pos):
                 sounds.audio.play_sound("button_click")
-                legacy.career_hub_controls.clear_skip_confirmation()
+                career_hub_controls.clear_skip_confirmation()
             return
 
-        fast_skip_day = (None if legacy.career_hub_controls.warp_open else legacy.career_hub_controls.request_fast_skip_at(
+        fast_skip_day = (None if career_hub_controls.warp_open else career_hub_controls.request_fast_skip_at(
             state.game_mouse_pos
         ))
         if fast_skip_day is not None:
             sounds.audio.play_sound("button_click")
             return
 
-        hub_action = legacy.career_hub_controls.get_action(state.game_mouse_pos)
+        hub_action = career_hub_controls.get_action(state.game_mouse_pos)
         if hub_action is not None:
             sounds.audio.play_sound("button_click")
             if hub_action.startswith("warp:"):
@@ -2079,11 +2085,11 @@ def handle_event(event):
                 state.current_state = state_names.STATE_OPTIONS
             elif hub_action == "customize":
                 state.customize_return_state = state_names.STATE_CAREER_HUB
-                state.customize_category = legacy.CUSTOMIZE_BACKGROUNDS
+                state.customize_category = customize.CUSTOMIZE_BACKGROUNDS
                 state.customize_page = 0
                 state.current_state = state_names.STATE_CUSTOMIZE
             return
-        if legacy.career_hub_controls.select_day_at(state.game_mouse_pos):
+        if career_hub_controls.select_day_at(state.game_mouse_pos):
             sounds.audio.play_sound("button_click")
             return
 
@@ -2111,7 +2117,7 @@ def handle_event(event):
                         == night.CAREER_ACTIVITY_ROUND
                 ):
                     state.pending_career_activity_index = (
-                        legacy.get_current_career_activity_index()
+                        calendar.get_current_career_activity_index()
                     )
 
                     state.pending_career_activity_type = night.CAREER_ACTIVITY_ROUND
@@ -2122,7 +2128,7 @@ def handle_event(event):
                         "career"
                     )
 
-                    legacy.game.clear_challenge()
+                    table.game.clear_challenge()
 
                     state.current_state = state_names.STATE_DIFFICULTY
 
@@ -2135,7 +2141,7 @@ def handle_event(event):
                         == night.CAREER_ACTIVITY_CHALLENGE
                 ):
                     state.pending_career_activity_index = (
-                        legacy.get_current_career_activity_index()
+                        calendar.get_current_career_activity_index()
                     )
 
                     state.pending_career_activity_type = night.CAREER_ACTIVITY_CHALLENGE
@@ -2150,11 +2156,11 @@ def handle_event(event):
                         "career"
                     )
 
-                    legacy.game.set_challenge(
+                    table.game.set_challenge(
                         state.pending_career_challenge_id
                     )
 
-                    legacy.game.new_game()
+                    table.game.new_game()
 
                     state.current_state = state_names.STATE_PLAYING
 
@@ -2176,7 +2182,7 @@ def handle_event(event):
                     if entry is not None:
                         state.career_event_entry = entry
 
-                        if not restore_event_progress(state.career_event_entry, legacy.game_namespace()):
+                        if not restore_event_progress(state.career_event_entry, game_globals.game_namespace()):
                             state.career_event_has_activity = False
                             night.reset_career_event_result_log()
                             night.reset_career_event_session_totals(activity_type)

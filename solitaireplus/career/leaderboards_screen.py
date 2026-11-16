@@ -10,7 +10,6 @@ from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
 web_pages = lazy("solitaireplus.career.web_pages")
 leaderboard_engine = lazy("solitaireplus.career.leaderboard_engine")
-legacy = lazy("solitaireplus.legacy")
 window = lazy("solitaireplus.app.window")
 ui_text = lazy("solitaireplus.ui.text")
 sounds = lazy("solitaireplus.app.sounds")

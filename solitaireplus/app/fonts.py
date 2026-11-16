@@ -93,11 +93,6 @@ tooltip_font = pygame.font.SysFont(
 
 # Blackjack deliberately uses its own typography rather than the default UI
 # font so the table has a more distinct casino identity.
-blackjack_title_font = pygame.font.SysFont(
-    "georgia",
-    46,
-    bold=True
-)
 blackjack_heading_font = pygame.font.SysFont(
     "cambria",
     27,
@@ -131,9 +126,4 @@ score_four_score_font = pygame.font.Font(
 score_four_round_font = pygame.font.Font(
     None,
     26
-)
-
-score_four_npc_font = pygame.font.Font(
-    None,
-    30
 )

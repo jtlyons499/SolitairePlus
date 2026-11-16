@@ -59,7 +59,7 @@ from solitaireplus.debug.menu import toggle_minigame_category
 from solitaireplus.app.lazy import lazy
 game_screen = lazy("solitaireplus.games.dead_mans_hand.game_screen")
 actions = lazy("solitaireplus.debug.actions")
-legacy = lazy("solitaireplus.legacy")
+game_globals = lazy("solitaireplus.app.game_globals")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 panels = lazy("solitaireplus.ui.panels")
@@ -353,7 +353,7 @@ def handle_event(event):
                 max(LEVEL_XP_THRESHOLDS)
             )
             from solitaireplus.debug.unlocks import debug_unlock_everything
-            unlock_summary = debug_unlock_everything(legacy.game_namespace())
+            unlock_summary = debug_unlock_everything(game_globals.game_namespace())
             show_debug_message(
                 "Max level + all current unlocks enabled"
             )

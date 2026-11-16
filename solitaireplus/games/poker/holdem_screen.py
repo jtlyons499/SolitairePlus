@@ -48,7 +48,10 @@ from solitaireplus.career.session_summary import track_night_cash
 from solitaireplus.games.poker.holdem_ui import update_holdem_bet_slider
 from solitaireplus.app.lazy import lazy
 table_stakes = lazy("solitaireplus.games.poker.table_stakes")
-legacy = lazy("solitaireplus.legacy")
+free_play_select = lazy("solitaireplus.menus.free_play_select")
+game_globals = lazy("solitaireplus.app.game_globals")
+game_portraits = lazy("solitaireplus.npc.game_portraits")
+table = lazy("solitaireplus.games.solitaire.table")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 panels = lazy("solitaireplus.ui.panels")
@@ -58,12 +61,6 @@ buttons = lazy("solitaireplus.ui.buttons")
 
 
 texas_holdem_game = TexasHoldemGame()
-
-TEXAS_HOLDEM_NPC_DELAY = 1200
-TEXAS_HOLDEM_STREET_DELAY = 1200
-
-TEXAS_HOLDEM_NEXT_HAND_DELAY = 15000
-
 
 TEXAS_HOLDEM_SESSION_END_DELAY = 5000
 
@@ -481,7 +478,7 @@ def start_texas_holdem_session(
     # ==================================================
 
     texas_holdem_game.career_session_rated = state.current_game_mode == "career"
-    texas_holdem_game.learning_store = legacy.game_namespace().get("career_poker_learning") if state.current_game_mode == "career" else None
+    texas_holdem_game.learning_store = game_globals.game_namespace().get("career_poker_learning") if state.current_game_mode == "career" else None
     texas_holdem_game.start_session(
         opponents,
         starting_stack,
@@ -512,7 +509,7 @@ def finish_texas_holdem_session():
         )
 
         state.texas_holdem_buy_in_active = False
-        track_night_cash(legacy.game_namespace(), "texas_holdem", state.texas_holdem_session_net)
+        track_night_cash(game_globals.game_namespace(), "texas_holdem", state.texas_holdem_session_net)
         career_rewards.rate_poker_cash_out("texas_holdem", texas_holdem_game)
 
     if (
@@ -531,14 +528,14 @@ def finish_texas_holdem_session():
         won_session = state.texas_holdem_session_net > 0
         leveling.award_game_xp("texas_holdem", won=won_session)
         if state.current_game_mode == "career" and state.texas_holdem_session_net < 0:
-            legacy.lose_fans_for_bad_result(
+            career_rewards.lose_fans_for_bad_result(
                 "Rough Hold'em session",
                 net_loss=abs(state.texas_holdem_session_net),
             )
         texas_holdem_game.session_xp_rewarded = True
 
     if state.current_game_mode == "free":
-        legacy.finish_free_play_sandbox()
+        free_play_select.finish_free_play_sandbox()
         state.current_state = state_names.STATE_FREE_PLAY_SELECT
     else:
         state.current_state = state_names.STATE_CAREER_EVENT_SELECT
@@ -579,7 +576,7 @@ def loop_event_texas_holdem_buy_in(event):
                 )
 
                 if state.current_game_mode == "free":
-                    legacy.finish_free_play_sandbox()
+                    free_play_select.finish_free_play_sandbox()
                     state.current_state = state_names.STATE_FREE_PLAY_SELECT
                 else:
                     state.current_state = state_names.STATE_CAREER_EVENT_SELECT
@@ -1002,17 +999,17 @@ def loop_draw_texas_holdem():
         window.game_surface,
         state.game_mouse_pos,
         texas_holdem_game,
-        legacy.game.card_fronts,
-        legacy.game.get_card_back_surface(),
+        table.game.card_fronts,
+        table.game.get_card_back_surface(),
         panels.draw_submenu_background,
         panels.draw_submenu_title,
         buttons.draw_menu_button,
-        legacy.draw_npc_portrait,
+        game_portraits.draw_npc_portrait,
         fonts.options_title_font,
         fonts.option_label_font,
         fonts.difficulty_detail_font,
         state.player_name,
-        legacy.game.felt_surface,
+        table.game.felt_surface,
         next_hand_seconds=(
             texas_holdem_next_hand_seconds
         )

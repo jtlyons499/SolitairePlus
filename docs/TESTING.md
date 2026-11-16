@@ -48,6 +48,42 @@ file is in, so two test files in one suite must not share a name; the runner sto
 Both `unittest.TestCase` classes and plain module-level `test_*` functions (no arguments) are run. (Before
 2026-11-15 the plain functions were silently skipped.)
 
+### Where the game tests live
+
+Each single-player test sits in the folder of the code it tests, like the folders of `solitaireplus/`:
+
+| Folder | Tests for |
+|---|---|
+| `tests/app/` | start-up, the main loop, the window, settings, music, logs, cosmetics, the multiplayer launcher, game-wide code rules (`solitaireplus/app/`) |
+| `tests/ui/` | shared drawing helpers: text and font caches, buttons, panels, backgrounds, images (`solitaireplus/ui/`) |
+| `tests/menus/` | menus and the splash screen (`solitaireplus/menus/`) |
+| `tests/profile/` | profiles, saves, avatars, unlock names, recaps and level-ups (`solitaireplus/profile/`) |
+| `tests/career/` | Career mode: activities, the hub, ratings, NPC development, cases, leaderboards (`solitaireplus/career/`) |
+| `tests/npc/` | NPC avatars, portraits, runtime ratings and personalities (`solitaireplus/npc/`) |
+| `tests/games/solitaire/` | Solitaire, races and Head-to-Head (`solitaireplus/games/solitaire/`) |
+| `tests/games/poker/` | Hold'em and the other poker tables: rules, pots, recaps, NPC play, table screens (`solitaireplus/games/poker/`) |
+| `tests/games/casino/` | blackjack, roulette, faro and horse races (`solitaireplus/games/casino/`) |
+| `tests/games/cards/` | Crazy Eights and Score Four (`solitaireplus/games/cards/`) |
+| `tests/games/arcade/` | the arcade machines (`solitaireplus/games/arcade/`) |
+| `tests/games/cryptid/` | Cryptid Creatures (`solitaireplus/games/cryptid/`) |
+| `tests/games/dead_mans_hand/` | Dead Man's Hand, PvP included (`solitaireplus/games/dead_mans_hand/`) |
+| `tests/debug/` | the F10 debug menu, its actions and launchers, and the game-wide check that F10 is the only debug entry point (`solitaireplus/debug/`) |
+| `tests/packaging/` | build, spec, release-tool and module-layout checks that need no build (`SolitairePlus.spec`, `tools/`) |
+| `tests/updater/` | the updater (`updater/`) |
+| `tests/netservice/` | the network service (`netservice/`) |
+| `tests/support/` | helpers and the profile fixture, not tests |
+
+**New tests** go in the folder of the code they test: the module the test imports or reads the most. So a test
+that reads one game's screen (for example, that its old debug keys are gone) goes with that game, not in
+`debug/`. Keep the file name unique in the suite.
+
+These folders have **no `__init__.py`**, on purpose. The runner puts `tests/` ahead of the repository root on the
+import path, so a `tests/updater/__init__.py` would hide the real `updater` package (and `tests/profile/` the
+standard-library `profile` module). The runner stops with an error if a test folder has one, for a full run and for a
+single file or test (`tests/packaging/test_run_tests_layout.py` checks this). A test that needs
+helpers from another test file imports it by its folder (`from tests.app import test_loop_mouse_and_screen_hooks`);
+shared helpers belong in `tests/support/`.
+
 Tests that check or run real game code without starting the game (for example, running `auto_save_career` in a
 fake namespace, or checking that a sound name is wired up) must not read `main.py` directly, because that code is
 moving into the `solitaireplus/` package. Use the code locator instead: `from tests.support import locate`, then
@@ -55,24 +91,38 @@ moving into the `solitaireplus/` package. Use the code locator instead: `from te
 `locate.source()`. It searches `main.py` and `solitaireplus/**/*.py`; see the docstring in
 `tests/support/locate.py`.
 
-Moved game code reads shared variables as `state.career_cash` (and constants as `fonts.x`, `legacy.y`, ...).
+Moved game code reads shared variables as `state.career_cash` (and constants and helpers as `fonts.x`,
+`table.game`, ...).
 `locate.exec_functions` and `locate.exec_nodes` make a fake namespace work anyway: each module alias the code uses
 becomes a stand-in object backed by the env dict, so a test still sets and checks `env["career_cash"]`. Tests that
 compile AST nodes themselves call `locate.namespace(env, nodes)` first.
 
-The updater (`updater/`, built as `SolitaireUpdater.exe`) is tested in the `game` suite by `tests/test_updater.py`
-(planning, downloading, applying, rolling back an update, using fake releases on disk via `file://` URLs) and
-`tests/test_updater_signatures.py` (the real Windows signature check, using a throwaway certificate created in memory;
-skipped on PCs without Windows PowerShell).
+Files a test writes (preview images, saves, settings) go into a temporary folder that is deleted afterwards
+(`tempfile.TemporaryDirectory()`), never a fixed path. Several checkouts can run their suites at the same time,
+and a fixed path outside the checkout is shared by all of them (or doesn't exist on another PC). Tests that start
+real game code which saves to `%LOCALAPPDATA%` point `LOCALAPPDATA` (or the profile `SAVE_FOLDER`) at a temporary
+folder first. That includes child processes: a test that runs `main.py` or `multiplayer/main.py` passes
+`LOCALAPPDATA=<temporary folder>` in the child's `env`, because both start with `bootstrap()`, which writes a game
+log there and deletes old ones.
 
-Saves: `tests/test_profile_recovery.py` covers damaged saves (fall back to the `.bak` copy), saves from newer
+The updater (`updater/`, built as `SolitaireUpdater.exe`) is tested in the `game` suite by
+`tests/updater/test_updater.py` (planning, downloading, applying, rolling back an update, using fake releases on disk
+via `file://` URLs) and `tests/updater/test_updater_signatures.py` (the real Windows signature check, using a
+throwaway certificate created in memory; skipped on PCs without Windows PowerShell).
+
+Saves: `tests/profile/test_profile_recovery.py` covers damaged saves (fall back to the `.bak` copy), saves from newer
 versions (refused), and the migration chain.
+
+Start-up and crash logs: `tests/app/test_log_pruning.py` runs `runtime_support.bootstrap()` against a temporary
+`LOCALAPPDATA` and checks that only the newest 10 `game-*.log` files are kept (the new one included), that other files
+are left alone, that a locked or vanished log doesn't stop start-up, and that the rest of start-up (working folder,
+logging, exception hooks) is unchanged.
 
 Relay room codes and guessing protection: `multiplayer/tests/test_relay_codes.py`. Encrypted WebSocket play:
 `multiplayer/tests/test_relay_websocket.py` (TCP and WebSocket players in one room, plus a real `SolitaireNet` process).
 
 The network service (`netservice/`, built as `SolitaireNet.exe`) is tested in the `game` suite by
-`tests/test_netservice.py`, which uses small fake servers on `127.0.0.1` (no internet needed). The real
+`tests/netservice/test_netservice.py`, which uses small fake servers on `127.0.0.1` (no internet needed). The real
 game path (game → `SolitaireNet` child process → relay server) is tested in `multiplayer/tests/test_net_client.py`.
 
 The multiplayer suite **must** have `multiplayer/` on the import path, ahead of the root. Since Phase 11
@@ -94,7 +144,7 @@ import path and starts pygame headless:
 .\.venv\Scripts\python.exe tools\run_tests.py --worker game test_runtime_support
 .\.venv\Scripts\python.exe tools\run_tests.py --worker multiplayer test_relay.RelayTests.test_pair_forward_disconnect
 .\.venv\Scripts\python.exe tools\run_tests.py --worker game test_arcade_audio.test_arcade_cabinets_have_optional_individual_music_hooks
-.\.venv\Scripts\python.exe tools\run_tests.py --worker game tests\test_runtime_support.py
+.\.venv\Scripts\python.exe tools\run_tests.py --worker game tests\app\test_runtime_support.py
 ```
 
 The target is a file name (found in any subfolder), a dotted test id, or the path of a test file.
@@ -121,12 +171,13 @@ When automated testing was switched on (November 2026), 14 tests were **already 
 was found to fail about 1 run in 5 (it tested the old LAN table and was deleted with it in Phase 11). Most were
 outdated tests rather than game bugs: they expected older menus or numbers, or wrote images to a folder that only
 existed on the original author's AI tool. So that releases weren't blocked from day one, each one is listed in
-`tests/KNOWN_FAILURES.txt` with a one-line reason.
+`tests/KNOWN_FAILURES.txt` with a one-line reason. (The three image-folder tests were fixed during the
+November 2026 restructure: they now save into a temporary folder.)
 
 The runner reports them like this (non-blocking):
 
 ```text
-  still fails game:test_poker_recap.RecapTests.test_recap_render_...  (hard-coded /workspace/scratch path)
+  still fails game:test_npc_development.ProspectTests.test_majority_are_...  (rebalance changed prospect bands)
   NOW PASSES  multiplayer:test_x.Tests.test_y -> remove it from tests/KNOWN_FAILURES.txt
 ```
 
@@ -137,10 +188,9 @@ Rules for the list:
 * Each line is `suite:module.Class.test_name   # reason`. A reason starting with `HANGS` means the test is run alone
   with a 30-second limit instead of inside its file. A reason starting with `FLAKY` means it fails only some of the
   time, so one pass doesn't prove it's fixed. The runner prints `passed (flaky...)` instead of `NOW PASSES`.
-* `multiplayer:test_six_seat.SixRelayTests.test_six_clients_and_late_join` **may be a real bug** (six-seat late
-  joiners). The designer should look at it.
 
-Fixing the rest is on the future refactor sprint list.
+What is left after the November 2026 restructure: the three `test_npc_development` lines. Their expected numbers
+predate the NPC aging and rating rebalance, and the designer decides which values are intended.
 
 ## Reading a failure
 
@@ -151,7 +201,7 @@ A blocking failure looks like this (an illustrative example, not a real test):
       ======================================================================
       FAIL: test_locked_save_creates_recovery (test_profile_save_lock.SaveLockTests...)
       Traceback (most recent call last):
-        File "...\tests\test_profile_save_lock.py", line 40, in test_locked_save_creates_recovery
+        File "...\tests\profile\test_profile_save_lock.py", line 40, in test_locked_save_creates_recovery
           self.assertTrue(recovery.exists())
       AssertionError: False is not true
 ...
@@ -313,5 +363,5 @@ Two tools prove that moving code around changed nothing a player can see:
 * Always run `python tools/run_tests.py` after changing code. Treat any `FAILED` result as blocking.
 * Don't edit `tests/KNOWN_FAILURES.txt` to hide a failure you caused.
 * Don't run `python -m unittest discover` from the repository root (wrong import order for multiplayer).
-* New tests go in `tests/` (single-player) or `multiplayer/tests/` (multiplayer), named `test_*.py`, using
-  `unittest`. They must not open real windows, play real audio, write outside a temporary folder, or need the internet.
+* New tests go in the area folder under `tests/` (single-player; see "Where the game tests live") or
+  `multiplayer/tests/` (multiplayer), named `test_*.py`, using `unittest`. They must not open real windows, play real audio, write outside a temporary folder, or need the internet.

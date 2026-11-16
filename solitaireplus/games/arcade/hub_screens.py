@@ -15,7 +15,7 @@ from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
 machine_screens = lazy("solitaireplus.games.arcade.machine_screens")
-legacy = lazy("solitaireplus.legacy")
+images = lazy("solitaireplus.ui.images")
 window = lazy("solitaireplus.app.window")
 ui_text = lazy("solitaireplus.ui.text")
 sounds = lazy("solitaireplus.app.sounds")
@@ -25,10 +25,10 @@ buttons = lazy("solitaireplus.ui.buttons")
 
 
 arcade_token_package_rects = {}
-for state.package_index in range(len(ARCADE_TOKEN_PACKAGES)):
-    row = state.package_index // 2
-    column = state.package_index % 2
-    arcade_token_package_rects[state.package_index] = pygame.Rect(
+for package_index in range(len(ARCADE_TOKEN_PACKAGES)):
+    row = package_index // 2
+    column = package_index % 2
+    arcade_token_package_rects[package_index] = pygame.Rect(
         248 + column * 475,
         270 + row * 172,
         395,
@@ -100,7 +100,7 @@ def draw_arcade_action_image_button(
     covering any part of the button artwork.
     """
     path = ARCADE_ACTION_BUTTON_ASSET_PATHS.get(button_kind)
-    image = legacy.get_cover_scaled_ui_asset(path, rect.size)
+    image = images.get_cover_scaled_ui_asset(path, rect.size)
     hovered = (
         enabled
         and state.game_mouse_pos is not None
@@ -164,7 +164,7 @@ def draw_arcade_action_image_button(
 
 
 def draw_arcade_page_background(shade_alpha=72):
-    background = legacy.get_event_ui_asset(str(paths.asset("arcade/bg.png")), (BASE_WIDTH, BASE_HEIGHT))
+    background = images.get_event_ui_asset(str(paths.asset("arcade/bg.png")), (BASE_WIDTH, BASE_HEIGHT))
     if background is not None:
         window.game_surface.blit(background, (0, 0))
     else:
@@ -315,7 +315,7 @@ def _draw_arcade_prize_page_button(rect, label, enabled):
 
 
 def _draw_arcade_prize_art(prize, art_rect):
-    art = legacy.get_event_ui_asset(prize.get("image"))
+    art = images.get_event_ui_asset(prize.get("image"))
     if art is not None:
         scale = min(art_rect.width / art.get_width(), art_rect.height / art.get_height())
         size = (
@@ -522,9 +522,9 @@ def loop_event_arcade_token_exchange(event):
             else:
                 state.current_state = state_names.STATE_CAREER_EVENT_SELECT
         else:
-            for state.package_index, state.rect in arcade_token_package_rects.items():
-                if state.rect.collidepoint(state.menu_mouse_pos):
-                    package = ARCADE_TOKEN_PACKAGES[state.package_index]
+            for package_index, package_rect in arcade_token_package_rects.items():
+                if package_rect.collidepoint(state.menu_mouse_pos):
+                    package = ARCADE_TOKEN_PACKAGES[package_index]
                     state.success, new_state, new_cash, message = buy_token_package(state.arcade_state, state.career_cash, package['id'])
                     state.arcade_state = new_state
                     if state.success:
@@ -561,9 +561,9 @@ def loop_event_arcade_prize_counter(event):
             sounds.audio.play_sound("button_click")
         else:
             page_start = state.arcade_prize_page * ARCADE_PRIZES_PER_PAGE
-            for prize_slot, state.rect in arcade_prize_card_rects.items():
+            for prize_slot, prize_rect in arcade_prize_card_rects.items():
                 prize_index = page_start + prize_slot
-                if prize_index < len(ARCADE_PRIZE_CATALOG) and state.rect.collidepoint(state.menu_mouse_pos):
+                if prize_index < len(ARCADE_PRIZE_CATALOG) and prize_rect.collidepoint(state.menu_mouse_pos):
                     state.arcade_selected_prize_index = prize_index
                     sounds.audio.play_sound("button_click")
                     break

@@ -29,7 +29,8 @@ from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.career.session_summary import track_night_cash
 from solitaireplus.app.lazy import lazy
-legacy = lazy("solitaireplus.legacy")
+free_play_select = lazy("solitaireplus.menus.free_play_select")
+game_globals = lazy("solitaireplus.app.game_globals")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 panels = lazy("solitaireplus.ui.panels")
@@ -113,7 +114,7 @@ def settle_roulette_round():
             "Roulette win"
         )
     elif state.current_game_mode == "career" and net_result <= -500:
-        legacy.lose_fans_for_bad_result(
+        career_rewards.lose_fans_for_bad_result(
             "Rough Roulette spin",
             net_loss=abs(net_result),
             severity=0.65,
@@ -131,7 +132,7 @@ def settle_roulette_round():
         bets=[dict(bet) for bet in roulette_game.bets],
     )
 
-    track_night_cash(legacy.game_namespace(), "roulette", net_result)
+    track_night_cash(game_globals.game_namespace(), "roulette", net_result)
     roulette_game.payout_claimed = True
 
 
@@ -613,7 +614,7 @@ def handle_event(event):
             )
 
             if state.current_game_mode == "free":
-                legacy.finish_free_play_sandbox()
+                free_play_select.finish_free_play_sandbox()
                 state.current_state = state_names.STATE_FREE_PLAY_SELECT
             else:
                 state.current_state = state_names.STATE_CAREER_EVENT_SELECT

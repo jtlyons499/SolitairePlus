@@ -14,7 +14,9 @@ import pygame
 from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
-legacy = lazy("solitaireplus.legacy")
+free_play_select = lazy("solitaireplus.menus.free_play_select")
+game_portraits = lazy("solitaireplus.npc.game_portraits")
+table = lazy("solitaireplus.games.solitaire.table")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 night = lazy("solitaireplus.career.events.night")
@@ -75,7 +77,7 @@ def handle_event(event):
             if action_name == CRAZY_EIGHTS_ACTION_RETURN:
                 sounds.audio.play_sound("button_click")
                 if state.current_game_mode == "free":
-                    legacy.finish_free_play_sandbox()
+                    free_play_select.finish_free_play_sandbox()
                     state.current_state = state_names.STATE_FREE_PLAY_SELECT
                 else:
                     state.current_state = state_names.STATE_CAREER_EVENT_SELECT
@@ -84,7 +86,7 @@ def handle_event(event):
                 sounds.audio.play_sound("button_click")
                 claim_crazy_eights_result()
                 if state.current_game_mode == "free":
-                    legacy.finish_free_play_sandbox()
+                    free_play_select.finish_free_play_sandbox()
                     state.current_state = state_names.STATE_FREE_PLAY_SELECT
                 else:
                     state.current_state = state_names.STATE_CAREER_EVENT_SELECT
@@ -120,7 +122,7 @@ def draw():
         window.game_surface,
         state.game_mouse_pos,
         crazy_eights_game,
-        legacy.game.card_fronts,
-        legacy.game.get_card_back_surface(),
-        portrait_loader=legacy.get_npc_portrait_surface,
+        table.game.card_fronts,
+        table.game.get_card_back_surface(),
+        portrait_loader=game_portraits.get_npc_portrait_surface,
     )

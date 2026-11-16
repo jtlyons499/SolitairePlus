@@ -14,7 +14,6 @@ career_saving = lazy("solitaireplus.career.career_saving")
 career_rewards = lazy("solitaireplus.career.career_rewards")
 career_names = lazy("solitaireplus.career.career_names")
 calendar = lazy("solitaireplus.career.calendar")
-legacy = lazy("solitaireplus.legacy")
 window = lazy("solitaireplus.app.window")
 ui_text = lazy("solitaireplus.ui.text")
 sounds = lazy("solitaireplus.app.sounds")
@@ -574,11 +573,11 @@ def handle_event(event):
 
         job_clicked = None
 
-        for job_id, state.rect in (
+        for job_id, job_rect in (
                 career_job_option_rects.items()
         ):
 
-            if state.rect.collidepoint(
+            if job_rect.collidepoint(
                     state.game_mouse_pos
             ):
                 job_clicked = job_id

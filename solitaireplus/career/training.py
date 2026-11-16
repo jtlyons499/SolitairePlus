@@ -56,20 +56,3 @@ TRAINING_RATING_REWARDS = {
         "profit": 60,
     },
 }
-
-TRAINING_GAMES = {
-    "card_bingo": {
-        "name": "Card Bingo",
-        "category": "Quick",
-    },
-
-    "trash": {
-        "name": "Trash",
-        "category": "Quick",
-    },
-
-    "score_four": {
-        "name": "Score-Four",
-        "category": "Quick",
-    },
-}

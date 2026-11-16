@@ -33,6 +33,37 @@ def save_directory():
                     logging.warning('Could not import legacy save %s', source, exc_info=True)
     return target
 
+KEPT_GAME_LOGS = 10
+
+def prune_game_logs(logdir, current, keep=KEPT_GAME_LOGS):
+    """Delete all but the newest ``keep`` game-*.log files in ``logdir``.
+
+    ``current`` (this process's log) is never deleted and counts as one of the
+    files kept. Files locked by another running copy, or that vanish while we
+    look, are skipped silently: nothing is logged, so a normal start leaves the
+    new log empty. Other files and folders are never touched."""
+    current_name = os.path.normcase(Path(current).name)
+    others = []
+    try:
+        candidates = list(Path(logdir).glob('game-*.log'))
+    except OSError:
+        return
+    for path in candidates:
+        if os.path.normcase(path.name) == current_name:
+            continue
+        try:
+            if not path.is_file():
+                continue
+            others.append((path.stat().st_mtime, path.name, path))
+        except OSError:
+            continue
+    others.sort(reverse=True)
+    for _mtime, _name, path in others[max(keep - 1, 0):]:
+        try:
+            path.unlink()
+        except OSError:
+            pass
+
 def bootstrap():
     os.chdir(ROOT)
     logdir=user_data_dir()/'logs'
@@ -40,6 +71,7 @@ def bootstrap():
     logfile=logdir/f'game-{os.getpid()}.log'
     logging.basicConfig(filename=logfile,level=logging.WARNING,
                         format='%(asctime)s %(levelname)s %(message)s',force=True)
+    prune_game_logs(logdir, logfile)
     original=sys.excepthook
     def report(kind,value,trace):
         if issubclass(kind,KeyboardInterrupt):

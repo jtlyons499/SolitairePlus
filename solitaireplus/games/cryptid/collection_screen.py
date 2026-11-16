@@ -5,7 +5,7 @@ import pygame
 from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
-legacy = lazy("solitaireplus.legacy")
+free_play_select = lazy("solitaireplus.menus.free_play_select")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 
@@ -27,7 +27,7 @@ def handle_event(event):
     if cryptid_screen.handle_event(event, state.game_mouse_pos) == "return":
         if cryptid_screen.career_mode:
             leave_career_cryptid()
-        else:legacy.leave_free_play_game()
+        else:free_play_select.leave_free_play_game()
 
 
 def draw():

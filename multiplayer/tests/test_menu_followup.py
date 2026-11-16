@@ -1,10 +1,34 @@
 """Exercise the real launcher loop and the lobby Quit button."""
+import logging
 import os
 import tempfile
 import unittest
 from unittest.mock import patch
+
+# Importing main runs runtime_support.bootstrap(), which opens a log file under
+# %LOCALAPPDATA% (and prunes old logs there). Each test file runs in its own
+# process, so point it at a scratch folder before the import.
+_DATA = tempfile.TemporaryDirectory(prefix='menu_followup_', ignore_cleanup_errors=True)
+_REAL_LOCALAPPDATA = os.environ.get('LOCALAPPDATA')
+os.environ['LOCALAPPDATA'] = _DATA.name
+
 import pygame
 import main
+
+
+def tearDownModule():
+    # Close bootstrap()'s log so the scratch folder can be removed.
+    root = logging.getLogger()
+    folder = os.path.normcase(_DATA.name)
+    for handler in list(root.handlers):
+        if os.path.normcase(str(getattr(handler, 'baseFilename', ''))).startswith(folder):
+            root.removeHandler(handler)
+            handler.close()
+    if _REAL_LOCALAPPDATA is None:
+        os.environ.pop('LOCALAPPDATA', None)
+    else:
+        os.environ['LOCALAPPDATA'] = _REAL_LOCALAPPDATA
+    _DATA.cleanup()
 
 QUIT_GAME=(1260,35)   # centre of the hub's "Quit Game" button (main.py quit_rect)
 

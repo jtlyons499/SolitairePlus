@@ -17,7 +17,9 @@ from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
 web_pages = lazy("solitaireplus.career.web_pages")
 career_rewards = lazy("solitaireplus.career.career_rewards")
-legacy = lazy("solitaireplus.legacy")
+game_portraits = lazy("solitaireplus.npc.game_portraits")
+profile_editor = lazy("solitaireplus.profile.profile_editor")
+table = lazy("solitaireplus.games.solitaire.table")
 window = lazy("solitaireplus.app.window")
 ui_text = lazy("solitaireplus.ui.text")
 sounds = lazy("solitaireplus.app.sounds")
@@ -215,16 +217,16 @@ def begin_selected_head_to_head_race():
         opponent.get("rating", 1000)
     )
 
-    state.head_to_head_previous_deal_mode = legacy.game.deal_mode
-    state.head_to_head_previous_difficulty = legacy.game.difficulty
-    state.head_to_head_previous_stock_draw_count = legacy.game.stock_draw_count
+    state.head_to_head_previous_deal_mode = table.game.deal_mode
+    state.head_to_head_previous_difficulty = table.game.difficulty
+    state.head_to_head_previous_stock_draw_count = table.game.stock_draw_count
 
-    legacy.game.clear_challenge()
-    legacy.game.set_difficulty(DEFAULT_DIFFICULTY)
+    table.game.clear_challenge()
+    table.game.set_difficulty(DEFAULT_DIFFICULTY)
 
-    legacy.game.stock_draw_count = 1
-    legacy.game.set_deal_mode("random")
-    legacy.game.new_race_game()
+    table.game.stock_draw_count = 1
+    table.game.set_deal_mode("random")
+    table.game.new_race_game()
 
     head_to_head_race.prepare(
         opponent,
@@ -232,7 +234,7 @@ def begin_selected_head_to_head_race():
         now_ms=pygame.time.get_ticks(),
     )
     # The player's clock starts at GO, like the opponent's: the 3-2-1 countdown is not race time.
-    legacy.game.round_start_ticks = head_to_head_race.race_started_ms
+    table.game.round_start_ticks = head_to_head_race.race_started_ms
 
     state.career_event_has_activity = True
     state.current_game_mode = "head_to_head"
@@ -248,12 +250,12 @@ def draw_head_to_head_event():
         state.head_to_head_selected_index,
         state.player_name,
         state.career_ratings["solitaire"],
-        legacy.get_npc_portrait_surface,
+        game_portraits.get_npc_portrait_surface,
         fonts.options_title_font,
         fonts.option_label_font,
         fonts.difficulty_detail_font,
         fonts.ui_small_font,
-        player_avatar=legacy.get_profile_avatar(),
+        player_avatar=profile_editor.get_profile_avatar(),
     )
 
 

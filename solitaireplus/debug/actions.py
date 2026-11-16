@@ -22,7 +22,8 @@ from solitaireplus.debug.menu import show_debug_message
 from solitaireplus.app import state
 from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
-legacy = lazy("solitaireplus.legacy")
+free_play_select = lazy("solitaireplus.menus.free_play_select")
+table = lazy("solitaireplus.games.solitaire.table")
 score_four_screen = lazy("solitaireplus.games.cards.score_four_screen")
 roulette_screen = lazy("solitaireplus.games.casino.roulette_screen")
 night = lazy("solitaireplus.career.events.night")
@@ -60,10 +61,10 @@ def debug_unlock_next_achievement():
         )
         cosmetic_labels = []
         for reward in iter_achievement_rewards(definition):
-            label = legacy.unlock_achievement_cosmetic(reward)
+            label = leveling.unlock_achievement_cosmetic(reward)
             if label:
                 cosmetic_labels.append(label)
-        legacy.queue_achievement_popup(
+        leveling.queue_achievement_popup(
             definition,
             fan_reward,
             ", ".join(cosmetic_labels),
@@ -250,7 +251,6 @@ def debug_open_blackjack():
     )
 
     state.blackjack_selected_bet_percentage = None
-    state.blackjack_bet_dropdown_open = False
     state.blackjack_session_net = 0
     state.blackjack_session_rating_change = 0
 
@@ -427,19 +427,19 @@ def debug_open_solitaire_challenge(
 
     entered_debug_mode = enter_debug_game_mode()
 
-    legacy.game.clear_challenge()
-    legacy.game.set_difficulty(
+    table.game.clear_challenge()
+    table.game.set_difficulty(
         DEFAULT_DIFFICULTY
     )
 
-    if not legacy.game.set_challenge(
+    if not table.game.set_challenge(
             challenge_id
     ):
         if entered_debug_mode:
             end_debug_game_mode()   # nothing started: leave only the "debug" mode this switched on
         return False
 
-    legacy.game.new_game()
+    table.game.new_game()
 
     state.current_state = state_names.STATE_PLAYING
 
@@ -503,7 +503,7 @@ def debug_end_free_play_sandbox():
         return False
 
     if sandbox_running or free_mode:
-        legacy.finish_free_play_sandbox()
+        free_play_select.finish_free_play_sandbox()
 
     if free_mode:
         state.current_game_mode = "career"
@@ -519,7 +519,7 @@ def debug_end_free_play_sandbox():
 def debug_start_next_career_month(save=True):
 
     if state.current_game_mode == "free":
-        legacy.finish_free_play_sandbox()
+        free_play_select.finish_free_play_sandbox()
     state.current_game_mode = "career"
     leaderboard_engine.ensure_career_leaderboard()
 
@@ -542,7 +542,7 @@ def debug_start_next_career_month(save=True):
     state.career_roster_dirty = True  # B18: new date, so the live roster is re-synced
 
     leaderboard_engine.update_career_leaderboard_ratings()
-    legacy.maybe_add_monthly_flavor_news()
+    news_screen.maybe_add_monthly_flavor_news()
 
     state.career_current_schedule = (
         calendar.build_default_career_schedule()
@@ -553,7 +553,7 @@ def debug_start_next_career_month(save=True):
 
 def debug_add_career_prospect(prodigy=False):
     if state.current_game_mode == "free":
-        legacy.finish_free_play_sandbox()
+        free_play_select.finish_free_play_sandbox()
     state.current_game_mode = "career"
     leaderboard_engine.ensure_career_leaderboard()
     story = add_prospect(state.career_npc_world, state.career_leaderboard_state, PROSPECT_POOL,
@@ -572,7 +572,7 @@ def debug_add_career_prospect(prodigy=False):
 
 def debug_advance_career_year():
     if state.current_game_mode == "free":
-        legacy.finish_free_play_sandbox()
+        free_play_select.finish_free_play_sandbox()
     state.current_game_mode = "career"
     leaderboard_engine.ensure_career_leaderboard()
     calendar.reset_career_hub_runtime()

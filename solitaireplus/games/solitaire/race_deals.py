@@ -9,11 +9,12 @@ from collections import deque
 import json
 from pathlib import Path
 import random
+from types import SimpleNamespace
 
 SUITS = ("Clubs", "Diamonds", "Hearts", "Spades")
 RANKS = ("A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K")
 _recent = deque(maxlen=128)
-_pool = None
+_cache = SimpleNamespace(pool=None)  # the verified deal pool, loaded on first use
 
 
 def rank(card):
@@ -100,8 +101,7 @@ def opening_is_varied(deck):
 
 
 def _load_pool():
-    global _pool
-    if _pool is None:
+    if _cache.pool is None:
         # PyInstaller ships this file through the existing --add-data data flag.
         path = paths.data("solitaire_race_deals.json")
         entries = json.loads(path.read_text(encoding="utf-8"))["deals"]
@@ -111,8 +111,8 @@ def _load_pool():
             verify_deal(entry["deck"], entry["solution"])
             if not opening_is_varied(entry["deck"]):
                 raise ValueError("Race opening failed variety check")
-        _pool = entries
-    return _pool
+        _cache.pool = entries
+    return _cache.pool
 
 
 def build_race_deal(rng=None):

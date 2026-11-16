@@ -10,7 +10,8 @@ How it works (see docs/TESTING.md for the full explanation):
   because the multiplayer modules import each other by bare name (it has no
   copies of game modules any more; shared code comes from solitaireplus/).
 * Test files (test_*.py) are found in the suite folder and all its subfolders
-  (except helper folders such as tests/support/). A test's id is always
+  (except helper folders such as tests/support/). The game tests sit in
+  tests/<area>/ folders, which have no __init__.py. A test's id is always
   <file name>.Class.test (or <file name>.test_function), whatever subfolder the
   file is in, so two test files in one suite must not share a name.
 * Both unittest TestCase classes and plain module-level test_* functions
@@ -73,11 +74,26 @@ def load_known_failures() -> dict[str, dict[str, str]]:
     return known
 
 
+def check_no_test_packages(suite_name: str) -> None:
+    """Stop with an error if a test subfolder of the suite has an __init__.py (see docs/TESTING.md).
+
+    The suite folder itself and helper folders (tests/support/) may have one."""
+    directory, _ = SUITES[suite_name]
+    for marker in sorted(directory.rglob("__init__.py")):
+        folders = marker.relative_to(directory).parts[:-1]
+        if folders and not any(part in NOT_TEST_FOLDERS for part in folders):
+            raise SystemExit(f"{marker.relative_to(ROOT)} must not exist: test folders are not packages. "
+                             "It would hide a real package of the same name on the import path "
+                             "(updater, netservice, the standard-library profile).")
+
+
 def discover(suite_name: str) -> list[Path]:
     """Every test_*.py in the suite folder and its subfolders, sorted by file name.
 
-    Stops with an error if two files share a name, because test ids use the file name only."""
+    Stops with an error if two files share a name, because test ids use the file name only,
+    or if a test subfolder has an __init__.py (see docs/TESTING.md)."""
     directory, _ = SUITES[suite_name]
+    check_no_test_packages(suite_name)
     found: dict[str, Path] = {}
     for path in sorted(directory.rglob("test_*.py")):
         if any(part in NOT_TEST_FOLDERS for part in path.relative_to(directory).parts[:-1]):
@@ -93,8 +109,10 @@ def discover(suite_name: str) -> list[Path]:
 def resolve_target(suite_name: str, target: str) -> tuple[Path, str]:
     """Turn a worker target into (test file, wanted test id).
 
-    A target is a .py path, or a dotted id: test_x, test_x.Class, test_x.Class.test_y or test_x.test_func."""
+    A target is a .py path, or a dotted id: test_x, test_x.Class, test_x.Class.test_y or test_x.test_func.
+    Both kinds stop with an error if a test subfolder has an __init__.py."""
     if target.endswith(".py"):
+        check_no_test_packages(suite_name)  # discover() checks it for the other kind
         path = Path(target)
         path = (path if path.is_absolute() else ROOT / path).resolve()
         if not path.is_file():

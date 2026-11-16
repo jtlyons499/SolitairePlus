@@ -11,7 +11,7 @@ from solitaireplus.app import update_check
 from solitaireplus.app.lazy import lazy
 career_saving = lazy("solitaireplus.career.career_saving")
 options_screen = lazy("solitaireplus.menus.options_screen")
-legacy = lazy("solitaireplus.legacy")
+customize = lazy("solitaireplus.menus.customize")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 fonts = lazy("solitaireplus.app.fonts")
@@ -205,7 +205,7 @@ def handle_event(event):
             )
 
             state.customize_return_state = state_names.STATE_MENU
-            state.customize_category = legacy.CUSTOMIZE_BACKGROUNDS
+            state.customize_category = customize.CUSTOMIZE_BACKGROUNDS
 
             state.customize_page = 0
 

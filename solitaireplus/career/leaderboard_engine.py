@@ -16,7 +16,6 @@ from solitaireplus.npc.manager import sync_npc_runtime_state
 from solitaireplus.app.lazy import lazy
 news_screen = lazy("solitaireplus.career.news_screen")
 career_saving = lazy("solitaireplus.career.career_saving")
-legacy = lazy("solitaireplus.legacy")
 
 
 def load_career_leaderboard_players():

@@ -16,7 +16,8 @@ from solitaireplus.app import state_names
 from solitaireplus.app.lazy import lazy
 machine_screens = lazy("solitaireplus.games.arcade.machine_screens")
 hub_screens = lazy("solitaireplus.games.arcade.hub_screens")
-legacy = lazy("solitaireplus.legacy")
+game_portraits = lazy("solitaireplus.npc.game_portraits")
+images = lazy("solitaireplus.ui.images")
 window = lazy("solitaireplus.app.window")
 ui_text = lazy("solitaireplus.ui.text")
 sounds = lazy("solitaireplus.app.sounds")
@@ -170,10 +171,6 @@ def get_selected_suit_snake_mode():
     return mode_ids[state.suit_snake_selected_mode_index]
 
 
-def get_selected_suit_snake_difficulty():
-    """Backward-compatible alias for older integration paths/tests."""
-    return get_selected_suit_snake_mode()
-
 def get_selected_battle_bosses_choice():
     if (
             state.battle_bosses_selected_choice_index is None
@@ -202,7 +199,7 @@ def draw_king_pong_opponent_select():
     window.game_surface.blit(panel_surface, panel.topleft)
     pygame.draw.rect(window.game_surface, (229, 197, 102), panel, 3, border_radius=16)
 
-    logo = legacy.get_event_ui_asset(
+    logo = images.get_event_ui_asset(
         str(paths.asset("arcade/king_pong/logo.png")),
         (330, 94),
     )
@@ -263,7 +260,7 @@ def draw_king_pong_opponent_select():
         portrait_rect = pygame.Rect(rect.centerx - 55, rect.y + 62, 110, 110)
         pygame.draw.ellipse(window.game_surface, (14, 23, 34), portrait_rect)
         try:
-            portrait = legacy.get_npc_portrait_surface(npc, 110)
+            portrait = game_portraits.get_npc_portrait_surface(npc, 110)
         except Exception:
             portrait = None
         if portrait is not None:
@@ -362,7 +359,7 @@ def draw_battle_bosses_opponent_select():
     window.game_surface.blit(panel_surface, panel.topleft)
     pygame.draw.rect(window.game_surface, (229, 197, 102), panel, 3, border_radius=16)
 
-    logo = legacy.get_event_ui_asset(
+    logo = images.get_event_ui_asset(
         str(paths.asset("arcade/battle_bosses/logo.png")),
         (390, 92),
     )
@@ -442,7 +439,7 @@ def draw_battle_bosses_opponent_select():
             )
             pygame.draw.ellipse(window.game_surface, (14, 23, 34), portrait_rect)
             try:
-                portrait = legacy.get_npc_portrait_surface(npc, portrait_size)
+                portrait = game_portraits.get_npc_portrait_surface(npc, portrait_size)
             except Exception:
                 portrait = None
             if portrait is not None:
@@ -512,7 +509,7 @@ def draw_ace_invaders_difficulty_select():
     window.game_surface.blit(panel_surface, panel.topleft)
     pygame.draw.rect(window.game_surface, (229, 197, 102), panel, 3, border_radius=16)
 
-    logo = legacy.get_event_ui_asset(
+    logo = images.get_event_ui_asset(
         str(paths.asset("arcade/ace_invaders/logo.png")),
         (360, 96),
     )
@@ -664,7 +661,7 @@ def draw_suit_snake_difficulty_select():
     window.game_surface.blit(panel_surface, panel.topleft)
     pygame.draw.rect(window.game_surface, (229, 197, 102), panel, 3, border_radius=16)
 
-    logo = legacy.get_event_ui_asset(
+    logo = images.get_event_ui_asset(
         str(paths.asset("arcade/suit_snake/logo.png")),
         (360, 96),
     )
@@ -869,10 +866,10 @@ def loop_event_king_pong_opponent_select(event):
     elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and state.menu_mouse_pos is not None:
         opponent_clicked = False
 
-        for opponent_index, state.rect in enumerate(king_pong_opponent_rects):
+        for opponent_index, opponent_rect in enumerate(king_pong_opponent_rects):
             if (
                     opponent_index < len(state.king_pong_opponent_choices)
-                    and state.rect.collidepoint(state.menu_mouse_pos)
+                    and opponent_rect.collidepoint(state.menu_mouse_pos)
             ):
                 state.king_pong_selected_opponent_index = opponent_index
                 sounds.audio.play_sound("button_click")
@@ -908,10 +905,10 @@ def loop_event_battle_bosses_opponent_select(event):
 
     elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and state.menu_mouse_pos is not None:
         choice_clicked = False
-        for choice_index, state.rect in enumerate(battle_bosses_choice_rects):
+        for choice_index, choice_rect in enumerate(battle_bosses_choice_rects):
             if (
                     choice_index < len(state.battle_bosses_opponent_choices)
-                    and state.rect.collidepoint(state.menu_mouse_pos)
+                    and choice_rect.collidepoint(state.menu_mouse_pos)
             ):
                 state.battle_bosses_selected_choice_index = choice_index
                 sounds.audio.play_sound("button_click")
@@ -948,10 +945,10 @@ def loop_event_ace_invaders_difficulty_select(event):
         difficulty_clicked = False
         difficulty_ids = list(ACE_INVADERS_DIFFICULTIES)
 
-        for difficulty_index, state.rect in enumerate(ace_invaders_difficulty_rects):
+        for difficulty_index, difficulty_rect in enumerate(ace_invaders_difficulty_rects):
             if (
                     difficulty_index < len(difficulty_ids)
-                    and state.rect.collidepoint(state.menu_mouse_pos)
+                    and difficulty_rect.collidepoint(state.menu_mouse_pos)
             ):
                 state.ace_invaders_selected_difficulty_index = difficulty_index
                 sounds.audio.play_sound("button_click")
@@ -989,10 +986,10 @@ def loop_event_suit_snake_difficulty_select(event):
         setup_clicked = False
         mode_ids = list(SUIT_SNAKE_MODES)
 
-        for mode_index, state.rect in enumerate(suit_snake_mode_rects):
+        for mode_index, mode_rect in enumerate(suit_snake_mode_rects):
             if (
                     mode_index < len(mode_ids)
-                    and state.rect.collidepoint(state.menu_mouse_pos)
+                    and mode_rect.collidepoint(state.menu_mouse_pos)
             ):
                 state.suit_snake_selected_mode_index = mode_index
                 sounds.audio.play_sound("button_click")

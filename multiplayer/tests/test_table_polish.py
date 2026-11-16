@@ -68,12 +68,29 @@ class PolishTests(unittest.TestCase):
         self.assertIn('straight flush',data['showdown_hands']['0'].lower())
 
     def test_local_animation_never_mutates_game_and_sound_edges_once(self):
+        # The fake holds the fields Presentation.update reads. Each one must be a real ClientGame field,
+        # so the fake cannot drift from the engine again.
+        g=SimpleNamespace(hand_number=1,current_stage='preflop',player_round_bet=0,npc_round_bets=[0]*5,
+                          player_action_text='',npc_action_texts=['']*5,player_folded=False,npc_folded=[False]*5,
+                          community_cards=[],hand_complete=False,winner_indexes=[],last_resolved_pot=0)
+        t=RoomAuthority('Host');t.start();real=ClientGame();real.apply(t.view(0))
+        self.assertEqual([name for name in vars(g) if not hasattr(real,name)],[])
         events=[];a=Presentation(None,sound=events.append)
-        g=SimpleNamespace(hand_number=1,player_round_bet=0,npc_round_bets=[0]*5,community_cards=[],hand_complete=False,winner_indexes=[])
-        a.update(g,0);g.player_round_bet=100;before=copy.deepcopy(vars(g));a.update(g,100);a.update(g,110)
-        self.assertEqual(vars(g),before);self.assertEqual(events.count('chip_move'),1)
+        a.update(g,0);self.assertEqual(events,['card_draw'])   # a new hand: one deal sound
+        # One update brings a bet, a check and a fold: one sound each, and none again on the next frame.
+        g.player_round_bet=100;g.player_action_text='Bet $100'
+        g.npc_action_texts[1]='Checked';g.npc_action_texts[2]='Folded';g.npc_folded[2]=True
+        before=copy.deepcopy(vars(g));events.clear();a.update(g,100);a.update(g,110)
+        self.assertEqual(vars(g),before)
+        self.assertEqual(len([e for e in events if e.startswith('chips_')]),1)
+        self.assertEqual(events.count('check'),1);self.assertEqual(events.count('card_move'),1);self.assertEqual(len(events),3)
         self.assertNotEqual(a.card_position(('seat',0,0),200,300,96,134,200)[:2],(200,300))
         self.assertEqual(a.card_position(('seat',0,0),200,300,96,134,1000)[:2],(200,300))
+        # The player wins the hand: one flip at once, one win sound later, never repeated.
+        g.hand_complete=True;g.winner_indexes=[0];g.last_resolved_pot=300
+        before=copy.deepcopy(vars(g));events.clear()
+        for now in (200,300,700,800):a.update(g,now)
+        self.assertEqual(vars(g),before);self.assertEqual(events,['card_flip','hand_win'])
 
     def test_dynamic_names_shorter_and_buyback_controls(self):
         pygame.init();s=pygame.display.set_mode((1366,768))

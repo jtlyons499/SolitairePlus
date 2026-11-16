@@ -20,7 +20,9 @@ from solitaireplus.app.lazy import lazy
 table_stakes = lazy("solitaireplus.games.poker.table_stakes")
 holdem_screen = lazy("solitaireplus.games.poker.holdem_screen")
 holdem_ui = lazy("solitaireplus.games.poker.holdem_ui")
-legacy = lazy("solitaireplus.legacy")
+free_play_select = lazy("solitaireplus.menus.free_play_select")
+game_globals = lazy("solitaireplus.app.game_globals")
+table = lazy("solitaireplus.games.solitaire.table")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 panels = lazy("solitaireplus.ui.panels")
@@ -52,7 +54,7 @@ def start_five_o_poker_session(starting_stack=None):
     state.five_o_poker_buy_in_active = True
     five_o_poker_game.session_xp_rewarded = False
 
-    five_o_poker_game.learning_store = legacy.game_namespace().get("career_poker_learning") if state.current_game_mode == "career" else None
+    five_o_poker_game.learning_store = game_globals.game_namespace().get("career_poker_learning") if state.current_game_mode == "career" else None
     # The last session's Quick Chat menu, queued replies and history do not carry over.
     reset_variant_quick_chat("five_o_poker")
     if not five_o_poker_game.start_session(opponent, starting_stack):
@@ -116,11 +118,11 @@ def finish_five_o_poker_session():
             five_o_wins=five_o_poker_game.five_o_wins,
             rating_reward=rating_gain,
         )
-        track_night_cash(legacy.game_namespace(), "five_o_poker", state.five_o_poker_session_net)
+        track_night_cash(game_globals.game_namespace(), "five_o_poker", state.five_o_poker_session_net)
         five_o_poker_game.reward_claimed = True
 
     if state.current_game_mode == "free":
-        legacy.finish_free_play_sandbox()
+        free_play_select.finish_free_play_sandbox()
         state.current_state = state_names.STATE_FREE_PLAY_SELECT
     else:
         state.current_state = state_names.STATE_CAREER_EVENT_SELECT
@@ -200,6 +202,6 @@ def draw():
         fonts.options_title_font,
         fonts.option_label_font,
         fonts.difficulty_detail_font,
-        card_fronts=legacy.game.card_fronts,
-        card_back_surface=legacy.game.get_card_back_surface(),
+        card_fronts=table.game.card_fronts,
+        card_back_surface=table.game.get_card_back_surface(),
     )

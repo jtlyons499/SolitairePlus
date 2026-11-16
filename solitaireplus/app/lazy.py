@@ -1,11 +1,10 @@
 """Late-bound module references.
 
-Some modules were cut out of the old main.py but still refer to one another (and to
-solitaireplus.legacy) from inside functions. Importing them at the top would run their
-start-up code out of order (for example, loading cursor images before the window exists).
-A LazyModule looks the module up when an attribute is first used, which is always after
-start-up has finished. Temporary: the restructure replaces these with plain imports as code
-leaves solitaireplus.legacy.
+Some modules were cut out of the old main.py but still refer to one another from inside
+functions. Importing them at the top would run their start-up code out of order (for example,
+loading cursor images before the window exists). A LazyModule looks the module up when an
+attribute is first used, which is always after start-up (solitaireplus/app/startup.py) has
+imported it in its place.
 """
 import importlib
 import sys

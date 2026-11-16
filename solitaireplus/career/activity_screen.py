@@ -11,7 +11,6 @@ from solitaireplus.app.lazy import lazy
 career_saving = lazy("solitaireplus.career.career_saving")
 career_rewards = lazy("solitaireplus.career.career_rewards")
 calendar = lazy("solitaireplus.career.calendar")
-legacy = lazy("solitaireplus.legacy")
 window = lazy("solitaireplus.app.window")
 sounds = lazy("solitaireplus.app.sounds")
 panels = lazy("solitaireplus.ui.panels")

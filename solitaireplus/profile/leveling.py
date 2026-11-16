@@ -1,6 +1,11 @@
 """Player progression: XP and levels, round rewards, unlocks by level, achievement events and popups (moved out of legacy.py)."""
+import pygame
+from solitaireplus.app.settings import FELTS
+from solitaireplus.app.settings import GAME_UNLOCK_LEVELS
 from solitaireplus.app.settings import LEVEL_UNLOCKS
 from solitaireplus.app.settings import LEVEL_XP_THRESHOLDS
+from solitaireplus.app.settings import MENU_BACKGROUNDS
+from solitaireplus.app.settings import TITLES
 from solitaireplus.career.fans import fan_bonus_for_achievement
 from solitaireplus.profile.achievements import iter_rewards as iter_achievement_rewards
 from solitaireplus.profile.achievements import record_event as record_achievement_event
@@ -9,7 +14,7 @@ from solitaireplus.app import state
 from solitaireplus.app.lazy import lazy
 career_saving = lazy("solitaireplus.career.career_saving")
 career_rewards = lazy("solitaireplus.career.career_rewards")
-legacy = lazy("solitaireplus.legacy")
+game_globals = lazy("solitaireplus.app.game_globals")
 
 
 # XP values intentionally stay modest because many of these games can be
@@ -72,11 +77,11 @@ def process_achievement_event(event_name, **data):
 
         cosmetic_labels = []
         for reward in iter_achievement_rewards(definition):
-            label = legacy.unlock_achievement_cosmetic(reward)
+            label = unlock_achievement_cosmetic(reward)
             if label:
                 cosmetic_labels.append(label)
 
-        legacy.queue_achievement_popup(
+        queue_achievement_popup(
             definition,
             fan_reward,
             ", ".join(cosmetic_labels),
@@ -281,7 +286,7 @@ def add_player_xp(amount):
                 )
             )
 
-            if legacy.game_namespace().get('cryptid_collection_state') is not None:
+            if game_globals.game_namespace().get('cryptid_collection_state') is not None:
                 from solitaireplus.games.cryptid.collection import award_level_packs
                 packs=award_level_packs(state.cryptid_collection_state,level)
                 if packs:level_unlocks.append(('cryptid_pack',str(packs)))
@@ -462,3 +467,70 @@ def apply_round_rewards(
         ] = fans_earned
 
     return progression_result
+
+
+def is_game_unlocked(
+        game_id
+):
+    required_level = (
+        GAME_UNLOCK_LEVELS.get(
+            game_id,
+            1
+        )
+    )
+
+    return (
+        state.player_level
+        >= required_level
+    )
+
+
+def unlock_achievement_cosmetic(reward):
+    reward_type = reward.get("type")
+    asset_id = reward.get("id")
+    if not asset_id:
+        return ""
+
+    if reward_type == "background":
+        if asset_id in MENU_BACKGROUNDS:
+            state.unlocked_menu_backgrounds.add(asset_id)
+            return MENU_BACKGROUNDS[asset_id].get("name", asset_id)
+        return ""
+
+    if reward_type == "felt":
+        if asset_id in FELTS:
+            state.unlocked_felts.add(asset_id)
+            return FELTS[asset_id].get("name", asset_id)
+        return ""
+
+    if reward_type == "title":
+        if asset_id in TITLES:
+            state.unlocked_titles.add(asset_id)
+            return TITLES[asset_id].get("name", asset_id)
+        return ""
+
+    return ""
+
+
+def queue_achievement_popup(definition, fan_reward, cosmetic_label=""):
+    state.achievement_popup_queue.append({
+        "definition": definition,
+        "fans": int(fan_reward or 0),
+        "cosmetic": str(cosmetic_label or ""),
+    })
+
+
+def update_achievement_popup():
+
+    now = pygame.time.get_ticks()
+
+    if state.achievement_popup_current is not None:
+        if now - state.achievement_popup_started >= 4400:
+            state.achievement_popup_current = None
+
+    if state.achievement_popup_current is None and state.achievement_popup_queue:
+        item = state.achievement_popup_queue.pop(0)
+        state.achievement_popup_current = item["definition"]
+        state.achievement_popup_fans = item["fans"]
+        state.achievement_popup_cosmetic = item["cosmetic"]
+        state.achievement_popup_started = now

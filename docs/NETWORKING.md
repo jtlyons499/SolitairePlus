@@ -82,8 +82,8 @@ In short:
   into `peer.inbox`), `closed`, `error`.
 
 `API_VERSION` exists in two places, `netservice/protocol.py` and `multiplayer/net_client.py`, and
-`tests/test_netservice.py` fails if they differ. Change it only for an incompatible protocol change. If the
-versions don't match, the game tells the player to run the updater.
+`tests/netservice/test_netservice.py` fails if they differ. Change it only for an incompatible protocol change. If
+the versions don't match, the game tells the player to run the updater.
 
 ## Adding a new way to connect (a "connector")
 
@@ -100,7 +100,7 @@ Example: a WebSocket relay at `wss://relay.example.com`.
    * Never block the asyncio loop.
 3. Register the URL scheme in `SCHEMES` in `netservice/connectors/__init__.py`, e.g. `"wss": WebSocketConnection`.
 4. If it should become the default, change `DEFAULT_ADDRESS`.
-5. Add tests to `tests/test_netservice.py` using a fake local server (see the existing relay tests).
+5. Add tests to `tests/netservice/test_netservice.py` using a fake local server (see the existing relay tests).
 6. Bump `netservice.__version__` in `netservice/__init__.py`.
 
 The game doesn't change: players get the new connection method through an update that replaces `SolitaireNet.exe`.

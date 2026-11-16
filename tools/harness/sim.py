@@ -229,8 +229,9 @@ class Probe:
         main = sys.modules.get("__main__")
         if main is not None:
             found.append(vars(main))
-        # Names of the old main.py first (legacy, then app modules), then everything else: a moved
-        # name never loses to an unrelated same-named object in some other package module.
+        # Names of the old main.py first (solitaireplus.legacy in checkouts from before Phase 12, then
+        # app modules), then everything else: a moved name never loses to an unrelated same-named
+        # object in some other package module.
         def priority(name):
             if name == "solitaireplus.legacy":
                 return (0, name)

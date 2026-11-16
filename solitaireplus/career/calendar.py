@@ -6,7 +6,9 @@ from solitaireplus.app.lazy import lazy
 leaderboard_engine = lazy("solitaireplus.career.leaderboard_engine")
 night = lazy("solitaireplus.career.events.night")
 career_saving = lazy("solitaireplus.career.career_saving")
-legacy = lazy("solitaireplus.legacy")
+hub_screen = lazy("solitaireplus.career.hub_screen")
+news_screen = lazy("solitaireplus.career.news_screen")
+table = lazy("solitaireplus.games.solitaire.table")
 
 
 CAREER_WEEKDAY_NAMES = [
@@ -17,22 +19,6 @@ CAREER_WEEKDAY_NAMES = [
     "Friday",
 ]
 
-
-def get_career_weekday_name():
-    if (
-        0
-        <= state.career_weekday_index
-        < len(
-            CAREER_WEEKDAY_NAMES
-        )
-    ):
-        return (
-            CAREER_WEEKDAY_NAMES[
-                state.career_weekday_index
-            ]
-        )
-
-    return "Unknown"
 
 def get_career_work_activity_name():
 
@@ -60,7 +46,7 @@ def advance_career_day(
     # ==================================================
 
     current_index = (
-        legacy.get_current_career_activity_index()
+        get_current_career_activity_index()
     )
 
     if current_index is not None:
@@ -126,7 +112,7 @@ def advance_career_day(
         # Update the competitive world
         # once per new Career month.
         leaderboard_engine.update_career_leaderboard_ratings()
-        legacy.maybe_add_monthly_flavor_news()
+        news_screen.maybe_add_monthly_flavor_news()
 
         state.career_current_schedule = (
             build_default_career_schedule()
@@ -147,8 +133,8 @@ def reset_career_hub_runtime():
     state.career_event_summary_lines = []
     state.career_news_page = 0
     state.career_leaderboard_page = 0
-    legacy.career_hub_controls.reset()
-    legacy.game.clear_challenge()
+    hub_screen.career_hub_controls.reset()
+    table.game.clear_challenge()
 
 
 def build_default_career_schedule():
@@ -281,3 +267,20 @@ def ensure_career_schedule():
     if len(state.career_current_schedule) == 15:
         second_half = build_default_career_schedule()[15:30]
         state.career_current_schedule.extend(second_half)
+
+
+def get_current_career_activity_index():
+
+    for index, entry in enumerate(
+        state.career_current_schedule
+    ):
+
+        if (
+            entry.get(
+                "day_number"
+            )
+            == state.career_day_of_month
+        ):
+            return index
+
+    return None

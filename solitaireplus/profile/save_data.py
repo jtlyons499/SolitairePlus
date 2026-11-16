@@ -17,7 +17,8 @@ leaderboard_engine = lazy("solitaireplus.career.leaderboard_engine")
 career_rewards = lazy("solitaireplus.career.career_rewards")
 profile_select = lazy("solitaireplus.profile.profile_select")
 leveling = lazy("solitaireplus.profile.leveling")
-legacy = lazy("solitaireplus.legacy")
+game_globals = lazy("solitaireplus.app.game_globals")
+table = lazy("solitaireplus.games.solitaire.table")
 cursors = lazy("solitaireplus.ui.cursors")
 assets = lazy("solitaireplus.app.assets")
 
@@ -37,7 +38,7 @@ def apply_fresh_profile():
 
 def build_profile_save_data():
     from solitaireplus.games.arcade.support import clone_arcade_state as clone_arcade_save_state
-    store_event_progress(legacy.game_namespace().get("career_event_entry"), legacy.game_namespace())
+    store_event_progress(game_globals.game_namespace().get("career_event_entry"), game_globals.game_namespace())
 
     profile_data = (
         make_default_profile()
@@ -341,13 +342,13 @@ def build_profile_save_data():
 
     profile_settings[
         "solitaire_deal_mode"
-    ] = legacy.game.deal_mode
+    ] = table.game.deal_mode
 
-    profile_data["cryptid_creatures"] = copy.deepcopy(legacy.game_namespace().get("cryptid_collection_state", profile_data["cryptid_creatures"]))
+    profile_data["cryptid_creatures"] = copy.deepcopy(game_globals.game_namespace().get("cryptid_collection_state", profile_data["cryptid_creatures"]))
     from solitaireplus.games.poker.learning import normalize_learning
-    profile_data["poker_learning"] = normalize_learning(legacy.game_namespace().get("career_poker_learning"))
+    profile_data["poker_learning"] = normalize_learning(game_globals.game_namespace().get("career_poker_learning"))
     from solitaireplus.career.case_opening import normalize_case_state
-    profile_data["case_opening"] = normalize_case_state(legacy.game_namespace().get("case_collection_state"))
+    profile_data["case_opening"] = normalize_case_state(game_globals.game_namespace().get("case_collection_state"))
 
     # A Free Play sandbox is running: its stake and results are not the career's. Whatever
     # saves now (a level-up, an achievement, a debug action), save the real career values the
@@ -766,7 +767,8 @@ def apply_profile_save_data(
 
     # Older profiles predate cursor ownership. Preserve all legacy cursors as
     # owned while keeping new Case/Arcade reward cursors locked until earned.
-    legacy_cursor_ids = set(cursors.cursor_cosmetics.keys()) - legacy.REWARD_CURSOR_IDS
+    from solitaireplus.profile.cosmetics import REWARD_CURSOR_IDS
+    legacy_cursor_ids = set(cursors.cursor_cosmetics.keys()) - REWARD_CURSOR_IDS
     unlocked_cursors = set(
         cosmetics.get(
             "unlocked_cursors",
@@ -774,7 +776,7 @@ def apply_profile_save_data(
         )
     )
     unlocked_cursors.add("cursor")
-    unlocked_cursors.intersection_update(set(cursors.cursor_cosmetics.keys()) | legacy.REWARD_CURSOR_IDS)
+    unlocked_cursors.intersection_update(set(cursors.cursor_cosmetics.keys()) | REWARD_CURSOR_IDS)
 
     # Reconcile possession-backed cosmetics so an earned reward remains owned
     # even if it was earned before its PNG existed or came from an older save.
@@ -808,9 +810,9 @@ def apply_profile_save_data(
         "solitaire_deal_mode",
         "random"
     )
-    if not legacy.VERIFIED_DEALS_ENABLED and requested_deal_mode == "verified":
+    if not table.VERIFIED_DEALS_ENABLED and requested_deal_mode == "verified":
         requested_deal_mode = "random"
-    legacy.game.set_deal_mode(requested_deal_mode)
+    table.game.set_deal_mode(requested_deal_mode)
     for entry in state.career_current_schedule:
         if entry.get("event_id") == "career_encounter" and not entry.get("completed"):
             entry.update(title="Bigfoot Night", event_id="bigfoot_night")
@@ -822,5 +824,5 @@ def apply_profile_save_data(
     profile_select.sync_achievement_cosmetic_rewards()
     career_rewards.grant_rating_cosmetics(force=True)
     leaderboard_engine.sync_career_npc_runtime_state()
-    legacy.sync_selected_cosmetics()
+    table.sync_selected_cosmetics()
     cursors.apply_selected_cursor()
