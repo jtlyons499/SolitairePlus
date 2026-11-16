@@ -5,6 +5,7 @@ import time
 import math
 import pygame
 from solitaireplus.games.cards.score_four_difficulty import DIFFICULTIES
+from solitaireplus.ui import text as ui_text
 
 WHITE = (241, 247, 255)
 MUTED = (163, 182, 208)
@@ -66,10 +67,10 @@ def draw_opponent_panel(surface, game, namespace):
         draw(opponent, portrait, 'score_four')
     name = opponent.get('name', 'Opponent')
     size = 32
-    font = pygame.font.Font(None, size)
+    font = ui_text.get_font(None, size)
     while font.size(name)[0] > 222 and size > 20:
         size -= 1
-        font = pygame.font.Font(None, size)
+        font = ui_text.get_font(None, size)
     surface.blit(font.render(name, True, WHITE), (152, 193))
     tier = {'low': 'Casual', 'mid': 'Skilled', 'strong': 'Expert', 'elite': 'Master'}.get(opponent.get('skill_tier'), 'Rival')
     text(surface, tier, (152, 230), 27, CYAN)
@@ -129,7 +130,7 @@ def draw_mode_select(surface, game, mouse, namespace):
     draw_rating_info(surface, mouse, namespace)
 
 def text(surface, value, position, size=28, color=WHITE, center=False):
-    label = pygame.font.Font(None, size).render(str(value), True, color)
+    label = ui_text.get_font(None, size).render(str(value), True, color)
     surface.blit(label, label.get_rect(center=position) if center else position)
 
 def panel(surface, rect, color=(16, 25, 43, 215), border=(67, 96, 127)):
@@ -245,7 +246,7 @@ def draw_score_four_table(surface, game, mouse, namespace):
         text(surface, line, (683, 680), 27, MUTED, True)
     if game.hint_text and not game.round_complete:
         words, rows = game.hint_text.split(), ['']
-        font = pygame.font.Font(None, 28)
+        font = ui_text.get_font(None, 28)
         for word in words:
             trial = (rows[-1] + ' ' + word).strip()
             if font.size(trial)[0] > 1000: rows.append(word)
@@ -302,7 +303,7 @@ def hint_meter_surface(size, progress):
 def draw_round_solution(surface, game, center):
     expression = str(game.solution) + ' = 24'
     size = 34
-    while size > 22 and pygame.font.Font(None, size).size(expression)[0] > 580:
+    while size > 22 and ui_text.get_font(None, size).size(expression)[0] > 580:
         size -= 1
     text(surface, expression, center, size, WHITE, True)
 

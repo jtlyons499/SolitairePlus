@@ -1,6 +1,7 @@
 """Restore the current Klondike deal without dealing again or awarding rewards."""
 import copy
 import pygame
+from solitaireplus.ui import text as ui_text
 
 DEAL_FIELDS = ('tableau','stock','waste','foundations','deal_status',
                'stock_passes_used','hints_remaining')
@@ -42,9 +43,9 @@ class RestartPrompt:
         pygame.draw.rect(surface,(24,50,40),rect,border_radius=16)
         pygame.draw.rect(surface,(150,220,190),rect,2,border_radius=16)
         for label,y,size in [('Restart this hand?',305,42),('Same deal. Timer and moves reset.',360,28),('No rewards for the abandoned attempt.',395,26)]:
-            text=pygame.font.Font(None,size).render(label,True,(245,245,245));surface.blit(text,text.get_rect(center=(683,y)))
+            text=ui_text.get_font(None,size).render(label,True,(245,245,245));surface.blit(text,text.get_rect(center=(683,y)))
         for button,label in [(self.yes,'Restart Hand'),(self.no,'Cancel')]:
             hover=mouse is not None and button.collidepoint(mouse)
             pygame.draw.rect(surface,(55,110,85) if hover else (35,75,60),button,border_radius=10)
             pygame.draw.rect(surface,(150,220,190),button,2,border_radius=10)
-            text=pygame.font.Font(None,30).render(label,True,(255,255,255));surface.blit(text,text.get_rect(center=button.center))
+            text=ui_text.get_font(None,30).render(label,True,(255,255,255));surface.blit(text,text.get_rect(center=button.center))

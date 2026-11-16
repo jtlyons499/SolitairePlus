@@ -1,6 +1,7 @@
 from solitaireplus.app import paths
 import os
 import pygame
+from solitaireplus.ui import text as ui_text
 
 
 BASE_WIDTH = 1366
@@ -137,7 +138,7 @@ def draw_head_to_head_selection(
         player_label.get_rect(center=(label_center_x, player_panel.centery))
     )
 
-    note = pygame.font.Font(None, 27).render('Rated race: wins earn Strategy points; losses and forfeits cost Strategy points.', True, (246, 240, 224))
+    note = ui_text.get_font(None, 27).render('Rated race: wins earn Strategy points; losses and forfeits cost Strategy points.', True, (246, 240, 224))
     note_rect = note.get_rect(center=(BASE_WIDTH//2, 604))
     backing = pygame.Surface(note_rect.inflate(24, 14).size, pygame.SRCALPHA)
     pygame.draw.rect(backing, (0, 0, 0, 190), backing.get_rect(), border_radius=8)
@@ -300,7 +301,7 @@ def draw_head_to_head_hud(
         overlay.fill((0, 0, 0, 92))
         surface.blit(overlay, (0, 0))
         label = race.countdown_label(now_ms)
-        giant_font = pygame.font.SysFont("georgia", 96, bold=True)
+        giant_font = ui_text.get_font("georgia", 96, bold=True, sysfont=True)
         count_surface = giant_font.render(label, True, (255, 229, 112))
         surface.blit(count_surface, count_surface.get_rect(center=(BASE_WIDTH // 2, BASE_HEIGHT // 2)))
         sub = body_font.render("First to clear all 52 foundation cards wins.", True, (250, 250, 245))

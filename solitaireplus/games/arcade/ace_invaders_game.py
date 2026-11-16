@@ -11,6 +11,7 @@ import random
 
 import pygame
 
+from solitaireplus.ui import text as ui_text
 from solitaireplus.games.arcade.ace_invaders import ACE_INVADERS_DIFFICULTIES, get_ace_invaders_difficulty
 from solitaireplus.games.arcade.motion import move_rect
 
@@ -608,7 +609,7 @@ class AceInvadersGame:
         color = (215, 58, 64) if suit in ("hearts", "diamonds") else (232, 236, 244)
         pygame.draw.rect(surface, (18, 22, 32), enemy["rect"], border_radius=7)
         pygame.draw.rect(surface, color, enemy["rect"], 2, border_radius=7)
-        font = pygame.font.Font(None, 34)
+        font = ui_text.get_font(None, 34)   # shared cache: never build a font per frame (B44)
         glyph = font.render("A" + SUIT_LABELS[suit], True, color)
         surface.blit(glyph, glyph.get_rect(center=enemy["rect"].center))
 

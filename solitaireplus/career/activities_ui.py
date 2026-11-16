@@ -3,6 +3,7 @@ from solitaireplus.app import paths
 from pathlib import Path
 import pygame
 from solitaireplus.career.activities import STORY, requirement_reason
+from solitaireplus.ui import text as ui_text
 from solitaireplus.career.alien_night import STORY as ALIEN_STORY
 
 MAP_PATH = str(paths.asset('events/bigfoot_night/map.png'))
@@ -19,7 +20,7 @@ class CareerActivityScreen:
         self.identity = None
 
     def lines(self, text, width, size):
-        font = pygame.font.Font(None, size)
+        font = ui_text.get_font(None, size)
         lines = []
         for paragraph in text.split('\n'):
             line = ''
@@ -32,7 +33,7 @@ class CareerActivityScreen:
         return lines
 
     def text(self, surface, text, x, y, width, size=28, colour=(242,244,232)):
-        font=pygame.font.Font(None,size)
+        font=ui_text.get_font(None,size)
         for line in self.lines(text,width,size):
             surface.blit(font.render(line,True,colour),(x,y))
             y+=font.get_linesize()+4
@@ -72,7 +73,7 @@ class CareerActivityScreen:
         for name,point in points.items():
             current=story['location']==name;visited=name in story['visited_locations']
             pygame.draw.circle(surface,(255,216,95) if current else (145,181,132) if visited else (68,94,72),point,14 if current else 9)
-            label=pygame.font.Font(None,23).render(name,True,(255,239,180) if current else (209,221,202))
+            label=ui_text.get_font(None,23).render(name,True,(255,239,180) if current else (209,221,202))
             caption=label.get_rect(midtop=(point[0],point[1]+16));caption.clamp_ip(rect)
             surface.blit(label,caption)
         self.text(surface,'Items',90,618,520,26,(222,205,140))
@@ -102,7 +103,7 @@ class CareerActivityScreen:
             body=state.get('result_text','') if state['claimed'] else state['intro']
             lines=self.lines(body,605,30);per_page=13;count=max(1,(len(lines)+per_page-1)//per_page)
             self.page=min(self.page,count-1)
-            font=pygame.font.Font(None,30)
+            font=ui_text.get_font(None,30)
             for i,line in enumerate(lines[self.page*per_page:(self.page+1)*per_page]):
                 surface.blit(font.render(line,True,(242,244,232)),(655,165+i*(font.get_linesize()+4)))
             if count>1:

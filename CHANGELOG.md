@@ -83,6 +83,7 @@ How to use this file (maintainers and AI agents):
 - Cryptid Creatures: a deck with fewer than two creatures no longer crashes the game. It shows a message and the battle doesn't start. The included and career decks always have eight creatures.
 - Dead Man's Hand: enemies can no longer be placed somewhere you can't walk to. None of the current levels has such a spot.
 - On a small screen (a usable area below about 1366x800, such as a 1366x768 laptop), the game window now really opens at the smaller size that fits, and a smaller size you drag it to stays. Before, it was held at 1366x768 and did not fit.
+- Score Four, the Bigfoot and Alien story nights, Head-to-Head (opponent choice and the race countdown) and the Solitaire "Restart this hand?" box no longer build new fonts on every frame, so these screens run a little smoother. They look exactly the same.
 
 ### Online play
 - Room codes are now 6 letters/digits instead of 5 digits, and guessing other people's room codes is slowed down and then blocked. Old 5-digit codes still work with players who haven't updated.

@@ -1,4 +1,5 @@
 import pygame
+from solitaireplus.ui import text as ui_text
 
 CARD_WIDTH = 120
 CARD_HEIGHT = 168
@@ -64,7 +65,7 @@ class Card:
             else:
                 color = (20, 20, 20)
 
-            font = pygame.font.SysFont(None, 28)
+            font = ui_text.get_font(None, 28, sysfont=True)   # shared cache (B44)
 
             text = font.render(
                 f"{self.rank} {self.suit[0]}",

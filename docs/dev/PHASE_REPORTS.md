@@ -1698,3 +1698,60 @@ record is unchanged.
   filled it. That is most likely a capture artefact: the screen itself could not be seen (a screen saver desktop
   was active). The window code is the one single-player has used since Phase 2.
 - Answer the open questions above.
+
+## Phase 7 (fix, late): B44 in Score Four, career activities and Head-to-Head
+
+The brief's B44 list also names Score Four, the career activities UI and Head-to-Head, and says they may be fixed in
+their own phases. Phases 4, 5 and 8 did not fix them, so this commit does. It was found while drafting the hand-back
+bug table. Every font now comes from the shared cache (`ui_text.get_font`) with the same font, size and flags as
+before, so the screens look the same.
+
+- **`games/cards/score_four_ui.py`**: these now use `ui_text.get_font(None, size)`:
+  - the opponent name fit loop (`draw_opponent_panel`, 2 sites);
+  - the `text()` helper that every Score Four screen uses;
+  - the hint line wrap in `draw_score_four_table`;
+  - the solution fit loop in `draw_round_solution`.
+- **`career/activities_ui.py`** (Bigfoot and Alien nights): `lines()`, `text()`, the map labels in `draw_map` and the
+  story page font in `draw` now use `ui_text.get_font(None, size)`.
+- **`games/solitaire/head_to_head_ui.py`**:
+  - the "Rated race" note on the opponent screen uses `ui_text.get_font(None, 27)`;
+  - the race countdown digit uses `ui_text.get_font("georgia", 96, bold=True, sysfont=True)`.
+- A scan of the rest of `solitaireplus/` found the same pattern in more places, fixed the same way:
+  - **`games/solitaire/restart.py`**: the "Restart this hand?" prompt built 5 fonts per frame. This one is live.
+  - **`games/arcade/ace_invaders_game.py`**: `_draw_enemy` built a font per enemy per frame for the enemy glyph. The
+    glyph is drawn only when both the enemy art and the card-front art are missing; both ship, so normal play never
+    reaches it.
+  - **`games/solitaire/card.py`**: `Card.draw` built a `SysFont(None, 28)` per face-up card. Nothing in the game
+    calls `Card.draw` (the table draws its own cards in `rules.py`), so this change is only for consistency.
+- After the fix, every `Font`/`SysFont` call in `solitaireplus/` outside `ui/text.py` runs at import time, in a
+  constructor that runs once, or behind a cache. The one exception is the Dead Man's Hand PvP duel (N73), which
+  Phase 11 was editing at the time.
+
+**Test:** `tests/test_frame_font_sites.py` (extended).
+- `test_screens_build_their_fonts_only_once` draws each screen twice and counts `pygame.font.Font` / `SysFont`
+  calls. The second frame must build no font.
+- `test_shared_fonts_draw_the_same_pixels_as_fresh_ones` checks that cached fonts draw the same pixels as fresh ones.
+- New screens, each with a fixed state (and a fixed `time.monotonic` for the Score Four timers):
+  `score_four_mode_select` (with the rating overlay), `score_four_difficulty_select`, `score_four_table_solo_hint`,
+  `score_four_table_competitive_npc_solved` (long opponent name and long solution, so both fit loops run),
+  `career_activity_intro`, `career_activity_choices`, `career_activity_alien_intro`,
+  `draw_head_to_head_selection`, `draw_head_to_head_hud_countdown`, `restart_prompt`, `ace_invaders_fallback_enemy`
+  and `card_draw_unused_by_game`.
+- The old `NOT_COUNTED = {'score_four_ui.py'}` exception is gone, so `draw_score_four_opponent_select` now counts
+  Score Four's helpers too.
+- Before the fix, 13 subtests failed. A reviewer put the old call back at each of the 15 fixed lines, one at a time:
+  every one made the test fail. A seeded pixel hash of all 21 test screens matched before and after.
+
+**Results:**
+- `tools\run_tests.py` → `PASSED`. No new `KNOWN_FAILURES.txt` lines.
+- `screen_harness compare` against "Phase 11 (move)" → `IDENTICAL 64/64 scenes`; `replay compare` →
+  `IDENTICAL 18/18 journeys`.
+
+**New findings (not fixed here):**
+- **N73:** `games/dead_mans_hand/pvp.py` (`PvPGame._render_remote`, about lines 407 and 412) builds
+  `Font(None, 10)` and `Font(None, 8)` every frame for the opponent's name and weapon plate. Fix:
+  `ui_text.get_font(None, 10)` and `ui_text.get_font(None, 8)`.
+- **N74:** `multiplayer/` still builds fonts per frame: `main.py` (hub and room buttons and the table status),
+  `mp_appearance.py` (the avatar initial when there is no image), `mp_hub.py` (the title fallback), `party_view.py`
+  (lobby code and roulette chip labels) and `room_view.py` (a `SysFont` per button whose label is too wide; see B84).
+- **N75:** `Card.draw` in `games/solitaire/card.py` has no caller in the game. It is dead code.
