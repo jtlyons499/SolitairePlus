@@ -4,7 +4,7 @@ import queue
 import uuid
 from types import SimpleNamespace
 from mp_profile import clean_public, winning_xp
-from room_protocol import ClientGame, clean_name
+from room_protocol import ClientGame, clean_name, countdown_offset, PROTOCOL_NOTICE, ROOM_PROTOCOL
 from solitaireplus.games.poker.holdem_ui import get_card_key
 from net_client import open_peer
 from room_table import RoomAuthority
@@ -25,10 +25,24 @@ class RoomTable:
         self.peer=open_peer(hosting,address,self.name,code,version=2)
         self.authority=(RoomAuthority(self.name) if mode in (None,'holdem') else make_party_authority(mode,self.name)) if hosting else None
         self.game=ClientGame();self.message={'type':'connecting'};self.status='Connecting to relay…';self.failed=False;self.last_sent=-1;self.pending=False;self.leave_notice='';self.leave_notice_seq=0;self.chat_messages=[];self.chat_seq=0
+        # now: this machine's clock at the last update(); countdown_until: when the host's next-hand
+        # (or roulette) countdown ends on that clock (B70); version_notice: set once if the host's
+        # messages carry another room protocol; host_leave_seq: the last host leave notice shown.
+        self.now=0;self.countdown_until=None;self.version_notice='';self.host_leave_seq=0
     @property
     def code(self):return self.peer.code
     def close(self):self.peer.close()
+    def send_stamped(self,message):
+        """Host to guests: every message carries the room protocol stamp."""
+        message['protocol']=ROOM_PROTOCOL
+        return self.peer.send(message)
+    def check_protocol(self,m):
+        """Guest: warn once (as a notice) if the host's messages carry another protocol; play goes on."""
+        if m.get('protocol')==ROOM_PROTOCOL or getattr(self,'version_notice',''):return
+        self.version_notice=PROTOCOL_NOTICE
+        self.leave_notice=PROTOCOL_NOTICE;self.leave_notice_seq=getattr(self,'leave_notice_seq',0)+1
     def update(self,now):
+        self.now=now
         while True:
             try:m=self.peer.inbox.get_nowait()
             except queue.Empty:break
@@ -46,8 +60,9 @@ class RoomTable:
                 self.authority.leave(m['identity']);self.last_sent=-1
                 self.leave_notice_seq+=1;self.leave_notice=f'{leaving} left the game.'
                 for target in list(self.authority.connections):
-                    if target:self.peer.send({'type':'ack','target':target,'leave_notice':self.leave_notice,'leave_seq':self.leave_notice_seq})
-            elif kind in ('lobby','state','waiting','party_state') and not self.hosting:self.apply(m)
+                    if target:self.send_stamped({'type':'ack','target':target,'leave_notice':self.leave_notice,'leave_seq':self.leave_notice_seq})
+            elif kind in ('lobby','state','waiting','party_state') and not self.hosting:
+                self.check_protocol(m);self.apply(m)
             elif kind=='action' and self.hosting:
                 who=m.get('sender')
                 if m.get('action')=='profile':
@@ -64,28 +79,39 @@ class RoomTable:
                 self.collect_awards()
                 ok=self.authority.act(who,m.get('action'),m.get('amount',0),m.get('revision'))
                 self.collect_awards()
-                self.peer.send({'type':'ack','target':who,'ok':ok});self.last_sent=-1
+                self.send_stamped({'type':'ack','target':who,'ok':ok});self.last_sent=-1
             elif kind=='ack' and 'public_profile' in m:
                 value=clean_public(m['public_profile'])
                 if value:self.public_profiles[m['owner']]=value
             elif kind=='ack' and 'leave_notice' in m:
                 self.leave_notice=str(m.get('leave_notice','Player left the game.'))[:96]
-                try:self.leave_notice_seq=max(self.leave_notice_seq,int(m.get('leave_seq',self.leave_notice_seq+1)))
-                except (TypeError,ValueError):self.leave_notice_seq+=1
+                # The host numbers its leave notices; each new one shows once. Counted apart from
+                # leave_notice_seq (the toast's counter), which the version notice also uses.
+                shown=getattr(self,'host_leave_seq',0)
+                try:seq=int(m.get('leave_seq',shown+1))
+                except (TypeError,ValueError):seq=shown+1
+                if seq>shown:self.host_leave_seq=seq;self.leave_notice_seq+=1
             elif kind=='ack':
                 self.pending=False
                 if not m.get('ok'):self.status='Table changed; try again after the next update'
         if self.hosting and not self.failed and self.code:
-            self.collect_awards();self.authority.update(now);self.collect_awards();self.apply(self.view(0))
-            if self.code and self.last_sent!=self.authority.revision:
+            self.collect_awards();self.authority.update(now);self.collect_awards()
+            if self.last_sent!=self.authority.revision:
+                # B84: the host's own view, like the guests', is rebuilt only when the revision
+                # moves; last_sent=-1 forces it after chat, joins, profiles and XP awards.
+                self.apply(self.view(0))
                 sent=True
                 for identity in self.authority.connections:
                     if identity:
                         m=self.view(identity);m['target']=identity
-                        sent=self.peer.send(m) and sent
+                        sent=self.send_stamped(m) and sent
                 if sent:self.last_sent=self.authority.revision
     def apply(self,m):
         self.message=m;self.pending=False
+        # B70: a countdown arrives as a 'starts at' time on the host clock (countdown_at) plus the
+        # host clock when the message was built (host_now); count it down on this machine's clock.
+        offset=countdown_offset(m)
+        self.countdown_until=None if offset is None else getattr(self,'now',0)+offset
         announced=m.get('mode')
         if announced:
             self.mode=announced
@@ -145,7 +171,7 @@ class RoomTable:
     def send_profile(self, owner, value, recipients=None):
         recipients=self.authority.connections if recipients is None else recipients
         for target in recipients:
-            if target:self.peer.send({'type':'ack','target':target,'owner':owner,'public_profile':value})
+            if target:self.send_stamped({'type':'ack','target':target,'owner':owner,'public_profile':value})
 
     def refresh_profile(self):
         if not self.profile:return

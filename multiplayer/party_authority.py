@@ -13,6 +13,9 @@ import random
 from fractions import Fraction
 
 from solitaireplus.games.poker.niche_common import RANK_VALUES, build_standard_deck, round_chip_amount
+from solitaireplus.games.poker.core import (award_pots, betting_reopened, build_pots, can_raise, hand_nets,
+                                            hand_winners, settle_fold_win)
+from solitaireplus.games.cards.score_four import check_solution
 from solitaireplus.games.cards.score_four_difficulty import puzzle_pool
 from solitaireplus.games.casino.roulette import ROULETTE_NUMBERS, RED_NUMBERS
 from solitaireplus.app import paths
@@ -26,7 +29,10 @@ SKILL_LABELS = {
 }
 STACK_OPTIONS = (1000, 5000, 10000, 25000)
 ROULETTE_TIMERS = (15, 25, 40, 60)
+ROULETTE_MIN_BET = 1
 SCORE_FOUR_DIFFICULTIES = ("easy", "standard", "difficult", "extreme")
+# A disconnected player's Blind Man's Bluff turn is taken for it after this pause (ms).
+DISCONNECTED_TURN_MS = 600
 
 
 def _load_npc_roster():
@@ -38,13 +44,6 @@ def _load_npc_roster():
 
 def _clean_name(value):
     return "".join(c for c in str(value or "Player") if c.isprintable())[:32].strip() or "Player"
-
-
-def _clamp_int(value, low, high, default=None):
-    try:
-        return max(low, min(high, int(value)))
-    except (TypeError, ValueError, OverflowError):
-        return low if default is None else default
 
 
 def _seat_record(kind="Empty", name="Open seat", skill="mid", identity=None, npc=None):
@@ -65,6 +64,8 @@ def _seat_record(kind="Empty", name="Open seat", skill="mid", identity=None, npc
 class FourSeatAuthority:
     mode = "party"
     title = "Multiplayer"
+    # The notice for a player who joins while a game is running.
+    join_wait_text = "will join when the table returns to the lobby"
 
     def __init__(self, host_name, rng=None):
         self.rng = rng or random.Random()
@@ -90,19 +91,20 @@ class FourSeatAuthority:
         name = _clean_name(name)
         self.connections[identity] = name
         if self.started:
+            # Seated by _seat_waiters at the next hand, spin or lobby.
             self.waiting.append((identity, name))
-            self._touch(f"{name} will join when the table returns to the lobby.")
+            self._touch(f"{name} {self.join_wait_text}.")
             return
-        self._assign_joiner(identity, name)
+        if not self._assign_joiner(identity, name):
+            self.waiting.append((identity, name))
         self._touch(f"{name} joined the room.")
 
     def _assign_joiner(self, identity, name):
         # Humans replace an optional NPC before being refused a seat.
-        seat = next((i for i in range(1, 4) if self.seat_data[i]["kind"] == "Empty"), None)
+        seat = self._free_seat()
         if seat is None:
             seat = next((i for i in range(1, 4) if self.seat_data[i]["kind"] == "NPC"), None)
         if seat is None:
-            self.waiting.append((identity, name))
             return False
         self.humans[identity] = seat
         self.seat_data[seat] = _seat_record("Human", name, identity=identity)
@@ -110,16 +112,84 @@ class FourSeatAuthority:
 
     def leave(self, identity):
         self.connections.pop(identity, None)
+        waiting = len(self.waiting)
         self.waiting = [pair for pair in self.waiting if pair[0] != identity]
         seat = self.humans.pop(identity, None)
         if seat is None:
+            if len(self.waiting) != waiting:
+                self._touch()
             return
         if self.started:
+            # The seat stays as a ghost seat until a waiter takes it or the lobby frees it.
             self.seat_data[seat]["connected"] = False
             self.seat_data[seat]["spectator"] = True
             self.seat_data[seat]["action"] = "Disconnected"
         else:
             self.seat_data[seat] = _seat_record()
+            self._seat_waiters()
+        self._touch()
+
+    # ------------------------------------------------------------------
+    # Seats for late joiners (B71, B74)
+    # ------------------------------------------------------------------
+    def _disconnected(self, seat):
+        """True for a ghost seat: a human seat whose player has left the room."""
+        row = self.seat_data[seat]
+        return row["kind"] == "Human" and row.get("identity") not in self.connections
+
+    def _free_seat(self):
+        return next((i for i in range(1, 4) if self.seat_data[i]["kind"] == "Empty"), None)
+
+    def _free_disconnected_seats(self):
+        for seat in range(1, 4):
+            if self._disconnected(seat):
+                self.seat_data[seat] = _seat_record()
+
+    def _seat_is_broke(self, seat):
+        """Mode hook: True when the seat has too few chips to play."""
+        return False
+
+    def _seat_for_waiter(self):
+        seat = self._free_seat()
+        if seat is None:
+            seat = next((i for i in range(1, 4) if self._disconnected(i)), None)
+        if seat is None:
+            npcs = [i for i in range(1, 4) if self.seat_data[i]["kind"] == "NPC"]
+            # A broke NPC's seat first: the joiner buys in and the funded NPCs play on.
+            seat = next((i for i in npcs if self._seat_is_broke(i)), npcs[0] if npcs else None)
+        return seat
+
+    def _seat_waiters(self):
+        """Seat every queued joiner who is still connected.
+
+        Each takes an Empty seat, else a ghost seat, else an NPC seat; a joiner who
+        finds none keeps waiting (once). _on_seated gives the seat its chips.
+        Returns True if anyone was seated.
+        """
+        still_waiting = []
+        seated = False
+        for identity, name in self.waiting:
+            if identity not in self.connections or identity in self.humans:
+                continue
+            seat = self._seat_for_waiter()
+            if seat is None:
+                still_waiting.append((identity, name))
+                continue
+            previous_row = self.seat_data[seat]
+            self.seat_data[seat] = _seat_record("Human", name, identity=identity)
+            self.humans[identity] = seat
+            self._on_seated(seat, previous_row)
+            seated = True
+        self.waiting = still_waiting
+        return seated
+
+    def _on_seated(self, seat, previous_row):
+        """Mode hook for a joiner who has just taken ``seat`` from ``previous_row``."""
+
+    def _return_to_lobby(self):
+        self.started = False
+        self._free_disconnected_seats()
+        self._seat_waiters()
         self._touch()
 
     def _active_lobby_count(self):
@@ -293,6 +363,9 @@ class ScoreFourAuthority(FourSeatAuthority):
         if seat is None:
             return False
         if action == "solved" and self.round_winner is None and self.match_winner is None:
+            # B76: the player sends its steps and the host replays them by the game's rules.
+            if not isinstance(amount, dict) or not check_solution(self.numbers, amount.get("steps")):
+                return False
             return self._win_round(seat)
         if action == "ready" and self.round_winner is not None and self.match_winner is None:
             self.ready.add(seat); self._touch(); return True
@@ -302,7 +375,8 @@ class ScoreFourAuthority(FourSeatAuthority):
             self.match_winner = None; self.round_number = 0
             self._start_round(self.now); return True
         if action == "return_lobby" and identity == 0 and self.match_winner is not None:
-            self.started = False; self.round_winner = None; self.match_winner = None; self.ready.clear(); self._touch(); return True
+            self.round_winner = None; self.match_winner = None; self.ready.clear()
+            self._return_to_lobby(); return True
         return False
 
     def update(self, now):
@@ -346,6 +420,7 @@ class ScoreFourAuthority(FourSeatAuthority):
 class BlindBluffAuthority(FourSeatAuthority):
     mode = "blind_mans_bluff"
     title = "Blind Man's Bluff"
+    join_wait_text = "will join at the next hand"
 
     def __init__(self, host_name, rng=None):
         super().__init__(host_name, rng)
@@ -370,6 +445,12 @@ class BlindBluffAuthority(FourSeatAuthority):
         self.result_until = 0
         self.npc_due = 0
         self.opening_cursor = -1
+        self.opener = None
+        # How the last hand was settled, in the shared record shape (core.award_pots).
+        self.last_pot_awards = []
+        self.last_refunds = {}
+        # Fewer than two seats can ante: the table is over (B73).
+        self.finished = False
 
     def lobby_view(self, identity):
         data = super().lobby_view(identity)
@@ -379,10 +460,28 @@ class BlindBluffAuthority(FourSeatAuthority):
     def _participants(self):
         return [i for i, row in enumerate(self.seat_data) if row["kind"] in ("Human", "NPC")]
 
+    def _seat_is_broke(self, seat):
+        return self.stacks[seat] < self.ante
+
+    def _on_seated(self, seat, previous_row):
+        # An empty or broke seat buys in for the starting stack; otherwise the
+        # joiner plays on with the chips of the seat it takes.
+        if previous_row["kind"] == "Empty" or self._seat_is_broke(seat):
+            self.stacks[seat] = self.starting_stack
+        self.seat_data[seat]["stack"] = self.stacks[seat]
+
+    def leave(self, identity):
+        seat = self.humans.get(identity)
+        super().leave(identity)
+        # B72: a player who leaves on their turn has it taken for them after a pause.
+        if self.started and not self.hand_complete and seat is not None and seat == self.current_actor:
+            self.npc_due = self.now + DISCONNECTED_TURN_MS
+
     def start(self, now=0):
         if self.started or self._active_lobby_count() < 2:
             return False
         self.started = True
+        self.finished = False
         self.stacks = [self.starting_stack if row["kind"] in ("Human", "NPC") else 0 for row in self.seat_data]
         for i, row in enumerate(self.seat_data):
             row["stack"] = self.stacks[i]
@@ -402,12 +501,17 @@ class BlindBluffAuthority(FourSeatAuthority):
         return paid
 
     def _start_hand(self, now):
+        # B71: players who joined during the last hand sit down now.
+        self._seat_waiters()
         eligible = [seat for seat in self._participants() if self.stacks[seat] >= self.ante]
         for seat in self._participants():
             self.seat_data[seat]["spectator"] = seat not in eligible
         if len(eligible) < 2:
+            # B73: the table is finished; update() deals no more hands.
+            self.finished = True
             self.hand_complete = True
             self.current_actor = None
+            self.result_until = 0
             self.result_text = "Not enough funded seats remain. Broke players are spectating."
             self._touch(self.result_text)
             return False
@@ -424,6 +528,8 @@ class BlindBluffAuthority(FourSeatAuthority):
         self.raise_rights = set()
         self.hand_complete = False
         self.winners = []
+        self.last_pot_awards = []
+        self.last_refunds = {}
         self.result_text = "See every forehead card except your own."
         for seat in eligible:
             self.folded[seat] = False
@@ -436,7 +542,8 @@ class BlindBluffAuthority(FourSeatAuthority):
                 self.pending.add(seat); self.raise_rights.add(seat)
         live_order = eligible
         self.opening_cursor = (self.opening_cursor + 1) % len(live_order)
-        self.current_actor = live_order[self.opening_cursor]
+        self.opener = live_order[self.opening_cursor]
+        self.current_actor = self.opener
         self.npc_due = 0
         self._advance(now, inclusive=True)
         self._touch()
@@ -445,42 +552,82 @@ class BlindBluffAuthority(FourSeatAuthority):
     def _active(self):
         return [i for i in self._participants() if not self.folded[i] and self.cards[i] is not None]
 
+    def _in_hand(self):
+        return [not self.folded[i] and self.cards[i] is not None for i in range(4)]
+
     def _can_raise(self, seat):
-        return seat in self.raise_rights and self.stacks[seat] + self.round_bets[seat] > self.current_bet
+        # The shared rule (core.can_raise), as in single-player Blind Man's Bluff:
+        # someone else in the hand must have chips to answer. raise_rights holds the
+        # seats that have not acted since the last full bet or raise; a seat that has
+        # acted may raise again once the short all-ins it faces add up to a full raise
+        # (core.betting_reopened).
+        if not isinstance(seat, int) or not 0 <= seat < 4:
+            return False
+        reopened = betting_reopened(seat not in self.raise_rights, self.round_bets[seat],
+                                    self.current_bet, self.last_raise)
+        return can_raise(seat, self._in_hand(), self.stacks, self.round_bets, self.current_bet,
+                         reopened=reopened)
 
     def _min_raise_to(self):
         return self.current_bet + self.last_raise if self.current_bet else self.bet_unit
 
+    def _dealer_seat(self):
+        # As in single-player Blind Man's Bluff the opener counts as the first seat
+        # left of the dealer, so odd chips go round the table from the opener.
+        return None if self.opener is None else (self.opener - 1) % 4
+
+    def _pay(self, seat, amount):
+        if amount:
+            self.stacks[seat] += amount
+            self.seat_data[seat]["stack"] = self.stacks[seat]
+
+    def _refund_text(self, refunds):
+        return "".join(f" Uncalled ${amount:,} returned to {self.seat_data[seat]['name']}."
+                       for seat, amount in sorted(refunds.items()))
+
     def _award_single(self, seat, now):
-        total = sum(self.contributions)
-        self.stacks[seat] += total
-        self.seat_data[seat]["stack"] = self.stacks[seat]
+        # core.settle_fold_win: settled like a showdown with one live seat. The
+        # survivor wins the pot of matched chips; uncalled chips go back to whoever
+        # put them in, the survivor's own included.
+        winnings, refunds = settle_fold_win(self.contributions, seat)
+        self._pay(seat, winnings)
+        for other, amount in refunds.items():
+            self._pay(other, amount)
+        self.last_pot_awards = [{"amount": winnings, "eligible": [seat], "winners": [seat],
+                                 "payouts": {seat: winnings}, "share": winnings,
+                                 "remainder": 0, "hand": ""}]
+        self.last_refunds = dict(refunds)
         self.winners = [seat]
-        self.result_text = f"{self.seat_data[seat]['name']} wins ${total:,}; everyone else folded."
+        self.result_text = (f"{self.seat_data[seat]['name']} wins ${winnings:,}; everyone else folded."
+                            + self._refund_text(refunds))
         self.hand_complete = True; self.current_actor = None; self.result_until = now + 5500
         self._touch(self.result_text)
 
     def _showdown(self, now):
-        levels = sorted({amount for amount in self.contributions if amount > 0})
-        previous = 0
-        winners_any = set()
-        for level in levels:
-            contributors = [i for i, amount in enumerate(self.contributions) if amount >= level]
-            eligible = [i for i in contributors if not self.folded[i] and self.cards[i] is not None]
-            amount = (level - previous) * len(contributors)
-            previous = level
-            if not eligible or amount <= 0:
-                continue
-            best = max(RANK_VALUES[self.cards[i]["rank"]] for i in eligible)
-            winners = [i for i in eligible if RANK_VALUES[self.cards[i]["rank"]] == best]
-            share, remainder = divmod(amount, len(winners))
-            for j, seat in enumerate(winners):
-                self.stacks[seat] += share + (1 if j < remainder else 0)
-                self.seat_data[seat]["stack"] = self.stacks[seat]
-                winners_any.add(seat)
-        self.winners = sorted(winners_any)
-        names = ", ".join(self.seat_data[i]["name"] for i in self.winners) or "Nobody"
-        self.result_text = f"{names} {'split the pot' if len(self.winners)>1 else 'wins the pot'}."
+        # The shared pot rules (core.build_pots and award_pots), as in single-player
+        # Blind Man's Bluff: uncalled chips, and any layer no live seat paid into, go
+        # back to whoever put them in; each pot goes to the highest live card, and
+        # ties split with odd chips round the table from the opener.
+        active = self._active()
+        pots, refunds = build_pots(self.contributions, [seat in active for seat in range(4)])
+        scores = {seat: RANK_VALUES[self.cards[seat]["rank"]] for seat in active}
+        awards, totals = award_pots(pots, scores, self._dealer_seat(), 4)
+        for seat in range(4):
+            self._pay(seat, totals.get(seat, 0) + refunds.get(seat, 0))
+        self.last_pot_awards = awards
+        self.last_refunds = dict(refunds)
+        # core.hand_winners: a contested pot is won; a pot a seat only collected (nobody
+        # else could win it) is won only when the seat made money on the hand. Only
+        # winners hear the win sound (party_view), so a refund is never a win.
+        self.winners = hand_winners(awards, hand_nets(self.contributions, awards, refunds))
+        collectors = sorted(seat for seat, amount in totals.items() if amount > 0)
+        if len(collectors) == 1:
+            seat = collectors[0]
+            text = f"{self.seat_data[seat]['name']} wins ${totals[seat]:,}."
+        else:
+            text = "Payouts: " + "; ".join(f"{self.seat_data[seat]['name']} ${totals[seat]:,}"
+                                           for seat in collectors) + "."
+        self.result_text = text + self._refund_text(refunds)
         self.hand_complete = True; self.current_actor = None; self.result_until = now + 5500
         self._touch(self.result_text)
 
@@ -503,22 +650,35 @@ class BlindBluffAuthority(FourSeatAuthority):
         due = max(0, self.current_bet - self.round_bets[seat])
         pot = max(1, sum(self.contributions))
         pressure = due / max(1, pot + due)
+        # The stack caps every bet (B77): a short stack bets or raises all in.
+        maximum = self.round_bets[seat] + self.stacks[seat]
+        minimum = self._min_raise_to()
         if due:
             if strength + .08 < pressure and self.rng.random() < .82:
                 return self._act_seat(seat, "fold", 0, now)
             if strength > .72 and self._can_raise(seat) and self.rng.random() < .42:
-                target = min(self.round_bets[seat] + self.stacks[seat], max(self._min_raise_to(), self.current_bet + self.bet_unit * 2))
+                target = min(maximum, max(minimum, self.current_bet + self.bet_unit * 2))
                 return self._act_seat(seat, "bet_raise", target, now)
             return self._act_seat(seat, "check_call", 0, now)
         if strength > .58 and self._can_raise(seat) and self.rng.random() < (.30 + .35 * strength):
-            target = min(self.stacks[seat], self.bet_unit * (2 if strength > .78 else 1))
-            return self._act_seat(seat, "bet_raise", max(self.bet_unit, target), now)
+            target = min(maximum, max(minimum, self.bet_unit * (2 if strength > .78 else 1)))
+            return self._act_seat(seat, "bet_raise", target, now)
         return self._act_seat(seat, "check_call", 0, now)
 
     def _act_seat(self, seat, action, amount, now):
         if self.hand_complete or seat not in self.pending or seat != self.current_actor:
             return False
         due = max(0, self.current_bet - self.round_bets[seat])
+        if action == "bet_raise":
+            if not self._can_raise(seat) or isinstance(amount, bool) or not isinstance(amount, int):
+                return False
+            maximum = self.round_bets[seat] + self.stacks[seat]
+            minimum = self._min_raise_to()
+            # B77: the stack caps the minimum, so a short stack raises all in for what
+            # it has (a short raise); a target that does not beat the bet is a call.
+            target = min(maximum, max(minimum, amount))
+            if target <= self.current_bet:
+                action = "check_call"
         if action == "fold":
             self.folded[seat] = True; self.actions[seat] = "Folded"
         elif action == "check_call":
@@ -527,13 +687,6 @@ class BlindBluffAuthority(FourSeatAuthority):
             else:
                 self.actions[seat] = "Checked"
         elif action == "bet_raise":
-            if not self._can_raise(seat):
-                return False
-            maximum = self.round_bets[seat] + self.stacks[seat]
-            minimum = self._min_raise_to()
-            target = _clamp_int(amount, minimum, maximum, minimum)
-            if target <= self.current_bet:
-                return False
             increase = target - self.current_bet
             self._commit(seat, target - self.round_bets[seat])
             self.actions[seat] = f"{'Bet' if self.current_bet == 0 else 'Raised to'} ${target:,}"
@@ -564,7 +717,12 @@ class BlindBluffAuthority(FourSeatAuthority):
             seat = (start + offset) % 4
             if seat in self.pending:
                 self.current_actor = seat
-                self.npc_due = now + self.rng.randint(550, 1150) if self.seat_data[seat]["kind"] == "NPC" else 0
+                if self.seat_data[seat]["kind"] == "NPC":
+                    self.npc_due = now + self.rng.randint(550, 1150)
+                elif self._disconnected(seat):
+                    self.npc_due = now + DISCONNECTED_TURN_MS
+                else:
+                    self.npc_due = 0
                 return
 
     def act(self, identity, action, amount=0, revision=None):
@@ -585,12 +743,26 @@ class BlindBluffAuthority(FourSeatAuthority):
         self.now = int(now)
         if not self.started:
             return
+        if self.finished:
+            # B71: a late joiner's buy-in can give the table two seats that can ante again.
+            # Only a real seat change retries, so a full room does not bump the revision.
+            if self.waiting and self._seat_waiters():
+                self.finished = False
+                self._start_hand(now)
+            return
         if self.hand_complete:
             if self.result_until and now >= self.result_until:
                 self._start_hand(now)
             return
-        if self.current_actor is not None and self.seat_data[self.current_actor]["kind"] == "NPC" and now >= self.npc_due:
-            self._npc_action(self.current_actor, now)
+        seat = self.current_actor
+        if seat is None or now < self.npc_due:
+            return
+        if self.seat_data[seat]["kind"] == "NPC":
+            self._npc_action(seat, now)
+        elif self._disconnected(seat):
+            # B72 (designer): a disconnected seat checks, or folds when it owes chips.
+            action = "check_call" if self.current_bet == self.round_bets[seat] else "fold"
+            self._act_seat(seat, action, 0, now)
 
     def view(self, identity):
         if not self.started:
@@ -601,8 +773,10 @@ class BlindBluffAuthority(FourSeatAuthority):
         cards = []
         for seat, card in enumerate(self.cards):
             cards.append(copy.deepcopy(card) if spectator or seat != viewer else None)
+        phase = "finished" if self.finished else "result" if self.hand_complete else "betting"
         data.update({
-            "type": "party_state", "phase": "result" if self.hand_complete else "betting",
+            "type": "party_state", "phase": phase,
+            "can_raise": phase == "betting" and viewer == self.current_actor and self._can_raise(viewer),
             "starting_stack": self.starting_stack, "ante": self.ante, "bet_unit": self.bet_unit,
             "hand_number": self.hand_number, "cards": cards, "folded": list(self.folded),
             "stacks": list(self.stacks), "round_bets": list(self.round_bets), "actions": list(self.actions),
@@ -616,6 +790,7 @@ class BlindBluffAuthority(FourSeatAuthority):
 class RouletteAuthority(FourSeatAuthority):
     mode = "roulette"
     title = "Roulette"
+    join_wait_text = "will join at the next spin"
 
     def __init__(self, host_name, rng=None):
         super().__init__(host_name, rng)
@@ -628,7 +803,6 @@ class RouletteAuthority(FourSeatAuthority):
         self.result = None
         self.round_number = 0
         self.last_net = [0] * 4
-        self.last_countdown = None
 
     def lobby_view(self, identity):
         data = super().lobby_view(identity)
@@ -637,6 +811,16 @@ class RouletteAuthority(FourSeatAuthority):
 
     def _participants(self):
         return [i for i, row in enumerate(self.seat_data) if row["kind"] in ("Human", "NPC")]
+
+    def _seat_is_broke(self, seat):
+        return self.stacks[seat] < ROULETTE_MIN_BET
+
+    def _on_seated(self, seat, previous_row):
+        # An empty or broke seat buys in for the starting stack; otherwise the
+        # joiner plays on with the chips of the seat it takes.
+        if previous_row["kind"] == "Empty" or self._seat_is_broke(seat):
+            self.stacks[seat] = self.starting_stack
+        self.seat_data[seat]["stack"] = self.stacks[seat]
 
     def start(self, now=0):
         if self.started or self._active_lobby_count() < 2:
@@ -649,10 +833,11 @@ class RouletteAuthority(FourSeatAuthority):
         return True
 
     def _new_betting(self, now):
+        # B71: players who joined during the last spin sit down now.
+        self._seat_waiters()
         self.round_number += 1
         self.phase = "betting"; self.deadline = now + self.bet_seconds * 1000
         self.result = None; self.bets = [[] for _ in range(4)]; self.last_net = [0] * 4
-        self.last_countdown = self.bet_seconds
         for seat in self._participants():
             broke = self.stacks[seat] <= 0
             self.seat_data[seat]["spectator"] = broke
@@ -680,9 +865,11 @@ class RouletteAuthority(FourSeatAuthority):
     def _place_bet(self, seat, bet_type, value, amount):
         if self.phase != "betting" or self.stacks[seat] <= 0:
             return False
-        amount = _clamp_int(amount, 1, self.stacks[seat], 0)
-        if amount <= 0:
+        # B78: a bet is a whole number of chips, at least the minimum; more than the
+        # stack is limited to the stack.
+        if isinstance(amount, bool) or not isinstance(amount, int) or amount < ROULETTE_MIN_BET:
             return False
+        amount = min(amount, self.stacks[seat])
         valid = False
         if bet_type == "number": valid = str(value) in ROULETTE_NUMBERS; value = str(value)
         elif bet_type == "color": valid = value in ("red", "black")
@@ -759,26 +946,34 @@ class RouletteAuthority(FourSeatAuthority):
         if not self.started:
             return
         if self.phase == "betting":
-            seconds = max(0, math.ceil((self.deadline - now) / 1000))
-            if seconds != self.last_countdown:
-                self.last_countdown = seconds; self.revision += 1
+            # B70: the countdown goes out as a time (view: countdown_at, host_now), so
+            # its ticks do not bump the revision and guests' bets stay valid.
             if now >= self.deadline:
                 self.phase = "spinning"; self.result = self.rng.choice(ROULETTE_NUMBERS); self.deadline = now + 4500; self._touch()
         elif self.phase == "spinning" and now >= self.deadline:
             self._settle(); self.phase = "result"; self.deadline = now + 5500; self._touch()
         elif self.phase == "result" and now >= self.deadline:
+            self._seat_waiters()
             if any(self.stacks[seat] > 0 for seat in self._participants()): self._new_betting(now)
             else:
                 self.phase = "finished"; self._touch("Everyone is broke. The table is finished.")
+        elif self.phase == "finished" and self.waiting and self._seat_waiters():
+            # B71: a late joiner buys in, so the wheel turns again.
+            self._new_betting(now)
 
     def view(self, identity):
         if not self.started:
             return self.lobby_view(identity)
         data = self._base_view(identity)
         viewer = self.humans.get(identity)
+        betting = self.phase == "betting"
         data.update({
             "type": "party_state", "phase": self.phase, "starting_stack": self.starting_stack,
-            "bet_seconds": self.bet_seconds, "seconds_left": max(0, math.ceil((self.deadline) / 1000)) if False else self.last_countdown,
+            "bet_seconds": self.bet_seconds,
+            "seconds_left": max(0, math.ceil((self.deadline - self.now) / 1000)) if betting else 0,
+            # The same countdown keys as the Hold'em room: the client counts down
+            # locally from countdown_at - host_now (room_session sets countdown_until).
+            "countdown_at": self.deadline if betting else None, "host_now": self.now,
             "round_number": self.round_number, "stacks": list(self.stacks), "result": self.result,
             "last_net": list(self.last_net), "bets": copy.deepcopy(self.bets[viewer]) if viewer is not None else [],
             "all_bets": copy.deepcopy(self.bets),

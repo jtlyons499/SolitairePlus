@@ -16,7 +16,8 @@ if update_check.recover_if_needed():
 update_check.cleanup_leftovers()
 
 # Real screen pixels, not Windows' stretched "logical" ones (must happen before pygame opens
-# the display). Multiplayer gets the same treatment in its own window code.
+# the display). Multiplayer returned above, before this line: multiplayer/main.py calls
+# window.enable_dpi_awareness() itself before it opens its window with window.open_window().
 from solitaireplus.app import window
 window.enable_dpi_awareness()
 

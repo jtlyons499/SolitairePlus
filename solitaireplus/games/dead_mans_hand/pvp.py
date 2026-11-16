@@ -8,6 +8,11 @@ currently deployed relay server needs no update.
 This module opens no connection itself: multiplayer/main.py passes in the
 function that does (open_peer), so it imports only the standard library,
 pygame and solitaireplus modules.
+
+Network data is never trusted: the host checks every guest pose and shot
+(_clean_pose, _clean_shot) and the guest checks the host's state messages;
+anything malformed or impossible is ignored.  A disconnect after hello ends
+the duel on a result screen (finished).
 """
 from __future__ import annotations
 
@@ -18,7 +23,15 @@ from pathlib import Path
 
 import pygame
 
-from solitaireplus.games.dead_mans_hand.levels import FOV, LEVELS, RENDER_HEIGHT, RENDER_WIDTH, normalize_angle, wall_at
+from solitaireplus.games.dead_mans_hand.levels import (
+    FOV,
+    LEVELS,
+    RENDER_HEIGHT,
+    RENDER_WIDTH,
+    map_size,
+    normalize_angle,
+    wall_at,
+)
 from solitaireplus.games.dead_mans_hand.game import (
     ADS_TRANSITION_SPEED,
     JUMP_GRAVITY,
@@ -36,6 +49,81 @@ SPAWN_PROTECTION_SECONDS = 1.0
 REMOTE_SMOOTH_RATE = 13.0
 PLAYER_RADIUS = 0.24
 PVP_DAMAGE = {"pistol": 34, "kar98k": 82, "thompson": 17, "scar20": 68}
+
+# Limits the host applies to guest data (B82).
+MAX_POSE_Z = JUMP_IMPULSE ** 2 / (2 * JUMP_GRAVITY) + 0.05  # top of a jump, plus a little
+MOVE_SLACK_FACTOR = 1.5   # a pose may move up to 1.5x walking speed since the last accepted one...
+MOVE_SLACK_TILES = 0.5    # ...plus half a tile for jitter
+SHOT_ORIGIN_TILES = 0.75  # a shot must start this close to the guest's last accepted pose
+SHOT_BURST = 2            # shots that may arrive at once (network jitter)
+# The relay's text when the other side leaves (it goes on about a poker table).
+OPPONENT_LEFT_TEXT = "Other player disconnected"
+RESULT_HINT = "ESC to return to Multiplayer"
+FINISHED_HINT = "ENTER or click for the duel lobby  •  ESC to return to Multiplayer"
+# A click this soon after the result screen appears is still a shot, not "back to the lobby".
+RESULT_CLICK_DELAY = 1.0
+
+
+def _peer_text(value, default, limit=24):
+    """Text from the other side, safe to draw: only printable characters are kept.
+
+    pygame cannot render a NUL or a lone surrogate (both survive JSON), so a name
+    holding one would crash every frame that draws it. Empty text gives default.
+    """
+    text = "".join(c for c in str(value) if c.isprintable())[:limit].strip()
+    return text or default
+
+
+def _num(value, lo, hi):
+    """value as a float in [lo, hi], or None. Only real numbers count (not bools or text)."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    try:
+        number = float(value)
+    except (OverflowError, TypeError, ValueError):
+        return None
+    if not math.isfinite(number) or number < lo or number > hi:
+        return None
+    return number
+
+
+def _pose_fields(raw, level):
+    """The checked x, y, z, angle, weapon, ads and dead of a network pose or shot, or None.
+
+    x and y must be an open floor tile of the arena and the weapon a PvP weapon;
+    z and ads are clamped and the angle is normalised. Every other key is dropped.
+    """
+    if not isinstance(raw, dict):
+        return None
+    width, height = map_size(level)
+    x = _num(raw.get("x"), 0.0, float(width))
+    y = _num(raw.get("y"), 0.0, float(height))
+    angle = _num(raw.get("angle"), -math.inf, math.inf)
+    z = _num(raw.get("z", 0.0), -math.inf, math.inf)
+    ads = _num(raw.get("ads", 0.0), -math.inf, math.inf)
+    weapon = raw.get("weapon")
+    if None in (x, y, angle, z, ads) or not isinstance(weapon, str) or weapon not in PVP_DAMAGE:
+        return None
+    if wall_at(level, x, y):
+        return None
+    return {
+        "x": x, "y": y, "z": min(MAX_POSE_Z, max(0.0, z)), "angle": normalize_angle(angle),
+        "weapon": weapon, "ads": min(1.0, max(0.0, ads)), "dead": bool(raw.get("dead", False)),
+    }
+
+
+def _state_number(raw, key, default, lo, hi):
+    """A number from a host state message; raises ValueError when it is malformed."""
+    number = _num(raw.get(key, default), lo, hi)
+    if number is None:
+        raise ValueError(key)
+    return number
+
+
+def _shot_cooldown(weapon):
+    """Seconds before the game lets the next shot go after one from this weapon."""
+    cfg = WEAPON_DEFINITIONS[weapon]
+    return max(float(cfg["fire_interval"]), float(cfg.get("bolt_seconds", 0.0)))
 
 
 def _open_cells(level):
@@ -72,12 +160,18 @@ def _los(level, x0, y0, x1, y1):
 def _shot_hits(level, shooter, target):
     if not shooter or not target or target.get("dead"):
         return False
-    sx, sy = float(shooter.get("x", 0)), float(shooter.get("y", 0))
-    tx, ty = float(target.get("x", 0)), float(target.get("y", 0))
+    try:
+        sx, sy = float(shooter.get("x", 0)), float(shooter.get("y", 0))
+        tx, ty = float(target.get("x", 0)), float(target.get("y", 0))
+        aim = float(shooter.get("angle", 0))
+        target_z = float(target.get("z", 0))
+    except (OverflowError, TypeError, ValueError):
+        return False
+    if not all(math.isfinite(value) for value in (sx, sy, tx, ty, aim, target_z)):
+        return False
     distance = math.hypot(tx - sx, ty - sy)
     if distance <= .05 or distance > 24:
         return False
-    aim = float(shooter.get("angle", 0))
     delta = normalize_angle(math.atan2(ty - sy, tx - sx) - aim)
     # Slightly forgiving hit cone, roughly matching campaign card targeting.
     angular_radius = min(.16, .30 / max(.7, distance))
@@ -86,7 +180,7 @@ def _shot_hits(level, shooter, target):
     if not _los(level, sx, sy, tx, ty):
         return False
     # A high jump can move the target above a chest-level hitscan.
-    if float(target.get("z", 0)) > .72 and distance < 3.0:
+    if target_z > .72 and distance < 3.0:
         return False
     return True
 
@@ -116,6 +210,8 @@ class PvPGame(DeadMansHandGame):
         self.local_score = 0
         self.match_over = False
         self.winner_text = ""
+        self.winner_detail = ""  # second result line, e.g. a win by forfeit
+        self.result_hint = RESULT_HINT
         self.respawn_text = ""
         self.spawn_protection_timer = 0.0
         self.remote_muzzle_timer = 0.0
@@ -195,7 +291,7 @@ class PvPGame(DeadMansHandGame):
             if self.remote is None or state.get("respawn"):
                 self.remote = dict(state)
         if name:
-            self.remote_name = str(name)[:24]
+            self.remote_name = _peer_text(name, self.remote_name)
 
     def notify_remote_shot(self, weapon):
         self.remote_weapon = str(weapon or self.remote_weapon)
@@ -509,7 +605,8 @@ class PvPGame(DeadMansHandGame):
             flash.fill((190, 20, 20, alpha))
             target.blit(flash, (0, 0))
 
-        if self.respawn_text:
+        # The result covers the middle of the screen, so no respawn countdown under it.
+        if self.respawn_text and not self.match_over:
             msg = self._dmh_font("ui", 42, True).render(self.respawn_text, True, (245, 210, 110))
             target.blit(msg, msg.get_rect(center=(w // 2, h // 2)))
         if self.match_over:
@@ -518,8 +615,13 @@ class PvPGame(DeadMansHandGame):
             target.blit(veil, (0, 0))
             msg = self._dmh_font("ui", 50, True).render(self.winner_text, True, (245, 220, 130))
             target.blit(msg, msg.get_rect(center=(w // 2, h // 2)))
-            sub = self._font(24, False).render("ESC to return to Multiplayer", True, (245, 235, 215))
-            target.blit(sub, sub.get_rect(center=(w // 2, h // 2 + 56)))
+            hint_y = h // 2 + 56
+            if self.winner_detail:
+                detail = self._font(26, False).render(self.winner_detail[:80], True, (238, 211, 132))
+                target.blit(detail, detail.get_rect(center=(w // 2, h // 2 + 50)))
+                hint_y = h // 2 + 90
+            sub = self._font(24, False).render(self.result_hint, True, (245, 235, 215))
+            target.blit(sub, sub.get_rect(center=(w // 2, hint_y)))
 
 
 class DeadMansHandPvPMode:
@@ -549,6 +651,10 @@ class DeadMansHandPvPMode:
         self.last_guest_event_seq = 0
         self.last_sync = 0.0
         self.closed = False
+        # True while the result screen of a duel that ended by a disconnect is shown.
+        self.finished = False
+        self._finished_at = 0.0  # when it appeared (time.monotonic)
+        self._reset_guest_checks()
         # Read by multiplayer/main.py's LeaveToast.sync(); bump the seq to show a notice.
         self.leave_notice = ""
         self.leave_notice_seq = 0
@@ -586,6 +692,8 @@ class DeadMansHandPvPMode:
         self.event_seq = 0
         self.event_log = []
         self.last_guest_event_seq = 0
+        self.finished = False
+        self._reset_guest_checks()
         self.game = PvPGame(0 if self.hosting else 1)
         self.game.local_name = self.name
         self.peer = self._open_peer(self.hosting, self.relay_address or None, self.name, self.code, version=1)
@@ -598,6 +706,55 @@ class DeadMansHandPvPMode:
             return
         for event in self.game.pop_sound_events():
             self.sound(event)
+
+    # ------------------------------------------------------------ checks on guest data (host)
+    def _reset_guest_checks(self):
+        # When the last guest pose was accepted (or the host placed the guest).
+        self._guest_pose_at = time.monotonic()
+        # Shot token bucket for the guest: tokens, time of the last check, weapon of the last accepted shot.
+        self._guest_shot_tokens = float(SHOT_BURST)
+        self._guest_shot_at = None
+        self._guest_shot_weapon = None
+
+    def _clean_pose(self, raw, prev, elapsed):
+        """The checked guest pose, or None to ignore the message.
+
+        prev is the last accepted pose (or where the host last placed the guest:
+        its spawn at the start and after each respawn); a pose further from it
+        than walking speed allows in elapsed seconds is refused.
+        """
+        pose = _pose_fields(raw, self.game.level)
+        if pose is None:
+            return None
+        if prev is not None:
+            limit = DeadMansHandGame.MOVE_SPEED * max(0.0, elapsed) * MOVE_SLACK_FACTOR + MOVE_SLACK_TILES
+            if math.hypot(pose["x"] - float(prev["x"]), pose["y"] - float(prev["y"])) > limit:
+                return None
+        return pose
+
+    def _clean_shot(self, raw):
+        """The checked guest shot, or None to ignore it.
+
+        The shot must be well formed, start near the guest's last accepted pose
+        and fit the fire rate: SHOT_BURST shots at once, then one per cooldown of
+        the gun fired last (all guns share the game's shot timer).
+        """
+        shot = _pose_fields(raw, self.game.level)
+        anchor = self.remote_pose
+        if shot is None or anchor is None:
+            return None
+        if math.hypot(shot["x"] - float(anchor["x"]), shot["y"] - float(anchor["y"])) > SHOT_ORIGIN_TILES:
+            return None
+        now = time.monotonic()
+        if self._guest_shot_at is not None and self._guest_shot_weapon is not None:
+            refill = max(0.0, now - self._guest_shot_at) / _shot_cooldown(self._guest_shot_weapon)
+            self._guest_shot_tokens = min(float(SHOT_BURST), self._guest_shot_tokens + refill)
+        self._guest_shot_at = now
+        if self._guest_shot_tokens < 1.0 - 1e-6:
+            return None
+        self._guest_shot_tokens = max(0.0, self._guest_shot_tokens - 1.0)
+        self._guest_shot_weapon = shot["weapon"]
+        return shot
 
     def _record_event(self, kind, **payload):
         self.event_seq += 1
@@ -634,24 +791,30 @@ class DeadMansHandPvPMode:
         if not isinstance(events, list):
             return
         for event in events:
+            if not isinstance(event, dict):
+                continue
             try:
                 seq = int(event.get("seq", 0))
-            except (TypeError, ValueError):
+            except (OverflowError, TypeError, ValueError):
                 continue
             if seq <= self.last_guest_event_seq:
                 continue
             self.last_guest_event_seq = seq
             kind = event.get("kind")
-            if kind == "shot":
+            try:
                 side = int(event.get("side", -1))
-                weapon = str(event.get("weapon", "pistol"))
+                shooter = int(event.get("shooter", -1))
+                target = int(event.get("target", -1))
+            except (OverflowError, TypeError, ValueError):
+                continue
+            weapon = event.get("weapon", "pistol")
+            if kind in ("shot", "hit") and (not isinstance(weapon, str) or weapon not in PVP_DAMAGE):
+                continue  # only PvP guns: the name is drawn in the kill feed
+            if kind == "shot":
                 if side == 0:
                     self.sound(f"{weapon}_shot")
                     self.game.notify_remote_shot(weapon)
             elif kind == "hit":
-                shooter = int(event.get("shooter", -1))
-                target = int(event.get("target", -1))
-                weapon = str(event.get("weapon", "pistol"))
                 killed = bool(event.get("killed"))
                 if shooter == 1:
                     self.sound("enemy_down" if killed else "enemy_hit")
@@ -687,7 +850,9 @@ class DeadMansHandPvPMode:
                     local = self.game.local_pose()
                     pose = local
                 else:
+                    # The guest's next pose is measured from this spawn, not from where it died.
                     self.remote_pose = dict(pose)
+                    self._guest_pose_at = now
                     remote = pose
 
             pose["health"] = a["health"]
@@ -754,96 +919,174 @@ class DeadMansHandPvPMode:
         return True
 
     def _process_network(self):
-        if not self.peer:
-            return
-        while True:
+        # A disconnect after hello drops the peer, which ends this loop.
+        while self.peer:
             try:
                 m = self.peer.inbox.get_nowait()
             except queue.Empty:
                 break
+            if not isinstance(m, dict):
+                continue
             kind = m.get("type")
             if kind == "status":
-                self.status = m.get("text", self.status)
+                self.status = str(m.get("text", self.status))[:120]
                 if self.hosting and self.peer.code:
                     self.code = self.peer.code
             elif kind == "hello":
-                self.connected = True
-                self.remote_name = str(m.get("name", "Opponent"))[:24]
-                self.status = f"Duel connected: {self.name} vs {self.remote_name}"
-                self.game.local_name = self.name
-                self.game.remote_name = self.remote_name
-                self.game.spawn_protection_timer = SPAWN_PROTECTION_SECONDS
-                if self.hosting:
-                    now = time.monotonic()
-                    self.authority[0]["protected_until"] = now + SPAWN_PROTECTION_SECONDS
-                    self.authority[1]["protected_until"] = now + SPAWN_PROTECTION_SECONDS
-                self.game.capture_mouse()
+                # Only the first hello counts: a repeat must not rename or re-protect anyone.
+                if not self.connected:
+                    self._on_hello(m)
             elif kind == "disconnected":
-                was_connected = self.connected
-                leaving_name = self.remote_name or "Opponent"
-                self.status = m.get("text", "Disconnected")
-                self.connected = False
-                if was_connected:
-                    self.leave_notice_seq += 1
-                    self.leave_notice = f"{leaving_name} left the game."
-                if self.game:
-                    self.game.release_mouse()
-            elif kind == "action" and self.hosting:
-                action = m.get("action")
-                if action == "pose":
-                    pose = dict(m.get("pose") or {})
-                    pose.pop("health", None)
-                    pose.pop("score", None)
-                    pose.pop("protected", None)
-                    pose.pop("protection_in", None)
-                    self.remote_pose = pose
-                elif action == "shot":
-                    shot = dict(m.get("shot") or {})
-                    weapon = str(shot.get("weapon", "pistol"))
-                    self._record_event("shot", side=1, weapon=weapon)
-                    self.sound(f"{weapon}_shot")
-                    self.game.notify_remote_shot(weapon)
-                    self._apply_hit(1, shot)
+                self._on_disconnect(str(m.get("text") or "Disconnected")[:120])
+            elif kind == "action" and self.hosting and self.connected:
+                self._on_guest_action(m)
             elif kind == "state" and not self.hosting:
-                host = dict(m.get("host") or {})
-                guest = dict(m.get("guest") or {})
-                self.remote_name = str(m.get("host_name", self.remote_name))[:24]
-                self.game.local_name = self.name
-                self.game.remote_name = self.remote_name
-                self.remote_pose = host
-                self.game.health = int(guest.get("health", self.game.health))
-                self.game.local_score = int(guest.get("score", 0))
-                self.game.remote_score = int(host.get("score", 0))
-                self.game.spawn_protection_timer = max(0.0, float(guest.get("protection_in", 0.0)))
-                self.game.set_remote(host, self.remote_name)
-                self._guest_process_events(m.get("events", []))
+                self._on_host_state(m)
 
-                if guest.get("respawn"):
-                    self.game.respawn(1)
-                    self.game.spawn_protection_timer = max(
-                        self.game.spawn_protection_timer,
-                        float(guest.get("protection_in", SPAWN_PROTECTION_SECONDS)),
-                    )
-                    self.game.respawn_text = ""
-                elif guest.get("dead"):
-                    self.game.game_over = True
-                    remaining = float(guest.get("respawn_in", 0.0))
-                    self.game.respawn_text = (
-                        f"Respawning in {max(1, math.ceil(remaining))}"
-                        if remaining > 0
-                        else "Respawning…"
-                    )
-                else:
-                    self.game.game_over = False
-                    self.game.respawn_text = ""
+    def _on_hello(self, m):
+        self.connected = True
+        self.remote_name = _peer_text(m.get("name", "Opponent"), "Opponent")
+        self.status = f"Duel connected: {self.name} vs {self.remote_name}"
+        self.game.local_name = self.name
+        self.game.remote_name = self.remote_name
+        self.game.spawn_protection_timer = SPAWN_PROTECTION_SECONDS
+        if self.hosting:
+            now = time.monotonic()
+            self.authority[0]["protected_until"] = now + SPAWN_PROTECTION_SECONDS
+            self.authority[1]["protected_until"] = now + SPAWN_PROTECTION_SECONDS
+            self._reset_guest_checks()  # the guest starts at its spawn now
+        self.game.capture_mouse()
 
-                self.game.match_over = bool(m.get("match_over"))
-                if self.game.match_over:
-                    self.game.winner_text = (
-                        "YOU WIN"
-                        if self.game.local_score > self.game.remote_score
-                        else f"{self.remote_name.upper()} WINS"
-                    )
+    def _on_disconnect(self, text):
+        was_connected = self.connected
+        leaving_name = self.remote_name or "Opponent"
+        self.connected = False
+        if self.game:
+            self.game.release_mouse()
+        if not was_connected or not self.game:
+            # Before hello: back to the lobby with the reason, as before.
+            self.status = text
+            return
+        self.leave_notice_seq += 1
+        self.leave_notice = f"{leaving_name} left the game."
+        game = self.game
+        if self.hosting:
+            self._sync_host_result()  # a final kill may have arrived just before the disconnect
+        opponent_left = text.startswith(OPPONENT_LEFT_TEXT)
+        if not game.match_over:
+            game.match_over = True
+            if opponent_left:
+                game.winner_text = "YOU WIN"
+                game.winner_detail = f"{leaving_name} left the duel - win by forfeit"
+            else:
+                game.winner_text = "CONNECTION LOST"
+                game.winner_detail = text
+        # The relay's wording is about a poker table; say what happened to the duel instead.
+        self.status = f"{leaving_name} left the duel." if opponent_left else text
+        game.respawn_text = ""
+        game.spawn_protection_timer = 0.0  # the frozen HUD shows no countdowns
+        game.result_hint = FINISHED_HINT
+        if self.peer:
+            self.peer.close()
+        self.peer = None
+        self.finished = True
+        self._finished_at = time.monotonic()
+
+    def _on_guest_action(self, m):
+        action = m.get("action")
+        if action == "pose":
+            if self.authority[1]["health"] <= 0:
+                return  # a dead guest does not move; it respawns where the host puts it
+            now = time.monotonic()
+            pose = self._clean_pose(m.get("pose"), self.remote_pose or SPAWN_STATE[1], now - self._guest_pose_at)
+            # A pose marked dead was sent before the guest saw its respawn: it is where the
+            # guest died, so it must not move the guest away from the spawn the host chose.
+            if pose is not None and not pose["dead"]:
+                self.remote_pose = pose
+                self._guest_pose_at = now
+        elif action == "shot":
+            shot = self._clean_shot(m.get("shot"))
+            if shot is None:
+                return
+            weapon = shot["weapon"]
+            self._record_event("shot", side=1, weapon=weapon)
+            self.sound(f"{weapon}_shot")
+            self.game.notify_remote_shot(weapon)
+            self._apply_hit(1, shot)
+
+    def _on_host_state(self, m):
+        """Apply the host's state message; a malformed one is ignored as a whole."""
+        host_raw, guest = m.get("host"), m.get("guest")
+        if not isinstance(host_raw, dict) or not isinstance(guest, dict):
+            return
+        host = _pose_fields(host_raw, self.game.level)
+        if host is None:
+            return
+        try:
+            host["health"] = int(_state_number(host_raw, "health", self.game.remote_health, 0, 100))
+            host["score"] = int(_state_number(host_raw, "score", 0, 0, 1e6))
+            health = int(_state_number(guest, "health", self.game.health, 0, 100))
+            score = int(_state_number(guest, "score", 0, 0, 1e6))
+            protection_in = _state_number(guest, "protection_in", 0.0, -math.inf, math.inf)
+            respawn_protection = _state_number(guest, "protection_in", SPAWN_PROTECTION_SECONDS, -math.inf, math.inf)
+            respawn_in = _state_number(guest, "respawn_in", 0.0, -math.inf, 3600.0)
+        except ValueError:
+            return
+        for key in ("protected", "respawn"):
+            host[key] = bool(host_raw.get(key, False))
+
+        self.remote_name = _peer_text(m.get("host_name", self.remote_name), self.remote_name)
+        self.game.local_name = self.name
+        self.game.remote_name = self.remote_name
+        self.remote_pose = host
+        self.game.health = health
+        self.game.local_score = score
+        self.game.remote_score = host["score"]
+        self.game.spawn_protection_timer = max(0.0, protection_in)
+        self.game.set_remote(host, self.remote_name)
+        self._guest_process_events(m.get("events", []))
+
+        if guest.get("respawn"):
+            self.game.respawn(1)
+            self.game.spawn_protection_timer = max(self.game.spawn_protection_timer, respawn_protection)
+            self.game.respawn_text = ""
+        elif guest.get("dead"):
+            self.game.game_over = True
+            self.game.respawn_text = (
+                f"Respawning in {max(1, math.ceil(respawn_in))}"
+                if respawn_in > 0
+                else "Respawning…"
+            )
+        else:
+            self.game.game_over = False
+            self.game.respawn_text = ""
+
+        self.game.match_over = bool(m.get("match_over"))
+        if self.game.match_over:
+            self.game.winner_text = (
+                "YOU WIN"
+                if self.game.local_score > self.game.remote_score
+                else f"{self.remote_name.upper()} WINS"
+            )
+
+    def _sync_host_result(self):
+        """Host: copy the authoritative scores and the match result into the game."""
+        self.game.local_score = self.authority[0]["score"]
+        self.game.remote_score = self.authority[1]["score"]
+        over = max(self.authority[0]["score"], self.authority[1]["score"]) >= FIRST_TO_KILLS
+        self.game.match_over = over
+        if over:
+            self.game.winner_text = (
+                "YOU WIN"
+                if self.authority[0]["score"] > self.authority[1]["score"]
+                else f"{self.remote_name.upper()} WINS"
+            )
+
+    def _back_to_lobby(self):
+        if self.game:
+            self.game.release_mouse()
+        self.game = None
+        self.finished = False
 
     def update(self, dt):
         self._process_network()
@@ -891,16 +1134,7 @@ class DeadMansHandPvPMode:
                 self.peer.send(self._host_state())
                 self.last_sync = now
 
-            over = max(
-                self.authority[0]["score"], self.authority[1]["score"]
-            ) >= FIRST_TO_KILLS
-            self.game.match_over = over
-            if over:
-                self.game.winner_text = (
-                    "YOU WIN"
-                    if self.authority[0]["score"] > self.authority[1]["score"]
-                    else f"{self.remote_name.upper()} WINS"
-                )
+            self._sync_host_result()
         else:
             for shot in self.game.pop_shots():
                 self.peer.send({"type": "action", "action": "shot", "shot": shot})
@@ -915,6 +1149,15 @@ class DeadMansHandPvPMode:
     def handle_event(self, event, mouse):
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             self.close(); return
+        if self.finished:
+            # Result screen: Enter or a click goes back to the duel lobby; nothing else reacts.
+            # A click in the first moment is the player still shooting, so it is ignored.
+            enter = event.type == pygame.KEYDOWN and event.key in (pygame.K_RETURN, pygame.K_KP_ENTER)
+            click = (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1
+                     and time.monotonic() - self._finished_at >= RESULT_CLICK_DELAY)
+            if enter or click:
+                self._back_to_lobby()
+            return
         if self.game and self.connected:
             # Reassert relative mouse capture whenever this instance regains focus.
             # This matters when two local PvP instances are being swapped between.
@@ -952,7 +1195,8 @@ class DeadMansHandPvPMode:
 
     def draw(self, canvas, mouse):
         # The leave notice toast is drawn on top by multiplayer/main.py (LeaveToast, with self.small).
-        if self.game and self.connected:
+        # After a disconnect (finished) the frozen duel stays on screen under its result.
+        if self.game and (self.connected or self.finished):
             self.game.draw(canvas)
             return
         canvas.fill((17, 23, 27))

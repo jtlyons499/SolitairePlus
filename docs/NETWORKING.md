@@ -56,6 +56,12 @@ from one address are refused for a while (`relay_server.py`: `FAILED_JOIN_*`).
 
 **Is the live relay current?** `python tools/relay_probe.py [address]` (see `docs/RAILWAY_DEPLOY.md`).
 
+**Room messages carry a protocol stamp:** the host adds `"protocol": ROOM_PROTOCOL` to every room message
+(`multiplayer/room_protocol.py`, now 3; `room_session.py` stamps and checks it). A guest whose host sends another
+number shows "The host's Solitaire+ is a different version. Update both games to play together." once, and play
+goes on. The relay does not read it. Raise `ROOM_PROTOCOL` when a guest on the previous release would misread the
+host's messages. Guests on releases from before the stamp do not check it, so they get no warning.
+
 ## The game ↔ service contract
 
 `multiplayer/net_client.py` (`NetPeer`) gives the room code the same small interface the old in-game transport had:
@@ -110,6 +116,12 @@ The game doesn't change: players get the new connection method through an update
   `RoomTable` clients to a local test relay without starting a `SolitaireNet` child process per player. The shipped
   game always uses `SolitaireNet.exe`. (The old LAN table and the offline Practice table were removed in Phase 11;
   online play is rooms only.)
+* **Countdowns arrive as a start time, not a ticking number.** The pause before the next Hold'em hand and the
+  Roulette betting time are sent as `countdown_at` (when the countdown ends, on the host's clock) and `host_now`
+  (the host's clock when the message was built). Each guest counts down on its own clock from the difference
+  (`room_protocol.countdown_offset`, which ignores broken values). The host no longer sends an update every
+  second, which made guests' actions fail with "Table changed; try again" (B70). Older guests read only
+  `next_hand_seconds`, so their countdown does not move until the next hand starts.
 * **The service checks the connection is alive.** It sends a ping every 20 seconds, and if nothing at all comes back
   for 45 seconds it reports "Lost contact with the server". Before, a silently dropped connection could leave a
   player waiting forever.

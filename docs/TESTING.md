@@ -209,6 +209,66 @@ about a minute, don't use the PC meanwhile) and check that it stays inside the s
 bar visible: at start-up, after F11 in and out of fullscreen five times, at every window size Options offers, and
 with a saved size too large for the screen. They use a temporary profile folder, never your saves or settings.
 
+Add `--multiplayer` to check the Multiplayer window the same way (about three minutes):
+
+```
+.venv\Scripts\python.exe tools\window_check.py source --multiplayer
+.venv\Scripts\python.exe tools\window_check.py packaged --multiplayer
+```
+
+It starts `main.py --multiplayer` (or `SolitairePlus.exe --multiplayer`) with a temporary `LOCALAPPDATA` holding
+`SolitaireMultiplayer\options.json` and a profile, seven times: no saved size, a saved 2560x1440, saved fullscreen,
+and the window handed over by single-player (`SOLITAIRE_MP_WINDOW`) at 1600x900, 1088x612 and 2560x1440, and
+1600x900 with `SOLITAIRE_MP_FULLSCREEN=1`. Besides the rectangles it checks that the process is per-monitor DPI
+aware, that the caption is "Solitaire+ Multiplayer" and (source only) that the single-player game and its cursor
+module were never loaded. It prints the window's DPI. Sizes the Options screen greys out as too large for the
+screen are skipped.
+
+### Local two-player test (online play)
+
+Online play can be tested on one PC with a relay started from source. Use only `127.0.0.1`: never point a test
+client at the real (Railway) server, and never start the relay on another address (its `--bind` default is
+`0.0.0.0`, so always pass `--bind 127.0.0.1`).
+
+1. Start the relay in its own window and check it answers:
+
+   ```
+   .venv\Scripts\python.exe multiplayer\relay_server.py --bind 127.0.0.1 --port 50111 --ws-port 50112
+   .venv\Scripts\python.exe tools\relay_probe.py tcp://127.0.0.1:50111
+   ```
+
+   Always give `relay_probe.py` the address: without one it probes the real server.
+2. Network clients (a script with `sys.path[:0] = [ROOT/'multiplayer', ROOT]`, `SOLITAIRE_NET_INPROCESS` unset,
+   `from net_client import NetPeer`). Run each step once with `command=[r'dist\SolitairePlus\SolitaireNet.exe']`
+   (the packaged service) and once with `command=None` (`python -m netservice` from source), over
+   `tcp://127.0.0.1:50111` and `ws://127.0.0.1:50112/`:
+   - a version 2 room: the host gets a `room` message with a 6-character code; the guest gets `joined` and the
+     host `peer_joined`; a guest action and a guest chat reach the host; a host `lobby` message with
+     `target` = the guest's identity reaches the guest; `'wss' in host.service_info['connectors']`;
+   - a version 1 duel pair: the host gets `status`, then each side gets the other's `hello`;
+   - close every peer; each `SolitaireNet` child process exits.
+3. Room games in the same script, with `net_client.service_command = lambda: [packaged SolitaireNet.exe]`, the
+   dummy SDL drivers and one fake millisecond clock passed to every `update()`:
+   `RoomTable('Host', True, address, mode='holdem')`, update until `.code` is set, then
+   `RoomTable('Guest', False, address, host.code)`. `host.act('start')`; whoever is to act plays `check_call`
+   until `host.authority.game.hand_complete`. Check that the chips add up (six starting stacks plus
+   `chips_added`), that the guest's revision catches up with the host's, that no guest view before the showdown
+   holds another seat's cards, and that every host message carries `'protocol': ROOM_PROTOCOL`. Repeat with
+   `mode='blind_mans_bluff'` (one hand; the guest never sees its own card) and `mode='score_four'` (a wrong
+   `'solved'` claim is refused; `act('solved', {'steps': [[i, op, j], ...]})` with a correct solve wins the
+   round).
+4. Two windows: make two temporary `LOCALAPPDATA` folders, each with `SolitaireMultiplayer\connection.json`
+   (`{"name": "Alice", "relay_address": "tcp://127.0.0.1:50111"}` and Bob) and
+   `SolitaireMultiplayer\profiles\profile_1.json`, written as UTF-8 **without** a BOM (a file that does not load
+   means the default, real server). Check with
+   `connection_settings.load()` under that `LOCALAPPDATA` that the address is the local one, then start
+   `main.py --multiplayer` from source in one and `dist\SolitairePlus\SolitairePlus.exe --multiplayer` in the
+   other. Each opens at the default window size for the screen, centred. Create a room in one, type its code in
+   the other, and play a hand. `SolitaireNet` connects to `127.0.0.1:50111` only (`Get-NetTCPConnection
+   -RemotePort 50111`). `netservice.log` is written only when the service crashes, so it should not exist.
+5. Afterwards the temporary `SimpleSolitaire\logs\game-*.log` files are empty and there is no `netservice.log`.
+   Stop the relay and close the windows.
+
 ## Asset preflight
 
 `tools/release_preflight.py` loads every image in `assets/` and every JSON file in `data/`, and checks that the

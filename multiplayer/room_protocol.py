@@ -3,6 +3,12 @@ import copy
 from solitaireplus.games.poker.holdem import TexasHoldemGame
 from solitaireplus.games.poker.core import describe_poker_score
 
+# The room message format. The host stamps every message with it ('protocol'); a guest that
+# sees no stamp or another number warns that the two games differ. Bump it whenever the room
+# messages change meaning. (The relay's room version stays 2: changing it needs a relay redeploy.)
+ROOM_PROTOCOL=3
+PROTOCOL_NOTICE="The host's Solitaire+ is a different version. Update both games to play together."
+
 PAIRS=(('player_stack','npc_stacks'),('player_hand_contribution','npc_hand_contributions'),('player_busted','npc_busted'),('player_bet_chunks','npc_bet_chunks'),('player_action_text','npc_action_texts'),('player_round_bet','npc_round_bets'),('player_folded','npc_folded'),('player_all_in','npc_all_in'),('player_has_acted','npc_has_acted'))
 FIELDS=('hand_number','starting_stack','ante','small_blind','big_blind','pot','last_resolved_pot','current_bet','last_raise_size','betting_round_complete','current_stage','hand_complete','community_cards')
 
@@ -22,6 +28,16 @@ def int_keys(mapping):
 
 def clean_name(value):
     return ''.join(c for c in str(value) if c.isprintable())[:32].strip() or 'Player'
+
+# A countdown further away than this (either way) is malformed and ignored.
+COUNTDOWN_LIMIT_MS=3_600_000
+
+def countdown_offset(message):
+    """B70: milliseconds from the host's host_now to its countdown_at, or None when the message
+    has no countdown or a malformed one (text, NaN, infinity, or absurdly far away)."""
+    try:offset=int(message['countdown_at'])-int(message['host_now'])
+    except (KeyError,TypeError,ValueError,OverflowError):return None
+    return offset if -COUNTDOWN_LIMIT_MS<=offset<=COUNTDOWN_LIMIT_MS else None
 
 def snapshot(game,viewer,revision,names):
     order=[viewer]+[i for i in range(len(names)) if i!=viewer];index={seat:i for i,seat in enumerate(order)}
@@ -51,7 +67,7 @@ def snapshot(game,viewer,revision,names):
                 if evaluated:data['showdown_hands'][str(index[seat])]=describe_poker_score(evaluated[0],compact=True)
     data['last_pot_awards']=copy.deepcopy(game.last_pot_awards)
     for pot in data['last_pot_awards']:
-        for key in ('winners','eligible'): 
+        for key in ('winners','eligible','contributors'):
             if key in pot:pot[key]=[index[i] for i in pot[key] if i in index]
         # The shared engine's per-winner amounts (odd-chip order kept).
         if 'payouts' in pot:pot['payouts']=seat_keys(pot['payouts'],index)

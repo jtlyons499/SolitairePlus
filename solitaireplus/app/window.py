@@ -15,6 +15,8 @@ Window size rules (W1 in docs/dev/RESTRUCTURE_BRIEF.md):
 * fullscreen is desktop fullscreen on the window's monitor (the picture is letterboxed).
 
 Importing this module has no side effects; ``open_window()`` creates the window at start-up.
+The multiplayer window uses the same code: it opens with its own caption and starting size and
+sets ``state.window_custom_cursor = False`` (it has no single-player cursor choices).
 """
 from __future__ import annotations
 
@@ -180,12 +182,26 @@ def _sdl_window():
         return None
 
 
+def _allow_small_window(window):
+    """Let the window be smaller than the 1366x768 game picture (SDL scales it down).
+
+    pygame's SCALED mode makes the game size the window's minimum size, and sets it again
+    after fullscreen; SDL then quietly keeps any smaller size at 1366x768 (for example the
+    1088x612 default of a 1366x768 laptop), so the window no longer fits the screen."""
+    try:
+        if tuple(window.minimum_size) != MIN_WINDOW_SIZE:
+            window.minimum_size = MIN_WINDOW_SIZE
+    except (pygame.error, AttributeError, TypeError, ValueError):
+        pass
+
+
 def _request_window_size(size):
     """Resize and centre the window. SDL applies a new size a frame or two later, so present()
     keeps checking until it has, then centres the window again."""
     state.window_pending_size = tuple(size)
     window = _sdl_window()
     if window is not None:
+        _allow_small_window(window)
         try:
             window.size = tuple(size)
             window.position = pygame.WINDOWPOS_CENTERED
@@ -203,6 +219,7 @@ def _finish_pending_resize():
         return
     try:
         if tuple(window.size) != size:
+            _allow_small_window(window)
             window.size = size
             return
         window.position = pygame.WINDOWPOS_CENTERED
@@ -211,11 +228,15 @@ def _finish_pending_resize():
     state.window_pending_size = None
 
 
-def open_window():
-    """Create the game window (once, at start-up): scaled, resizable, default size, centred."""
+def open_window(caption="Solitaire", size=None):
+    """Create the game window (once per process, at start-up): scaled, resizable, centred.
+
+    ``size`` is a starting window size (for example the one handed over from single-player); it is
+    used only if it fits this screen, otherwise (and when it is None) the default size is used.
+    Call it only once: pygame-ce 2.5.8 crashes on a second SCALED set_mode after a resize."""
     state.screen = pygame.display.set_mode((BASE_WIDTH, BASE_HEIGHT), pygame.SCALED | pygame.RESIZABLE)
-    pygame.display.set_caption("Solitaire")
-    size = default_window_size(usable_area())
+    pygame.display.set_caption(caption)
+    size = clamp_window_size(size, usable_area())
     state.WINDOW_WIDTH, state.WINDOW_HEIGHT = size
     state.WINDOWED_WIDTH, state.WINDOWED_HEIGHT = size
     _request_window_size(size)
@@ -231,7 +252,8 @@ def set_window_size(width, height):
     state.WINDOW_WIDTH = state.WINDOWED_WIDTH
     state.WINDOW_HEIGHT = state.WINDOWED_HEIGHT
     _request_window_size((state.WINDOW_WIDTH, state.WINDOW_HEIGHT))
-    cursors.apply_selected_cursor()
+    if state.window_custom_cursor:
+        cursors.apply_selected_cursor()
 
 
 def set_fullscreen_enabled(enabled):
@@ -250,7 +272,8 @@ def set_fullscreen_enabled(enabled):
         state.WINDOW_WIDTH = state.WINDOWED_WIDTH
         state.WINDOW_HEIGHT = state.WINDOWED_HEIGHT
         _request_window_size((state.WINDOW_WIDTH, state.WINDOW_HEIGHT))
-    cursors.apply_selected_cursor()
+    if state.window_custom_cursor:
+        cursors.apply_selected_cursor()
 
 
 def window_to_game_coords(pos):

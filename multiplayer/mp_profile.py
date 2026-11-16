@@ -210,10 +210,14 @@ def clean_public(value):
 
 
 def winning_xp(game, humans, participants):
-    """20 XP for an outright pot win; 10 for split-only wins, once per hand."""
+    """20 XP for an outright pot win; 10 for split-only wins, once per hand.
+
+    A pot that holds only its winners' own chips (every contributor is a winner) is
+    not a win. Pot records without 'contributors' (an older host) count as before."""
     result={}
     for identity,seat in humans.items():
         if identity not in participants:continue
-        pots=[p for p in game.last_pot_awards if seat in p.get('winners',[]) and p.get('amount',0)>0]
+        pots=[p for p in game.last_pot_awards if seat in p.get('winners',[]) and p.get('amount',0)>0
+              and not ((c:=p.get('contributors')) and set(c)<=set(p['winners']))]
         if pots:result[identity]=20 if any(len(p['winners'])==1 for p in pots) else 10
     return result

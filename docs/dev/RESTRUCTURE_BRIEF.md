@@ -327,11 +327,27 @@ poker_learning, npc_personality, npc_personality_chat, texas_holdem_chat).
   - In the packaged game, `multiplayer/*.py` ship as **loose source files** in `SolitairePlus_Data\multiplayer\`.
     They import other modules from the game exe's bundled code, so any standard-library or game module they need
     must be imported by the game. The packaged self-test checks this.
-- **17 duplicated module names** in `multiplayer/`: texas_holdem, texas_holdem_ui, poker_ai, audio, npc_portraits,
-  poker_recap, npc_avatars, dead_mans_hand_pvp, plus shims for poker_core, poker_strategy, poker_speech,
-  poker_ui_assets, poker_learning, npc_personality, npc_personality_chat and texas_holdem_chat. The multiplayer copy
-  wins on `sys.path`.
-- **Real differences between copies:**
+- **Merged in Phase 11 (done).** `multiplayer/` has no copies of game code left. The duplicated modules and shims
+  listed below are deleted, and so are LAN play (`lan_*.py`) and the offline Practice table (`standalone_*.py`):
+  - room Hold'em runs on `solitaireplus.games.poker.holdem` (`RoomGame`/`TwoHumanGame` in `multiplayer/room_game.py`
+    only set the engine options `allow_network_spectator`, `finish_hand_after_player_fold` and
+    `quick_chat_enabled`, plus sit-out) and draws with `holdem_ui`; NPCs use `ai.py`, the Payout History reads the
+    shared engine's pot records; party Blind Man's Bluff settles with `core.py`;
+  - portraits, card art and the NPC roster load through `solitaireplus.npc.portraits` and
+    `solitaireplus.app.paths`; the sound adapter in `multiplayer/main.py` reads `paths.asset('sounds')` and imports
+    neither `app.sounds` nor `app.audio`;
+  - Dead Man's Hand PvP is `solitaireplus/games/dead_mans_hand/pvp.py` (`open_peer` passed in; in the spec's
+    `hiddenimports`);
+  - the window is `solitaireplus/app/window.py` (W1): `multiplayer/mp_options.py` calls `window.open_window()`
+    with its own caption and sets `state.window_custom_cursor = False`;
+  - `ClientGame`, `snapshot()` and the room message stamp (`ROOM_PROTOCOL`) are in `multiplayer/room_protocol.py`.
+  `tests/test_shared_imports.py` fails if any of the old module names comes back.
+  The two lists below are kept as history (they describe the code before Phase 11).
+- **17 duplicated module names** (before Phase 11) in `multiplayer/`: texas_holdem, texas_holdem_ui, poker_ai,
+  audio, npc_portraits, poker_recap, npc_avatars, dead_mans_hand_pvp, plus shims for poker_core, poker_strategy,
+  poker_speech, poker_ui_assets, poker_learning, npc_personality, npc_personality_chat and texas_holdem_chat. The
+  multiplayer copy won on `sys.path`.
+- **Real differences between copies (before Phase 11):**
   - `texas_holdem.py`, 25 lines differ:
     - multiplayer adds `allow_network_spectator`, `get_live_player_indexes` and busted-seat dealing;
     - root has the short-big-blind fix, the raise guard and the quick-chat reset.

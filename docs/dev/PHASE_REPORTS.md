@@ -1310,3 +1310,391 @@ every solitaireplus module" (`collect_submodules('solitaireplus')` in the spec, 
 
 Hand-back: `test_standalone.py` (now deleted) left a stray file at
 `C:\Users\Dan Fiscus\Documents\standalone_preview.png`, outside the repository. Dan can delete it.
+
+## Phase 11 (fix): B67-B85, W1 (multiplayer)
+
+Built as `e795414` in the Phase 11 worktree, on top of the move commit `ff82492` (which sits on B86, `707be96`), then applied on top of the integrated move. At integration the spec conflict was settled in favour of the branch's `collect_submodules('solitaireplus')` (see N68), and the two out-of-date docs in N71 were updated. The plan is
+`tools/refactor/specs/phase11_plan.md`. This stage fixed B67-B84 in the merged multiplayer code, moved the
+Multiplayer window onto `solitaireplus/app/window.py` (W1, multiplayer part), and fixed the packaged game, which
+crashed at start (found in the move stage). B80 and B85 were resolved by the merge itself. Single-player is
+unchanged on the safety net: `screen_harness compare` IDENTICAL 64/64 and `replay compare` IDENTICAL 18/18 against
+`ff82492`, with no `contributors` difference (single-player never records it).
+
+**Group outcomes**
+
+- **bugs-holdem-room** (`room_table.py`, `room_session.py`, `room_protocol.py`, `mp_profile.py`, `holdem.py`):
+  - B67: one fake clock in `SixRelayTests`. `RoomAuthority.update()` re-arms `due` and `resume_at` when the clock
+    jumps back by more than `CLOCK_JUMP_MS` (60 s).
+  - B69: `boundary()` returns True only when someone left a seat or was seated, and `update()` bumps the revision
+    only then.
+  - B70 (host and client): the per-second revision bump is gone. A view carries `countdown_at` (the "starts at"
+    time on the host clock) and `host_now`. The guest sets `countdown_until` on its own clock. A malformed or
+    absurd countdown (over 1 hour either way) is ignored (`room_protocol.countdown_offset`, added in the repair).
+    `next_hand_seconds` is still sent, for older guests.
+  - B68: a late joiner takes a busted NPC seat first, with the starting stack and the notice
+    "{name} buys in for ${amount} in {old}'s seat." Otherwise it takes a funded NPC seat as before.
+    `next_if_ready()` seats waiters before replacement NPCs are made. The waiting text is now "Waiting for a seat
+    at the next hand".
+  - B81: new `TexasHoldemGame.reset_seat_ai_state(seat)`, which single-player never calls.
+    `RoomAuthority._install_seat()` builds the seat record from the room's current state and resets that seat's
+    reads, reveals, last AI decision and rival-learning binding. It is used by `assign()`, `boundary()` and
+    `replace_busted_npcs()`.
+  - B79:
+    - `TexasHoldemGame.record_pot_contributors` (class option, default False) adds `contributors` to each
+      showdown pot record. Rooms turn it on.
+    - `snapshot()` remaps the key per viewer.
+    - `winning_xp()` skips a pot whose contributors are all winners. Pot records without the key, from an older
+      host, count as before.
+  - B80 remainder: a guest `bet_raise` is refused before the engine changes anything unless `can_npc_raise()`
+    allows it (B86 already includes "somebody must be able to answer").
+  - B84 (host): the host rebuilds its own `view(0)` only when the revision changes.
+  - Protocol stamp: `ROOM_PROTOCOL = 3` on every host-to-guest message (`send_stamped`). A guest that sees no
+    stamp, or another number, shows the notice "The host's Solitaire+ is a different version. Update both games
+    to play together." once, and play goes on. The relay room version stays 2.
+  - Quarantine: `test_last_payout_survives_new_hand` was fixed (`room.mode=None`). Both six-seat quarantine
+    lines were removed after the repeated runs (see "Un-quarantine").
+- **bugs-room-view** (`room_view.py`, `mp_assets.py`):
+  - B70 display: the countdown comes from `table.countdown_until` and `pygame.time.get_ticks()`, with the
+    message's `next_hand_seconds` as the fallback.
+  - B84 caches:
+    - the smaller Georgia font of a too-wide button label, built once per size;
+    - scaled cards and their shadows (bounded 96, keyed by image identity and size, and keeping the image alive);
+    - `panel()` layers, and translucent fill layers (turn banner, result banner, details shade);
+    - finished NPC portraits in `TableView.portrait`, keyed by id, portrait path, look and size.
+  - The drawing output is unchanged.
+  - The repair added two things:
+    - "Starting next hand…" for 2 seconds after a guest's local countdown ends, before "Waiting for players to
+      rejoin" (review finding: guests flashed "Waiting" before every hand);
+    - the same kind of caches in `mp_appearance.py`: background shade, oval felt and avatar layers, and the
+      avatar initial's font (review finding: B84 work left there).
+- **bugs-party** (`party_authority.py`, `party_view.py`, `score_four.py`):
+  - B70 Roulette: no per-second bump; the view sends `seconds_left`, `countdown_at` and `host_now`.
+    `party_view` counts down locally.
+  - B71/B74: seat helpers on `FourSeatAuthority` (`_disconnected`, `_free_seat`, `_free_disconnected_seats`,
+    `_seat_waiters`, `_return_to_lobby`, and the `_on_seated`/`_seat_is_broke` hooks). Waiters sit down at the
+    next Blind Man's Bluff hand, at the next Roulette spin, or when Score Four returns to the lobby. A joiner is
+    never queued twice.
+  - B72 (designer): a disconnected Blind Man's Bluff seat checks, or folds when it owes chips, after 600 ms.
+  - B73: fewer than 2 seats can ante → `finished` and phase 'finished' ("Table finished"). The repair added
+    that a late joiner's buy-in deals a finished Blind Man's Bluff table, or a finished Roulette table, back in.
+    A full finished table does not bump the revision.
+  - B75: the solve is sent until the room takes it, at most once per revision. The board is kept per room
+    (repair: a new room on the same round number gets its own cards).
+  - B76: new pure `score_four.check_solution(numbers, steps)`. The host checks the guest's steps; `party_view`
+    records them, and Undo and Reset trim them.
+  - B77: a short-stack raise is clamped as min(maximum, max(minimum, amount)); a target that does not beat the
+    bet is a call. The same order is used for NPC bets.
+  - B78: a Roulette bet must be a whole number of at least `ROULETTE_MIN_BET` = 1.
+  - B86 review (Blind Man's Bluff pots): the room now settles with
+    `core.build_pots`/`award_pots`/`settle_fold_win`, raises with `core.can_raise`/`betting_reopened`, and
+    picks winners with `core.hand_winners`/`hand_nets`. The view sends `can_raise`, which the Raise button follows.
+- **bugs-dmh** (`solitaireplus/games/dead_mans_hand/pvp.py`):
+  - B82: the host checks every guest pose and shot (`_pose_fields`, `_clean_pose`, `_clean_shot`):
+    - an open floor tile;
+    - a PvP weapon;
+    - z and ads clamped;
+    - a move no longer than walking speed allows;
+    - a shot origin within 0.75 tiles of the last pose;
+    - a 2-shot token bucket refilled at the gun's fire interval;
+    - `hello` only before connecting;
+    - `_shot_hits` safe on bad numbers;
+    - guest-side checks on the host's state messages.
+  - The repair added:
+    - cleaning of peer names (a NUL or lone surrogate crashed rendering);
+    - kill-feed gun names checked;
+    - a stale dead pose no longer undoes a respawn;
+    - a 1 s delay before a click leaves the result screen, so a shot fired at the moment of a disconnect is
+      not taken as "back to lobby".
+  - B83: a disconnect after hello ends the duel on a result screen:
+    - "YOU WIN" with "{opponent} left the duel - win by forfeit" when the relay says the other player left;
+    - "CONNECTION LOST" with the score for any other disconnect;
+    - Enter or a click goes back to the lobby; ESC still closes.
+- **window-shared** (`window.py`, `state.py`, root `main.py`):
+  - `open_window(caption="Solitaire", size=None)` clamps the size.
+  - `state.window_custom_cursor` (default True) keeps the single-player cursor code out of multiplayer.
+  - The `main.py` comment was corrected.
+  - The repair added `_allow_small_window()`. pygame's SCALED mode sets the 1366x768 picture size as the
+    window's minimum size, so SDL silently kept a smaller requested size (for example the 1088x612 default on a
+    1366x768 laptop) at 1366x768, and `present()` kept retrying. The minimum is now `MIN_WINDOW_SIZE`
+    (1024x576). This also affects single-player on screens smaller than about 1366x800 (see "Single-player").
+- **window-mp** (`mp_options.py`, `multiplayer/main.py`, `tools/window_check.py`):
+  - `Options.open_window()`, `set_fullscreen()` and `set_size()` go through `app/window.py`.
+  - `inherited_window()` reads any positive `SOLITAIRE_MP_WINDOW` and `SOLITAIRE_MP_FULLSCREEN` on its own.
+    Inherited values are never saved, and the default size writes no `size` key.
+  - `main.py` calls `window.enable_dpi_awareness()`, draws on `window.game_surface`, maps the mouse with
+    `window_to_game_coords`, and shows frames with `window.present()`.
+  - B84: the hub's button and status fonts are made once.
+  - `window_check.py --multiplayer` added.
+  - `test_menu_followup.test_lobby_quit_button_ends_the_loop` was rewritten for the current hub and passes, so
+    its quarantine line went.
+- **Review and repair**: the reviewers' findings were repaired as listed above. Findings left as notes are under
+  "New findings".
+- **final-packaged** (this group):
+  - spec `hiddenimports` gained the three importlib-only screens (N68; dropped at integration, because the branch already collects every solitaireplus module);
+  - full tests, both compares, the packaged build and checks, the local two-player test, and the window checks;
+  - docs: `docs/TESTING.md`, `docs/POKER_RULE_CHANGES.md` ("Online play"), and the brief's section 5.6.
+
+**Decisions** (plan section 1, as carried out)
+1. LAN and Practice were removed first. The shared parts moved unchanged into `room_protocol.py`, `room_game.py`
+   and `mp_assets.py`.
+2. Engine options on `TexasHoldemGame` with single-player defaults: `allow_network_spectator=False`,
+   `finish_hand_after_player_fold=True`, `quick_chat_enabled=True`. No hole cards for a busted seat 0
+   (unconditional). Sit-out stays in `RoomGame`. The fix stage added `record_pot_contributors=False` (B79, rooms
+   only) and `reset_seat_ai_state()` (B81, rooms only).
+3. No draw options on `holdem_ui`. B85 is resolved by the deletion, with a guard test. The only UI addition is
+   `speed=None` on the three delay helpers.
+4. The single-player AI and recap win, with no flags. Room NPCs gain the short-stack tenacity cap (table below).
+5. Multiplayer imports neither `app.audio` nor `app.sounds`. Its sound adapter reads `paths.asset('sounds')`.
+6. DMH PvP is `solitaireplus/games/dead_mans_hand/pvp.py`, with `open_peer` passed in, `LeaveToast` in
+   `multiplayer/main.py`, and the module in `hiddenimports`.
+7. `SELFTEST_SKIP` and `MP_EXCLUDED` are unchanged. `hiddenimports` gained the PvP module (move) and three
+   screens (this commit, N68; on the branch `collect_submodules('solitaireplus')` covers them). The installer has `[InstallDelete]` for loose `multiplayer\*.py`.
+8. The relay room versions stay 1 and 2. Room messages carry the app-level `protocol` stamp (3).
+9. B68 seating: busted NPC seats first, with the normal buy-in; otherwise a funded NPC seat as before.
+10. Additive room state fields: `data.last_refunds` and per-pot `payouts` (move stage), and per-pot
+    `contributors` (this stage). All are seat-relative, and older clients ignore them.
+11. `RoomGame.start_hand` no longer marks a dealt-in, all-in-from-the-blind seat as busted (move stage).
+- Orchestrator and designer defaults (final):
+  - B72: a disconnected Blind Man's Bluff seat auto-checks, or folds if it cannot check.
+  - B70: the countdown is sent as a "starts at" time, with no relay or room version bump.
+
+**Bug table**
+
+| Bug | Result | Tests |
+|---|---|---|
+| W1 (multiplayer) | fixed: the multiplayer window uses `app/window.py` (DPI aware, clamped and centred start, letterboxed desktop fullscreen, handed-over size honoured, too-large sizes greyed out) | `tests/test_window.py` (`test_open_window_sets_caption_and_clamps_size`, `test_small_window_sizes_really_apply`, `test_open_window_default_unchanged`, `test_custom_cursor_is_applied_only_when_enabled`, `test_no_cursor_import_when_custom_cursor_off`, handoff tests), `multiplayer/tests/test_mp_window.py` (12), `tools/window_check.py --multiplayer` |
+| B67 | fixed | `test_clock_going_backwards_rearms_timer`; `SixRelayTests.test_six_clients_and_late_join` un-quarantined |
+| B68 | fixed | `test_late_join_takes_busted_npc_seat_with_buy_in`; `test_late_join_no_mid_hand_takeover` un-quarantined |
+| B69 | fixed | `test_unseatable_waiter_does_not_bump_revision` |
+| B70 | fixed (Hold'em, Roulette, client display) | `test_countdown_does_not_bump_revision`, `test_client_countdown_from_timestamp`, `test_malformed_countdown_is_ignored`, `test_roulette_countdown_keeps_revision`, `test_countdown_uses_local_timestamp`, `test_countdown_runs_on_the_local_clock`, `test_draw_shows_the_local_countdown`, `test_malformed_countdown_falls_back_to_seconds_left` |
+| B71 | fixed | `test_bluff_late_joiner_seated_at_next_hand`, `test_roulette_late_joiner_seated_at_next_spin`, `test_score_four_late_joiner_seated_on_return_to_lobby`, `test_waiter_takes_ghost_then_npc_seat_and_is_queued_once`, `test_lobby_waiter_takes_a_seat_freed_in_the_lobby`, `test_broke_seat_buys_in_for_the_joiner` |
+| B72 | fixed (auto-check, else fold) | `test_disconnected_actor_checks_after_a_pause`, `test_disconnected_actor_folds_to_a_bet`, `test_disconnected_seat_acts_when_its_turn_comes` |
+| B73 | fixed | `test_bluff_finishes_when_fewer_than_two_can_ante`, `test_late_joiner_deals_a_finished_bluff_table_back_in`, `test_full_finished_bluff_table_keeps_its_revision`, `test_late_joiner_restarts_a_finished_roulette_table` |
+| B74 | fixed | `test_score_four_return_lobby_frees_ghost_seats` |
+| B75 | fixed | `test_solve_is_retried_until_the_room_takes_it`, `test_a_new_room_on_the_same_round_gets_its_own_cards` |
+| B76 | fixed | `test_score_four_host_checks_the_guest_solve`, `test_sent_steps_pass_the_host_check`, `test_steps_follow_undo_reset_and_a_new_round`, `tests/test_score_four_check_solution.py` (8) |
+| B77 | fixed | `test_short_all_in_raise_is_recorded_as_the_real_amount`, `test_npc_short_stack_bet_is_its_stack` |
+| B78 | fixed | `test_roulette_rejects_bets_below_the_minimum` |
+| B79 | fixed | `test_returned_chips_give_no_xp`, `test_dead_money_layer_still_gives_xp`, `test_room_showdown_split_of_own_chips_gives_no_xp`, `tests/test_holdem_pot_contributors.py` (5) |
+| B80 | resolved by the merge and B86; guest raise rule added | `multiplayer/tests/test_room_engine.py` (6), `test_guest_cannot_raise_when_no_one_can_respond`, `test_can_raise_agrees_for_every_human_seat` (see N70) |
+| B81 | fixed | `test_takeover_resets_seat_ai_state` |
+| B82 | fixed | `tests/test_dead_mans_hand_pvp.py` (malformed shots/poses, teleports, bursts, distant origin, second hello, legal shots and full-auto still accepted, guest-side checks, name cleaning) |
+| B83 | fixed | `test_opponent_leaving_mid_match_is_a_forfeit_win`, `test_own_connection_lost_shows_connection_lost_with_the_score`, `test_disconnect_after_a_normal_end_keeps_the_real_winner`, `test_guest_sees_a_forfeit_win_when_the_host_leaves`, `test_enter_or_click_returns_to_the_lobby_and_esc_still_closes`, `test_a_click_right_after_the_disconnect_is_still_a_shot` |
+| B84 | fixed | `test_wide_button_font_built_once`, `test_card_cache_reuses_scaled_card`, `test_panels_share_layer`, `test_portrait_cached`, `test_appearance_layers_built_once`, `test_host_builds_view_only_on_revision_change` |
+| B85 | resolved by the merge (Practice `TableView.draw` deleted) | `test_shared_ui_usage.test_keywords_accepted` |
+| B86 review (room Blind Man's Bluff pots) | fixed | `test_bmb_pots_use_the_shared_rules`, `test_folded_to_bettor_gets_uncalled_bet_back`, `test_reraise_rights_follow_the_shared_rule`, `test_raise_button_follows_the_host_rule` |
+
+Deviation: plan step B79 "extend test_sidepots_allin the same way" was not done as such.
+`tests/test_holdem_pot_contributors.py` covers it instead: a forced side pot names every contributor, every
+showdown pot in played side-pot hands has contributors, the recap and pot log ignore the key, and the default-off
+record is unchanged.
+
+**Multiplayer changes players will notice** (move and fix stages)
+- **Room Hold'em now follows the single-player B86 rules** (shared engine; `docs/POKER_RULE_CHANGES.md` "Online
+  play" is updated):
+  - A fold win settles like a one-seat showdown. Example: seat 3 raises to 150 and everyone folds. "Last pot"
+    and the Payout History show a $125 main pot, plus "Returned (uncalled): Uncalled $100 returned to Guest 3".
+    Before: a $225 pot.
+  - Uncalled chips and folded players' chips are refunds, or join the pot they were paid into.
+  - No bet or raise that nobody can answer, for the host and for guests.
+  - A seat whose blind puts it all in plays the hand.
+  - Single-player odd-chip and winner rules apply.
+  - The new Payout History footnote.
+  - No empty "You are dealt ." line for a busted host.
+- **Room NPCs fold less with high-tenacity short stacks.** Measured on 3,000 seeded decisions each (flop,
+  strength 0.40, 100 to call into 300):
+
+  | Spot | Old multiplayer copy | Shared `ai.py` |
+  |---|---|---|
+  | tenacity 10, stack 200 | 66.2% | 38.4% |
+  | tenacity 5, stack 200 | 40.0% | 32.2% |
+  | tenacity 1, stack 200 | 22.7% | 22.7% |
+  | tenacity 10, stack 5000 | 0% | 0% |
+
+- **Portraits:** layered NPC portraits gain the `outline.png` layer.
+- **Rooms:**
+  - countdowns no longer reject guest actions;
+  - each screen counts down locally, and guests see "Starting next hand…" for a moment at the end;
+  - Hold'em late joiners take busted NPC seats with a buy-in;
+  - a waiter no longer freezes the table;
+  - a takeover seat starts with fresh NPC reads;
+  - no XP for returned chips or own-chip pots;
+  - a version-mismatch notice;
+  - party late joiners get seated;
+  - a disconnected Blind Man's Bluff seat auto-checks or folds;
+  - Blind Man's Bluff "Table finished" when fewer than 2 can ante (a newcomer restarts it);
+  - room Blind Man's Bluff uses the single-player pot, raise and winner rules;
+  - Score Four solves are checked by the host and retried;
+  - Roulette bets below $1 are refused.
+- **DMH PvP:**
+  - mouse-look speed scales with the window (as single-player);
+  - a disconnect shows a result screen (forfeit win or CONNECTION LOST);
+  - invalid guest data is ignored.
+- **Window:**
+  - opens at the single-player default size for the screen, clamped and centred;
+  - F11 is letterboxed desktop fullscreen;
+  - the handed-over size and fullscreen choice are honoured;
+  - DPI aware when started on its own;
+  - Options greys out sizes too large for the screen.
+
+**Single-player**
+- The harness is IDENTICAL (64/64 scenes, 18/18 journeys, baseline `ff82492`). No scene or checkpoint changed.
+- Two single-player-visible changes are outside what the harness can see:
+  - The packaged game starts again (N68). The move-stage build crashed with `ModuleNotFoundError:
+    solitaireplus.menus.splash`, as the B86 base does.
+  - On screens whose work area is smaller than about 1366x800, the window now really gets its smaller default
+    size (for example 1088x612 on a 1366x768 laptop), and a smaller size the player drags to stays. Before, SDL
+    held it at 1366x768, so the window did not fit, and `present()` retried the resize on every frame. This is
+    the repair's `_allow_small_window()`. It is a W1 fix, guarded by `test_small_window_sizes_really_apply`.
+
+**Un-quarantine** (`tests/KNOWN_FAILURES.txt`)
+- Removed (4):
+  - `test_menu_followup.test_lobby_quit_button_ends_the_loop`: rewritten for the current hub; passes.
+  - `test_table_flow.test_last_payout_survives_new_hand`: `room.mode=None` in its setup; passes.
+  - `test_six_seat.SixSeatTests.test_late_join_no_mid_hand_takeover` (B68): re-run here 50 times with
+    `run_tests.py --worker`, 50/50 passed. Every `@@RESULT` was read: the worker exits 0 even when a test fails.
+  - `test_six_seat.SixRelayTests.test_six_clients_and_late_join` (B67): re-run here 20 times, 20/20 passed.
+- Left: `multiplayer:test_table_polish.PolishTests.test_local_animation_never_mutates_game_and_sound_edges_once`
+  (the fake game lacks `player_action_text`) is the only multiplayer line. The 8 game lines are unchanged:
+  3 `/workspace/scratch` paths, 2 DMH weapon, and 3 NPC development.
+
+**Verification**
+- `tools/run_tests.py`: PASSED.
+  - game: 120 files, 1,100 tests (8 quarantined failures, as before);
+  - multiplayer: 17 files, 141 tests (1 quarantined failure);
+  - the move stage had game 118/1,056 and multiplayer 14/78.
+  - Run again after the build and the docs: PASSED.
+- `screen_harness.py compare --baseline ff82492…`: IDENTICAL 64/64. Then `replay.py compare --baseline ff82492…`:
+  IDENTICAL 18/18. They ran one after the other.
+- Packaged (`build_release.ps1 -SkipTests`, in this worktree):
+  - `SolitaireNet 1.1.0 ok; connectors: tcp, tls, ws, wss`; the updater self-test exited 0;
+  - `release/selftest-multiplayer.txt` lists 22 modules and ends with `PASSED: every multiplayer module
+    imported`.
+  - `build/SolitairePlus/PYZ-00.toc`: all 20 solitaireplus modules imported by the shipped `multiplayer/*.py`
+    are present. So are all 58 modules named in importlib or `lazy()` strings, including
+    `solitaireplus.menus.splash`, `solitaireplus.debug.poker_select_screen` and
+    `solitaireplus.career.leaderboard_bio_screen` (missing before this commit).
+  - 10 s runs with a temporary LOCALAPPDATA (`auto_update_check` false, so no update check went to the
+    internet): `SolitairePlus.exe` was still running after 10 s, and its newest `game-*.log` is 0 bytes;
+    `SolitairePlus.exe --multiplayer` the same, 0 bytes.
+- Local two-player test (relay started from source with `--bind 127.0.0.1 --port 50111 --ws-port 50112`; it
+  listened on 127.0.0.1 only):
+  - `relay_probe.py tcp://127.0.0.1:50111`: 6-character code, party games supported, "this relay is up to date".
+  - Scratch `two_player.py` (every address checked to be 127.0.0.1 before a peer opens) printed 72/72 OK,
+    `TWO_PLAYER PASSED`:
+    - raw `NetPeer`, with the packaged `SolitaireNet.exe` and with the source service, over tcp:// and ws://:
+      v2 room code, joined/peer_joined, guest action and chat to the host, host lobby to the guest,
+      `'wss'` in the connectors, a v1 duel pair with hello both ways, and every peer and service closed;
+    - `RoomTable` games through the packaged service:
+      - a Hold'em hand to the end: chips conserved 30,000 = 30,000; guest revision = host revision (30); 162
+        guest views checked with no other seat's cards before the showdown; every state message the guest
+        received carried `protocol` 3, and no version notice;
+      - a Blind Man's Bluff hand: chips conserved, and the guest never saw its own card;
+      - a Score Four round: a wrong `solved` claim was refused, and a valid steps solve won the round;
+    - no log files in the run's temporary LOCALAPPDATA.
+  - Windows. Two temporary LOCALAPPDATA folders ("Alice", "Bob"), with UTF-8 files without a BOM.
+    `connection_settings.load()` was checked to give `tcp://127.0.0.1:50111` before either window started.
+    - The source window (`main.py --multiplayer`) and the packaged window (`SolitairePlus.exe --multiplayer`)
+      both opened at client 1712x963, window (103, 87, 1817, 1082), centre offset (0, -0.5), inside the work
+      area (0, 0, 1920, 1152), caption "Solitaire+ Multiplayer", DPI awareness 2, window DPI 96.
+    - With posted input, the source window created a room (code TBCD8Q) and the packaged window joined it: both
+      lobbies showed Alice and Bob "Connected".
+    - The only TCP connections to anywhere outside the processes were from `python -m netservice` (the source
+      window's service) and `SolitaireNet.exe` (the packaged window's) to 127.0.0.1:50111.
+    - Starting the table and playing a hand by posted clicks did not work (see Manual items).
+    - Both `game-*.log` files are 0 bytes, and there is no `netservice.log`. That file is written only when the
+      service crashes, so the plan's "netservice.log shows the connection" cannot be checked from it.
+  - The relay, both windows and every service process were stopped afterwards.
+- Window checks. This PC now runs at 100% (window DPI 96): monitor 1920x1200, work area (0, 0, 1920, 1152).
+  Default start: client 1712x963, window (103, 87, 1817, 1082). F11: (0, 0, 1920, 1200). Options 1366x768 →
+  (276, 185, 1644, 985); 1600x900 → (159, 119, 1761, 1051); 1920x1080 and 2560x1440 greyed out.
+  - `window_check.py source`: 41/41 ok. Saved 2560x1440 was clamped to 1712x963; saved fullscreen started at
+    (0, 0, 1920, 1200).
+  - `window_check.py packaged`: 11/11 ok (start-up and 5 x F11).
+  - `window_check.py source --multiplayer`: 110/110 ok, with DPI awareness 2, caption right, and no legacy or
+    cursors module loaded:
+    - no saved size, saved 2560x1440 and inherited 2560x1440 → 1712x963, centred;
+    - inherited 1600x900 → client 1600x900 at (159, 119, 1761, 1051);
+    - inherited 1088x612 → client 1088x612 at (415, 263, 1505, 907);
+    - saved fullscreen and inherited 1600x900 + FULLSCREEN=1 → (0, 0, 1920, 1200).
+  - `window_check.py packaged --multiplayer`: 84/84 ok, the same rectangles and DPI awareness 2.
+
+**Open questions** (default taken in brackets)
+- NPC raise rule [no change needed]. B86 already put "no bet or raise unless somebody can answer" into
+  `can_npc_raise`/`npc_raise` for every table, so single-player and room NPCs follow it. The room adds the same
+  check for guest humans, and the host has it through `can_player_raise`.
+- Mixed-version rooms [no relay change; a protocol stamp and an "Update both games" notice for new guests].
+  Guests on the current release can still join a new host, with three effects:
+  - their Score Four solves are refused (they send no steps), so they cannot win a round;
+  - their next-hand countdown stays at "Next hand in 6 seconds" for the whole pause, because the host no longer
+    bumps the revision every second;
+  - they get no warning, because only new guests check the stamp.
+  - A new guest at an old host sees the notice. Redeploy the relay with a version-3 gate instead?
+- B68 seating [a busted NPC seat with the normal buy-in first; otherwise take over a funded NPC seat and its stack,
+  as today]. Should humans still inherit a funded NPC's stack at all?
+- Party late joiners, B71 [seat order: Empty, then a disconnected human's seat, then an NPC seat (a broke NPC's
+  first). The buy-in goes to an empty or broke seat; otherwise the joiner inherits the stack. Score Four seats
+  joiners only on return to the lobby]. Confirm.
+- B72 follow-on [keep dealing a disconnected Blind Man's Bluff seat in, paying antes, until a waiter takes it or it
+  cannot ante]. Sit it out from the next hand instead?
+- B73 ["Table finished" with no new button; a newcomer's buy-in restarts the table]. Give the host a "Room lobby"
+  button?
+- B78 [minimum Roulette bet $1]. A $10 minimum would match the chip tray.
+- B83 [a forfeit "YOU WIN" only when the relay reports that the other player disconnected; otherwise "CONNECTION
+  LOST" with the last score; PvP records no stats or XP]. OK?
+- For information: the plan section 4 items above (NPC fold rates, outline layer, mouse-look scaling,
+  single-player window rules) came with the merge.
+
+**New findings**
+- **N68 (H, already fixed on the branch): the packaged game crashed at start.**
+  - `solitaireplus/app/loop.py` loads `solitaireplus.menus.splash`, `solitaireplus.debug.poker_select_screen` and
+    `solitaireplus.career.leaderboard_bio_screen` only through importlib strings, so PyInstaller left them out.
+  - The newest `game-*.log` showed `ModuleNotFoundError: No module named 'solitaireplus.menus.splash'`. The B86
+    base `707be96` has the same `loop.py` and spec, so the bug came in when the screens moved to `SCREENS`
+    strings.
+  - Fix in the Phase 11 worktree: the three modules in the spec's game `hiddenimports`. The branch already had
+    the wider fix, "Phase 7 (fix): packaged game ships every solitaireplus module" (`collect_submodules`), so at
+    integration the three entries were dropped. A check of `PYZ-00.toc` finds every module named in an importlib
+    or `lazy()` string.
+  - The packaged self-tests did not catch it, because the multiplayer self-test imports only `multiplayer/`
+    modules. `tests/test_packaged_game_modules.py` (from the Phase 7 packaged fix) now guards it.
+- **N69 (L): an old guest at a new host sees a frozen next-hand countdown.**
+  - The new host bumps the revision once per finished hand (B70). The current release's `room_view` reads only
+    `next_hand_seconds`, so the guest shows "Next hand in 6 seconds" for the whole pause until the deal arrives.
+  - Nothing breaks, and new guests count down from `countdown_at`.
+  - It follows from the chosen B70 design and is part of the mixed-version open question.
+- **N70 (L, test evidence): the B80 guest-raise tests also pass on the code before the fix.**
+  - On `ff82492` a guest's raise over an all-in was already refused twice: `room_table` checked `can_npc_raise`
+    when there was a bet, and B86's `npc_bet`/`npc_raise` run the "somebody can answer" check themselves.
+  - The new early refusal changes no outcome. It only returns before `npc_bet`'s `ensure_*` calls.
+  - `test_guest_cannot_raise_when_no_one_can_respond` and `test_can_raise_agrees_for_every_human_seat` guard
+    the behaviour but do not prove the change.
+- **N71 (L, docs, fixed at integration): wording outside this group's sections was out of date.**
+  - The intro of `docs/POKER_RULE_CHANGES.md` said "Online play is unchanged until Phase 11" (only the
+    "Online play" section was in scope).
+  - `docs/NETWORKING.md` did not describe the room message stamp (`protocol`, `ROOM_PROTOCOL = 3`) or the
+    `countdown_at`/`host_now` countdown fields. Both are updated now.
+- **N72 (info, test tooling): posted mouse input does not reliably reach an SDL window.**
+  - With another process's window, or the cursor, elsewhere, SDL's `WM_MOUSELEAVE` handling moves its mouse
+    position back to the real cursor, and the room and hub use the frame's mouse position.
+  - Moving the real cursor (`SetCursorPos`) and raising the target window made some clicks work, but not all.
+    The Start table click never registered.
+  - A scripted full hand through two windows needs another way in (for example a test-only input hook), or a
+    person.
+
+**Stray files**
+- `C:\Users\Dan Fiscus\Documents\standalone_preview.png` (outside the repository) was written by the now-deleted
+  `multiplayer/tests/test_standalone.py` (`'../standalone_preview.png'`). Dan may delete it.
+- The same test, run at the base inside a sprint worktree, also left
+  `C:\Users\Dan Fiscus\Documents\SolitairePlus\.harness_out\wt\standalone_preview.png` (harness area, never
+  committed). Deleted at integration.
+
+**Manual items for Dan**
+- Play one Hold'em hand through two Multiplayer windows: one from source and one packaged, or two packaged with
+  different LOCALAPPDATA folders, against a relay on 127.0.0.1. The recipe is in `docs/TESTING.md`, "Local
+  two-player test". Room creation and joining were done by script; starting the table and the hand were not.
+- While doing that, check that the picture fills the window. The `PrintWindow` captures taken during the test
+  showed the 1366x768 picture at 1:1 in the middle of the 1712x963 client, while mouse input was mapped as if it
+  filled it. That is most likely a capture artefact: the screen itself could not be seen (a screen saver desktop
+  was active). The window code is the one single-player has used since Phase 2.
+- Answer the open questions above.

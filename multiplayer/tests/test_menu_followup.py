@@ -6,6 +6,8 @@ from unittest.mock import patch
 import pygame
 import main
 
+QUIT_GAME=(1260,35)   # centre of the hub's "Quit Game" button (main.py quit_rect)
+
 class MenuFollowupTests(unittest.TestCase):
     def setUp(self):
         self.original_cwd=os.getcwd()
@@ -23,10 +25,11 @@ class MenuFollowupTests(unittest.TestCase):
             main.main()
         self.assertEqual(events.call_count,len(batches))
     def test_lobby_quit_button_ends_the_loop(self):
-        event=pygame.event.Event(pygame.MOUSEBUTTONDOWN,button=1,pos=(820,35))
+        # main() opens its own window through app/window.py (W1), so nothing is patched there.
+        # The hub's buttons exist once the hub has drawn, so the click comes on the second pass.
+        event=pygame.event.Event(pygame.MOUSEBUTTONDOWN,button=1,pos=QUIT_GAME)
         with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ,LOCALAPPDATA=folder), \
-             patch('pygame.mouse.get_pos',return_value=(820,35)), \
-             patch('pygame.event.get',side_effect=[[event]]) as events, \
-             patch.object(main.Options,'display',side_effect=lambda:pygame.display.set_mode((1366,768))):
+             patch('pygame.mouse.get_pos',return_value=QUIT_GAME), \
+             patch('pygame.event.get',side_effect=[[],[event]]) as events:
             main.main()
-            self.assertEqual(events.call_count,1)
+            self.assertEqual(events.call_count,2)

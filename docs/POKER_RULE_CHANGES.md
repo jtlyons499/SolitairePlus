@@ -2,7 +2,8 @@
 
 This file lists what changed in the rules of the five single-player poker tables during the restructure sprint
 (November 2026): the Phase 7 fixes (B35, B40, B41, B43) and B86, which put all five tables on one shared set of
-table rules while keeping each game's own structure. Online play is unchanged until Phase 11. No rule here creates
+table rules while keeping each game's own structure. Since Phase 11, online Texas Hold'em and Blind Man's Bluff rooms
+use the same rules (see "Online play" at the end). No rule here creates
 or loses chips: chip totals are checked after every step of 1,000 seeded random hands per game, and buy-in and
 cash-out are tested to move exactly the right money. The technical audit is in [dev/B86_POKER_AUDIT.md](dev/B86_POKER_AUDIT.md).
 
@@ -516,11 +517,66 @@ These shared rules were set by default during the sprint and can still change.
 
 ## Online play
 
-- The multiplayer app's poker still uses its own copies of the rules: Texas Hold'em at its NPC table, over LAN
-  and in online rooms, and party Blind Man's Bluff. None of the changes above apply to them yet.
-- Phase 11 moves them onto the same shared rules. This file will be updated then.
-- The room features stay: buying back in for the starting stack, a busted NPC replaced by a new one, sitting
-  out, a busted host spectating, absent players folded automatically, and the pause between hands.
+Since Phase 11 the multiplayer app has no copies of the poker rules left. LAN play and the offline practice table
+are gone; what remains is online rooms.
+
+### Texas Hold'em rooms
+
+- **Shared with the single-player table:** a room plays on the same Hold'em engine, so every rule in "Every poker
+  table" and "Texas Hold'em" above applies, including:
+  - the bet to call after a short all-in blind;
+  - no bet or raise that nobody can answer. The host refuses it for guests too, and a guest's Raise button stays
+    off. Before, the host and the guests could raise when everyone else left was all-in;
+  - minimum raises, and short all-ins that together re-open the betting;
+  - uncalled chips come back and are not won, and folded players' chips join the pot they were paid into
+    instead of making extra side pots (for example one $4,025 pot instead of $100, $1,725 and $2,200 pots);
+  - odd chips to the first winner left of the dealer, and the same rule for who counts as a winner.
+- **Fold wins.** A fold win settles like a showdown with one player left. Example: a guest raises to $150 and
+  everyone folds. "Last pot" and the Payout History now show a $125 main pot, and the Payout History adds
+  "Returned (uncalled): Uncalled $100 returned to Guest 3". Before: a $225 pot. The guest's stack ends the same.
+- **A short blind plays.** A seat whose blind puts it all in now plays the hand and can win the pots it paid
+  into. Before, it was shown as busted for the whole hand, left out of every pot, and lost its blind.
+- **NPCs** in a room decide with the single-player NPC code, including its short-stack rule: a stubborn NPC with
+  a short stack folds less (in one measured spot, from 66% to 38% of the time). Layered NPC portraits gain the
+  outline layer that single-player draws.
+- **Stays room-specific:**
+  - up to six people, with NPCs in the other seats; the host chooses the starting stack ($1,000 to $25,000) and
+    the table speed;
+  - the room's own chat instead of Quick Chat, so nothing nudges the NPCs;
+  - the 6-second pause before the next hand. Each player's screen now counts it down on its own clock, so the
+    countdown no longer makes a guest's action arrive "too late";
+  - buying back in for the starting stack, a busted NPC replaced by a new one, sitting out, a busted host
+    spectating (no empty "You are dealt" line any more), and a player who left the room folded automatically
+    on their turn;
+  - a late joiner takes a knocked-out NPC's seat first and buys in for the starting stack. Only when every NPC
+    still has chips does the joiner take over an NPC's seat and its stack, as before;
+  - the room's Payout History, not the single-player recap. Its footnote now reads "Amounts above are gross
+    payouts and returned uncalled bets; your own wagers were already deducted.";
+  - multiplayer XP. A pot gives XP only if someone other than its winners paid into it, so returned chips, or a
+    pot two players split from only their own chips, give none. A pot that holds a folded player's chips still
+    does.
+
+### Blind Man's Bluff rooms
+
+- **Shared with single-player Blind Man's Bluff:**
+  - uncalled chips come back, and so does a layer that only folded players paid into;
+  - a fold win: the survivor wins the matched chips and gets its uncalled bet back;
+  - odd chips go to the player with the opening action first, then round the table;
+  - nobody may bet or raise unless another player still in the hand has chips to answer, and several short
+    all-ins that add up to a full raise re-open the betting. The Raise button follows the host's rule;
+  - who won the hand, and the win sound only for winners (returned chips are not a win).
+- **Short stacks.** A raise from a stack too short for the minimum raise is an all-in for what it has, and an
+  amount that does not beat the bet is a call. Before, it was recorded wrongly.
+- **Stays room-specific:**
+  - four seats, and the room's own ante (0.8% of the starting stack, at least $5) and bet unit (2%, at least $10);
+  - a seat with less than the ante watches the hand instead of playing it all-in. When fewer than two seats can
+    ante, the table shows "Table finished";
+  - the room's NPCs use their own simpler decisions, not the single-player NPC code;
+  - the next hand is dealt automatically a few seconds after the result;
+  - a player who leaves the room on their turn checks, or folds when they owe chips, after a short pause. Their
+    seat keeps being dealt in and paying antes until a newcomer takes it or it can no longer pay the ante;
+  - players who join during a hand sit down at the next hand. They buy in for the starting stack in an empty or
+    broke seat; otherwise they play on with the chips of the seat they take.
 
 ## Not rule changes
 

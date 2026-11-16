@@ -3,7 +3,7 @@ import os
 import pygame
 
 from multiplayer_paths import ROOT
-from solitaireplus.app import paths
+from solitaireplus.app import paths, state, window
 from solitaireplus.app.runtime_support import bootstrap
 bootstrap()
 
@@ -34,12 +34,18 @@ def make_duel(name, relay_address, sound):
 
 def main():
     os.chdir(ROOT)
+    # The single-player window code (W1): real screen pixels, a size that fits the screen,
+    # centred, letterboxed desktop fullscreen. Everything draws on the 1366x768 game surface.
+    window.enable_dpi_awareness()          # before pygame opens the display
     pygame.init()
     options = Options()
-    screen = options.display()
-    pygame.display.set_caption("Solitaire+ Multiplayer")
-    canvas = pygame.Surface((1366, 768))
+    options.open_window()
+    canvas = window.game_surface
     clock = pygame.time.Clock()
+    # Fonts for the top buttons, made once instead of every frame (B84).
+    button_font = pygame.font.Font(None, 24)
+    profile_font = pygame.font.Font(None, 22)
+    status_font = pygame.font.Font(None, 38)
 
     profile = MultiplayerProfile()
     # Multiplayer now uses the same layered avatar builder as single-player.
@@ -100,11 +106,7 @@ def main():
         pygame.key.start_text_input()
 
     while running:
-        sx, sy = screen.get_size()
-        scale = min(sx / 1366, sy / 768)
-        offset = ((sx - 1366 * scale) / 2, (sy - 768 * scale) / 2)
-        raw = pygame.mouse.get_pos()
-        mouse = ((raw[0] - offset[0]) / scale, (raw[1] - offset[1]) / scale)
+        mouse = window.window_to_game_coords(pygame.mouse.get_pos())
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -114,8 +116,7 @@ def main():
 
             if pvp_mode is not None:
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_F11:
-                    options.values["fullscreen"] = not options.values["fullscreen"]
-                    options.save(); screen = options.display(); continue
+                    options.set_fullscreen(not state.fullscreen_enabled); continue
                 pvp_mode.handle_event(event, mouse)
                 if pvp_mode.closed:
                     pvp_mode = None
@@ -124,11 +125,10 @@ def main():
                 continue
 
             if event.type == pygame.KEYDOWN and event.key == pygame.K_F11:
-                options.values["fullscreen"] = not options.values["fullscreen"]
-                options.save(); screen = options.display(); continue
+                options.set_fullscreen(not state.fullscreen_enabled); continue
 
             if options.open:
-                if options.event(event, mouse, table): screen = options.display()
+                options.event(event, mouse, table)
                 if not options.open: pygame.key.start_text_input()
                 continue
 
@@ -232,8 +232,8 @@ def main():
             duel_toast.draw(canvas, pvp_mode.small)
         elif table is None:
             hub.draw(canvas, mouse, room_code, code_active)
-            wooden_button(canvas, appearance, options_rect, "Options", pygame.font.Font(None, 24), hover=options_rect.collidepoint(mouse))
-            wooden_button(canvas, appearance, quit_rect, "Quit Game", pygame.font.Font(None, 24), hover=quit_rect.collidepoint(mouse))
+            wooden_button(canvas, appearance, options_rect, "Options", button_font, hover=options_rect.collidepoint(mouse))
+            wooden_button(canvas, appearance, quit_rect, "Quit Game", button_font, hover=quit_rect.collidepoint(mouse))
             if pygame.mouse.get_pressed()[0] and quit_rect.collidepoint(mouse):
                 # Actual close remains event-driven below; this branch only preserves hover feedback.
                 pass
@@ -247,10 +247,10 @@ def main():
                 party_view.draw(table, mouse)
             else:
                 appearance.background(canvas)
-                label = pygame.font.Font(None, 38).render(table.status, True, (245,233,201)); canvas.blit(label,label.get_rect(center=(683,330)))
-            draw_holdem_glossy_button(canvas, leave_rect, "Leave Room", mouse, pygame.font.Font(None, 24))
-            draw_holdem_glossy_button(canvas, profile_rect, f"Edit Profile • Lv {profile.level}", mouse, pygame.font.Font(None, 22))
-            draw_holdem_glossy_button(canvas, options_rect, "Options", mouse, pygame.font.Font(None, 24))
+                label = status_font.render(table.status, True, (245,233,201)); canvas.blit(label,label.get_rect(center=(683,330)))
+            draw_holdem_glossy_button(canvas, leave_rect, "Leave Room", mouse, button_font)
+            draw_holdem_glossy_button(canvas, profile_rect, f"Edit Profile • Lv {profile.level}", mouse, profile_font)
+            draw_holdem_glossy_button(canvas, options_rect, "Options", mouse, button_font)
 
         # Hub-only top buttons need event handling after the hub has drawn them.
         if table is None and pvp_mode is None and not options.open and not profile_screen.open:
@@ -265,9 +265,8 @@ def main():
         # Handle hub utility clicks using current mouse button transition.
         # (The main hub's own action list is rebuilt every draw.)
         # F11 remains available everywhere.
-        screen.fill((0,0,0))
-        screen.blit(pygame.transform.smoothscale(canvas,(round(1366*scale),round(768*scale))),offset)
-        pygame.display.flip(); clock.tick(60)
+        # SDL scales the 1366x768 canvas into the window (letterboxed in fullscreen).
+        window.present(); clock.tick(window.FPS)
 
         # Direct utility click handling is intentionally after display so it does
         # not compete with profile/code fields.  Detect only the edge event state.

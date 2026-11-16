@@ -171,9 +171,8 @@ class DuelLoopTests(unittest.TestCase):
                 patch('pygame.event.get', side_effect=events), \
                 patch('pygame.mouse.get_pos', side_effect=mouse_position), \
                 patch('pygame.display.flip', side_effect=flip), \
-                patch.object(main.Options, 'display',
-                             side_effect=lambda: pygame.display.set_mode((1366, 768))), \
                 patch.object(main, 'make_duel', recording_make_duel):
+            # main() opens its own 1366x768 SCALED window through app/window.py (W1).
             main.main()
 
         self.assertEqual(frame[0], len(frames) - 1)

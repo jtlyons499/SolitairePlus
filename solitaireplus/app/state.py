@@ -19,6 +19,7 @@ help_content_scroll = 0
 help_content_max_scroll = 0
 fullscreen_enabled = False
 window_pending_size = None   # window size waiting for SDL to apply it (see window.present)
+window_custom_cursor = True   # window.py applies the chosen cursor on resize/fullscreen; multiplayer sets it False
 confirm_return_to_menu = False
 game_pause_menu_open = False
 profile_switch_snapshot = None

@@ -1,5 +1,8 @@
 """Readable six-seat table and host lobby; uses existing card/portrait art."""
+import math
+from collections import OrderedDict
 import pygame
+from mp_assets import remember
 from mp_widgets import wooden_button,hand_type,TextInput
 from mp_appearance import Appearance
 from mp_profile import MultiplayerProfile
@@ -9,10 +12,15 @@ from mp_toast import LeaveToast
 from mp_chat import MultiplayerChat
 from solitaireplus.games.poker.holdem_ui import get_card_key as card_key,draw_holdem_glossy_button,get_holdem_fonts
 
+# After a guest's local next-hand countdown ends, the host's new hand is still on its way.
+STARTING_GRACE_MS=2000
+
 class RoomView:
     def __init__(self,surface,assets,appearance=None,options=None,sound=None):
         self.appearance=appearance or Appearance(MultiplayerProfile());self.presentation=Presentation(self.appearance,options,sound);self.details=False;self.details_scroll=0;self.history_index=-1;self.mouse=(-1,-1);self.badge_rects=[];self.dragging=False;self.slider=None;self.minimum=0;self.maximum=0;self.log_scroll=0
         self.surface=surface;self.assets=assets;self.buttons=[];self.raise_amount=100;self.hand=-1;self.editing=False;self.amount_text='';self.bet_input=TextInput();self.leave_toast=LeaveToast();self.chat=MultiplayerChat();self.active_tab='log'
+        # Surfaces reused across frames instead of rebuilt every draw (B84).
+        self._fonts={};self._card_cache=OrderedDict();self._panel_layers=OrderedDict();self._fill_layers=OrderedDict()
         try:
             fonts=get_holdem_fonts();self.font=fonts['small'];self.small=fonts['tiny'];self.large=fonts['title']
         except Exception:
@@ -20,10 +28,15 @@ class RoomView:
     def text(self,text,x,y,font=None,color=(246,237,207)):
         self.surface.blit((font or self.font).render(str(text),True,color),(x,y))
     def button(self,label,rect,action,enabled=True):
-        rect=pygame.Rect(rect)
-        font=self.small if self.small.size(label)[0]<=rect.w-14 else pygame.font.SysFont('georgia',max(12,int(18*(rect.w-14)/self.small.size(label)[0])))
+        rect=pygame.Rect(rect);width=self.small.size(label)[0]
+        font=self.small if width<=rect.w-14 else self.button_font(max(12,int(18*(rect.w-14)/width)))
         draw_holdem_glossy_button(self.surface,rect,label,self.mouse,font,enabled,attention=enabled and action=='check_call')
         if enabled:self.buttons.append((rect,action))
+    def button_font(self,size):
+        """The smaller Georgia for a label too wide for its button, built once per size."""
+        font=self._fonts.get(size)
+        if font is None:font=self._fonts[size]=pygame.font.SysFont('georgia',size)
+        return font
     def is_text_entry_active(self):
         return bool(self.editing or self.chat.editing)
     def chat_rects(self):
@@ -91,12 +104,22 @@ class RoomView:
         image=self.assets.cards.get(card_key(card),self.assets.back) if card else self.assets.back
         x,y,w,h,hidden=self.presentation.card_position(key,x,y,w,h,pygame.time.get_ticks())
         if hidden:image=self.assets.back
+        scaled,shadow=self.scaled_card(image,w,h)
+        self.surface.blit(shadow,(x+4,y+5))
+        self.surface.blit(scaled,(x,y))
+    def scaled_card(self,image,w,h):
+        """The card art scaled to w x h and its shadow, built once per image and size.
+
+        The entry keeps the image alive, so its id cannot be reused by another surface."""
+        key=(id(image),w,h);entry=self._card_cache.get(key)
+        if entry is not None and entry[0] is image:
+            self._card_cache.move_to_end(key);return entry[1],entry[2]
         # Single-player-style depth: a small shadow keeps cards readable over
         # custom felts and makes deal animations feel less flat.
         shadow=pygame.Surface((max(1,w),max(1,h)),pygame.SRCALPHA)
         pygame.draw.rect(shadow,(0,0,0,80),shadow.get_rect(),border_radius=max(3,w//12))
-        self.surface.blit(shadow,(x+4,y+5))
-        self.surface.blit(pygame.transform.smoothscale(image,(w,h)),(x,y))
+        entry=remember(self._card_cache,key,(image,pygame.transform.smoothscale(image,(w,h)),shadow))
+        return entry[1],entry[2]
     def draw(self,table,mouse=None):
         if mouse is not None:self.mouse=mouse
         s=self.surface;self.appearance.background(s);self.buttons=[];self.slider=None;self.leave_toast.sync(table)
@@ -234,12 +257,12 @@ class RoomView:
                 label=self.small.render(line,True,(246,237,207))
                 if label.get_width()>385:label=pygame.transform.smoothscale(label,(385,label.get_height()))
                 s.blit(label,(937,619+j*23))
-            self.text('Next hand in '+str(m.get('next_hand_seconds',6))+' seconds' if m.get('next_hand_seconds',6)>0 else 'Waiting for players to rejoin',937,678,self.small)
+            self.text(self.next_hand_text(table,m,now),937,678,self.small)
         else:
             active=g.current_actor==0 and g.actor_needs_action(0) and not table.pending
             if active:
                 turn_rect=pygame.Rect(920,530,420,30)
-                layer=pygame.Surface(turn_rect.size,pygame.SRCALPHA);layer.fill((125,91,18,225));s.blit(layer,turn_rect)
+                s.blit(self.fill_layer(turn_rect.size,(125,91,18,225)),turn_rect)
                 pygame.draw.rect(s,(242,202,79),turn_rect,2,border_radius=8)
                 turn=self.small.render('YOUR TURN',True,(255,248,218));s.blit(turn,turn.get_rect(center=turn_rect.center))
             call=g.get_player_amount_to_call();minimum=g.get_minimum_raise_to() if g.current_bet else g.big_blind
@@ -263,7 +286,7 @@ class RoomView:
         if g.hand_complete:
             result=(getattr(g,'result_text','') or '').strip()
             if result:
-                banner=pygame.Rect(365,514,635,46);layer=pygame.Surface(banner.size,pygame.SRCALPHA);layer.fill((12,18,18,220));s.blit(layer,banner)
+                banner=pygame.Rect(365,514,635,46);s.blit(self.fill_layer(banner.size,(12,18,18,220)),banner)
                 pygame.draw.rect(s,(235,190,70),banner,2,border_radius=12)
                 text=self.small.render(result,True,(255,245,214))
                 if text.get_width()>banner.w-30:text=pygame.transform.smoothscale(text,(banner.w-30,text.get_height()))
@@ -281,12 +304,55 @@ class RoomView:
         self.leave_toast.draw(s,self.small)
 
     def panel(self,rect,active=False):
-        rect=pygame.Rect(rect);layer=pygame.Surface(rect.size,pygame.SRCALPHA)
-        pygame.draw.rect(layer,(12,23,25,220),layer.get_rect(),border_radius=10);self.surface.blit(layer,rect)
+        rect=pygame.Rect(rect);self.surface.blit(self.panel_layer(rect.size),rect)
         pygame.draw.rect(self.surface,(230,190,72) if active else (144,165,159),rect,3 if active else 1,border_radius=10)
 
+    def panel_layer(self,size):
+        """panel()'s translucent rounded fill for one size, built once and reused."""
+        layer=self._panel_layers.get(size)
+        if layer is not None:self._panel_layers.move_to_end(size);return layer
+        layer=pygame.Surface(size,pygame.SRCALPHA)
+        pygame.draw.rect(layer,(12,23,25,220),layer.get_rect(),border_radius=10)
+        return remember(self._panel_layers,size,layer)
+
+    def fill_layer(self,size,color):
+        """A translucent rectangle of one size and colour, built once and reused."""
+        key=(tuple(size),tuple(color));layer=self._fill_layers.get(key)
+        if layer is not None:self._fill_layers.move_to_end(key);return layer
+        layer=pygame.Surface(size,pygame.SRCALPHA);layer.fill(color)
+        return remember(self._fill_layers,key,layer)
+
+    @classmethod
+    def next_hand_text(cls,table,message,now):
+        """The line under a finished hand: the countdown, then what the table waits for.
+
+        A guest's own clock reaches the end of the countdown a moment before the host's new
+        hand arrives (network delay plus a host frame), so for STARTING_GRACE_MS after that it
+        says the hand is starting; only then (or at once on the host, which knows) is the
+        table waiting for players."""
+        seconds=cls.countdown_seconds(table,message,now)
+        if seconds>0:return 'Next hand in '+str(seconds)+' seconds'
+        until=getattr(table,'countdown_until',None)
+        if (not getattr(table,'hosting',False) and isinstance(until,(int,float)) and not isinstance(until,bool)
+                and math.isfinite(until) and now-until<STARTING_GRACE_MS):
+            return 'Starting next hand…'
+        return 'Waiting for players to rejoin'
+
+    @staticmethod
+    def countdown_seconds(table,message,now):
+        """Whole seconds to the next hand.
+
+        From the table's local countdown_until timestamp (same clock as pygame.time.get_ticks)
+        when it has one, so the host need not bump the revision every second (B70);
+        otherwise the host's next_hand_seconds, as older hosts send it."""
+        until=getattr(table,'countdown_until',None)
+        if isinstance(until,(int,float)) and not isinstance(until,bool) and math.isfinite(until):
+            return max(0,math.ceil((until-now)/1000))
+        seconds=message.get('next_hand_seconds',6)
+        return seconds if isinstance(seconds,int) and not isinstance(seconds,bool) else 6
+
     def draw_details(self,g):
-        s=self.surface;shade=pygame.Surface(s.get_size(),pygame.SRCALPHA);shade.fill((0,0,0,185));s.blit(shade,(0,0))
+        s=self.surface;s.blit(self.fill_layer(s.get_size(),(0,0,0,185)),(0,0))
         self.panel((215,145,930,475));self.text('Payout History • Hand '+str(g.hand_number),240,163,self.large)
         self.button('Close',(1020,165,105,38),'close_details')
         lines=payout_lines(g)

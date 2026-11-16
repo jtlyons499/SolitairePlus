@@ -82,10 +82,38 @@ How to use this file (maintainers and AI agents):
 - F10 debug menu: closing the menu with its Close button during Dead Man's Hand now hands the mouse back to the game, as F10 already did. Before, mouse look stopped working.
 - Cryptid Creatures: a deck with fewer than two creatures no longer crashes the game. It shows a message and the battle doesn't start. The included and career decks always have eight creatures.
 - Dead Man's Hand: enemies can no longer be placed somewhere you can't walk to. None of the current levels has such a spot.
+- On a small screen (a usable area below about 1366x800, such as a 1366x768 laptop), the game window now really opens at the smaller size that fits, and a smaller size you drag it to stays. Before, it was held at 1366x768 and did not fit.
 
 ### Online play
 - Room codes are now 6 letters/digits instead of 5 digits, and guessing other people's room codes is slowed down and then blocked. Old 5-digit codes still work with players who haven't updated.
 - Online play can now use an encrypted connection (wss://) once the relay server is switched over. It needs no setup for players.
+- Online Texas Hold'em now uses the same table rules as single-player Hold'em (listed in `docs/POKER_RULE_CHANGES.md`, "Online play"): chips nobody called go back to the player who bet them instead of counting as a win, also when everyone folds, and folded players' chips join the pot they were paid into instead of making extra side pots. Stacks end the same.
+- Online Hold'em: when everyone else left in the hand is all-in, nobody can bet or raise any more, host or guest (before, both could).
+- Online Hold'em: a player whose blind puts them all-in now plays the hand and can win the pots they paid into (before, they were treated as busted and lost the blind).
+- Online Hold'em: odd chips in a split pot go to the first winner left of the dealer, as in single-player.
+- Online Hold'em: the room's computer players now play like the single-player ones; a stubborn computer player with a short stack folds less often.
+- Online Hold'em: a busted host who watches the table no longer gets an empty "You are dealt ." line in the game log.
+- Online Hold'em: the Payout History lists uncalled chips that went back ("Returned (uncalled): ..."), and its footnote explains that the amounts include them.
+- Online Hold'em: computer players' portraits now include the outline layer, as in single-player.
+- The pause before the next hand (Hold'em) and the betting time (Roulette) no longer make a guest's action fail with "Table changed; try again" every second. Each screen now counts down on its own clock.
+- Online Hold'em: a player who joins during a hand now gets a seat at the next hand, first in a knocked-out computer player's seat with a fresh buy-in. Before, joiners could be left waiting for a seat that never came.
+- Online Hold'em: a player waiting for a seat no longer makes everyone else's actions fail.
+- Online Hold'em: a player who takes over a computer player's seat no longer inherits what the table had learned about the previous player.
+- Online Hold'em: XP is no longer given for chips that only came back to you, or for a pot split from only the winners' own chips.
+- If the host's Solitaire+ is a different version, guests now see "The host's Solitaire+ is a different version. Update both games to play together." Play still goes on.
+- Online Blind Man's Bluff uses the single-player pot rules: uncalled chips come back, a pot that only folded players paid into goes back to them, odd chips go round the table from the player who opened, and getting chips back is not a win (no win sound).
+- Online Blind Man's Bluff: the Raise button is only offered when the host allows a raise (somebody still has chips to answer, or short all-ins add up to a full raise).
+- Online Blind Man's Bluff: a raise from a stack too short for the minimum raise is recorded as the all-in it really is.
+- Online Blind Man's Bluff: a player who disconnects no longer freezes the table. On their turn they check, or fold when they owe chips.
+- Online Blind Man's Bluff: when fewer than two players can pay the ante, the table shows "Table finished" instead of trying to deal a hand every frame. A newcomer's buy-in starts it again.
+- Party games: players who join during a game now get a seat: at the next hand (Blind Man's Bluff), the next spin (Roulette) or back in the room lobby (Score Four). An empty or broke seat buys in for the starting stack. Seats of players who left are freed for them.
+- Score Four: seats of players who left no longer stay taken after the match returns to the room lobby.
+- Score Four: the host now checks that a solve really makes 24 before it awards the round, and a solve that did not get through is sent again automatically.
+- Roulette: a bet of $0, or anything that isn't a whole number of chips, is refused instead of becoming a $1 bet.
+- Dead Man's Hand duels: when the other player leaves mid-match you win by forfeit, and a result screen shows the score ("CONNECTION LOST" if your own connection drops). Press Enter or click to go back to the duel lobby.
+- Dead Man's Hand duels: the host ignores impossible or broken moves and shots from the guest (jumps across the map, bursts faster than the gun can fire, shots from far away, garbage data), so a broken or modified copy can no longer crash the duel or land impossible hits.
+- Dead Man's Hand duels: mouse-look speed now scales with the window size, as in single-player.
+- The Multiplayer window now follows the single-player window rules: it opens at a size that fits your screen, centred, it is sharp with Windows display scaling, F11 gives fullscreen without stretching the picture, and window sizes too large for your screen are greyed out in Options. The size and fullscreen choice handed over from the game are kept.
 
 ### Behind the scenes
 - The game's version number now comes from one place (`version.py`), so the in-game version always matches the GitHub release.

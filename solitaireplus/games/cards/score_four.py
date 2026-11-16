@@ -920,3 +920,80 @@ class ScoreFourGame:
             and remaining_values[0] == 24
         )
 
+
+# ==================================================
+# Solve check (multiplayer)
+# ==================================================
+
+SOLUTION_OPERATORS = ("+", "-", "*", "/")
+
+
+def _live_tile(values, index):
+    return (
+        isinstance(index, int)
+        and not isinstance(index, bool)
+        and 0 <= index < len(values)
+        and values[index] is not None
+    )
+
+
+def check_solution(numbers, steps):
+    """Return True if ``steps`` turn the four ``numbers`` into 24 by the game's rules.
+
+    The multiplayer Score-Four host checks a guest's "solved" claim with it.
+    ``steps`` must be exactly three ``[first_index, operator, second_index]``
+    steps (lists or tuples), the moves select_number and select_operator make:
+    both indexes are ints 0-3 (not bools), different, and still on the table;
+    the operator is one of + - * /, and dividing by zero is refused. As in
+    combine_with, the first tile is removed and the result goes into the
+    second. Fraction arithmetic; the one value left must equal 24. Anything
+    else, malformed input included, gives False. The inputs are not changed.
+    """
+    try:
+        values = [Fraction(number) for number in numbers]
+    except (TypeError, ValueError, ZeroDivisionError):
+        return False
+
+    if (
+            len(values) != 4
+            or not isinstance(steps, (list, tuple))
+            or len(steps) != 3
+    ):
+        return False
+
+    for step in steps:
+        if not isinstance(step, (list, tuple)) or len(step) != 3:
+            return False
+
+        first_index, operator, second_index = step
+
+        if (
+                not _live_tile(values, first_index)
+                or not _live_tile(values, second_index)
+                or first_index == second_index
+                or not isinstance(operator, str)
+                or operator not in SOLUTION_OPERATORS
+        ):
+            return False
+
+        first_value = values[first_index]
+        second_value = values[second_index]
+
+        if operator == "+":
+            result = first_value + second_value
+        elif operator == "-":
+            result = first_value - second_value
+        elif operator == "*":
+            result = first_value * second_value
+        elif second_value == 0:
+            return False
+        else:
+            result = first_value / second_value
+
+        values[first_index] = None
+        values[second_index] = result
+
+    remaining_values = [value for value in values if value is not None]
+
+    return len(remaining_values) == 1 and remaining_values[0] == 24
+

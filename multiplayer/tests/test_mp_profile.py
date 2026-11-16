@@ -42,6 +42,56 @@ class ProfileTests(unittest.TestCase):
         self.assertEqual(winning_xp(game,{0:0,1:1,2:2,3:3},{0,1,2}),{0:10,1:10,2:20})
         self.assertEqual(winning_xp(game,{0:0,4:2},{0}),{0:10})
 
+    def test_returned_chips_give_no_xp(self):
+        # B79: a pot made only of the winners' own chips (contributors within winners) is not a win.
+        game=SimpleNamespace(last_pot_awards=[{'amount':300,'winners':[0],'eligible':[0],'contributors':[0]},
+                                              {'amount':400,'winners':[1,2],'eligible':[1,2],'contributors':[2,1]}])
+        self.assertEqual(winning_xp(game,{0:0,1:1,2:2},{0,1,2}),{})
+        # A real win elsewhere in the hand still counts, once.
+        game.last_pot_awards.append({'amount':90,'winners':[0],'eligible':[0,3],'contributors':[0,3]})
+        self.assertEqual(winning_xp(game,{0:0,1:1,2:2},{0,1,2}),{0:20})
+
+    def test_dead_money_layer_still_gives_xp(self):
+        # A pot only the winner could take still holds other seats' (folded) chips: XP as before.
+        game=SimpleNamespace(last_pot_awards=[{'amount':150,'winners':[0],'eligible':[0],'contributors':[0,3,4]},
+                                              {'amount':200,'winners':[1,2],'eligible':[1,2],'contributors':[1,2,5]}])
+        self.assertEqual(winning_xp(game,{0:0,1:1,2:2},{0,1,2}),{0:20,1:10,2:10})
+        # Pot records from an older host have no contributors: today's rule.
+        old=SimpleNamespace(last_pot_awards=[{'amount':100,'winners':[0]},{'amount':60,'winners':[1,2],'contributors':[]}])
+        self.assertEqual(winning_xp(old,{0:0,1:1,2:2},{0,1,2}),{0:20,1:10,2:10})
+
+    def test_room_showdown_split_of_own_chips_gives_no_xp(self):
+        # Through the real room engine: heads-up, both all in, a tie splits only their own chips.
+        import random
+        from room_table import RoomAuthority
+        suits={'c':'Clubs','d':'Diamonds','h':'Hearts','s':'Spades'}
+        def card(text):return {'rank':text[:-1],'suit':suits[text[-1]]}
+        random.seed(6)
+        t=RoomAuthority('Host')
+        for identity in range(1,6):t.join(identity,f'Guest {identity}')
+        t.start();g=t.game
+        self.assertTrue(g.record_pot_contributors)
+        g.player_stack,g.npc_stacks=1000,[1000,0,0,0,0];g.refresh_busted_state();g.hand_complete=True
+        for identity in sorted(t.humans):t.act(identity,'next_hand',0,t.revision)
+        self.assertEqual(sorted(g.hand_seat_indexes),[0,1])
+        g.player_hand=[card('Ah'),card('Qh')];g.npc_hands[0]=[card('As'),card('Qs')]
+        board=['2c','7d','9h','Js','Kc']  # each street burns one card first; the deck pops from its end
+        g.deck=[card(c) for c in (board[4],'8c',board[3],'8d',board[2],board[1],board[0],'8h')]
+        now=0
+        for _ in range(200):
+            if g.hand_complete:break
+            seat=g.current_actor
+            if not g.is_betting_round_complete() and g.actor_needs_action(seat):
+                stack=[g.player_stack,*g.npc_stacks][seat];bet=[g.player_round_bet,*g.npc_round_bets][seat]
+                if not t.act(seat,'bet_raise',stack+bet,t.revision):self.assertTrue(t.act(seat,'check_call',0,t.revision))
+            else:now+=10000;t.update(now)
+        self.assertTrue(g.hand_complete);self.assertEqual([g.player_stack,g.npc_stacks[0]],[1000,1000])
+        [pot]=g.last_pot_awards
+        self.assertEqual((pot['amount'],sorted(pot['winners']),sorted(pot['contributors'])),(2000,[0,1],[0,1]))
+        self.assertEqual(winning_xp(g,dict(t.humans),set(t.humans)),{})
+        # The guest's view carries the contributors seat-relative.
+        self.assertEqual(sorted(t.view(1)['data']['last_pot_awards'][0]['contributors']),[0,1])
+
     def test_avatar_import_frame_limits(self):
         pygame.init();pygame.display.set_mode((1366,768))
         path=Path(self.temp.name)/'my_avatar.png';image=pygame.Surface((256,256));image.fill((92,145,70));pygame.image.save(image,path)

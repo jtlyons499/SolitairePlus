@@ -97,6 +97,8 @@ class TexasHoldemGame:
     finish_hand_after_player_fold = True
     # Multiplayer room subclasses turn this off (no quick-chat state or NPC nudges).
     quick_chat_enabled = True
+    # Multiplayer rooms turn this on: showdown pot records list 'contributors' (room XP, B79).
+    record_pot_contributors = False
 
     def __init__(self):
 
@@ -562,6 +564,37 @@ class TexasHoldemGame:
         self.winner_indexes = []
 
         self.result_text = ""
+
+    def reset_seat_ai_state(self, seat):
+        """Forget what the table learned about whoever sat in ``seat`` (1+).
+
+        For multiplayer rooms, where a seat changes hands between hands
+        (a late joiner, a leaver's NPC coming back, a replacement NPC);
+        single-player never calls it. Call it after npcs[seat - 1] holds
+        the new occupant: the seat's public-action reads and showdown
+        reveals are dropped, its last AI decision is cleared, and the
+        rival-learning seat-to-identity map is rebuilt from the npcs.
+        """
+        reads = self.table_reads
+
+        for per_seat in (
+                reads.histories,
+                reads.reveals,
+                reads.hand_actions,
+                reads.street_bets,
+                reads.draw_counts,
+        ):
+            per_seat.pop(seat, None)
+
+        if 0 <= seat - 1 < len(self.npc_ai_last_decisions):
+            self.npc_ai_last_decisions[seat - 1] = None
+
+        if reads.learning is not None:
+            reads.bind_learning(
+                self.learning_store,
+                self.rating_game_key,
+                table_identities(self.npcs)
+            )
 
     # ==================================================
     # CHIP COMMITMENT HELPERS
@@ -4406,6 +4439,12 @@ class TexasHoldemGame:
                 compact=True
             )
         )
+
+        if self.record_pot_contributors:
+            # Every seat that paid into each pot, folded seats included
+            # (award_pots keeps build_pots' order, one record per pot).
+            for award, pot in zip(awards, pots):
+                award["contributors"] = list(pot["contributors"])
 
         for player_index, amount in payout_totals.items():
             self.award_chips_to_player(

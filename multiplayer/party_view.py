@@ -9,6 +9,7 @@ from solitaireplus.games.cards import score_four_ui as sfui
 from solitaireplus.games.cards.score_four import ScoreFourGame
 from solitaireplus.games.casino.roulette import AMERICAN_WHEEL_ORDER, RED_NUMBERS
 from party_authority import SKILL_LABELS, STACK_OPTIONS, ROULETTE_TIMERS, SCORE_FOUR_DIFFICULTIES
+from room_protocol import countdown_offset
 from mp_widgets import wooden_button
 from mp_toast import LeaveToast
 from mp_chat import MultiplayerChat
@@ -38,7 +39,13 @@ class PartyView:
         self.large = pygame.font.SysFont("cambria", 34, bold=True)
         self.score_game = ScoreFourGame()
         self.score_round = -1
-        self.score_sent_round = -1
+        # The room (RoomTable) the board belongs to: one PartyView lasts the whole session.
+        self.score_table = None
+        # The moves of this round's solve, [first_index, operator, second_index] each,
+        # sent with "solved" for the host to check (B76).
+        self.score_steps = []
+        # The table revision the solve was last sent at (B75).
+        self.score_sent_revision = None
         self.score_number_rects = []
         self.score_operator_rects = {}
         self.bluff_raise = 100
@@ -46,6 +53,8 @@ class PartyView:
         self.roulette_phase = None
         self.roulette_phase_started = 0
         self.roulette_bet_targets = {}
+        # (message key, local end time) of the countdown last read from a message.
+        self._roulette_countdown = (None, None)
         self.leave_toast = LeaveToast()
         self.chat = MultiplayerChat()
         self.chat_open = False
@@ -275,15 +284,21 @@ class PartyView:
     # ------------------------------------------------------------------
     # Score-Four
     # ------------------------------------------------------------------
-    def sync_score_four(self, m):
+    def sync_score_four(self, m, table=None):
         round_number = int(m.get("round_number", 0))
-        if round_number == self.score_round:
+        numbers = list(m.get("numbers", []))
+        # The same round of the same room keeps the board; another room on the same round
+        # number (the player left one room and joined another) gets its own cards.
+        if (round_number == self.score_round and table is self.score_table
+                and numbers == self.score_game.original_numbers):
             if m.get("phase") != "round": self.score_game.round_complete = True
             return
         self.score_round = round_number
-        self.score_sent_round = -1
+        self.score_table = table
+        self.score_steps = []
+        self.score_sent_revision = None
         self.score_game.mode = "multiplayer"
-        self.score_game.original_numbers = list(m.get("numbers", []))
+        self.score_game.original_numbers = numbers
         self.score_game.card_suits = list(m.get("suits", []))
         self.score_game.values = [Fraction(n) for n in self.score_game.original_numbers]
         self.score_game.selected_index = None
@@ -295,7 +310,7 @@ class PartyView:
         self.score_game.puzzles_required = 999
 
     def draw_score_four(self, table):
-        m = table.message; self.sync_score_four(m); game = self.score_game
+        m = table.message; self.sync_score_four(m, table); game = self.score_game
         sfui.background(self.surface); sfui.logo(self.surface)
         self.buttons = []
         # Four-player score strip above the familiar calculator.
@@ -343,15 +358,46 @@ class PartyView:
             elif table.hosting:
                 self.button("REMATCH", (445, 665, 220, 46), "rematch")
                 self.button("ROOM LOBBY", (700, 665, 220, 46), "return_lobby")
+        # B75: a solve that did not go through is sent again on a later frame.
+        self._send_solve(table)
+
+    def _select_score_number(self, index):
+        game = self.score_game
+        first, operator, steps = game.selected_index, game.selected_operator, len(game.undo_stack)
+        game.select_number(index)
+        if len(game.undo_stack) > steps:
+            # select_number combined two tiles: the first went into tile `index`.
+            self.score_steps.append([first, operator, index])
+
+    def _trim_score_steps(self):
+        # Undo pops a step and Reset clears them: keep one step per undo entry.
+        del self.score_steps[len(self.score_game.undo_stack):]
+
+    def _send_solve(self, table):
+        """Send this round's solve, with its steps, until the room takes it.
+
+        It is sent at most once per table revision: a failed send (or a pending
+        action) is retried on the next frame, and a new revision means the table
+        changed, so the solve goes again. Returns True if it was sent now.
+        """
+        m = table.message
+        revision = m.get("revision")
+        if (m.get("phase") != "round" or int(m.get("round_number", 0) or 0) != self.score_round
+                or not self.score_game.is_solved() or getattr(table, "pending", False)
+                or self.score_sent_revision == revision):
+            return False
+        if table.act("solved", {"steps": [list(step) for step in self.score_steps]}):
+            self.score_sent_revision = revision
+            return True
+        return False
 
     def score_event(self, table, mouse):
         m = table.message
         if m.get("phase") == "round":
             for i, rect in enumerate(self.score_number_rects):
                 if rect.collidepoint(mouse):
-                    self.score_game.select_number(i)
-                    if self.score_game.is_solved() and self.score_sent_round != self.score_round:
-                        self.score_sent_round = self.score_round; table.act("solved")
+                    self._select_score_number(i)
+                    self._send_solve(table)
                     return True
             for operator, rect in self.score_operator_rects.items():
                 if rect.collidepoint(mouse): self.score_game.select_operator(operator); return True
@@ -399,12 +445,13 @@ class PartyView:
             self.bluff_raise=max(minimum,min(maximum,self.bluff_raise or minimum))
             self.button("FOLD",(920,625,105,42),"fold")
             self.button(f"CALL ${due:,}" if due else "CHECK",(1035,625,130,42),"check_call")
-            self.button(("RAISE" if m.get('current_bet') else "BET")+f" ${self.bluff_raise:,}",(1175,625,135,42),"bet_raise",maximum>m.get('current_bet',0))
+            # can_raise: the host's raise rule (an older host does not send it).
+            self.button(("RAISE" if m.get('current_bet') else "BET")+f" ${self.bluff_raise:,}",(1175,625,135,42),"bet_raise",bool(m.get('can_raise',maximum>m.get('current_bet',0))))
             for j,(label,value) in enumerate((("MIN",minimum),("2×",min(maximum,max(minimum,m.get('current_bet',0)+m.get('bet_unit',10)*2))),("MAX",maximum))):
                 self.button(label,(940+j*115,684,100,34),("bluff_amount",value))
         else:
             self.text(m.get('result_text','Waiting for the next action.'),(1115,660),self.small,MUTED,True)
-        if m.get('phase')=='result':
+        if m.get('phase') in ('result','finished'):
             self.panel((330,500,706,62),(8,15,14,235),GOLD,2)
             self.text(m.get('result_text','Hand complete'),(683,531),self.font,GOLD,True)
 
@@ -482,12 +529,35 @@ class PartyView:
                     image = pygame.transform.smoothscale(image,(16,image.get_height()))
                 self.surface.blit(image,image.get_rect(center=center))
 
+    def roulette_seconds_left(self, table, now=None):
+        """Seconds left to bet.
+
+        B70: the host sends the countdown as a time (countdown_at, host_now) and does
+        not send a new message every second. room_session turns it into
+        table.countdown_until on this client's clock; without that attribute the
+        view does the same from the moment it first sees the message. An older
+        host's seconds_left is the last fallback, and the only one when the countdown
+        is malformed (room_session then sets countdown_until to None).
+        """
+        now = pygame.time.get_ticks() if now is None else now
+        m = table.message
+        until = getattr(table, 'countdown_until', None)
+        offset = None if hasattr(table, 'countdown_until') else countdown_offset(m)
+        if offset is not None:
+            key = (m.get('revision'), m.get('countdown_at'), m.get('host_now'))
+            if self._roulette_countdown[0] != key:
+                self._roulette_countdown = (key, now + offset)
+            until = self._roulette_countdown[1]
+        if until is None:
+            return m.get('seconds_left')
+        return max(0, math.ceil((until - now) / 1000))
+
     def draw_roulette(self, table):
         m=table.message; self.appearance.background(self.surface); self.buttons=[]
         self.panel((24,22,700,82),(8,24,20,232),(147,169,160),1,14)
         self.text("ROULETTE",(46,36),self.large,GOLD)
         self.text(f"Round {m.get('round_number',1)}",(48,78),self.small,MUTED)
-        phase=m.get('phase'); seconds=m.get('seconds_left')
+        phase=m.get('phase'); seconds=self.roulette_seconds_left(table)
         status = f"BETTING • {seconds}s" if phase=='betting' else "WHEEL SPINNING" if phase=='spinning' else "RESULT" if phase=='result' else "TABLE FINISHED"
         self.panel((475,42,225,42),(16,35,29,230),GOLD,1,12)
         self.text(status,(587,63),self.small,GOLD,True)
@@ -600,8 +670,8 @@ class PartyView:
             if self.score_event(table,mouse): return True
             for rect,action in self.buttons:
                 if not rect.collidepoint(mouse):continue
-                if action=='score_undo':self.score_game.undo();return True
-                if action=='score_reset':self.score_game.reset_current_puzzle();return True
+                if action=='score_undo':self.score_game.undo();self._trim_score_steps();return True
+                if action=='score_reset':self.score_game.reset_current_puzzle();self._trim_score_steps();return True
                 if action=='ready':return table.act('ready')
                 if action=='rematch':return table.act('rematch')
                 if action=='return_lobby':return table.act('return_lobby')
