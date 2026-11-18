@@ -313,7 +313,7 @@ def run():
 
             screen = screen_for(state.current_state)
             if screen is not None and screen.handle_event is not None:
-                screen.handle_event(event)
+                screen.handle_event(window.translate_event(event))   # mouse positions in game coordinates
 
             entered_state = run_screen_hooks(entered_state)
 
@@ -325,8 +325,8 @@ def run():
         if last_pointer_event is not None and not (
                 0 <= last_pointer_event[0] < window.game_surface.get_width()
                 and 0 <= last_pointer_event[1] < window.game_surface.get_height()):
-            # The pointer is in a letterbox bar: SDL clamps get_pos() to the picture's edge,
-            # which would hover things along the edge. Keep the real (outside) position.
+            # The pointer is in a letterbox bar: keep the real (outside) position the last
+            # event reported, so nothing along the picture's edge is hovered.
             state.mouse_pos = last_pointer_event
         if not pointer_in_window:
             state.mouse_pos = None

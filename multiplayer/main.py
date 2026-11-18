@@ -108,7 +108,7 @@ def main():
     while running:
         mouse = window.window_to_game_coords(pygame.mouse.get_pos())
 
-        for event in pygame.event.get():
+        for event in window.get_events():   # mouse positions in game coordinates
             if event.type == pygame.QUIT:
                 if pvp_mode is not None: pvp_mode.close()
                 running = False

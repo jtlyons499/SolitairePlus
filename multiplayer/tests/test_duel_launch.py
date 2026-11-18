@@ -26,6 +26,7 @@ import main
 import net_client
 from mp_toast import LeaveToast
 from solitaireplus.games.dead_mans_hand.pvp import DeadMansHandPvPMode
+from solitaireplus.app import window
 
 GOLD = (226, 191, 80)    # LeaveToast border colour
 LOBBY = (17, 23, 27)     # duel lobby background
@@ -164,15 +165,17 @@ class DuelLoopTests(unittest.TestCase):
 
         def flip():
             # What the window shows at the toast's top edge once the whole pass has drawn.
-            shown[frame[0]] = tuple(pygame.display.get_surface().get_at(TOAST_TOP))[:3]
+            shown[frame[0]] = tuple(window.game_surface.get_at(TOAST_TOP))[:3]
 
         with tempfile.TemporaryDirectory() as folder, \
                 patch.dict(os.environ, {'LOCALAPPDATA': folder}), \
                 patch('pygame.event.get', side_effect=events), \
                 patch('pygame.mouse.get_pos', side_effect=mouse_position), \
                 patch('pygame.display.flip', side_effect=flip), \
+                patch.object(window, '_current_picture_rect', return_value=pygame.Rect(0, 0, 1366, 768)), \
                 patch.object(main, 'make_duel', recording_make_duel):
-            # main() opens its own 1366x768 SCALED window through app/window.py (W1).
+            # main() opens its own window through app/window.py (W1); positions above are game
+            # coordinates, so the window-to-game mapping is pinned to 1:1.
             main.main()
 
         self.assertEqual(frame[0], len(frames) - 1)

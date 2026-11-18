@@ -109,6 +109,7 @@ def loop_env(frames, screens_module, screens, current_state, to_game=lambda pos:
         # sounds / window
         audio=FakeAudio(),
         window_to_game_coords=to_game,
+        translate_event=lambda event: event,
         set_fullscreen_enabled=lambda enabled: None,
         present=lambda: None,
         clock=types.SimpleNamespace(tick=tick),
@@ -200,8 +201,8 @@ class DrawingUsesTheFramesMousePosition(unittest.TestCase):
         self.assertEqual(env["mouse_pos"], game_pos)
 
     def test_pointer_in_a_letterbox_bar_hovers_nothing(self):
-        # In SCALED mode SDL clamps mouse.get_pos() to the picture's edge when the pointer is in a
-        # black bar, while events report the real (outside) position; drawing must use the latter.
+        # When the pointer is in a black bar, events report the real (outside) position; drawing
+        # must use that, not a position clamped to the picture's edge.
         log = []
         module, env_ref = self.recording_screen(log)
         frames = [

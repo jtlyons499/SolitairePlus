@@ -2,8 +2,8 @@
 
 mp_options.Options decides the start size and fullscreen choice (handed over by single-player,
 else saved, else the default size) and window.py opens, resizes and fullscreens the window with
-the single-player size rules. The window opens once per process (pygame-ce 2.5.8 crashes on a
-second SCALED set_mode after a resize), so each test that opens it starts a fresh display.
+the single-player size rules. The window opens once per process, so each test that opens it
+starts a fresh display.
 Areas are client areas in real screen pixels, as window.usable_area() returns them.
 """
 import json
@@ -74,7 +74,7 @@ class WindowTestCase(unittest.TestCase):
         pygame.display.init()
         self.assertEqual(pygame.display.get_driver(), "dummy")
         with mock.patch.object(window, "usable_area", return_value=area), \
-                mock.patch.object(pygame.display, "toggle_fullscreen", return_value=1) as toggle, \
+                mock.patch.object(window, "_set_sdl_fullscreen") as toggle, \
                 warnings.catch_warnings():
             warnings.simplefilter("ignore")               # "no fast renderer available" (dummy driver)
             options.open_window()
@@ -82,7 +82,7 @@ class WindowTestCase(unittest.TestCase):
 
     def assert_windowed_size(self, size):
         self.assertEqual((state.WINDOWED_WIDTH, state.WINDOWED_HEIGHT), tuple(size))
-        # The SDL window really has that size, also below 1366x768 (pygame's SCALED minimum).
+        # The SDL window really has that size, also below 1366x768.
         self.assertEqual(tuple(window._sdl_window().size), tuple(size))
 
 
@@ -96,7 +96,7 @@ class StartSizeTests(WindowTestCase):
         self.assertTrue(state.fullscreen_enabled)
         self.assertIs(state.window_custom_cursor, False)
         self.assertEqual(pygame.display.get_caption()[0], "Solitaire+ Multiplayer")
-        self.assertEqual(state.screen.get_size(), (1366, 768))        # always the game picture
+        self.assertEqual(state.screen.get_size(), (1696, 954))        # the picture is scaled to fill it
         # Handed-over values are for this start only: nothing is saved.
         self.assertEqual((options.values["size"], options.values["fullscreen"]), (None, False))
         self.assertIsNone(self.saved_file())
@@ -191,7 +191,7 @@ class OptionsScreenTests(WindowTestCase):
         self.area = mock.patch.object(window, "usable_area", return_value=DANS_PC)
         self.area.start()
         self.addCleanup(self.area.stop)
-        self.toggle = mock.patch.object(pygame.display, "toggle_fullscreen", return_value=1)
+        self.toggle = mock.patch.object(window, "_set_sdl_fullscreen")
         self.toggle.start()
         self.addCleanup(self.toggle.stop)
 
@@ -314,10 +314,11 @@ def flip():
                    "surface": list(pygame.display.get_surface().get_size())})
 errors = []
 with mock.patch.object(window, "usable_area", return_value=AREA), \
-        mock.patch.object(pygame.display, "toggle_fullscreen", return_value=1) as toggle, \
+        mock.patch.object(window, "_set_sdl_fullscreen") as toggle, \
         mock.patch("pygame.event.get", side_effect=events), \
         mock.patch("pygame.mouse.get_pos", side_effect=mouse), \
-        mock.patch("pygame.display.flip", side_effect=flip):
+        mock.patch("pygame.display.flip", side_effect=flip), \
+        mock.patch.object(window, "_current_picture_rect", return_value=pygame.Rect(0, 0, 1366, 768)):
     sys.argv = [str(ROOT / "main.py"), "--multiplayer"]
     try:
         runpy.run_path(str(ROOT / "main.py"), run_name="__main__")
@@ -371,7 +372,9 @@ class MultiplayerMainTests(unittest.TestCase):
         for number, (windowed, fullscreen) in expected.items():
             with self.subTest(number=number):
                 self.assertEqual((by_pass[number]["windowed"], by_pass[number]["fullscreen"]), (windowed, fullscreen))
-        self.assertTrue(all(frame["surface"] == [1366, 768] for frame in result["frames"]))
+        # The window surface has the window's size (the 1366x768 picture is scaled into it).
+        self.assertTrue(all(frame["surface"] == frame["windowed"] for frame in result["frames"]
+                            if not frame["fullscreen"] and frame["pass"] > 0), result["frames"])
         self.assertTrue(all(frame["caption"] == "Solitaire+ Multiplayer" for frame in result["frames"]))
         self.assertEqual(result["toggles"], 3)
         self.assertEqual((result["saved"]["size"], result["saved"]["fullscreen"]), ([1600, 900], True))

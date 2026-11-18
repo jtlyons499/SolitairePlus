@@ -96,11 +96,55 @@ class OptionsAndSavedSizeTests(unittest.TestCase):
         self.assertEqual(window.usable_area_from((10, 10), (16, 39)), (1, 1))
 
 
+class PictureRectTests(unittest.TestCase):
+    """The 1366x768 picture fills the window (W1: no black borders in a 16:9 window)."""
+
+    def test_16_9_windows_are_filled_completely(self):
+        for size in [(1366, 768), (1696, 954), (1024, 576), (1088, 612), (1920, 1080), (2560, 1440), (1600, 900)]:
+            self.assertEqual(window.picture_rect(size), pygame.Rect(0, 0, *size), size)
+
+    def test_other_shapes_get_bars_only_on_the_extra_side(self):
+        # 16:10 fullscreen (Dan's 1920x1200 monitor): 60-pixel bars top and bottom, none at the sides.
+        self.assertEqual(window.picture_rect((1920, 1200)), pygame.Rect(0, 60, 1920, 1079))   # 1366 is a hair over 16:9
+        # A window dragged wider than 16:9: bars at the sides only.
+        self.assertEqual(window.picture_rect((2000, 900)), pygame.Rect(199, 0, 1601, 900))
+        # A window size that is not an exact 16:9 multiple fills to within a pixel.
+        rect = window.picture_rect((1700, 956))
+        self.assertLessEqual(1700 - rect.width, 1)
+        self.assertLessEqual(956 - rect.height, 1)
+
+
 class MouseMappingTests(unittest.TestCase):
-    def test_scaled_mode_positions_are_already_game_coordinates(self):
-        # SDL maps window positions to 1366x768 (letterbox bars land outside it).
-        self.assertEqual(window.window_to_game_coords((683.0, 384.4)), (683, 384))
-        self.assertEqual(window.window_to_game_coords((-5, 800)), (-5, 800))
+    def test_unscaled_picture_maps_one_to_one(self):
+        rect = pygame.Rect(0, 0, 1366, 768)
+        self.assertEqual(window.window_to_game_coords((683.0, 384.4), rect), (683, 384))
+        self.assertEqual(window.window_to_game_coords((-5, 800), rect), (-5, 800))
+
+    def test_scaled_window_maps_back_to_game_coordinates(self):
+        rect = window.picture_rect((1696, 954))
+        self.assertEqual(window.window_to_game_coords((0, 0), rect), (0, 0))
+        self.assertEqual(window.window_to_game_coords((848, 477), rect), (683, 384))
+        self.assertEqual(window.window_to_game_coords((1695, 953), rect), (1365, 767))
+
+    def test_black_bars_map_outside_the_picture(self):
+        rect = window.picture_rect((1920, 1200))          # bars of 60 pixels top and bottom
+        self.assertLess(window.window_to_game_coords((960, 30), rect)[1], 0)
+        self.assertGreaterEqual(window.window_to_game_coords((960, 1170), rect)[1], 768)
+        self.assertEqual(window.window_to_game_coords((960, 600), rect), (683, 384))
+
+    def test_events_get_game_positions_and_movement(self):
+        rect = window.picture_rect((2732, 1536))          # exactly twice the game size
+        event = pygame.event.Event(pygame.MOUSEMOTION, pos=(1000, 500), rel=(10, -4), buttons=(0, 0, 0))
+        moved = window.translate_event(event, rect)
+        self.assertEqual(moved.pos, (500, 250))
+        self.assertEqual(moved.rel, (5, -2))
+        self.assertEqual(moved.buttons, (0, 0, 0))
+        click = window.translate_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, pos=(2, 2), button=1), rect)
+        self.assertEqual((click.pos, click.button), ((1, 1), 1))
+        key = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_a)
+        self.assertIs(window.translate_event(key, rect), key)
+        # At 1366x768 nothing changes (the screenshot harness relies on this).
+        self.assertIs(window.translate_event(event, pygame.Rect(0, 0, 1366, 768)), event)
 
 
 MISSING = object()
@@ -134,8 +178,7 @@ class OpenWindowTests(unittest.TestCase):
                 setattr(state, name, value)
 
     def open(self, *args, area=DANS_PC):
-        # A fresh display each time: the game opens its window once per process, and pygame-ce
-        # 2.5.8 crashes on a second SCALED set_mode after the window was resized.
+        # A fresh display each time: the game opens its window once per process.
         pygame.display.quit()
         pygame.display.init()
         self.assertEqual(pygame.display.get_driver(), "dummy")
@@ -146,11 +189,11 @@ class OpenWindowTests(unittest.TestCase):
 
     def assert_window(self, sdl_window, caption, size):
         self.assertEqual(pygame.display.get_caption()[0], caption)
-        self.assertEqual(state.screen.get_size(), (1366, 768))             # always the game picture
+        self.assertEqual(state.screen.get_size(), size)                    # the picture is scaled to fill it
         self.assertEqual((state.WINDOWED_WIDTH, state.WINDOWED_HEIGHT), size)
         self.assertEqual((state.WINDOW_WIDTH, state.WINDOW_HEIGHT), size)
         self.assertEqual(state.window_pending_size, size)                  # present() centres it again
-        # SDL really has the size, also below 1366x768 (pygame's SCALED minimum is lowered).
+        # SDL really has the size, also below 1366x768.
         self.assertEqual(tuple(sdl_window.size), size)
         self.assertEqual(tuple(sdl_window.minimum_size), window.MIN_WINDOW_SIZE)
 
@@ -185,9 +228,9 @@ class OpenWindowTests(unittest.TestCase):
         sdl_window.size = (1200, 675)
         self.present()
         self.assertEqual(tuple(sdl_window.size), (1200, 675))
-        # pygame puts the 1366x768 minimum back after fullscreen; the next size request lowers it.
+        # If SDL puts a bigger minimum back after fullscreen, the next size request lowers it.
         sdl_window.minimum_size = (1366, 768)
-        with mock.patch.object(pygame.display, "toggle_fullscreen", return_value=1):
+        with mock.patch.object(window, "_set_sdl_fullscreen"):
             window.set_fullscreen_enabled(True)
             window.set_fullscreen_enabled(False)
         self.present()
@@ -201,7 +244,6 @@ class OpenWindowTests(unittest.TestCase):
 
     def test_open_window_default_unchanged(self):
         # Single-player calls open_window() with no arguments: caption and default size as before.
-        # (Each open costs about 0.7 s: a SCALED set_mode builds a software renderer.)
         self.assertEqual(window.default_window_size(DANS_PC), (1696, 954))
         self.assert_window(self.open(), "Solitaire", (1696, 954))
         self.assert_window(self.open("Solitaire", None), "Solitaire", (1696, 954))
@@ -214,7 +256,7 @@ class OpenWindowTests(unittest.TestCase):
         # new= is given so that patch never touches the lazy module (that would import it).
         cursors = mock.Mock()
         with mock.patch.object(window, "cursors", new=cursors), \
-                mock.patch.object(pygame.display, "toggle_fullscreen", return_value=1) as toggle:
+                mock.patch.object(window, "_set_sdl_fullscreen") as toggle:
             window.set_window_size(1366, 768)
             window.set_fullscreen_enabled(True)
             window.set_fullscreen_enabled(False)
@@ -243,7 +285,7 @@ state.window_custom_cursor = False
 pygame.display.init()
 errors = []
 window.open_window("Solitaire+ Multiplayer", (1600, 900))
-with mock.patch.object(pygame.display, "toggle_fullscreen", return_value=1) as toggle:
+with mock.patch.object(window, "_set_sdl_fullscreen") as toggle:
     steps = [lambda: window.set_window_size(1366, 768),
              lambda: window.set_fullscreen_enabled(True),
              lambda: window.set_window_size(1600, 900),
@@ -290,8 +332,7 @@ class MultiplayerHandoffTests(unittest.TestCase):
     CASES = (((1600, 900), True), ((1696, 954), False), ((1696, 954), True), ((1088, 612), False))
 
     def launch_env(self, size, fullscreen):
-        # Since W1 the display surface is always the 1366x768 game picture, so the launcher must
-        # pass the real window size (state.WINDOWED_*) and the fullscreen choice instead.
+        # The launcher must pass the real windowed size (state.WINDOWED_*) and the fullscreen choice instead.
         from solitaireplus.app import multiplayer_launcher
         saved = {name: getattr(state, name, MISSING) for name in ("WINDOWED_WIDTH", "WINDOWED_HEIGHT", "fullscreen_enabled")}
         try:

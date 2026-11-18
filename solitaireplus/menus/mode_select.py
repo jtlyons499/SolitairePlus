@@ -63,7 +63,7 @@ def draw_mode_select():
     mouse_pos = state.game_mouse_pos
 
     if mouse_pos is None:
-        mouse_pos = pygame.mouse.get_pos()
+        mouse_pos = window.window_to_game_coords(pygame.mouse.get_pos())
 
     # ==================================================
     # Hover feedback

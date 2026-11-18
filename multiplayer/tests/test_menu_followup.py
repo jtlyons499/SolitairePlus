@@ -14,6 +14,7 @@ os.environ['LOCALAPPDATA'] = _DATA.name
 
 import pygame
 import main
+from solitaireplus.app import window
 
 
 def tearDownModule():
@@ -49,10 +50,12 @@ class MenuFollowupTests(unittest.TestCase):
             main.main()
         self.assertEqual(events.call_count,len(batches))
     def test_lobby_quit_button_ends_the_loop(self):
-        # main() opens its own window through app/window.py (W1), so nothing is patched there.
-        # The hub's buttons exist once the hub has drawn, so the click comes on the second pass.
+        # main() opens its own window through app/window.py (W1). The click is given in game
+        # coordinates, so the window-to-game mapping is pinned to 1:1 (tests/app/test_window.py
+        # tests the mapping). The hub's buttons exist once the hub has drawn: second pass.
         event=pygame.event.Event(pygame.MOUSEBUTTONDOWN,button=1,pos=QUIT_GAME)
         with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ,LOCALAPPDATA=folder), \
+             patch.object(window,'_current_picture_rect',return_value=pygame.Rect(0,0,1366,768)), \
              patch('pygame.mouse.get_pos',return_value=QUIT_GAME), \
              patch('pygame.event.get',side_effect=[[],[event]]) as events:
             main.main()

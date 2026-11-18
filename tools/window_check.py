@@ -27,6 +27,12 @@ Source runs also check that a windowed start-up has the size it should have (the
 handed-over size if it fits the screen, else the default size; also below 1366x768) and that
 its client area is centred on the monitor.
 
+Picture checks (after every step) read what is really on the screen inside the window's client
+area and check that the game picture fills it: no black bars in a 16:9 window, and in fullscreen
+on a screen of another shape only the bars that keep the picture 16:9 (for example 60 pixels top
+and bottom on 1920x1200). Source runs paint the whole game picture magenta for one frame and
+measure it; packaged runs measure the black bars around whatever the game shows.
+
 Exit code 0 = every windowed check is inside the work area, every fullscreen check covers
 the monitor, and every extra check passed.
 """
@@ -113,6 +119,79 @@ def check(hwnd, label, fullscreen):
           f"client {client[0]}x{client[1]}", flush=True)
     return {"label": label, "window": window, "monitor": monitor, "work": work, "fullscreen": fullscreen,
             "client": client, "ok": ok}
+
+
+class _BitmapInfoHeader(ctypes.Structure):
+    _fields_ = [("biSize", wt.DWORD), ("biWidth", wt.LONG), ("biHeight", wt.LONG), ("biPlanes", wt.WORD),
+                ("biBitCount", wt.WORD), ("biCompression", wt.DWORD), ("biSizeImage", wt.DWORD),
+                ("biXPelsPerMeter", wt.LONG), ("biYPelsPerMeter", wt.LONG), ("biClrUsed", wt.DWORD),
+                ("biClrImportant", wt.DWORD)]
+
+
+def capture_client(hwnd):
+    """(width, height, BGRA bytes) of what the screen shows inside the window's client area."""
+    gdi32 = ctypes.windll.gdi32
+    width, height = client_size(hwnd)
+    origin = wt.POINT(0, 0)
+    user32.ClientToScreen(hwnd, ctypes.byref(origin))
+    screen_dc = user32.GetDC(0)
+    memory_dc = gdi32.CreateCompatibleDC(screen_dc)
+    bitmap = gdi32.CreateCompatibleBitmap(screen_dc, width, height)
+    old = gdi32.SelectObject(memory_dc, bitmap)
+    try:
+        gdi32.BitBlt(memory_dc, 0, 0, width, height, screen_dc, origin.x, origin.y, 0x00CC0020)   # SRCCOPY
+        info = _BitmapInfoHeader()
+        info.biSize = ctypes.sizeof(info)
+        info.biWidth, info.biHeight, info.biPlanes, info.biBitCount = width, -height, 1, 32
+        pixels = (ctypes.c_ubyte * (width * height * 4))()
+        gdi32.GetDIBits(memory_dc, bitmap, 0, height, pixels, ctypes.byref(info), 0)
+    finally:
+        gdi32.SelectObject(memory_dc, old)
+        gdi32.DeleteObject(bitmap)
+        gdi32.DeleteDC(memory_dc)
+        user32.ReleaseDC(0, screen_dc)
+    return width, height, bytes(pixels)
+
+
+def expected_picture(client):
+    sys.path.insert(0, str(ROOT))
+    from solitaireplus.app.window import picture_rect
+    rect = picture_rect(client)
+    return (rect.x, rect.y, rect.width, rect.height)
+
+
+def measure_picture(capture, is_picture):
+    """(x, y, width, height) of the picture: the extent of pixels for which is_picture(b, g, r)
+    holds, along the middle row and the middle column (sampled every pixel)."""
+    width, height, pixels = capture
+    def hit(x, y):
+        i = (y * width + x) * 4
+        return is_picture(pixels[i], pixels[i + 1], pixels[i + 2])
+    xs = [x for x in range(width) if hit(x, height // 2)]
+    ys = [y for y in range(height) if hit(width // 2, y)]
+    if not xs or not ys:
+        return (0, 0, 0, 0)
+    return (xs[0], ys[0], xs[-1] - xs[0] + 1, ys[-1] - ys[0] + 1)
+
+
+def picture_check(hwnd, label, capture, is_picture, tolerance=2):
+    client = (capture[0], capture[1])
+    want = expected_picture(client)
+    got = measure_picture(capture, is_picture)
+    ok = all(abs(a - b) <= tolerance for a, b in zip(got, want))
+    fill = 100 * got[2] * got[3] / max(1, client[0] * client[1])
+    print(f"  {'ok ' if ok else 'BAD'} {label:<34} picture {got[2]}x{got[3]} at ({got[0]},{got[1]}) "
+          f"in client {client[0]}x{client[1]} = {fill:.0f}%  (want {want[2]}x{want[3]} at ({want[0]},{want[1]}))",
+          flush=True)
+    return {"label": label, "client": list(client), "picture": list(got), "expected": list(want), "ok": ok}
+
+
+def not_black(b, g, r):
+    return max(b, g, r) > 8
+
+
+def magenta(b, g, r):
+    return r > 200 and b > 200 and g < 60
 
 
 def start_size_check(hwnd, label, expected):
@@ -244,12 +323,30 @@ def source_child(out_path: str, multiplayer: bool = False) -> None:
     def single_player_loaded():
         return [name for name in ("solitaireplus.app.startup", "solitaireplus.ui.cursors") if name in sys.modules]
 
+    probing = {"on": False}
+
+    def picture(hwnd, label):
+        """Show one all-magenta game picture and measure how much of the client area it fills."""
+        from solitaireplus.app import window
+        saved = window.game_surface.copy()
+        probing["on"] = True
+        try:
+            window.game_surface.fill((255, 0, 255))
+            window.present()
+            time.sleep(0.25)                      # let the compositor show it
+            capture = capture_client(hwnd)
+        finally:
+            window.game_surface.blit(saved, (0, 0))
+            probing["on"] = False
+        return picture_check(hwnd, label, capture, magenta)
+
     def steps():
         from solitaireplus.app import state, window
         from solitaireplus.app.settings import RESOLUTION_OPTIONS
         yield 90
         hwnd = pygame.display.get_wm_info()["window"]
         results.append(check(hwnd, "start-up", state.fullscreen_enabled))
+        results.append(picture(hwnd, "start-up picture"))
         if not state.fullscreen_enabled:
             request = json.loads(os.environ.get("WINDOW_CHECK_REQUEST") or "null")
             results.append(start_size_check(hwnd, "start-up size and centre",
@@ -264,6 +361,7 @@ def source_child(out_path: str, multiplayer: bool = False) -> None:
                 results.append(check(hwnd, f"F11 #{round_number} -> "
                                      f"{'fullscreen' if state.fullscreen_enabled else 'window'}",
                                      state.fullscreen_enabled))
+                results.append(picture(hwnd, f"F11 #{round_number} picture"))
         if state.fullscreen_enabled:
             window.set_fullscreen_enabled(False)
             yield 60
@@ -274,6 +372,7 @@ def source_child(out_path: str, multiplayer: bool = False) -> None:
             window.set_window_size(*size)          # what clicking the Options button does
             yield 60
             results.append(check(hwnd, f"Options size {size[0]}x{size[1]}", False))
+            results.append(picture(hwnd, f"Options size {size[0]}x{size[1]} picture"))
         if multiplayer:
             results.append(extra_check("extras at the end", process_dpi_awareness(), pygame.display.get_caption()[0],
                                        single_player_loaded(), window_dpi(hwnd)))
@@ -283,6 +382,8 @@ def source_child(out_path: str, multiplayer: bool = False) -> None:
 
     def hook():
         real_flip()
+        if probing["on"]:
+            return
         frames["n"] += 1
         if wait["n"] > 0:
             wait["n"] -= 1
@@ -398,6 +499,15 @@ def run_packaged_once(command, env, label, start_fullscreen=False, multiplayer=F
             return [{"label": f"{label}: window", "ok": False}]
         time.sleep(3)
         results.append(check(hwnd, "start-up", start_fullscreen))
+        # The packaged game loads for a few seconds before its first frame: wait for it (max 15 s).
+        started = time.monotonic()
+        while time.monotonic() - started < 15:
+            capture = capture_client(hwnd)
+            if measure_picture(capture, not_black)[2] > capture[0] // 2:
+                break
+            time.sleep(0.5)
+        print(f"      first frame after {3 + time.monotonic() - started:.1f} s", flush=True)
+        results.append(picture_check(hwnd, "start-up picture", capture_client(hwnd), not_black))
         if multiplayer:
             results.append(extra_check("start-up extras", other_process_dpi_awareness(process.pid),
                                        window_caption(hwnd), None, window_dpi(hwnd)))
@@ -409,6 +519,7 @@ def run_packaged_once(command, env, label, start_fullscreen=False, multiplayer=F
                 time.sleep(1.5)
                 results.append(check(hwnd, f"F11 #{round_number} -> {'fullscreen' if fullscreen else 'window'}",
                                      fullscreen))
+                results.append(picture_check(hwnd, f"F11 #{round_number} picture", capture_client(hwnd), not_black))
     finally:
         process.kill()
         try:
