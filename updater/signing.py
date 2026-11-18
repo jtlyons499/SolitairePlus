@@ -1,6 +1,6 @@
 """Check that an update really comes from the Solitaire+ developers.
 
-Two checks, both compared against the thumbprints in trusted_publishers.json:
+Two checks, both compared against the thumbprints in trusted_publishers.py:
 
 1. manifest.json must carry a valid detached signature (manifest.json.p7s).
    The manifest lists the SHA-256 of every file, so this one signature

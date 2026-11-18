@@ -8,68 +8,24 @@ A game about card games. Dynamic career progression, streamlined multiplayer, in
 
 ### Windows
 
-**[Download the latest Windows release (v0.0.6b)](https://github.com/jtlyons499/SolitairePlus/releases/latest/download/Solitaire-Windows.zip)**
+**[Download the installer from the latest release](https://github.com/jtlyons499/SolitairePlus/releases/latest)**
+(`SolitairePlus-Setup-<version>.exe`).
 
-1. Download `Solitaire-Windows.zip`.
-2. Extract the ZIP to a folder.
-3. Double-click `SolitairePlus.exe`.
+1. Run the installer. If Windows says "Windows protected your PC", click **More info**, then **Run anyway**.
+2. Keep "Trust the Solitaire+ publisher" ticked, and when Windows asks to install the certificate, check that
+   its thumbprint matches the one below before clicking **Yes**.
+3. Play from the Start Menu. The game updates itself from then on (an **Update to …** button appears on the
+   main menu).
 
-You do **not** need to install Python to use the packaged Windows release.
-Yes, Windows typically will request permission to run the game the very first time, but that's how .exe files work.
+**Publisher certificate thumbprint:** not set yet (the first signed release adds it here).
+
+Already playing an older version, or prefer the ZIP? Step-by-step instructions, including how to keep your saves:
+[docs/INSTALLING.md](docs/INSTALLING.md). You do **not** need Python to play.
 
 This application has been verified Stuxnet free since September 2026.
 
-## Latest changelog
-Solitaire+ 0.0.6b
--------------------------------------------
-**MULTIPLAYER**
--  Added three more games to multiplayer
-  - Score-Four (24), up to four users, optional NPCs of varying difficulty
-    - Users/NPCs compete to solve each puzzle first, first to 3 wins
-  - Blind Man's Bluff, up to four users, optional NPCs of varying difficulty
-    - Everyone's playing card is visible except your own, whoever has the highest card wins
-    - Players who go broke switch to spectators
-  - Roulette, up to four users, optional NPCs of varying difficulty
-    - Users and/or NPCs can play roulette together, host can change time available to bet before each spin
-    - Players who go broke switch to spectators
-- Re-worked the multiplayer hub UI, streamlined joining/hosting lobbies
-  - Can now quickly select one of five available modes
-  - Replaced custom PNG avatars with the singleplayer avatar builder 
-  - Lobby/room codes are shorter and apply to whichever game the host selected
-  - LAN and Practice options removed
-  - Game defaults to using the server running on Railway, no need to know an IP
-  - Blind Man's Bluff, Roulette, and Hold'em now have live chat for users to interact
-- Updated multiplayer Texas Hold'em to be current with the singeplayer version
-  - Copied over more polished UI, improvements in AI behavior 
-  - Clearer animations and card details
-    
-**SINGLEPLAYER**
-- Reworked how the poker rating is calculated in Career Mode
-  - Increases/decreases are based more on the user's own change in money
-  - More generous rating rewards for cash gains, less punishing for cash losses
-- Rating decline caused by age in NPCs is now much stronger, 
-- User now has a public appeal status based on recent trends in fan engagement
-- News now addresses major milestones in user's rating progression, oddity stories re-written
-- NPC decision making now accounts for having larger amounts of money in all poker games
-  - NPCs may bet more, may raise instead of calling, call instead of backing down, etc.
-  - Personality traits still control the degree to which this impacts NPCs
-- Added a "Quick Chat" option in Texas Hold'em with ~180 possible replies
-  - Depending on the context of the game, the user can select messages to send to NPCs
-  - Responses are determined by the NPCs strongest personality traits with a mix of randomization
-  - NPCs may shift their behavior based on the user's quick chats (e.g. bet more aggressively)
-  - During a hand of poker...
-    - How's it going?
-    - I have a crush on...(select NPC)
-    - I despise...(select NPC)
-    - Favorite suits?
-    - Where's everyone from?
-    - Anything going on with y'all?
-    - I'm bored
-    - I've got a great hand
-  - Between hands of poker...
-    - Easy win (response pool will vary if used after a loss)
-    - Nice hand
-    - Well played
+## What's new
+See [CHANGELOG.md](CHANGELOG.md) for every version's changes.
 
 ##  Instant play / debug / bypass progression / 
 Press F10 to pull up the debug menu, which lets you select from some of the following options:
@@ -91,29 +47,13 @@ To win a Solitaire round automatically, press F10 at the Solitaire table and cli
   - Improve gameplay flow and eliminate confusion
  - Additional choose-your-own adventure story events in Career Mode
 
-## Historic changelog
-v0.0.6 - first pass
-- Added "Arcade Night" event with four unrated minigames in the style of retro Atari games
-  - Win tickets, set high scores, cash in tickets for customization unlocks 
-    - King Pong (Pong)
-    - Ace Invaders (Space Invaders)
-    - Battle Bosses (Warlords)
-    - Suit Snake (Snake)
-  - Added a very basic DOOM-inspired FPS minigame where you fight against playing card monsters through 10 levels
-    - CURRENTLY CAN ONLY ACCESS THROUGH DEBUG MENU (F10)
-    - Enemy health is based on the card number, one starting weapon and three bonus weapons to pick up
-    - Handful of custom skyboxes and floors
-  - Added a very basic PVP multiplayer version of the game, 1v1, first to five kills   
-  - Added dozens of missing assets
-
-
 ## Source code
 
 The files in this repository are the development source code. If you only want to play the game, use the Windows download above instead of GitHub's auto **Source code (zip)** download. But I mean if you _do_ want to download the src and everything...
 
 ### Running from source
 
-The project currently targets Python 3.14 and uses pygame-ce.
+The project targets Python 3.14 (3.12 also works) and uses pygame-ce.
 
 ```bash
 python -m pip install -r requirements.txt
@@ -132,4 +72,5 @@ py -3.14 -m venv .venv
 
 The playable folder is created at `dist/SolitairePlus/` and a test ZIP at `release/Solitaire-Windows.zip`.
 Local builds are unsigned test builds. Official releases are made with `tools/release.ps1`
-(see [docs/TESTING.md](docs/TESTING.md) for running the tests on their own).
+([docs/RELEASING.md](docs/RELEASING.md)); signing is explained in [docs/CODE_SIGNING.md](docs/CODE_SIGNING.md),
+the tests in [docs/TESTING.md](docs/TESTING.md). AI assistants: read [AGENTS.md](AGENTS.md) first.

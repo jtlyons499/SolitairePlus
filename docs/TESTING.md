@@ -259,6 +259,12 @@ about a minute, don't use the PC meanwhile) and check that it stays inside the s
 bar visible: at start-up, after F11 in and out of fullscreen five times, at every window size Options offers, and
 with a saved size too large for the screen. They use a temporary profile folder, never your saves or settings.
 
+After every step they also read what the screen really shows inside the window and check that the game picture
+fills it: 100% of a 16:9 window, and in fullscreen on a screen of another shape only the bars that keep the
+picture 16:9 (for example 60 pixels top and bottom on 1920x1200). Source runs paint the picture magenta for one
+frame to measure it; packaged runs measure the black bars around whatever the game shows (after waiting for the
+first frame, about 4 seconds after launch).
+
 Add `--multiplayer` to check the Multiplayer window the same way (about three minutes):
 
 ```
